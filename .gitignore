@@ -1,0 +1,4 @@
+/cp38-macosx_10_15_x86_64/
+*~
+__pycache__/
+*.egg-info/

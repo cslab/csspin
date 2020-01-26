@@ -1,0 +1,4 @@
+spin:
+  plugin_dir: plugins
+plugins:
+  - flake8
