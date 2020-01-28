@@ -1,4 +1,13 @@
-from spin.plugin import config, task, sh, echo, exists, rmtree, namespaces, argument
+from spin.plugin import (
+    config,
+    task,
+    sh,
+    echo,
+    exists,
+    rmtree,
+    namespaces,
+    argument,
+)
 from wheel import pep425tags
 
 
