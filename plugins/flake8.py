@@ -6,7 +6,7 @@ requires = ["virtualenv"]
 
 
 @task
-def flake8(ctx, files: argument(nargs=-1)):
+def flake8(files: argument(nargs=-1)):
     """Run flake8 to lint Python code."""
     if not files:
         files = (
@@ -17,5 +17,5 @@ def flake8(ctx, files: argument(nargs=-1)):
     sh("{virtualenv.bindir}/flake8", *files)
 
 
-def configure(ctx):
-    ctx.obj.requirements.append("flake8")
+def configure(cfg):
+    cfg.requirements.append("flake8")

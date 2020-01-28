@@ -4,6 +4,11 @@
 # All rights reserved.
 # http://www.contact.de/
 
+"""spin is a simple task runner and sandbox provisioner that supports
+re-usable task definitions. Task definitions are Python modules, that
+are automatically provisioned.
+"""
+
 import os
 import sys
 from pprint import pprint
@@ -24,6 +29,9 @@ from .util import (
 )
 
 
+# These are the basic defaults for the top-level configuration
+# tree. Sections and values will be added by loading plugins and
+# reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
@@ -58,6 +66,8 @@ def read_spinfile(spinfile):
 
 
 def load_plugin(cfg, pi):
+    """Recursively load the plugin named 'pi', and its dependencies as
+    given in the module-level attribute 'requires' (list of names)."""
     if pi not in cfg.loaded:
         mod = importlib.import_module(pi)
         modcfg = getattr(mod, "defaults", config())
@@ -93,6 +103,24 @@ def toposort(nodes, graph):
     return result
 
 
+def toporun(cfg, *fn_names):
+    for func_name in fn_names:
+        for pi_name in cfg.topo_plugins:
+            pi_mod = cfg.loaded[pi_name]
+            initf = getattr(pi_mod, func_name, None)
+            if initf:
+                initf(cfg)
+
+
+# This is a click-style decorator that adds the basic command line
+# options of spin to a click.command or click.group; we have this
+# separately here, because we'll use it twice: a) for 'cli' below,
+# which is our boostrap command, and b) for 'commands' which is the
+# actual click group that collects sub commands from plugins. 'cli'
+# uses these options to find the the configuration file, the project
+# root and plugin directory, and then loads the plugins. 'commands'
+# just has the same options, but doesn't use them except for
+# generating the help text.
 def base_options(fn):
     decorators = [
         click.option(
@@ -100,31 +128,77 @@ def base_options(fn):
             "-C",
             "cwd",
             type=click.Path(file_okay=False, exists=True),
+            help="Change directory before doing anything else. "
+            "In this case, the configuration file "
+            "(spinfile.yaml) is expected to live in the "
+            "directory changed to.",
         ),
         click.option(
             "-f",
             "spinfile",
             default=DEFAULTS.spin.spinfile,
             type=click.Path(dir_okay=False, exists=False),
+            help="An alternative name for the configuration file. "
+            "This can include a relative of absolute path when "
+            "used without -C.",
         ),
         click.option(
             "--plugin-directory",
             "-p",
             "plugin_dir",
             type=click.Path(file_okay=False, exists=False),
+            help="Alternative directory where spin installs and "
+            "searches plugin packages. The default is "
+            "{project_root}/.spin/plugins. This option overrides "
+            "the 'spin.plugin_dir' setting.",
         ),
-        click.option("--quiet", "-q", is_flag=True, default=DEFAULTS.quiet,),
-        click.option("--debug", is_flag=True, default=False),
+        click.option(
+            "--quiet",
+            "-q",
+            is_flag=True,
+            default=DEFAULTS.quiet,
+            help="No informational output",
+        ),
+        click.option(
+            "--debug",
+            is_flag=True,
+            default=False,
+            help="Dump the configuration tree before processing.",
+        ),
     ]
     for d in decorators:
         fn = d(fn)
     return fn
 
 
+@click.group(help=__doc__)
+# Note that the base_options here are not actually used and ignore by
+# 'commands'. Base options are processed by 'cli'.
+@base_options
+@click.pass_context
+def commands(ctx, **kwargs):
+    ctx.obj = util.CONFIG
+    toporun(ctx.obj, "configure", "init")
+
+
+@commands.command()
+@click.pass_context
+def cleanup(ctx):
+    """Call the 'cleanup' hook in all plugins.
+
+    This is expected to eventually remove provisioned software
+    (e.g. spin's Python interpreter, virtualenv etc.)
+    """
+    toporun(ctx.obj, "cleanup")
+
+
 @click.command(
     context_settings=dict(
         allow_extra_args=True,
         ignore_unknown_options=True,
+        # Override the default help option name -- we want click to
+        # use the help of the main command group 'commands', not from
+        # this boilerplate entry point.
         help_option_names=["--hidden-help-option"],
     )
 )
@@ -161,6 +235,8 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
         mkdir(cfg.spin.plugin_dir)
     sys.path.insert(0, cfg.spin.plugin_dir)
 
+    # Install plugin packages that are not yet installed, using pip
+    # with the "-t" (target) option pointing to the plugin directory.
     with memoizer("{spin.plugin_dir}/packages.memo") as m:
         for pkg in cfg.spin.plugin_packages:
             if not m.check(pkg):
@@ -175,53 +251,31 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
                 )
                 m.add(pkg)
 
-    # Load plugins
+    # Load plugins. "Plugins" are not plugin packages, but modules
+    # which we expect to live in plugin packages. Afterwards
+    # 'cfg.loaded' will be a mapping from plugin names to module
+    # objects.
     cfg.loaded = config()
     for pi in cfg.plugins:
         load_plugin(cfg, pi)
 
+    # Create a topologically sorted list of the plugins by their
+    # 'requires' dependencies. This will be used later by 'toporun' to
+    # run initialization functions in order (e.g. a tool like 'flake8'
+    # requires a virtualenv where it can be installed; the virtualenv
+    # is provided by the 'virtualenv' plugin, which in turn requires
+    # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
     graph = dict(
         (n, getattr(mod, "requires", [])) for n, mod in cfg.loaded.items()
     )
     cfg.topo_plugins = toposort(nodes, graph)
+
+    # Debug aid: dump config tree for --debug
     if debug:
         echo("Configuration tree (debug):")
         pprint(cfg)
+
+    # Invoke the main command group, which by now has all the
+    # sub-commands from the plugins.
     commands.main(args=ctx.args)
-
-
-def toporun(ctx, *fn_names):
-    cfg = ctx.obj
-    for func_name in fn_names:
-        for pi_name in cfg.topo_plugins:
-            pi_mod = cfg.loaded[pi_name]
-            initf = getattr(pi_mod, func_name, None)
-            if initf:
-                initf(ctx)
-
-
-@click.group()
-@base_options
-@click.pass_context
-def commands(ctx, **kwargs):
-    ctx.obj = util.CONFIG
-    toporun(ctx, "configure", "init")
-
-
-@commands.command()
-@click.pass_context
-def help(ctx):
-    print(ctx.parent.get_help())
-
-
-@commands.command()
-@click.pass_context
-def cleanup(ctx):
-    toporun(ctx, "cleanup")
-
-
-@commands.command()
-@click.pass_context
-def dump(ctx):
-    pprint(ctx.obj)

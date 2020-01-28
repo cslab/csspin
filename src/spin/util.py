@@ -19,7 +19,7 @@ import yaml
 def echo(*msg, **kwargs):
     if not CONFIG.quiet:
         msg = interpolate(msg)
-        click.echo(click.style("spin: ", fg="green"), nl=False, **kwargs)
+        click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(" ".join(msg), **kwargs)
 
 
@@ -56,16 +56,32 @@ def sh(*cmd, **kwargs):
     return subprocess.run(cmd, shell=shell, **kwargs)
 
 
-def readbytes(fn):
+def _read_file(fn, mode):
     (fn,) = interpolate((fn,))
-    with open(fn, "rb") as f:
+    with open(fn, mode) as f:
         return f.read()
 
 
-def writebytes(fn, data):
+def _write_file(fn, mode, data):
     (fn,) = interpolate((fn,))
     with open(fn, "wb") as f:
         f.write(data)
+
+
+def readbytes(fn):
+    return _read_file(fn, "rb")
+
+
+def writebytes(fn, data):
+    return _write_file(fn, "wb", data)
+
+
+def readtext(fn):
+    return _read_file(fn, "r")
+
+
+def writetext(fn, data):
+    return _write_file(fn, "w", data)
 
 
 def persist(fn, data):
@@ -173,4 +189,5 @@ def load_config(fname):
         return yaml.load(f, ConfigLoader)
 
 
+# This is the global configuration tree.
 CONFIG = config()

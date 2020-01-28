@@ -1,4 +1,4 @@
-from spin.plugin import config, task, sh, echo, exists, rmtree, namespaces
+from spin.plugin import config, task, sh, echo, exists, rmtree, namespaces, argument
 from wheel import pep425tags
 
 
@@ -21,13 +21,18 @@ defaults = config(
 
 
 @task
-def python(ctx):
-    sh("{python.interpreter}", "--version")
+def python(passthrough: argument(nargs=-1)):
+    """Run the Python interpreter used for this projects.
+
+    Provisioning happens automatically. The 'python' task makes sure
+    the requested Python release is installed.
+    """
+    sh("{python.interpreter}", *passthrough)
 
 
-def init(ctx):
-    if not ctx.obj.python.use_existing:
-        with namespaces(ctx.obj.python):
+def init(cfg):
+    if not cfg.python.use_existing:
+        with namespaces(cfg.python):
             if not exists("{interpreter}"):
                 echo("Installing Python {version} to {inst_dir}")
                 if not exists("{pyenv.path}"):
@@ -37,7 +42,7 @@ def init(ctx):
                 sh("{pip} install wheel")
 
 
-def cleanup(ctx):
-    if not ctx.obj.python.use_existing:
+def cleanup(cfg):
+    if not cfg.python.use_existing:
         if exists("{python.inst_dir}"):
             rmtree("{python.inst_dir}")

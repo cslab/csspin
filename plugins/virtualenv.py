@@ -11,7 +11,7 @@ from spin.plugin import (
 requires = ["python"]
 
 defaults = config(
-    venv="{spin.project_root}/" "{virtualenv.abitag}-{python.platform}",
+    venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     command="{python.bin_dir}/virtualenv",
     bindir="{virtualenv.venv}/bin",
     python="{virtualenv.bindir}/python",
@@ -31,10 +31,10 @@ def info(ctx):
 
 @venv.task
 def rm(ctx):
-    cleanup(ctx)
+    cleanup(ctx.obj)
 
 
-def init(ctx):
+def init(cfg):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
@@ -45,7 +45,7 @@ def init(ctx):
         capture_output=True,
         silent=True,
     )
-    ctx.obj.virtualenv.abitag = cpi.stdout.decode().strip()
+    cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
     if not exists("{virtualenv.command}"):
         sh("{python.pip} install virtualenv")
@@ -53,12 +53,12 @@ def init(ctx):
         sh("{virtualenv.command} -p {python.interpreter} {virtualenv.venv}")
 
     with memoizer("{virtualenv.venv}/spininfo.memo") as m:
-        for req in ctx.obj.requirements:
+        for req in cfg.requirements:
             if not m.check(req):
                 sh("{virtualenv.pip} install {req}")
                 m.add(req)
 
 
-def cleanup(ctx):
+def cleanup(cfg):
     if exists("{virtualenv.venv}"):
         rmtree("{virtualenv.venv}")
