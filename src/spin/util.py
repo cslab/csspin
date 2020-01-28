@@ -195,3 +195,9 @@ CONFIG = config()
 
 def get_tree():
     return CONFIG
+
+
+def set_tree(cfg):
+    global CONFIG
+    CONFIG = cfg
+    return cfg

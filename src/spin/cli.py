@@ -15,7 +15,6 @@ from pprint import pprint
 import importlib
 
 import click
-from . import util
 from .util import (
     config,
     echo,
@@ -26,6 +25,8 @@ from .util import (
     die,
     memoizer,
     sh,
+    set_tree,
+    get_tree,
 )
 
 
@@ -178,7 +179,7 @@ def base_options(fn):
 @base_options
 @click.pass_context
 def commands(ctx, **kwargs):
-    ctx.obj = util.CONFIG
+    ctx.obj = get_tree()
     toporun(ctx.obj, "configure", "init")
 
 
@@ -208,20 +209,20 @@ def cleanup(ctx):
 def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
     # We want to honor the 'quiet' flag even if the configuration tree
     # has not yet been created.
-    util.CONFIG.quiet = quiet
+    get_tree().quiet = quiet
 
     # Find a project file and load it.
     if cwd:
         cd(cwd)
     else:
         spinfile = find_spinfile(spinfile)
-    cfg = util.CONFIG = read_spinfile(spinfile)
+    cfg = set_tree(read_spinfile(spinfile))
     cfg.quiet = quiet
     cfg.spin.spinfile = spinfile
     cfg.spin.project_root = "."
 
-    # We have a proper config tree now in util.CONFIG (and an alias
-    # 'cfg' for it); cd to project root and proceed.
+    # We have a proper config tree now in 'cfg'; cd to project root
+    # and proceed.
     spinfile_dir = os.path.dirname(cfg.spin.spinfile)
     cd(spinfile_dir)
 
