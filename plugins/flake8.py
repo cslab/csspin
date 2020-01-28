@@ -2,10 +2,10 @@ from spin.plugin import config, sh, task, argument
 
 defaults = config()
 
-requires = ["virtualenv"]
+requires = ["virtualenv", "lint"]
 
 
-@task
+@task(when="lint")
 def flake8(files: argument(nargs=-1)):
     """Run flake8 to lint Python code."""
     if not files:

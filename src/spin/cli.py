@@ -41,6 +41,7 @@ DEFAULTS = config(
     ),
     requirements=[],
     quiet=False,
+    hooks=config(),
 )
 
 

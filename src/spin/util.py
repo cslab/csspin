@@ -191,3 +191,7 @@ def load_config(fname):
 
 # This is the global configuration tree.
 CONFIG = config()
+
+
+def get_tree():
+    return CONFIG
