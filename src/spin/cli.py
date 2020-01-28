@@ -6,25 +6,13 @@
 
 import os
 import sys
-from io import StringIO
 from pprint import pprint
 import importlib
 
 import click
-import yaml
 from . import util
-from .util import config, echo, cd, mkdir, load_config, merge_config
-
-
-DEFAULTS = config(
-    spin=config(
-        spinfile="spinfile.yaml",
-        plugin_dir=".spin",
-        plugin_packages=[],
-        userprofile="{HOME}/.spin",
-    ),
-    requirements=[],
-)
+from .util import config, echo, cd, mkdir, load_config, merge_config, die
+from . import defaults
 
 
 def find_spinfile(spinfile_):
@@ -43,7 +31,7 @@ def find_spinfile(spinfile_):
 
 def read_spinfile(spinfile):
     data = load_config(spinfile)
-    merge_config(data, DEFAULTS)
+    merge_config(data, defaults.DEFAULTS)
     return data
 
 
@@ -71,35 +59,57 @@ def toposort(nodes, graph):
     return result
 
 
+def base_options(fn):
+    decorators = [
+        click.option(
+            "--change-directory",
+            "-C",
+            "cwd",
+            type=click.Path(file_okay=False, exists=True),
+        ),
+        click.option(
+            "-f",
+            "spinfile",
+            default=defaults.DEFAULTS.spin.spinfile,
+            type=click.Path(dir_okay=False, exists=False),
+        ),
+        click.option(
+            "--plugin-directory",
+            "-p",
+            "plugin_dir",
+            type=click.Path(file_okay=False, exists=False),
+        ),
+        click.option(
+            "--quiet", "-q", is_flag=True, default=defaults.DEFAULTS.quiet,
+        ),
+    ]
+    for d in decorators:
+        fn = d(fn)
+    return fn
+
+
 @click.command(
-    context_settings=dict(allow_extra_args=True, ignore_unknown_options=True,)
+    context_settings=dict(
+        allow_extra_args=True,
+        ignore_unknown_options=True,
+        help_option_names=["--hidden-help-option"],
+    )
 )
-@click.option(
-    "--change-directory", "-C", "cwd", type=click.Path(file_okay=False, exists=True),
-)
-@click.option(
-    "-f",
-    "spinfile",
-    default=DEFAULTS.spin.spinfile,
-    type=click.Path(dir_okay=False, exists=False),
-)
-@click.option(
-    "--plugin-directory",
-    "-p",
-    "plugin_dir",
-    type=click.Path(file_okay=False, exists=False),
-)
+@base_options
 @click.pass_context
-def cli(ctx, cwd, spinfile, plugin_dir):
+def cli(ctx, cwd, spinfile, plugin_dir, quiet):
+    util.GLOBALS.quiet = quiet
     if cwd:
         cd(cwd)
-    spinfile = find_spinfile(spinfile)
-    echo("Reading", spinfile)
+    else:
+        spinfile = find_spinfile(spinfile)
     cfg = read_spinfile(spinfile)
     util.GLOBALS = cfg
+    util.GLOBALS.quiet = quiet
     spinfile_dir = os.path.dirname(spinfile)
+    cd(spinfile_dir)
     cfg.spin.spinfile = spinfile
-    cfg.spin.project_root = spinfile_dir
+    cfg.spin.project_root = "."
     if plugin_dir:
         cfg.spin.plugin_dir = plugin_dir
     if not os.path.isabs(cfg.spin.plugin_dir):
@@ -118,13 +128,15 @@ def cli(ctx, cwd, spinfile, plugin_dir):
     if to_be_installed:
         echo(f"Installing plugin packages {to_be_installed}")
         # FIXME: this should be 'sh' from util ...
+        # 2nd FIXME: should this be pip from the spin install??
         os.system(
-            f"pip install -t {cfg.spin.plugin_dir} " "{' '.join(to_be_installed)}"
+            f"pip install -t {cfg.spin.plugin_dir} "
+            "{' '.join(to_be_installed)}"
         )
 
     def load_plugin(pi):
         if pi not in plugins:
-            echo(f"loading {pi}")
+            # echo(f"loading {pi}")
             mod = importlib.import_module(pi)
             modcfg = getattr(mod, "defaults", config())
             target = cfg.setdefault(pi, config())
@@ -140,9 +152,11 @@ def cli(ctx, cwd, spinfile, plugin_dir):
         load_plugin(pi)
     cfg.plugins = plugins
     nodes = cfg.plugins.keys()
-    graph = dict((n, getattr(mod, "requires", [])) for n, mod in cfg.plugins.items())
+    graph = dict(
+        (n, getattr(mod, "requires", [])) for n, mod in cfg.plugins.items()
+    )
     cfg.topo_plugins = toposort(nodes, graph)
-    commands.main()
+    commands.main(args=ctx.args)
 
 
 def toporun(ctx, *fn_names):
@@ -156,8 +170,9 @@ def toporun(ctx, *fn_names):
 
 
 @click.group()
+@base_options
 @click.pass_context
-def commands(ctx):
+def commands(ctx, **kwargs):
     ctx.obj = util.GLOBALS
     toporun(ctx, "configure", "init")
 

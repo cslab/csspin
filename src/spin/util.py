@@ -10,16 +10,17 @@ import click
 import shutil
 import subprocess
 import collections
+import pickle
+from contextlib import contextmanager
 
 import yaml
 
-GLOBALS = {}
-
 
 def echo(*msg, **kwargs):
-    msg = interpolate(msg)
-    click.echo(click.style("spin: ", fg="green"), nl=False, **kwargs)
-    click.echo(" ".join(msg), **kwargs)
+    if not GLOBALS.quiet:
+        msg = interpolate(msg)
+        click.echo(click.style("spin: ", fg="green"), nl=False, **kwargs)
+        click.echo(" ".join(msg), **kwargs)
 
 
 def cd(where):
@@ -38,7 +39,7 @@ def mkdir(what):
 
 
 def rmtree(d):
-    d, = interpolate((d,))
+    (d,) = interpolate((d,))
     echo("rmtree", d)
     shutil.rmtree(d)
 
@@ -49,9 +50,45 @@ def die(*msg, **kwargs):
 
 def sh(*cmd, **kwargs):
     cmd = interpolate(cmd)
-    echo(click.style(" ".join(cmd), bold=True))
-    shell = kwargs.pop("shell", len(cmd)==1)
+    if not kwargs.pop("silent", False):
+        echo(click.style(" ".join(cmd), bold=True))
+    shell = kwargs.pop("shell", len(cmd) == 1)
     return subprocess.run(cmd, shell=shell, **kwargs)
+
+
+def readbytes(fn):
+    (fn,) = interpolate((fn,))
+    with open(fn, "rb") as f:
+        return f.read()
+
+
+def writebytes(fn, data):
+    (fn,) = interpolate((fn,))
+    with open(fn, "wb") as f:
+        f.write(data)
+
+
+def persist(fn, data):
+    writebytes(fn, pickle.dumps(data))
+
+
+def unpersist(fn, default=None):
+    try:
+        return pickle.loads(readbytes(fn))
+    except FileNotFoundError:
+        return default
+
+
+NSSTACK = []
+
+
+@contextmanager
+def namespaces(*nslist):
+    for ns in nslist:
+        NSSTACK.append(ns)
+    yield
+    for ns in nslist:
+        NSSTACK.pop()
 
 
 def interpolate(literals, *extra_dicts):
@@ -59,12 +96,14 @@ def interpolate(literals, *extra_dicts):
     caller_frame = sys._getframe(2)
     caller_globals = caller_frame.f_globals
     caller_locals = collections.ChainMap(
-        caller_frame.f_locals, GLOBALS, os.environ, *extra_dicts
+        caller_frame.f_locals, GLOBALS, os.environ, *extra_dicts, *NSSTACK,
     )
     for literal in literals:
         while True:
             previous = literal
-            literal = eval("f'''%s'''" % literal, caller_globals, caller_locals)
+            literal = eval(
+                "f'''%s'''" % literal, caller_globals, caller_locals
+            )
             if previous == literal:
                 break
         out.append(literal)
@@ -110,3 +149,6 @@ def config(**kwargs):
 def load_config(fname):
     with open(fname) as f:
         return yaml.load(f, ConfigLoader)
+
+
+GLOBALS = config()
