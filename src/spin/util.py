@@ -17,7 +17,7 @@ import yaml
 
 
 def echo(*msg, **kwargs):
-    if not GLOBALS.quiet:
+    if not CONFIG.quiet:
         msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False, **kwargs)
         click.echo(" ".join(msg), **kwargs)
@@ -79,6 +79,28 @@ def unpersist(fn, default=None):
         return default
 
 
+class Memoizer(object):
+    def __init__(self, fn):
+        self._fn = fn
+        self._items = unpersist(fn, [])
+
+    def check(self, item):
+        return item in self._items
+
+    def add(self, item):
+        self._items.append(item)
+
+    def finalize(self):
+        persist(self._fn, self._items)
+
+
+@contextmanager
+def memoizer(fn):
+    m = Memoizer(fn)
+    yield m
+    m.finalize()
+
+
 NSSTACK = []
 
 
@@ -96,7 +118,7 @@ def interpolate(literals, *extra_dicts):
     caller_frame = sys._getframe(2)
     caller_globals = caller_frame.f_globals
     caller_locals = collections.ChainMap(
-        caller_frame.f_locals, GLOBALS, os.environ, *extra_dicts, *NSSTACK,
+        caller_frame.f_locals, CONFIG, os.environ, *extra_dicts, *NSSTACK,
     )
     for literal in literals:
         while True:
@@ -151,4 +173,4 @@ def load_config(fname):
         return yaml.load(f, ConfigLoader)
 
 
-GLOBALS = config()
+CONFIG = config()

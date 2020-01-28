@@ -6,3 +6,4 @@ requirements:
   - pytest
   - click
   - scons
+  - black

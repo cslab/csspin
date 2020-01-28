@@ -11,11 +11,33 @@ import importlib
 
 import click
 from . import util
-from .util import config, echo, cd, mkdir, load_config, merge_config, die
-from . import defaults
+from .util import (
+    config,
+    echo,
+    cd,
+    mkdir,
+    load_config,
+    merge_config,
+    die,
+    memoizer,
+    sh,
+)
+
+
+DEFAULTS = config(
+    spin=config(
+        spinfile="spinfile.yaml",
+        plugin_dir=".spin",
+        plugin_packages=[],
+        userprofile="{HOME}/.spin",
+    ),
+    requirements=[],
+    quiet=False,
+)
 
 
 def find_spinfile(spinfile_):
+    """Find a file 'spinfile_' by walking up the directory tree."""
     cwd = os.getcwd()
     spinfile = spinfile_
     while not os.path.exists(spinfile):
@@ -31,8 +53,20 @@ def find_spinfile(spinfile_):
 
 def read_spinfile(spinfile):
     data = load_config(spinfile)
-    merge_config(data, defaults.DEFAULTS)
+    merge_config(data, DEFAULTS)
     return data
+
+
+def load_plugin(cfg, pi):
+    if pi not in cfg.loaded:
+        mod = importlib.import_module(pi)
+        modcfg = getattr(mod, "defaults", config())
+        target = cfg.setdefault(pi, config())
+        mod.config = cfg
+        merge_config(target, modcfg)
+        cfg.loaded[pi] = mod
+        for requirement in getattr(mod, "requires", []):
+            load_plugin(cfg, requirement)
 
 
 def toposort(nodes, graph):
@@ -70,7 +104,7 @@ def base_options(fn):
         click.option(
             "-f",
             "spinfile",
-            default=defaults.DEFAULTS.spin.spinfile,
+            default=DEFAULTS.spin.spinfile,
             type=click.Path(dir_okay=False, exists=False),
         ),
         click.option(
@@ -79,9 +113,8 @@ def base_options(fn):
             "plugin_dir",
             type=click.Path(file_okay=False, exists=False),
         ),
-        click.option(
-            "--quiet", "-q", is_flag=True, default=defaults.DEFAULTS.quiet,
-        ),
+        click.option("--quiet", "-q", is_flag=True, default=DEFAULTS.quiet,),
+        click.option("--debug", is_flag=True, default=False),
     ]
     for d in decorators:
         fn = d(fn)
@@ -97,19 +130,27 @@ def base_options(fn):
 )
 @base_options
 @click.pass_context
-def cli(ctx, cwd, spinfile, plugin_dir, quiet):
-    util.GLOBALS.quiet = quiet
+def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
+    # We want to honor the 'quiet' flag even if the configuration tree
+    # has not yet been created.
+    util.CONFIG.quiet = quiet
+
+    # Find a project file and load it.
     if cwd:
         cd(cwd)
     else:
         spinfile = find_spinfile(spinfile)
-    cfg = read_spinfile(spinfile)
-    util.GLOBALS = cfg
-    util.GLOBALS.quiet = quiet
-    spinfile_dir = os.path.dirname(spinfile)
-    cd(spinfile_dir)
+    cfg = util.CONFIG = read_spinfile(spinfile)
+    cfg.quiet = quiet
     cfg.spin.spinfile = spinfile
     cfg.spin.project_root = "."
+
+    # We have a proper config tree now in util.CONFIG (and an alias
+    # 'cfg' for it); cd to project root and proceed.
+    spinfile_dir = os.path.dirname(cfg.spin.spinfile)
+    cd(spinfile_dir)
+
+    # Setup plugin_dir, where spin installs plugin packages.
     if plugin_dir:
         cfg.spin.plugin_dir = plugin_dir
     if not os.path.isabs(cfg.spin.plugin_dir):
@@ -119,43 +160,34 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet):
     if not os.path.exists(cfg.spin.plugin_dir):
         mkdir(cfg.spin.plugin_dir)
     sys.path.insert(0, cfg.spin.plugin_dir)
-    # FIXME: Check wether all packages in plugin_dir are installed.
-    # we're using a rather lousy heuristic of checking for directory
-    # named like the packages -- to be fixed if required ...
-    existing = set(os.listdir(cfg.spin.plugin_dir))
-    required = set(cfg.spin.plugin_packages)
-    to_be_installed = required - existing
-    if to_be_installed:
-        echo(f"Installing plugin packages {to_be_installed}")
-        # FIXME: this should be 'sh' from util ...
-        # 2nd FIXME: should this be pip from the spin install??
-        os.system(
-            f"pip install -t {cfg.spin.plugin_dir} "
-            "{' '.join(to_be_installed)}"
-        )
 
-    def load_plugin(pi):
-        if pi not in plugins:
-            # echo(f"loading {pi}")
-            mod = importlib.import_module(pi)
-            modcfg = getattr(mod, "defaults", config())
-            target = cfg.setdefault(pi, config())
-            mod.config = cfg
-            merge_config(target, modcfg)
-            plugins[pi] = mod
-            for requirement in getattr(mod, "requires", []):
-                load_plugin(requirement)
+    with memoizer("{spin.plugin_dir}/packages.memo") as m:
+        for pkg in cfg.spin.plugin_packages:
+            if not m.check(pkg):
+                sh(
+                    "{sys.executable}",
+                    "-m",
+                    "pip",
+                    "install",
+                    "-t",
+                    "{spin.plugin_dir}",
+                    "{pkg}",
+                )
+                m.add(pkg)
 
-    # Load all the plugins and their configuration data
-    plugins = config()
+    # Load plugins
+    cfg.loaded = config()
     for pi in cfg.plugins:
-        load_plugin(pi)
-    cfg.plugins = plugins
-    nodes = cfg.plugins.keys()
+        load_plugin(cfg, pi)
+
+    nodes = cfg.loaded.keys()
     graph = dict(
-        (n, getattr(mod, "requires", [])) for n, mod in cfg.plugins.items()
+        (n, getattr(mod, "requires", [])) for n, mod in cfg.loaded.items()
     )
     cfg.topo_plugins = toposort(nodes, graph)
+    if debug:
+        echo("Configuration tree (debug):")
+        pprint(cfg)
     commands.main(args=ctx.args)
 
 
@@ -163,7 +195,7 @@ def toporun(ctx, *fn_names):
     cfg = ctx.obj
     for func_name in fn_names:
         for pi_name in cfg.topo_plugins:
-            pi_mod = cfg.plugins[pi_name]
+            pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
                 initf(ctx)
@@ -173,7 +205,7 @@ def toporun(ctx, *fn_names):
 @base_options
 @click.pass_context
 def commands(ctx, **kwargs):
-    ctx.obj = util.GLOBALS
+    ctx.obj = util.CONFIG
     toporun(ctx, "configure", "init")
 
 
@@ -192,4 +224,4 @@ def cleanup(ctx):
 @commands.command()
 @click.pass_context
 def dump(ctx):
-    pprint(util.GLOBALS)
+    pprint(ctx.obj)

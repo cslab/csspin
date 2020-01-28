@@ -15,6 +15,7 @@ from .util import (
     writebytes,
     persist,
     unpersist,
+    memoizer,
 )
 
 __all__ = [  # noqa
@@ -35,6 +36,7 @@ __all__ = [  # noqa
     "unpersist",
     "argument",
     "option",
+    "memoizer",
 ]
 
 

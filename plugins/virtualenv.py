@@ -3,8 +3,7 @@ from spin.plugin import (
     sh,
     exists,
     rmtree,
-    persist,
-    unpersist,
+    memoizer,
     group,
     echo,
 )
@@ -53,13 +52,11 @@ def init(ctx):
     if not exists("{virtualenv.venv}"):
         sh("{virtualenv.command} -p {python.interpreter} {virtualenv.venv}")
 
-    if ctx.obj.requirements:
-        installed_by_spin = unpersist("{virtualenv.venv}/spininfo.pickle", [])
+    with memoizer("{virtualenv.venv}/spininfo.memo") as m:
         for req in ctx.obj.requirements:
-            if req not in installed_by_spin:
+            if not m.check(req):
                 sh("{virtualenv.pip} install {req}")
-                installed_by_spin.append(req)
-        persist("{virtualenv.venv}/spininfo.pickle", installed_by_spin)
+                m.add(req)
 
 
 def cleanup(ctx):
