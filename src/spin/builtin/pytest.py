@@ -9,13 +9,9 @@ from spin.plugin import config, sh, task, argument
 defaults = config()
 
 requires = [".virtualenv", ".test"]
+packages = ["pytest", "pytest-cov"]
 
 
 @task(when="test")
 def pytest(files: argument(nargs=-1)):
-    sh("{virtualenv.bindir}/pytest", *files)
-    pass
-
-
-def configure(cfg):
-    cfg.requirements.append("pytest")
+    sh("{virtualenv.bindir}/pytest", "--cov=spin", "--cov-report=html", *files)

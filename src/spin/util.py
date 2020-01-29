@@ -28,18 +28,20 @@ def cd(where):
 
 
 def exists(path):
-    (path,) = interpolate((path,))
+    path = interpolate1(path)
     return os.path.exists(path)
 
 
-def mkdir(what):
-    (what,) = interpolate((what,))
-    echo("mkdir", what)
-    os.makedirs(what)
+def mkdir(path):
+    path = interpolate1(path)
+    if not exists(path):
+        echo("mkdir", path)
+        os.makedirs(path)
+    return path
 
 
 def rmtree(d):
-    (d,) = interpolate((d,))
+    d = interpolate1(d)
     echo("rmtree", d)
     shutil.rmtree(d)
 
@@ -72,17 +74,28 @@ def sh(*cmd, **kwargs):
     if not kwargs.pop("silent", False):
         echo(click.style(" ".join(cmd), bold=True))
     shell = kwargs.pop("shell", len(cmd) == 1)
-    return subprocess.run(cmd, shell=shell, **kwargs)
+    cpi = subprocess.run(cmd, shell=shell, **kwargs)
+    if cpi.returncode:
+        die(f"Command failed with return code {cpi.returncode}")
+    return cpi
+
+
+def setenv(**kwargs):
+    for key, value in kwargs.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = interpolate1(value)
 
 
 def _read_file(fn, mode):
-    (fn,) = interpolate((fn,))
+    fn = interpolate1(fn)
     with open(fn, mode) as f:
         return f.read()
 
 
 def _write_file(fn, mode, data):
-    (fn,) = interpolate((fn,))
+    fn = interpolate1(fn)
     with open(fn, "wb") as f:
         f.write(data)
 
@@ -148,18 +161,22 @@ def namespaces(*nslist):
         NSSTACK.pop()
 
 
-def interpolate(literals, *extra_dicts):
-    out = []
+def interpolate1(literal, *extra_dicts):
     where_to_look = collections.ChainMap(
         CONFIG, os.environ, *extra_dicts, *NSSTACK,
     )
+    while True:
+        previous = literal
+        literal = eval("f'''%s'''" % literal, {}, where_to_look)
+        if previous == literal:
+            break
+    return literal
+
+
+def interpolate(literals, *extra_dicts):
+    out = []
     for literal in literals:
-        while True:
-            previous = literal
-            literal = eval("f'''%s'''" % literal, {}, where_to_look)
-            if previous == literal:
-                break
-        out.append(literal)
+        out.append(interpolate1(literal, *extra_dicts))
     return out
 
 

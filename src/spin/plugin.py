@@ -18,6 +18,7 @@ from .util import (
     unpersist,
     memoizer,
     get_tree,
+    setenv,
 )
 
 __all__ = [
@@ -41,6 +42,7 @@ __all__ = [
     "option",
     "memoizer",
     "invoke",
+    "setenv",
 ]
 
 

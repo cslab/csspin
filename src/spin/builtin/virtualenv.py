@@ -20,7 +20,6 @@ requires = [".python"]
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     memo="{virtualenv.venv}/spininfo.memo",
-    command="{python.bin_dir}/virtualenv",
     bindir="{virtualenv.venv}/bin",
     python="{virtualenv.bindir}/python",
     pip="{virtualenv.bindir}/pip",
@@ -55,10 +54,10 @@ def init(cfg):
     )
     cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
-    if not exists("{virtualenv.command}"):
-        sh("{python.pip} install virtualenv")
+    if not exists("{python.bin_dir}/virtualenv"):
+        sh("{python.interpreter} -m pip install -q virtualenv")
 
-    virtualenv = Command("{virtualenv.command}", "-q")
+    virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
     pip = Command("{virtualenv.pip}", "-q")
 
     if not exists("{virtualenv.venv}"):
@@ -72,6 +71,11 @@ def init(cfg):
 
         for req in cfg.requirements:
             pipit(req)
+
+        for plugin in cfg.topo_plugins:
+            plugin_module = cfg.loaded[plugin]
+            for req in getattr(plugin_module, "packages", []):
+                pipit(req)
 
         pipit("-e", ".")
 

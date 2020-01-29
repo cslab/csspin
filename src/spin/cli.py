@@ -88,8 +88,10 @@ def load_plugin(cfg, import_spec, package=None):
         plugin_config_tree = cfg.setdefault(settings_name, config())
         mod.config = plugin_config_tree
         merge_config(plugin_config_tree, plugin_defaults)
-        dependencies = [load_plugin(cfg, requirement, mod.__package__)
-                        for requirement in getattr(mod, "requires", [])]
+        dependencies = [
+            load_plugin(cfg, requirement, mod.__package__)
+            for requirement in getattr(mod, "requires", [])
+        ]
         mod.requires = [dep.__name__ for dep in dependencies]
     return mod
 
@@ -203,6 +205,9 @@ def base_options(fn):
 @click.pass_context
 def commands(ctx, **kwargs):
     ctx.obj = get_tree()
+    # FIXME: for commands like "cleanup" or "venv ..." it is idiotic
+    # to run all initializations first. This should be supressable,
+    # possibly by augmenting 'spin.plugin.task' or something ...
     toporun(ctx.obj, "configure", "init")
 
 
@@ -225,6 +230,7 @@ def cleanup(ctx):
         # use the help of the main command group 'commands', not from
         # this boilerplate entry point.
         help_option_names=["--hidden-help-option"],
+        auto_envvar_prefix="SPIN",
     )
 )
 @base_options
@@ -304,3 +310,7 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug):
     # Invoke the main command group, which by now has all the
     # sub-commands from the plugins.
     commands.main(args=ctx.args)
+
+
+def main():
+    cli(auto_envvar_prefix="SPIN")
