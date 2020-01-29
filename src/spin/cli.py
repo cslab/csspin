@@ -19,6 +19,7 @@ from .util import (
     config,
     echo,
     cd,
+    exists,
     mkdir,
     load_config,
     merge_config,
@@ -36,12 +37,14 @@ from .util import (
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
-        plugin_dir=".spin",
+        spin_dir=".spin",
+        plugin_dir="{spin.spin_dir}/plugins",
         plugin_packages=[],
         userprofile="{HOME}/.spin",
     ),
     requirements=[],
     quiet=False,
+    verbose=False,
     hooks=config(),
 )
 
@@ -67,21 +70,31 @@ def read_spinfile(spinfile):
     return data
 
 
-def load_plugin(cfg, pi):
-    """Recursively load the plugin named 'pi', and its dependencies as
-    given in the module-level attribute 'requires' (list of names)."""
-    if pi not in cfg.loaded:
-        mod = importlib.import_module(pi)
-        modcfg = getattr(mod, "defaults", config())
-        target = cfg.setdefault(pi, config())
-        mod.config = cfg
-        merge_config(target, modcfg)
-        cfg.loaded[pi] = mod
-        for requirement in getattr(mod, "requires", []):
-            load_plugin(cfg, requirement)
+def load_plugin(cfg, import_spec, package=None):
+    """Recursively load a plugin module.
+
+    Load the plugin given by 'import_spec' and its dependencies
+    specified in the module-level attribute 'requires' (list of
+    absolute or relative import specs).
+    """
+    mod = importlib.import_module(import_spec, package)
+    full_name = mod.__name__
+    if full_name not in cfg.loaded:
+        # This plugin module has not been imported so far --
+        # initialize it and recursively load dependencies
+        cfg.loaded[full_name] = mod
+        settings_name = full_name.split(".")[-1]
+        plugin_defaults = getattr(mod, "defaults", config())
+        plugin_config_tree = cfg.setdefault(settings_name, config())
+        mod.config = plugin_config_tree
+        merge_config(plugin_config_tree, plugin_defaults)
+        dependencies = [load_plugin(cfg, requirement, mod.__package__)
+                        for requirement in getattr(mod, "requires", [])]
+        mod.requires = [dep.__name__ for dep in dependencies]
+    return mod
 
 
-def toposort(nodes, graph):
+def reverse_toposort(nodes, graph):
     """Topologically sort nodes according to graph, which is a dict
     mapping nodes to dependencies.
     """
@@ -100,12 +113,15 @@ def toposort(nodes, graph):
             if counts[m] == 0:
                 independent.add(m)
     if graph:
-        raise Exception("dependency graph has at least one cycle")
+        die("dependency graph has at least one cycle")
 
     return result
 
 
 def toporun(cfg, *fn_names):
+    """Run plugin functions named in 'fn_names' in topological order.
+
+    """
     for func_name in fn_names:
         for pi_name in cfg.topo_plugins:
             pi_mod = cfg.loaded[pi_name]
@@ -159,7 +175,14 @@ def base_options(fn):
             "-q",
             is_flag=True,
             default=DEFAULTS.quiet,
-            help="No informational output",
+            help="Be more quiet",
+        ),
+        click.option(
+            "--verbose",
+            "-v",
+            is_flag=True,
+            default=DEFAULTS.verbose,
+            help="Be more verbose",
         ),
         click.option(
             "--debug",
@@ -206,7 +229,7 @@ def cleanup(ctx):
 )
 @base_options
 @click.pass_context
-def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
+def cli(ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug):
     # We want to honor the 'quiet' flag even if the configuration tree
     # has not yet been created.
     get_tree().quiet = quiet
@@ -233,23 +256,23 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
         cfg.spin.plugin_dir = os.path.abspath(
             os.path.join(spinfile_dir, cfg.spin.plugin_dir)
         )
-    if not os.path.exists(cfg.spin.plugin_dir):
+    if not exists(cfg.spin.plugin_dir):
         mkdir(cfg.spin.plugin_dir)
     sys.path.insert(0, cfg.spin.plugin_dir)
 
     # Install plugin packages that are not yet installed, using pip
     # with the "-t" (target) option pointing to the plugin directory.
-    with memoizer("{spin.plugin_dir}/packages.memo") as m:
+    with memoizer("{spin.spin_dir}/packages.memo") as m:
         for pkg in cfg.spin.plugin_packages:
             if not m.check(pkg):
                 sh(
-                    "{sys.executable}",
+                    f"{sys.executable}",
                     "-m",
                     "pip",
                     "install",
                     "-t",
                     "{spin.plugin_dir}",
-                    "{pkg}",
+                    f"{pkg}",
                 )
                 m.add(pkg)
 
@@ -258,8 +281,8 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
-    for pi in cfg.plugins:
-        load_plugin(cfg, pi)
+    for import_spec in cfg.plugins:
+        load_plugin(cfg, import_spec)
 
     # Create a topologically sorted list of the plugins by their
     # 'requires' dependencies. This will be used later by 'toporun' to
@@ -271,7 +294,7 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, debug):
     graph = dict(
         (n, getattr(mod, "requires", [])) for n, mod in cfg.loaded.items()
     )
-    cfg.topo_plugins = toposort(nodes, graph)
+    cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Debug aid: dump config tree for --debug
     if debug:

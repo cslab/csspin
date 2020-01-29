@@ -1,3 +1,9 @@
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2020 CONTACT Software GmbH
+# All rights reserved.
+# http://www.contact.de/
+
 from spin.plugin import (
     config,
     task,
@@ -25,7 +31,7 @@ defaults = config(
     bin_dir="{python.inst_dir}/bin",
     interpreter="{python.bin_dir}/python",
     pip="{python.bin_dir}/pip",
-    use_existing=False,
+    use=None,
 )
 
 
@@ -40,7 +46,9 @@ def python(passthrough: argument(nargs=-1)):
 
 
 def init(cfg):
-    if not cfg.python.use_existing:
+    if cfg.python.use:
+        cfg.python.interpreter = cfg.python.use
+    else:
         with namespaces(cfg.python):
             if not exists("{interpreter}"):
                 echo("Installing Python {version} to {inst_dir}")

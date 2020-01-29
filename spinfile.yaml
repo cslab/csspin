@@ -1,9 +1,6 @@
-spin:
-  plugin_dir: plugins
 plugins:
-  - flake8
+  - spin.builtin.flake8
+  - spin.builtin.pytest
 requirements:
-  - pytest
-  - click
   - scons
   - black

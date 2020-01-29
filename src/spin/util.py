@@ -5,7 +5,6 @@
 # http://www.contact.de/
 
 import os
-import sys
 import click
 import shutil
 import subprocess
@@ -34,8 +33,9 @@ def exists(path):
 
 
 def mkdir(what):
+    (what,) = interpolate((what,))
     echo("mkdir", what)
-    os.mkdir(what)
+    os.makedirs(what)
 
 
 def rmtree(d):
@@ -44,8 +44,27 @@ def rmtree(d):
     shutil.rmtree(d)
 
 
+class SpinError(click.ClickException):
+    pass
+
+
 def die(*msg, **kwargs):
-    raise click.ClickException(" ".join(msg))
+    raise SpinError(" ".join(msg))
+
+
+class Command(object):
+    def __init__(self, *cmd, quiet=None):
+        self._cmd = list(cmd)
+        cfg = get_tree()
+        if quiet and cfg.quiet:
+            self.append(quiet)
+
+    def append(self, item):
+        self._cmd.append(item)
+
+    def __call__(self, *args, **kwargs):
+        cmd = self._cmd + list(args)
+        return sh(*cmd, **kwargs)
 
 
 def sh(*cmd, **kwargs):
@@ -131,17 +150,13 @@ def namespaces(*nslist):
 
 def interpolate(literals, *extra_dicts):
     out = []
-    caller_frame = sys._getframe(2)
-    caller_globals = caller_frame.f_globals
-    caller_locals = collections.ChainMap(
-        caller_frame.f_locals, CONFIG, os.environ, *extra_dicts, *NSSTACK,
+    where_to_look = collections.ChainMap(
+        CONFIG, os.environ, *extra_dicts, *NSSTACK,
     )
     for literal in literals:
         while True:
             previous = literal
-            literal = eval(
-                "f'''%s'''" % literal, caller_globals, caller_locals
-            )
+            literal = eval("f'''%s'''" % literal, {}, where_to_look)
             if previous == literal:
                 break
         out.append(literal)

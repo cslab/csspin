@@ -1,3 +1,9 @@
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2020 CONTACT Software GmbH
+# All rights reserved.
+# http://www.contact.de/
+
 from spin.plugin import (
     config,
     sh,
@@ -6,12 +12,14 @@ from spin.plugin import (
     memoizer,
     group,
     echo,
+    Command,
 )
 
-requires = ["python"]
+requires = [".python"]
 
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
+    memo="{virtualenv.venv}/spininfo.memo",
     command="{python.bin_dir}/virtualenv",
     bindir="{virtualenv.venv}/bin",
     python="{virtualenv.bindir}/python",
@@ -49,14 +57,23 @@ def init(cfg):
 
     if not exists("{virtualenv.command}"):
         sh("{python.pip} install virtualenv")
-    if not exists("{virtualenv.venv}"):
-        sh("{virtualenv.command} -p {python.interpreter} {virtualenv.venv}")
 
-    with memoizer("{virtualenv.venv}/spininfo.memo") as m:
-        for req in cfg.requirements:
+    virtualenv = Command("{virtualenv.command}", "-q")
+    pip = Command("{virtualenv.pip}", "-q")
+
+    if not exists("{virtualenv.venv}"):
+        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
+
+    with memoizer("{virtualenv.memo}") as m:
+        def pipit(*req):
             if not m.check(req):
-                sh("{virtualenv.pip} install {req}")
+                pip("install", *req)
                 m.add(req)
+
+        for req in cfg.requirements:
+            pipit(req)
+
+        pipit("-e", ".")
 
 
 def cleanup(cfg):
