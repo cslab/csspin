@@ -82,8 +82,11 @@ def task(*args, **kwargs):
         hook = kwargs.pop("when", None)
         if hook:
             cfg = get_tree()
-            hooks = cfg.hooks.setdefault(hook, [])
+            hook_tree = cfg.get("hooks", config())
+            hooks = hook_tree.setdefault(hook, [])
             hooks.append(task_object)
+        for alias in kwargs.pop("aliases", []):
+            group.register_alias(alias, task_object)
         return task_object
 
     if args:

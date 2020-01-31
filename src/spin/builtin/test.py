@@ -7,7 +7,7 @@
 from spin.plugin import task, invoke
 
 
-@task
+@task(aliases=["tests"])
 def test():
     """Run all tests defined in this project."""
     invoke("test")

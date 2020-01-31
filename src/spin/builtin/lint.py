@@ -7,7 +7,7 @@
 from spin.plugin import task, invoke
 
 
-@task
+@task(aliases=["check"])
 def lint():
     """Run all linters defined in this project."""
     invoke("lint")

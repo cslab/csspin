@@ -198,7 +198,22 @@ def base_options(fn):
     return fn
 
 
-@click.group(help=__doc__)
+class GroupWithAliases(click.Group):
+    def __init__(self, *args, **kwargs):
+        click.Group.__init__(self, *args, **kwargs)
+        self._aliases = {}
+
+    def register_alias(self, alias, cmd_object):
+        self._aliases[alias] = cmd_object
+
+    def get_command(self, ctx, cmd_name):
+        cmd = click.Group.get_command(self, ctx, cmd_name)
+        if cmd is None:
+            cmd = self._aliases.get(cmd_name, None)
+        return cmd
+
+
+@click.command(cls=GroupWithAliases, help=__doc__)
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options
