@@ -9,6 +9,7 @@ from spin.plugin import config, sh, task, argument
 defaults = config()
 
 requires = [".virtualenv", ".lint"]
+packages = ["flake8"]
 
 
 @task(when="lint")
@@ -21,7 +22,3 @@ def flake8(files: argument(nargs=-1)):
         )
 
     sh("{virtualenv.bindir}/flake8", *files)
-
-
-def configure(cfg):
-    cfg.requirements.append("flake8")

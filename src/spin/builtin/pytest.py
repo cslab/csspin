@@ -9,7 +9,7 @@ from spin.plugin import config, sh, task, argument
 defaults = config()
 
 requires = [".virtualenv", ".test"]
-packages = ["pytest", "pytest-cov"]
+packages = ["pytest", "pytest-cov", "pytest-tldr"]
 
 
 @task(when="test")
