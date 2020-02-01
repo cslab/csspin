@@ -4,3 +4,19 @@ plugins:
 requirements:
   - scons
   - black
+cruise:
+  cp27win:
+    banner: Manylinux Container with Python 2.7 on Windows
+    image: registry.contact.de/cp27m-win_amd64
+    tags: docker windows
+  cp38win:
+    image: registry.contact.de/cp38-win_amd64
+    tags: docker windows
+  cp27manylinux:
+    image: registry.contact.de/cp27m-manylinux2010_x86_64
+    tags: docker linux
+  cp38manylinux:
+    image: registry.contact.de/cp38-manylinux2014_x86_64
+    tags: docker linux
+  host:
+    tags: host
