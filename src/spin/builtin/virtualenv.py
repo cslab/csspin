@@ -54,8 +54,10 @@ def init(cfg):
     )
     cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
-    if not exists("{python.bin_dir}/virtualenv"):
-        sh("{python.interpreter} -m pip install -q virtualenv")
+    if not (cfg.python.use or exists("{python.bin_dir}/virtualenv")):
+        # If we use Python provisioned by spin, add virtualenv if
+        # necessary.
+        sh("{python.interpreter} -m pip install virtualenv")
 
     virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
     pip = Command("{virtualenv.pip}", "-q")
@@ -64,6 +66,7 @@ def init(cfg):
         virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
 
     with memoizer("{virtualenv.memo}") as m:
+
         def pipit(*req):
             if not m.check(req):
                 pip("install", *req)
