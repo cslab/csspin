@@ -5,3 +5,6 @@ __pycache__/
 *.memo
 .coverage
 /htmlcov/
+/cp38-linux_x86_64/
+/dist/
+/build/
