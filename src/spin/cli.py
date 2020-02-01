@@ -17,6 +17,7 @@ import importlib
 import click
 from .util import (
     config,
+    Config,
     echo,
     cd,
     exists,
@@ -28,7 +29,15 @@ from .util import (
     sh,
     set_tree,
     get_tree,
+    interpolate1,
 )
+from . import cruise
+
+
+CRUISE_EXECUTOR_MAPPINGS = {
+    "@docker": config(executor=cruise.DockerExecutor),
+    "@host": config(executor=cruise.HostExecutor),
+}
 
 
 # These are the basic defaults for the top-level configuration
@@ -38,6 +47,7 @@ DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
         spin_dir=".spin",
+        spin_global="{spin.userprofile}/global.yaml",
         plugin_dir="{spin.spin_dir}/plugins",
         plugin_packages=[],
         userprofile="{HOME}/.spin",
@@ -46,6 +56,7 @@ DEFAULTS = config(
     quiet=False,
     verbose=False,
     hooks=config(),
+    cruise=Config(CRUISE_EXECUTOR_MAPPINGS),
 )
 
 
@@ -62,12 +73,6 @@ def find_spinfile(spinfile_):
     if os.path.exists(spinfile):
         return os.path.abspath(spinfile)
     die(f"{spinfile_} not found")
-
-
-def read_spinfile(spinfile):
-    data = load_config(spinfile)
-    merge_config(data, DEFAULTS)
-    return data
 
 
 def load_plugin(cfg, import_spec, package=None):
@@ -164,7 +169,7 @@ def base_options(fn):
         ),
         click.option(
             "--plugin-directory",
-            "-p",
+            "-P",
             "plugin_dir",
             type=click.Path(file_okay=False, exists=False),
             help="Alternative directory where spin installs and "
@@ -191,6 +196,18 @@ def base_options(fn):
             is_flag=True,
             default=False,
             help="Dump the configuration tree before processing.",
+        ),
+        click.option(
+            "--cruise",
+            "-c",
+            multiple=True,
+            help="Run spin in the given environment.",
+        ),
+        click.option(
+            "-p",
+            "properties",
+            multiple=True,
+            help="Set configuration property",
         ),
     ]
     for d in decorators:
@@ -250,7 +267,9 @@ def cleanup(ctx):
 )
 @base_options
 @click.pass_context
-def cli(ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug):
+def cli(
+    ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug, cruise, properties
+):
     # We want to honor the 'quiet' flag even if the configuration tree
     # has not yet been created.
     get_tree().quiet = quiet
@@ -260,7 +279,15 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug):
         cd(cwd)
     else:
         spinfile = find_spinfile(spinfile)
-    cfg = set_tree(read_spinfile(spinfile))
+
+    cfg = set_tree(load_config(spinfile))
+    merge_config(cfg, DEFAULTS)
+
+    # Merge user-specific globals if they exist
+    if exists("{spin.spin_global}"):
+        merge_config(cfg, load_config(interpolate1("{spin.spin_global}")))
+
+    # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
     cfg.spin.spinfile = spinfile
     cfg.spin.project_root = "."
@@ -317,14 +344,65 @@ def cli(ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug):
     )
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
+    # Add command line settings.
+    for prop in properties:
+        k, v = prop.split("=")
+        path = list(k.split("."))
+        scope = cfg
+        while len(path) > 1:
+            scope = getattr(scope, path.pop(0))
+        setattr(scope, path[0], v)
+
+    build_cruises(cfg)
+
     # Debug aid: dump config tree for --debug
     if debug:
         echo("Configuration tree (debug):")
         pprint(cfg)
 
-    # Invoke the main command group, which by now has all the
-    # sub-commands from the plugins.
-    commands.main(args=ctx.args)
+    if not cruise:
+        # Invoke the main command group, which by now has all the
+        # sub-commands from the plugins.
+        commands.main(args=ctx.args)
+    else:
+        this_command = ["spin"]
+        i = 1
+        spinargs = True
+        while i < len(sys.argv):
+            if spinargs and sys.argv[i] in ("-c", "--cruise"):
+                i += 1
+            else:
+                this_command.append(sys.argv[i])
+            if not sys.argv[i].startswith("-"):
+                spinargs = False
+            i += 1
+        for name, definition in match_cruises(cfg, cruise):
+            executor = definition.executor(name, definition)
+            executor.run(this_command)
+
+
+def match_cruises(cfg, selectors):
+    for name, definition in cfg.cruise.items():
+        if name.startswith("@"):
+            continue
+        elif "@all" in selectors:
+            yield name, definition
+        if name in selectors:
+            yield name, definition
+        elif any(
+            ("@" + tag in selectors) for tag in getattr(definition, "tags", [])
+        ):
+            yield name, definition
+
+
+def build_cruises(cfg):
+    for key in cfg.cruise.keys():
+        if not key.startswith("@"):
+            cruise = cfg.cruise[key]
+            cruise.tags = cruise.tags.split()
+            for tag in ["@" + tag for tag in cruise.tags]:
+                if tag in cfg.cruise:
+                    merge_config(cruise, cfg.cruise[tag])
 
 
 def main():
