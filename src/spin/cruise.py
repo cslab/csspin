@@ -17,6 +17,7 @@ class DockerExecutor(BaseExecutor):
     def __init__(self, name, definition):
         super().__init__(name, definition)
         cmd = ["docker"]
+
         context = getattr(definition, "context", "")
         if context:
             cmd += ["-c", context]
@@ -24,9 +25,15 @@ class DockerExecutor(BaseExecutor):
         env = getattr(definition, "env", {})
         for key, value in env.items():
             cmd += ["-e", f"{key}={value}"]
+
         volprefix = getattr(definition, "volprefix", "")
         home = os.path.expanduser("~")
         cmd += ["-v", f"{volprefix}{home}:{volprefix}{home}"]
+        if "windows" in getattr(definition, "tags", []):
+            cmd += ["-e", f"USERPROFILE={volprefix}{home}"]
+        else:
+            cmd += ["-e", f"HOME={volprefix}{home}"]
+
         workdir = os.getcwd()
         cmd += ["-w", f"{volprefix}{workdir}"]
         cmd += [definition.image]
