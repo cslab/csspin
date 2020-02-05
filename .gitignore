@@ -8,3 +8,5 @@ __pycache__/
 /cp38-linux_x86_64/
 /dist/
 /build/
+/doc/_build/
+.DS_Store
