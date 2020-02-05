@@ -44,7 +44,7 @@ def cd(path):
     configuration tree.
 
     `cd` can be used either as a function or as a context
-    manager. When uses as a context manager, the working directory is
+    manager. When used as a context manager, the working directory is
     changed back to what it was before the ``with`` block.
 
     You can do this:
@@ -162,9 +162,12 @@ def setenv(**kwargs):
     """
     for key, value in kwargs.items():
         if value is None:
+            echo(click.style(f"unset {key}", bold=True))
             os.environ.pop(key, None)
         else:
-            os.environ[key] = interpolate1(value)
+            value = interpolate1(value)
+            echo(click.style(f"set {key}={value}", bold=True))
+            os.environ[key] = value
 
 
 def _read_file(fn, mode):
@@ -260,7 +263,7 @@ def namespaces(*nslist):
 
 def interpolate1(literal, *extra_dicts):
     where_to_look = collections.ChainMap(
-        CONFIG, os.environ, *extra_dicts, *NSSTACK,
+        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK,
     )
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
