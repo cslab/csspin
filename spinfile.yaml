@@ -1,6 +1,7 @@
 plugins:
   - spin.builtin.flake8
   - spin.builtin.pytest
+  - spin.builtin.devpi
 requirements:
   - scons
   - black
