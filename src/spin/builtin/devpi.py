@@ -1,9 +1,25 @@
-from spin.plugin import config, task, sh, setenv, echo, exists, readtext, get_tree, argument
-from spin.util import interpolate1
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2020 CONTACT Software GmbH
+# All rights reserved.
+# http://www.contact.de/
+
+from spin.api import (
+    config,
+    task,
+    sh,
+    setenv,
+    exists,
+    readtext,
+    get_tree,
+    argument,
+    Command,
+    interpolate1,
+)
 import yaml
 import os
 
-defaults = config(formats=["bdist_wheel"], devpi="{virtualenv.bindir}/devpi",)
+defaults = config(formats=["bdist_wheel"])
 requires = [".virtualenv"]
 packages = ["devpi-client", "keyring"]
 
@@ -18,15 +34,23 @@ def prepare_environment():
 def stage():
     prepare_environment()
     data = {}
+    devpi = Command("devpi")
     if exists("{spin.spin_dir}/devpi/current.json"):
         data = yaml.safe_load(readtext("{spin.spin_dir}/devpi/current.json"))
     if data.get("index", "") != interpolate1("{devpi.stage}"):
-        sh("{devpi.devpi} use -t yes {devpi.stage}")
-    sh("{devpi.devpi} login {devpi.user}")
+        devpi("use", "-t", "yes", "{devpi.stage}")
+    devpi("login", "{devpi.user}")
     python = os.path.abspath(get_tree().virtualenv.python)
-    sh("{devpi.devpi} upload -p %s --no-vcs --formats={','.join(devpi.formats)}" % python)
+    devpi(
+        "upload",
+        "-p",
+        python,
+        "--no-vcs",
+        "--formats={','.join(devpi.formats)}",
+    )
 
 
 @task
 def devpi(passthrough: argument(nargs=-1)):
-    sh("{devpi.devpi}", *passthrough)
+    prepare_environment()
+    sh("devpi", *passthrough)

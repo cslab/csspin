@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.plugin import config, sh, task, argument
+from spin.api import config, sh, task, argument
 
 defaults = config()
 

@@ -15,7 +15,7 @@ from pprint import pprint
 import importlib
 
 import click
-from .util import (
+from .api import (
     config,
     Config,
     echo,

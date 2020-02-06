@@ -4,12 +4,12 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.plugin import config, sh, task, argument
+from spin.api import config, sh, task, argument
 
 defaults = config()
 
 requires = [".virtualenv", ".lint"]
-packages = ["flake8"]
+packages = ["flake8", "flake8-fixme"]
 
 
 @task(when="lint")
@@ -21,4 +21,4 @@ def flake8(files: argument(nargs=-1)):
             "{spin.project_root}/plugins",
         )
 
-    sh("{virtualenv.bindir}/flake8", *files)
+    sh("flake8", *files)

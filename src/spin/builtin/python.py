@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.plugin import (
+from spin.api import (
     config,
     task,
     sh,

@@ -4,7 +4,8 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.plugin import (
+import os
+from spin.api import (
     config,
     sh,
     exists,
@@ -13,6 +14,8 @@ from spin.plugin import (
     group,
     echo,
     Command,
+    setenv,
+    interpolate1,
 )
 
 requires = [".python"]
@@ -81,6 +84,15 @@ def init(cfg):
                 pipit(req)
 
         pipit("-e", ".")
+
+    # It is more useful to abspath virtualenv bindir before pushing it
+    # onto the PATH, as anything run from a different directory will
+    # not pick up the venv bin.
+    venvabs = os.path.abspath(interpolate1("{virtualenv.bindir}"))
+    setenv(
+        f"set PATH={venvabs}:$PATH",
+        PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
+    )
 
 
 def cleanup(cfg):
