@@ -2,9 +2,6 @@ plugins:
   - spin.builtin.flake8
   - spin.builtin.pytest
   - spin.builtin.devpi
-requirements:
-  - scons
-  - black
 cruise:
   cp27win:
     banner: Manylinux Container with Python 2.7 on Windows
