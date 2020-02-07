@@ -1,15 +1,24 @@
-.. spin documentation master file, created by
-   sphinx-quickstart on Thu Jan 30 20:00:12 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to spin's documentation!
 ================================
 
+Spin is a task runner with a twist: it focuses on standardizing
+workflows for heterogeneous technology stacks and re-usable task
+definitions in the form of Python packages for engineering teams with
+a large number of projects.
+
+Spin doesn't try to replace established tools for building, testing,
+measuring and releasing software. Spin encapsulates knowledge of best
+practices in using those tools and orchestrates tools into a
+meaningful workflow.
+
+Learn more by reading the documentation.
+
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+   overview
+   install
    spin
    spin.builtin
 
