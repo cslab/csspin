@@ -1,5 +1,5 @@
 from spin.cli import reverse_toposort
-from spin.util import SpinError
+from spin.api import SpinError
 from pytest import raises
 
 def test_valid():
