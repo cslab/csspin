@@ -7,16 +7,16 @@
 import os
 
 from spin.api import (
-    config,
-    task,
-    sh,
-    setenv,
-    exists,
-    readyaml,
-    get_tree,
-    argument,
     Command,
+    argument,
+    config,
+    exists,
+    get_tree,
     interpolate1,
+    readyaml,
+    setenv,
+    sh,
+    task,
 )
 
 

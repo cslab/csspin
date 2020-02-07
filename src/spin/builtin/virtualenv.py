@@ -6,17 +6,18 @@
 
 import os
 import sys
+
 from spin.api import (
-    config,
-    sh,
-    exists,
-    rmtree,
-    memoizer,
-    group,
-    echo,
     Command,
-    setenv,
+    config,
+    echo,
+    exists,
+    group,
     interpolate1,
+    memoizer,
+    rmtree,
+    setenv,
+    sh,
 )
 
 requires = [".python"]

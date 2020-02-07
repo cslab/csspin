@@ -6,7 +6,7 @@
 
 import os
 import sys
-from wheel import pep425tags
+
 from spin.api import (
     argument,
     config,
@@ -21,6 +21,8 @@ from spin.api import (
     sh,
     task,
 )
+
+from wheel import pep425tags
 
 
 # Thank you PyPA, you just broke an API

@@ -6,17 +6,18 @@
 
 """This is the fabulous scripting API, concise and powerful."""
 
-import os
-import sys
-import click
-import shutil
-import shlex
-import subprocess
 import collections
-import pickle
 import inspect
+import os
+import pickle
+import shlex
+import shutil
+import subprocess
+import sys
 import urllib.request
 from contextlib import contextmanager
+
+import click
 
 import yaml
 

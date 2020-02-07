@@ -9,29 +9,30 @@ re-usable task definitions. Task definitions are Python modules, that
 are automatically provisioned.
 """
 
+import importlib
 import os
 import sys
 from pprint import pprint
-import importlib
 
 import click
+
+from . import cruise
 from .api import (
-    config,
     Config,
-    echo,
     cd,
-    exists,
-    mkdir,
-    readyaml,
-    merge_config,
+    config,
     die,
-    memoizer,
-    sh,
-    set_tree,
+    echo,
+    exists,
     get_tree,
     interpolate1,
+    memoizer,
+    merge_config,
+    mkdir,
+    readyaml,
+    set_tree,
+    sh,
 )
-from . import cruise
 
 
 CRUISE_EXECUTOR_MAPPINGS = {
