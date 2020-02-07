@@ -4,19 +4,23 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import os
+import sys
+from wheel import pep425tags
 from spin.api import (
+    argument,
     config,
-    task,
-    sh,
+    download,
     echo,
     exists,
-    setenv,
-    rmtree,
-    namespaces,
-    argument,
+    interpolate1,
     mkdir,
+    namespaces,
+    rmtree,
+    setenv,
+    sh,
+    task,
 )
-from wheel import pep425tags
 
 
 # Thank you PyPA, you just broke an API
@@ -25,9 +29,6 @@ try:
     pep425_platform = pep425tags.get_platform()
 except TypeError:
     pep425_platform = pep425tags.get_platform(None)
-
-
-# https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
 
 defaults = config(
@@ -39,11 +40,29 @@ defaults = config(
             "{python.pyenv.path}/plugins/python-build/bin/python-build"
         ),
     ),
+    nuget=config(
+        url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
+        exe="{spin.userprofile}/nuget.exe",
+    ),
     version="3.8.1",
     platform=pep425_platform,
-    inst_dir="{spin.userprofile}/{python.platform}/python/{python.version}",
-    bin_dir="{python.inst_dir}/bin",
-    interpreter="{python.bin_dir}/python",
+    plat_dir="{spin.userprofile}/{python.platform}",
+    inst_dir=(
+        "{python.plat_dir}/python/{python.version}"
+        if sys.platform != "win32"
+        else "{python.plat_dir}/python.{python.version}/tools"
+    ),
+    bin_dir=(
+        "{python.inst_dir}/bin"
+        if sys.platform != "win32"
+        else "{python.inst_dir}"
+    ),
+    script_dir=(
+        "{python.inst_dir}/bin"
+        if sys.platform != "win32"
+        else "{python.inst_dir}/Scripts"
+    ),
+    interpreter="{python.bin_dir}/python{platform.exe}",
     use=None,
 )
 
@@ -58,20 +77,53 @@ def python(passthrough: argument(nargs=-1)):
     sh("{python.interpreter}", *passthrough)
 
 
+def pyenv_install(cfg):
+    with namespaces(cfg.python):
+        echo("Installing Python {version} to {inst_dir}")
+        # For Linux/macOS using the 'python-build' plugin from
+        # pyenv is by far the most robust way to install a
+        # version of Python.
+        if not exists("{pyenv.path}"):
+            sh("git clone {pyenv.url} {pyenv.path}")
+        # we should set
+        setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
+        sh("{pyenv.python_build} {version} {inst_dir}")
+        sh("{interpreter} -m pip install -q --upgrade pip wheel")
+
+
+def nuget_install(cfg):
+    if not exists("{python.nuget.exe}"):
+        download("{python.nuget.url}", "{python.nuget.exe}")
+    setenv(NUGET_HTTP_CACHE_PATH="{spin.userprofile}/nugetcache")
+    sh(
+        "{python.nuget.exe}",
+        "install",
+        "-verbosity",
+        "quiet",
+        "-o",
+        "{spin.userprofile}/{python.platform}",
+        "python",
+        "-version",
+        "{python.version}",
+    )
+    pathes = interpolate1("{python.inst_dir};" "{python.inst_dir}/Scripts")
+    setenv(
+        f"set PATH={pathes}{os.pathsep}$PATH",
+        PATH=os.pathsep.join((f"{pathes}", os.environ["PATH"])),
+    )
+    sh("{python.interpreter} -m ensurepip")
+    sh("{python.interpreter} -m pip install -q --upgrade pip wheel")
+
+
 def init(cfg):
     if not cfg.python.use:
-        with namespaces(cfg.python):
-            if not exists("{interpreter}"):
-                echo("Installing Python {version} to {inst_dir}")
-                # For Linux/macOS using the 'python-build' plugin from
-                # pyenv is by far the most robust way to install a
-                # version of Python.
-                if not exists("{pyenv.path}"):
-                    sh("git clone {pyenv.url} {pyenv.path}")
-                # we should set
-                setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
-                sh("{pyenv.python_build} {version} {inst_dir}")
-                sh("{interpreter} -m pip install -q --upgrade pip wheel")
+        mkdir("{spin.userprofile}")
+        if not exists("{python.interpreter}"):
+            if sys.platform == "win32":
+                nuget_install(cfg)
+            else:
+                # Everything (Linux and macOS) else uses pyenv
+                pyenv_install(cfg)
 
 
 def cleanup(cfg):

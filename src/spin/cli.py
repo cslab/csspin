@@ -50,13 +50,16 @@ DEFAULTS = config(
         spin_global="{spin.userprofile}/global.yaml",
         plugin_dir="{spin.spin_dir}/plugins",
         plugin_packages=[],
-        userprofile="{HOME}/.spin",
+        userprofile=os.path.expanduser("~/.spin"),
     ),
     requirements=[],
     quiet=False,
     verbose=False,
     hooks=config(),
     cruise=Config(CRUISE_EXECUTOR_MAPPINGS),
+    platform=config(
+        exe=".exe" if sys.platform == "win32" else "",
+    ),
 )
 
 
@@ -237,9 +240,9 @@ class GroupWithAliases(click.Group):
 @click.pass_context
 def commands(ctx, **kwargs):
     ctx.obj = get_tree()
-    # FIXME: for commands like "cleanup" or "venv ..." it is idiotic
-    # to run all initializations first. This should be supressable,
-    # possibly by augmenting 'spin.plugin.task' or something ...
+    # For commands like "cleanup" or "venv ..." it is idiotic to run
+    # all initializations first. This should be supressable, possibly
+    # by augmenting 'spin.plugin.task' or something ...
     toporun(ctx.obj, "configure", "init")
 
 

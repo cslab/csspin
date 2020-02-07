@@ -5,6 +5,7 @@
 # http://www.contact.de/
 
 import os
+import sys
 from spin.api import (
     config,
     sh,
@@ -23,9 +24,18 @@ requires = [".python"]
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     memo="{virtualenv.venv}/spininfo.memo",
-    bindir="{virtualenv.venv}/bin",
+    bindir=(
+        "{virtualenv.venv}/bin"
+        if sys.platform != "win32"
+        else "{virtualenv.venv}"
+    ),
+    scriptdir=(
+        "{virtualenv.venv}/bin"
+        if sys.platform != "win32"
+        else "{virtualenv.venv}/Scripts"
+    ),
     python="{virtualenv.bindir}/python",
-    pip="{virtualenv.bindir}/pip",
+    pip="{virtualenv.scriptdir}/pip",
 )
 
 
@@ -57,7 +67,10 @@ def init(cfg):
     )
     cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
-    if not (cfg.python.use or exists("{python.bin_dir}/virtualenv")):
+    if not (
+        cfg.python.use
+        or exists("{python.script_dir}/virtualenv{platform.exe}")
+    ):
         # If we use Python provisioned by spin, add virtualenv if
         # necessary.
         sh("{python.interpreter} -m pip install virtualenv")
@@ -88,9 +101,17 @@ def init(cfg):
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
     # not pick up the venv bin.
-    venvabs = os.path.abspath(interpolate1("{virtualenv.bindir}"))
+    if sys.platform == "win32":
+        venvabs = os.pathsep.join(
+            (
+                os.path.abspath(interpolate1("{virtualenv.bindir}")),
+                os.path.abspath(interpolate1("{virtualenv.scriptdir}")),
+            )
+        )
+    else:
+        venvabs = os.path.abspath(interpolate1("{virtualenv.bindir}"))
     setenv(
-        f"set PATH={venvabs}:$PATH",
+        f"set PATH={venvabs}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
     )
 

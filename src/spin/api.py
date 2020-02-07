@@ -7,12 +7,15 @@
 """This is the fabulous scripting API, concise and powerful."""
 
 import os
+import sys
 import click
 import shutil
+import shlex
 import subprocess
 import collections
 import pickle
 import inspect
+import urllib.request
 from contextlib import contextmanager
 
 import yaml
@@ -117,15 +120,10 @@ class Command(object):
     >>> install = Command("pip", "install")
     >>> install("spin")
 
-    FIXME: document ``quiet`` or remove it!
-
     """
 
-    def __init__(self, *cmd, quiet=None):
+    def __init__(self, *cmd):
         self._cmd = list(cmd)
-        cfg = get_tree()
-        if quiet and cfg.quiet:
-            self.append(quiet)
 
     def append(self, item):
         self._cmd.append(item)
@@ -146,6 +144,8 @@ def sh(*cmd, **kwargs):
     if not kwargs.pop("silent", False):
         echo(click.style(" ".join(cmd), bold=True))
     shell = kwargs.pop("shell", len(cmd) == 1)
+    if sys.platform == "win32" and len(cmd) == 1:
+        cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
     cpi = subprocess.run(cmd, shell=shell, **kwargs)
     if cpi.returncode:
         die(f"Command failed with return code {cpi.returncode}")
@@ -183,7 +183,7 @@ def _read_file(fn, mode):
 
 def _write_file(fn, mode, data):
     fn = interpolate1(fn)
-    with open(fn, "wb") as f:
+    with open(fn, mode) as f:
         f.write(data)
 
 
@@ -274,7 +274,7 @@ def interpolate1(literal, *extra_dicts):
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
-        literal = eval("f'''%s'''" % literal, {}, where_to_look)
+        literal = eval("rf'''%s'''" % literal, {}, where_to_look)
         if previous == literal:
             break
     return literal
@@ -334,6 +334,14 @@ def readyaml(fname):
     fname = interpolate1(fname)
     with open(fname) as f:
         return yaml.load(f, _ConfigLoader)
+
+
+def download(url, location):
+    url, location = interpolate((url, location))
+    echo(f"Download {url} -> {location} ...")
+    response = urllib.request.urlopen(url)
+    data = response.read()
+    writebytes(location, data)
 
 
 # This is the global configuration tree.
