@@ -14,4 +14,11 @@ packages = ["pytest", "pytest-cov", "pytest-tldr"]
 
 @task(when="test")
 def pytest(files: argument(nargs=-1)):
-    sh("{virtualenv.bindir}/pytest", "--cov=spin", "--cov-report=html", *files)
+    if not files:
+        files = ["./tests"]
+    sh(
+        "{virtualenv.scriptdir}/pytest",
+        "--cov=spin",
+        "--cov-report=html",
+        *files
+    )
