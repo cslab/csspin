@@ -9,12 +9,13 @@ from spin.api import argument, config, sh, task
 defaults = config()
 
 requires = [".virtualenv", ".lint"]
-packages = ["flake8", "flake8-fixme"]
+packages = ["flake8", "flake8-fixme", "flake8-import-order"]
 
 
 @task(when="lint")
-def flake8(files: argument(nargs=-1)):
+def flake8(passthrough: argument(nargs=-1)):
     """Run flake8 to lint Python code."""
+    files = passthrough
     if not files:
         files = (
             "{spin.project_root}/src",
