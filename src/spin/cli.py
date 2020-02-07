@@ -59,7 +59,7 @@ DEFAULTS = config(
     hooks=config(),
     cruise=Config(CRUISE_EXECUTOR_MAPPINGS),
     platform=config(
-        exe=".exe" if sys.platform == "win32" else "",
+        exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
     ),
 )
 
@@ -234,7 +234,9 @@ class GroupWithAliases(click.Group):
         return cmd
 
 
-@click.command(cls=GroupWithAliases, help=__doc__)
+@click.command(
+    cls=GroupWithAliases, help=__doc__,
+)
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options
@@ -245,6 +247,18 @@ def commands(ctx, **kwargs):
     # all initializations first. This should be supressable, possibly
     # by augmenting 'spin.plugin.task' or something ...
     toporun(ctx.obj, "configure", "init")
+
+
+@commands.command(
+    "exec",
+    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True,),
+)
+@click.pass_context
+def exec_shell(ctx):
+    cmd = ctx.args
+    if not cmd:
+        cmd = ("{platform.shell}",)
+    sh(*cmd)
 
 
 @commands.command()
@@ -267,6 +281,7 @@ def cleanup(ctx):
         # this boilerplate entry point.
         help_option_names=["--hidden-help-option"],
         auto_envvar_prefix="SPIN",
+        allow_interspersed_args=False,
     )
 )
 @base_options
