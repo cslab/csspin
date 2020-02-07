@@ -4,20 +4,21 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import os
+
 from spin.api import (
     config,
     task,
     sh,
     setenv,
     exists,
-    readtext,
+    readyaml,
     get_tree,
     argument,
     Command,
     interpolate1,
 )
-import yaml
-import os
+
 
 defaults = config(formats=["bdist_wheel"])
 requires = [".virtualenv"]
@@ -36,7 +37,7 @@ def stage():
     data = {}
     devpi = Command("devpi")
     if exists("{spin.spin_dir}/devpi/current.json"):
-        data = yaml.safe_load(readtext("{spin.spin_dir}/devpi/current.json"))
+        data = readyaml("{spin.spin_dir}/devpi/current.json")
     if data.get("index", "") != interpolate1("{devpi.stage}"):
         devpi("use", "-t", "yes", "{devpi.stage}")
     devpi("login", "{devpi.user}")

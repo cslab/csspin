@@ -330,7 +330,8 @@ def config(**kwargs):
     return Config(kwargs)
 
 
-def load_config(fname):
+def readyaml(fname):
+    fname = interpolate1(fname)
     with open(fname) as f:
         return yaml.load(f, _ConfigLoader)
 

@@ -22,7 +22,7 @@ from .api import (
     cd,
     exists,
     mkdir,
-    load_config,
+    readyaml,
     merge_config,
     die,
     memoizer,
@@ -60,18 +60,18 @@ DEFAULTS = config(
 )
 
 
-def find_spinfile(spinfile_):
-    """Find a file 'spinfile_' by walking up the directory tree."""
+def find_spinfile(spinfile):
+    """Find a file 'spinfile' by walking up the directory tree."""
     cwd = os.getcwd()
-    spinfile = spinfile_
-    while not os.path.exists(spinfile):
+    spinfile_ = spinfile
+    while not os.path.exists(spinfile_):
         cwd_ = os.path.dirname(cwd)
         if cwd_ == cwd:
             break
         cwd = cwd_
-        spinfile = os.path.join(cwd, spinfile_)
-    if os.path.exists(spinfile):
-        return os.path.abspath(spinfile)
+        spinfile_ = os.path.join(cwd, spinfile)
+    if os.path.exists(spinfile_):
+        return os.path.abspath(spinfile_)
     die(f"{spinfile_} not found")
 
 
@@ -280,12 +280,12 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
-    cfg = set_tree(load_config(spinfile))
+    cfg = set_tree(readyaml(spinfile))
     merge_config(cfg, DEFAULTS)
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        merge_config(cfg, load_config(interpolate1("{spin.spin_global}")))
+        merge_config(cfg, readyaml(interpolate1("{spin.spin_global}")))
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
