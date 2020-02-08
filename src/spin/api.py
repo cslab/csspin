@@ -30,23 +30,33 @@ def echo(*msg, **kwargs):
         click.echo(" ".join(msg), **kwargs)
 
 
-class DirectoryChanger(object):
+class DirectoryChanger:
+    """A simple class to change the current directory.
+
+    Change directory on construction, and restore the cwd when used as
+    a context manager.
+    """
+
     def __init__(self, path):
+        """Change directory."""
         path = interpolate1(path)
         self._cwd = os.getcwd()
         echo("cd", path)
         os.chdir(path)
 
     def __enter__(self):
-        pass
+        """Nop."""
 
     def __exit__(self, *args):
+        """Change back to where we came from."""
         os.chdir(self._cwd)
 
 
 def cd(path):
-    """Change directory. The `path` argument is interpolated against the
-    configuration tree.
+    """Change directory.
+
+    The `path` argument is interpolated against the configuration
+    tree.
 
     `cd` can be used either as a function or as a context
     manager. When used as a context manager, the working directory is
@@ -108,7 +118,7 @@ def die(*msg, **kwargs):
     raise SpinError(" ".join(msg))
 
 
-class Command(object):
+class Command:
     """Create a function that is a shrink-wrapped shell command.
 
     The callable returned behaves like :py:func:`sh`, accepting
@@ -263,7 +273,7 @@ def namespaces(*nslist):
     for ns in nslist:
         NSSTACK.append(ns)
     yield
-    for ns in nslist:
+    for _ in nslist:
         NSSTACK.pop()
 
 
