@@ -4,9 +4,10 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""spin is a simple task runner and sandbox provisioner that supports
-re-usable task definitions. Task definitions are Python modules, that
-are automatically provisioned.
+"""spin is a task runner with a twist that supports reusable task
+definitions. Task definitions are Python modules, that are
+automatically provisioned.
+
 """
 
 import importlib
@@ -110,12 +111,12 @@ def reverse_toposort(nodes, graph):
     mapping nodes to dependencies.
     """
     graph = dict(graph)  # don't destroy the input
-    counts = dict((n, 0) for n in nodes)
+    counts = {n: 0 for n in nodes}
     for targets in graph.values():
         for n in targets:
             counts[n] += 1
     result = []
-    independent = set(n for n in nodes if counts[n] == 0)
+    independent = {n for n in nodes if counts[n] == 0}
     while independent:
         n = independent.pop()
         result.insert(0, n)
@@ -208,6 +209,13 @@ def base_options(fn):
             help="Run spin in the given environment.",
         ),
         click.option(
+            "--interactive",
+            "-i",
+            is_flag=True,
+            default=False,
+            help="Run docker commands using -it.",
+        ),
+        click.option(
             "-p",
             "properties",
             multiple=True,
@@ -251,7 +259,10 @@ def commands(ctx, **kwargs):
 
 @commands.command(
     "exec",
-    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True,),
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_extra_args": True,
+    },
 )
 @click.pass_context
 def exec_shell(ctx):
@@ -273,21 +284,30 @@ def cleanup(ctx):
 
 
 @click.command(
-    context_settings=dict(
-        allow_extra_args=True,
-        ignore_unknown_options=True,
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
         # Override the default help option name -- we want click to
         # use the help of the main command group 'commands', not from
         # this boilerplate entry point.
-        help_option_names=["--hidden-help-option"],
-        auto_envvar_prefix="SPIN",
-        allow_interspersed_args=False,
-    )
+        "help_option_names": ["--hidden-help-option"],
+        "auto_envvar_prefix": "SPIN",
+        "allow_interspersed_args": False,
+    }
 )
 @base_options
 @click.pass_context
 def cli(
-    ctx, cwd, spinfile, plugin_dir, quiet, verbose, debug, cruise, properties
+    ctx,
+    cwd,
+    spinfile,
+    plugin_dir,
+    quiet,
+    verbose,
+    debug,
+    cruise,
+    interactive,
+    properties,
 ):
     # We want to honor the 'quiet' flag even if the configuration tree
     # has not yet been created.
@@ -337,6 +357,7 @@ def cli(
                     "-m",
                     "pip",
                     "install",
+                    "-q",
                     "-t",
                     "{spin.plugin_dir}",
                     f"{pkg}",
@@ -358,9 +379,7 @@ def cli(
     # is provided by the 'virtualenv' plugin, which in turn requires
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
-    graph = dict(
-        (n, getattr(mod, "requires", [])) for n, mod in cfg.loaded.items()
-    )
+    graph = {n: getattr(mod, "requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Add command line settings.
@@ -396,7 +415,7 @@ def cli(
                 spinargs = False
             i += 1
         for name, definition in match_cruises(cfg, cruise):
-            executor = definition.executor(name, definition)
+            executor = definition.executor(name, definition, interactive)
             executor.run(this_command)
 
 
