@@ -68,9 +68,8 @@ def init(cfg):
     )
     cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
-    if not (
-        cfg.python.use
-        or exists("{python.script_dir}/virtualenv{platform.exe}")
+    if not cfg.python.use and not exists(
+        "{python.script_dir}/virtualenv{platform.exe}"
     ):
         # If we use Python provisioned by spin, add virtualenv if
         # necessary.
