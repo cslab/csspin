@@ -130,8 +130,8 @@ def init(cfg):
 
 def cleanup(cfg):
     if not cfg.python.use:
-        if exists("{python.inst_dir}"):
-            rmtree("{python.inst_dir}")
+        if exists("{python.plat_dir}"):
+            rmtree("{python.plat_dir}")
 
 
 def configure(cfg):
