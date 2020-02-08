@@ -1,21 +1,34 @@
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2020 CONTACT Software GmbH
+# All rights reserved.
+# http://www.contact.de/
+
+"""Run spin commands elsewhere, e.g. in a Docker container."""
 import os
 
 from .api import echo, sh
 
 
-class BaseExecutor(object):
+class BaseExecutor:
+    """Base class for executors."""
+
     def __init__(self, name, definition):
+        """Set up executor from definition."""
         self.banner = getattr(definition, "banner", "")
 
     def run(self, cmd):
+        """Run 'cmd' using the executor."""
         if self.banner:
             echo(self.banner)
 
 
-# Docker is relatively straightforward: run the command in the
-# container.
+# Docker is straightforward: run the command in the container.
 class DockerExecutor(BaseExecutor):
-    def __init__(self, name, definition):
+    """Execute commands in Docker containers."""
+
+    def __init__(self, name, definition, interactive):
+        """Set up docker command line."""
         super().__init__(name, definition)
         cmd = ["docker"]
 
@@ -23,6 +36,8 @@ class DockerExecutor(BaseExecutor):
         if context:
             cmd += ["-c", context]
         cmd += ["run", "--rm"]
+        if interactive:
+            cmd += ["-it"]
         env = getattr(definition, "env", {})
         for key, value in env.items():
             cmd += ["-e", f"{key}={value}"]
@@ -41,6 +56,7 @@ class DockerExecutor(BaseExecutor):
         self._docker = cmd
 
     def run(self, cmd):
+        """Run 'cmd' in Docker container."""
         super().run(cmd)
         cmd = self._docker + cmd
         sh(*cmd)
@@ -50,5 +66,6 @@ class HostExecutor(BaseExecutor):
     """Run command on this host."""
 
     def run(self, cmd):
+        """Run command locally."""
         super().run(cmd)
         self.ctx.run(cmd, pty=True)
