@@ -9,7 +9,16 @@ from spin.api import argument, config, sh, task
 defaults = config()
 
 requires = [".virtualenv", ".lint"]
-packages = ["flake8", "flake8-fixme", "flake8-import-order"]
+packages = [
+    "flake8",
+    "flake8-fixme",
+    "flake8-import-order",
+    "flake8-comprehensions",
+    "flake8-copyright",
+    "flake8-bugbear",
+    #"flake8-spellcheck",
+    "flake8-cognitive-complexity",
+]
 
 
 @task(when="lint")
@@ -19,7 +28,7 @@ def flake8(passthrough: argument(nargs=-1)):
     if not files:
         files = (
             "{spin.project_root}/src",
-            "{spin.project_root}/plugins",
+            "{spin.project_root}/tests",
         )
 
     sh("flake8", *files)
