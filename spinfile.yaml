@@ -4,8 +4,9 @@ plugins:
   - devpi
   - git
   - radon
-flake8:
-  append opts: [--statistics]
+# Example for a directive: add --statistics to the flake8 command
+#flake8:
+#  append opts: [--statistics]
 cruise:
   "@docker":
     # The docker containers are set up to have 'python' in PATH as the
