@@ -316,15 +316,15 @@ _ConfigLoader.add_constructor(
 
 _sentinel = object()
 
+
 class Config(dict):
     def __getattr__(self, name, default=_sentinel):
         if name not in self and default is _sentinel:
-            raise AttributeError(f"config key '{name}' not found")
+            die(f"config key '{name}' not found")
         return self.get(name, default)
 
     def __setattr__(self, name, value):
         self[name] = value
-
 
 
 def rpad(seq, length, padding=None):
@@ -356,16 +356,31 @@ def directive_interpolate(target, key, value):
 
 
 def merge_config(target, source):
+    """Merge the 'source' configuration tree into 'target'.
+
+    Merging is done by adding values from 'source' to 'target' if they
+    do not yet exist. Subtrees are merged recursively. In a second
+    pass, special keys of the form "directive key" (i.e. separated by
+    space) in 'target' are processed. Supported directives include
+    "append" for adding values or lists to a list, and "interpolate"
+    for replacing configuration variables.
+    """
     for key, value in source.items():
         if key not in target:
-            target[key] = value
+            try:
+                target[key] = value
+            except Exception:
+                die(f"cannot merge {value} into '{target}[{key}]'")
         elif isinstance(value, dict):
             merge_config(target[key], value)
-    for key, value in target.items():
-        directive, key = rpad(key.split(maxsplit=1), 2)
+    # Pass 2: process directives. Note that we need a list for the
+    # iteration, as we remove directive keys on the fly.
+    for clause, value in list(target.items()):
+        directive, key = rpad(clause.split(maxsplit=1), 2)
         fn = globals().get(f"directive_{directive}", None)
         if fn:
             fn(target, key, value)
+            del target[clause]
 
 
 def config(**kwargs):
