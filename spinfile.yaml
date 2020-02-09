@@ -3,10 +3,13 @@ plugins:
   - pytest
   - devpi
   - git
+  - radon
 flake8:
   append opts: [--statistics]
 cruise:
   "@docker":
+    # The docker containers are set up to have 'python' in PATH as the
+    # Python version they announce in their name.
     opts: [-p, python.use=python]
   cp27-win:
     banner: Manylinux Container with Python 2.7 on Windows
