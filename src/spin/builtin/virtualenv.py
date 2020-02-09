@@ -51,8 +51,8 @@ def info(ctx):
 
 
 @venv.task
-def rm(ctx):
-    cleanup(ctx.obj)
+def rm(cfg):
+    cleanup(cfg)
 
 
 def init(cfg):

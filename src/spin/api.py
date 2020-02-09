@@ -440,15 +440,23 @@ def task(*args, **kwargs):
     from . import cli
 
     def task_wrapper(fn, group=cli.commands):
+
+        def alternate_callback(*args, **kwargs):
+            return fn(get_tree(), *args, **kwargs)
+
         task_object = fn
         context_settings = config()
-        sig = inspect.signature(task_object)
+        sig = inspect.signature(fn)
         param_names = list(sig.parameters.keys())
         if param_names:
             if param_names[0] == "ctx":
                 task_object = click.pass_context(fn)
                 param_names.pop(0)
+        pass_config = False
         for pn in param_names:
+            if pn == "cfg":
+                pass_config = True
+                continue
             if pn == "passthrough":
                 context_settings.ignore_unknown_options = True
                 context_settings.allow_extra_args = True
@@ -465,6 +473,8 @@ def task(*args, **kwargs):
             hooks.append(task_object)
         for alias in kwargs.pop("aliases", []):
             group.register_alias(alias, task_object)
+        if pass_config:
+            task_object.callback = alternate_callback
         return task_object
 
     if args:
@@ -487,8 +497,8 @@ def group(fn):
     return grp
 
 
-def invoke(hook):
+def invoke(hook, *args, **kwargs):
     ctx = click.get_current_context()
     cfg = get_tree()
     for task_object in cfg.hooks.setdefault(hook, []):
-        ctx.invoke(task_object)
+        ctx.invoke(task_object, *args, **kwargs)

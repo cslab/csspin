@@ -6,19 +6,20 @@
 
 from spin.api import argument, config, option, sh, task
 
-defaults = config(opts=[], cmd="radon",)
+defaults = config(
+    opts=["-n", "{radon.mi_treshold}"], cmd="radon", mi_treshold="B"
+)
 requires = [".lint"]
 packages = ["radon"]
 
 
 @task(when="lint")
 def radon(
-    ctx,
+    cfg,
     allsource: option("--all", "allsource", is_flag=True),
     passthrough: argument(nargs=-1),
 ):
     """Run radon to measure code complexity."""
-    cfg = ctx.obj
     files = passthrough
     if not files:
         files = [f for f in cfg.vcs.modified if f.endswith(".py")]
