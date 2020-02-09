@@ -4,9 +4,10 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""spin is a task runner with a twist that supports reusable task
-definitions. Task definitions are Python modules, that are
-automatically provisioned.
+"""spin is a task runner with a twist.
+
+It supports reusable task definitions in the form of Python modules,
+that are automatically provisioned.
 
 """
 
@@ -173,7 +174,7 @@ def base_options(fn):
             default=DEFAULTS.spin.spinfile,
             type=click.Path(dir_okay=False, exists=False),
             help="An alternative name for the configuration file. "
-            "This can include a relative of absolute path when "
+            "This can include a relative or absolute path when "
             "used without -C.",
         ),
         click.option(
@@ -283,7 +284,8 @@ def cleanup(ctx):
     """Call the 'cleanup' hook in all plugins.
 
     This is expected to eventually remove provisioned software
-    (e.g. spin's Python interpreter, virtualenv etc.)
+    (e.g. spin's Python interpreter, virtualenv etc.), but never
+    remove user-supplied data.
     """
     toporun(ctx.obj, "cleanup")
 
@@ -374,7 +376,7 @@ def cli(
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
-    for import_spec in cfg.plugins:
+    for import_spec in cfg.get("plugins", []):
         load_plugin(cfg, import_spec)
 
     # Create a topologically sorted list of the plugins by their
