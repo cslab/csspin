@@ -4,11 +4,15 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import argument, config, sh, task
+from spin.api import argument, config, get_tree, option, sh, task
 
-defaults = config()
+defaults = config(cmd="flake8", opts=[],)
 
 requires = [".virtualenv", ".lint"]
+
+# These are the flake8 plugins we want to use. Maybe this should be
+# configurable in spinfile (candidates are "flake8-spellcheck" or
+# "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
 packages = [
     "flake8",
     "flake8-fixme",
@@ -16,19 +20,24 @@ packages = [
     "flake8-comprehensions",
     "flake8-copyright",
     "flake8-bugbear",
-    #"flake8-spellcheck",
-    "flake8-cognitive-complexity",
 ]
 
 
 @task(when="lint")
-def flake8(passthrough: argument(nargs=-1)):
+def flake8(
+    ctx,
+    allsource: option("--all", "allsource", is_flag=True),
+    passthrough: argument(nargs=-1),
+):
     """Run flake8 to lint Python code."""
+    cfg = ctx.obj
     files = passthrough
     if not files:
+        files = [f for f in get_tree().vcs.modified if f.endswith(".py")]
+    if allsource:
         files = (
             "{spin.project_root}/src",
             "{spin.project_root}/tests",
         )
-
-    sh("flake8", *files)
+    if files:
+        sh("{flake8.cmd}", *cfg.flake8.opts, *files)

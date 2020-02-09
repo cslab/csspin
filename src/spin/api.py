@@ -157,7 +157,10 @@ def sh(*cmd, **kwargs):
     shell = kwargs.pop("shell", len(cmd) == 1)
     if sys.platform == "win32" and len(cmd) == 1:
         cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
-    cpi = subprocess.run(cmd, shell=shell, **kwargs)
+    try:
+        cpi = subprocess.run(cmd, shell=shell, **kwargs)
+    except FileNotFoundError as ex:
+        die(str(ex))
     if cpi.returncode:
         die(f"Command failed with return code {cpi.returncode}")
     return cpi
@@ -311,15 +314,45 @@ _ConfigLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
 )
 
+_sentinel = object()
 
 class Config(dict):
-    def __getattr__(self, name, default=None):
-        if name not in self:
-            raise AttributeError(f"config key {name} not found")
+    def __getattr__(self, name, default=_sentinel):
+        if name not in self and default is _sentinel:
+            raise AttributeError(f"config key '{name}' not found")
         return self.get(name, default)
 
     def __setattr__(self, name, value):
         self[name] = value
+
+
+
+def rpad(seq, length, padding=None):
+    while True:
+        pad_length = length - len(seq)
+        if pad_length > 0:
+            seq.insert(0, padding)
+        else:
+            break
+    return seq
+
+
+def directive_append(target, key, value):
+    if isinstance(value, list):
+        target[key].extend(value)
+    else:
+        target[key].append(value)
+
+
+def directive_prepend(target, key, value):
+    if isinstance(value, list):
+        target[key][0:0] = value
+    else:
+        target[key].insert(0, value)
+
+
+def directive_interpolate(target, key, value):
+    target[key] = interpolate1(value)
 
 
 def merge_config(target, source):
@@ -328,6 +361,11 @@ def merge_config(target, source):
             target[key] = value
         elif isinstance(value, dict):
             merge_config(target[key], value)
+    for key, value in target.items():
+        directive, key = rpad(key.split(maxsplit=1), 2)
+        fn = globals().get(f"directive_{directive}", None)
+        if fn:
+            fn(target, key, value)
 
 
 def config(**kwargs):

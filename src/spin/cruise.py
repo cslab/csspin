@@ -5,16 +5,63 @@
 # http://www.contact.de/
 
 """Run spin commands elsewhere, e.g. in a Docker container."""
-import os
 
-from .api import echo, sh
+import os
+import sys
+
+from .api import echo, merge_config, sh
+
+
+def build_cruises(cfg):
+    for key in cfg.cruise.keys():
+        if not key.startswith("@"):
+            cruise = cfg.cruise[key]
+            cruise.tags = cruise.tags.split()
+            for tag in ["@" + tag for tag in cruise.tags]:
+                if tag in cfg.cruise:
+                    merge_config(cruise, cfg.cruise[tag])
+
+
+def match_cruises(cfg, selectors):
+    for name, definition in cfg.cruise.items():
+        if name.startswith("@"):
+            continue
+        elif "@all" in selectors:
+            yield name, definition
+        if name in selectors:
+            yield name, definition
+        elif any(
+            ("@" + tag in selectors) for tag in getattr(definition, "tags", [])
+        ):
+            yield name, definition
+
+
+def do_cruise(cfg, cruiseopt, interactive):
+    spin_args = []
+    spin_base_opts = True
+    i = 1
+    while i < len(sys.argv):
+        if spin_base_opts and sys.argv[i] in ("-c", "--cruise"):
+            i += 1
+        else:
+            spin_args.append(sys.argv[i])
+        if not sys.argv[i].startswith("-"):
+            spin_base_opts = False
+        i += 1
+    for name, definition in match_cruises(cfg, cruiseopt):
+        executor = definition.executor(name, definition, interactive)
+        cmd = ["spin"] + getattr(definition, "opts", []) + spin_args
+        executor.run(cmd)
 
 
 class BaseExecutor:
     """Base class for executors."""
 
-    def __init__(self, name, definition):
+    def __init__(self, name, definition, interactive):
         """Set up executor from definition."""
+        self.name = name
+        self.definition = definition
+        self.interactive = interactive
         self.banner = getattr(definition, "banner", "")
 
     def run(self, cmd):
@@ -29,7 +76,7 @@ class DockerExecutor(BaseExecutor):
 
     def __init__(self, name, definition, interactive):
         """Set up docker command line."""
-        super().__init__(name, definition)
+        super().__init__(name, definition, interactive)
         cmd = ["docker"]
 
         context = getattr(definition, "context", "")
@@ -68,4 +115,4 @@ class HostExecutor(BaseExecutor):
     def run(self, cmd):
         """Run command locally."""
         super().run(cmd)
-        self.ctx.run(cmd, pty=True)
+        sh(*cmd)

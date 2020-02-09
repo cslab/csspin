@@ -87,7 +87,12 @@ def load_plugin(cfg, import_spec, package=None):
     specified in the module-level attribute 'requires' (list of
     absolute or relative import specs).
     """
-    mod = importlib.import_module(import_spec, package)
+    if len(import_spec.split(".")) < 2:
+        import_spec = "spin.builtin." + import_spec
+    try:
+        mod = importlib.import_module(import_spec, package)
+    except ModuleNotFoundError:
+        die(f"no such module: '{import_spec}'")
     full_name = mod.__name__
     if full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
@@ -96,7 +101,6 @@ def load_plugin(cfg, import_spec, package=None):
         settings_name = full_name.split(".")[-1]
         plugin_defaults = getattr(mod, "defaults", config())
         plugin_config_tree = cfg.setdefault(settings_name, config())
-        mod.config = plugin_config_tree
         merge_config(plugin_config_tree, plugin_defaults)
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__)
@@ -205,6 +209,7 @@ def base_options(fn):
         click.option(
             "--cruise",
             "-c",
+            "cruiseopt",
             multiple=True,
             help="Run spin in the given environment.",
         ),
@@ -305,7 +310,7 @@ def cli(
     quiet,
     verbose,
     debug,
-    cruise,
+    cruiseopt,
     interactive,
     properties,
 ):
@@ -391,56 +396,20 @@ def cli(
             scope = getattr(scope, path.pop(0))
         setattr(scope, path[0], v)
 
-    build_cruises(cfg)
+    # We do this before 'debug' so people see the cruise config
+    cruise.build_cruises(cfg)
 
     # Debug aid: dump config tree for --debug
     if debug:
         echo("Configuration tree (debug):")
         pprint(cfg)
 
-    if not cruise:
+    if not cruiseopt:
         # Invoke the main command group, which by now has all the
         # sub-commands from the plugins.
         commands.main(args=ctx.args)
     else:
-        this_command = ["spin"]
-        i = 1
-        spinargs = True
-        while i < len(sys.argv):
-            if spinargs and sys.argv[i] in ("-c", "--cruise"):
-                i += 1
-            else:
-                this_command.append(sys.argv[i])
-            if not sys.argv[i].startswith("-"):
-                spinargs = False
-            i += 1
-        for name, definition in match_cruises(cfg, cruise):
-            executor = definition.executor(name, definition, interactive)
-            executor.run(this_command)
-
-
-def match_cruises(cfg, selectors):
-    for name, definition in cfg.cruise.items():
-        if name.startswith("@"):
-            continue
-        elif "@all" in selectors:
-            yield name, definition
-        if name in selectors:
-            yield name, definition
-        elif any(
-            ("@" + tag in selectors) for tag in getattr(definition, "tags", [])
-        ):
-            yield name, definition
-
-
-def build_cruises(cfg):
-    for key in cfg.cruise.keys():
-        if not key.startswith("@"):
-            cruise = cfg.cruise[key]
-            cruise.tags = cruise.tags.split()
-            for tag in ["@" + tag for tag in cruise.tags]:
-                if tag in cfg.cruise:
-                    merge_config(cruise, cfg.cruise[tag])
+        cruise.do_cruise(cfg, cruiseopt, interactive)
 
 
 def main():

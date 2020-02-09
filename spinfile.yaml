@@ -1,19 +1,24 @@
 plugins:
-  - spin.builtin.flake8
-  - spin.builtin.pytest
-  - spin.builtin.devpi
+  - flake8
+  - pytest
+  - devpi
+  - git
+flake8:
+  append opts: [--statistics]
 cruise:
-  cp27win:
+  "@docker":
+    opts: [-p, python.use=python]
+  cp27-win:
     banner: Manylinux Container with Python 2.7 on Windows
     image: registry.contact.de/cp27m-win_amd64
     tags: docker windows
-  cp38win:
+  cp38-win:
     image: registry.contact.de/cp38-win_amd64
     tags: docker windows
-  cp27manylinux:
+  cp27-linux:
     image: registry.contact.de/cp27m-manylinux2010_x86_64
     tags: docker linux
-  cp38manylinux:
+  cp38-linux:
     image: registry.contact.de/cp38-manylinux2014_x86_64
     tags: docker linux
   host:
