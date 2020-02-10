@@ -53,7 +53,7 @@ packages* that have to be activated in ``spinfile.yaml`` using the
 * **git** -- git support
 * **pytest** -- use pytest for Python tests
 * **test** -- provide subcommand ``tests`` that runs automatic tests
-   
+
 
 Where file go
 =============
@@ -78,7 +78,7 @@ Example
 =======
 
 The following shows an invocation of ``spin lint`` when nothing has
-been provisioned yet (the 
+been provisioned yet.
 
 .. code-block:: console
 
@@ -111,10 +111,11 @@ project directory and installs all packages required by the project
 used.
 
 .. code-block:: console
+
    spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
-         -m virtualenv -q \
-         -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
-         ./cp38-macosx_10_15_x86_64
+	 -m virtualenv -q \
+	 -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
+	 ./cp38-macosx_10_15_x86_64
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install radon
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-cov
@@ -135,9 +136,7 @@ and launches all linters (``flake8`` and ``radon`` in this case).
 
 
 .. code-block:: console
-   
+
    spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
    spin: flake8 ./src ./tests
    spin: radon mi -n B ./src ./tests
-
-
