@@ -96,7 +96,8 @@ def init(cfg):
             for req in getattr(plugin_module, "packages", []):
                 pipit(req)
 
-        pipit("-e", ".")
+        if exists("setup.py"):
+            pipit("-e", ".")
 
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
