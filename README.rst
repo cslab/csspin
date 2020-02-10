@@ -73,3 +73,40 @@ Plugin API
 
 The API for plugin development is defined in ``spin.api`` (sorry, not
 really documented yet).
+
+Motivating Example
+==================
+
+.. code-block:: console
+
+   $ spin lint
+   spin: cd /Users/frank/Projects/spin
+   spin: Installing Python 3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
+   spin: set PYTHON_BUILD_CACHE_PATH=/Users/frank/.spin/cache
+   spin: /Users/frank/.spin/pyenv/plugins/python-build/bin/python-build 3.8.1 /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
+   python-build: use openssl@1.1 from homebrew
+   python-build: use readline from homebrew
+   Installing Python-3.8.1...
+   python-build: use readline from homebrew
+   python-build: use zlib from xcode sdk
+   Installed Python-3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
+   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install -q --upgrade pip wheel
+   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install virtualenv
+   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m virtualenv -q -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python ./cp38-macosx_10_15_x86_64
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install radon
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-cov
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-tldr
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-fixme
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-import-order
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-comprehensions
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-copyright
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-bugbear
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install devpi-client
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install keyring
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install -e .
+   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
+   spin: flake8 ./src ./tests
+
+
