@@ -8,13 +8,24 @@ Basic information:
 * should be available on ``PATH``
 
 Recommendation: install from git clone using `pipx
-<https://pipxproject.github.io/pipx/>`_ like so:
+<https://pipxproject.github.io/pipx/>`_. `pipx` is a tool that
+installs Python packages into a user-specific location in a user's
+``HOME`` directory.
+
+Example:
 
 .. code-block:: console
 
    $ python38 -m pip install --user pipx
    $ python38 -m pipx ensurepath
-   # ... make sure you have pipx in your PATH ...
+
+``ensurepath`` adds ``$HOME/.local/bin`` to your shell's
+configuration, so commands from packages installed by `pipx` are
+available in ``PATH``. Make sure to restart your shell to make the
+setting effective.
+
+.. code-block:: console
+
    $ git clone git@git.contact.de:frank/spin.git
    $ cd spin
    $ pipx install --spec . --editable spin
@@ -25,19 +36,93 @@ The ``spin`` command is now available in your PATH.
 Overview
 ========
 
-``spin`` runs programs.
 
-``spin`` expects a `YAML <https://yaml.org/>`_ file named
-``spinfile.yaml`` in the top-level folder of the project that declares
-tasks, dependencies etc.
+Plugins
+-------
 
-``spin`` by itself does nothing. All tasks are defined in *plugin
-packages* that have to be activated in ``spinfile.yaml`` using the
-``plugins`` key, for example::
+``spin`` by itself does nothing. All tasks are defined in *plugins*.
+Plugins have to be declared in ``spinfile.yaml`` using the ``plugins``
+key, for example::
 
   plugins:
     - flake8
     - pytest
+
+A plugin can do one or more of the following:
+
+* register new subcommands; e.g. the **lint** plugin registers a
+  subcommand ``lint``; this can be verified by calling ``spin
+  --help``, which displays all know subcommands
+
+* declare plugin dependencies, e.g. **flake8** depends on **lint** (so
+  it can be called as one the linters know to **lint**), and
+  **virtualenv** (because we need a place to install the ``flake8``
+  package from PyPI)
+
+* declare package requirements, that are installed into a virtual
+  environment
+
+* declare *hooks* that are called while ``spin`` runs; e.g. the
+  **python** plugin declares a hook that provisions the required
+  Python release
+
+
+The Configuration Tree
+----------------------
+
+``spin`` expects a `YAML <https://yaml.org/>`_ file named
+``spinfile.yaml`` in the top-level folder of the project that declares
+tasks, dependencies etc. This file is used to construct a
+*configuration tree*, a nested data structure that defines the project
+and the behaviour of the task plugins. The configuration tree is built
+from (in this order):
+
+* the default configuration of each plugin and spin itself. E.g. the
+  ``flake8.cmd`` setting is ``"flake8"``. This setting is used to
+  construct the command line to call ``flake8``.
+* the settings from ``spinfile.yaml`` complement (or override) the
+  defaults
+* if it exists, user-specific settings are read from
+  ``~/.spin/global.yaml`` and complement the project configuration
+  tree; an example for a user-specific setting is ``devpi.stage``, the
+  staging index for uploading packages
+* command line settings given by ``-p prop=value`` override all other
+  settings; a typical use case is setting the python interpreter to
+  use with ``spin -p python.use=python3.7`` etc.
+
+Settings in the configuration tree can refer to other settings by
+using *string interpolation*: path expressions surrounded by braces
+are replaced by the setting given. E.g. ``{spin.project_root}`` is the
+setting ``project_root`` in the subtree ``spin`` and is the root
+directory of the project (i.e. where ``spinfile.yaml`` is located).
+
+Braces a meta-characters in the syntax of YAML that indicate a literal
+dictionary (very much like with JSON, of which YAML is
+super-set). Settings using string interpolation must there be
+quoted. Example:
+
+.. code-block:: yaml
+
+   devpi:
+      user: frank
+      url: http://haskell:4033
+      stage: "{devpi.url}/{devpi.user}/staging"
+
+There are dozens of settings defined by the spin framework, and each
+plugin comes with its own set of settings and uses settings from other
+plugins and the framework.
+
+Note that YAML has the information model as JSON: supported data types
+include dictionaries, lists and literals (mostly strings). Spin and
+its plugins require each entry to be of a particular type. Destroying
+the structure of the tree by setting a key that is expected to be a
+dictionary to a string value will likely break the code and make the
+``spin`` command fail.
+
+
+
+Built-in Plugins
+----------------
 
 ``spin`` comes with a set of built-in plugins:
 
@@ -55,34 +140,24 @@ packages* that have to be activated in ``spinfile.yaml`` using the
 * **test** -- provide subcommand ``tests`` that runs automatic tests
 
 
-Where file go
-=============
+Workflows
+---------
 
-* ``$HOME/.spin/`` -- Python releases and configuration files that are
-  not project-specific
-
-* ``<project root>/.spin`` -- plugin packages and project-specific
-  settings
-
-* ``<project root>/<venv>`` -- platform/ABI specific virtual
-  environment (provisioned by the built-in plugin *virtualenv*)
+*TBD* -- workflows are simply plugins that trigger tasks from other
+ plugins. **lint** is already similar to that. We plan to add things
+ similar (and better) than those in driver ``Makefile`` currently used
+ for `cs.platform`.
 
 
-Plugin API
-==========
-
-The API for plugin development is defined in ``spin.api`` (sorry, not
-really documented yet).
-
-Example
-=======
+Examples
+========
 
 The following shows an invocation of ``spin lint`` when nothing has
 been provisioned yet.
 
 .. code-block:: console
 
-   $ spin lint
+   $ spin lint --all
    spin: cd /Users/frank/Projects/spin
 
 
@@ -132,7 +207,8 @@ used.
 
 
 Finally, ``spin`` modifies ``PATH`` to include the virtual environment
-and launches all linters (``flake8`` and ``radon`` in this case).
+and launches all linters declared for this project (``flake8`` and
+``radon`` in this case).
 
 
 .. code-block:: console
@@ -140,3 +216,126 @@ and launches all linters (``flake8`` and ``radon`` in this case).
    spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
    spin: flake8 ./src ./tests
    spin: radon mi -n B ./src ./tests
+
+
+Invoking the same command a second time will naturally not
+re-provision everything, but simply call ``flake8``:
+
+.. code-block:: console
+
+   $ spin lint --all
+   spin: cd /Users/frank/Projects/spin
+   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
+   spin: flake8 ./src ./tests
+   spin: radon mi -n B ./src ./tests
+
+Note that dependencies are taken care off automatically.
+
+.. code-block:: yaml
+
+   requirements:
+      - flake8-docstrings
+
+to ``spinfile.yaml`` will automatically add the requested package to
+the virtual environment:
+
+.. code-block:: console
+
+   $ spin lint --all
+   spin: cd /Users/frank/Projects/spin
+   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-docstrings
+   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
+   spin: flake8 ./src ./tests
+   ./src/spin/cruise.py:15:1: D103 Missing docstring in public function
+   ./src/spin/cruise.py:25:1: D103 Missing docstring in public function
+   ./src/spin/cruise.py:39:1: D103 Missing docstring in public function
+   ... and so on ...
+
+
+Simply removing the ``requirements`` setting from ``spinfile.yaml``
+will not remove that package from provisioned virtual environment,
+though. We can either simply remove that environment, or use ``spin
+exec`` to run ``pip`` inside the environment:
+
+.. code-block:: console
+
+   $ spin exec pip uninstall flake8-docstrings
+
+
+
+Reference
+=========
+
+Where files go
+--------------
+
+* ``$HOME/.spin/`` -- Python releases and configuration files that are
+  not project-specific
+
+* ``<project_root>/.spin`` -- plugin packages and project-specific
+  settings
+
+* ``<project_root>/<venv>`` -- platform/ABI specific virtual
+  environment (provisioned by the built-in plugin *virtualenv*)
+
+
+Plugin API
+----------
+
+The API for plugin development is defined in ``spin.api`` (sorry,
+documentation pretty incomplete right now). The general idea is to
+keep plugin scripts short and tidy. Therefore there a lot for simple
+Python function to do basic things like manipulating files and running
+programs. String arguments to spin APIs are automatically interpolated
+agains the configuration tree.
+
+Overview:
+
+* ``echo()`` prints messages (unless silenced by the ``-q`` option)
+* ``cd()`` changes the current working directory
+* ``exists()`` checks wether a file or directory exists
+* ``mkdir()`` makes sure a path exists, creating it if necessary
+* ``rmtree()`` removes a directory tree
+* ``die()`` terminates with an error message
+* ``sh()`` runs a program
+* ``setenv()`` sets or deletes one or more environment variables
+* ``[read|write][bytes|text]()`` reads/writes binary data or text
+  from/to a file
+* ``persist()`` and ``unpersist()`` read and write Python objects
+  from/to the file system
+* ``memoizer()`` is a context manager that manages a database of
+  simple facts (i.e. strings) -- this is for example used to maintain
+  which dependencies have already installed into a virtual environment
+* ``config()`` creates a configuration tree, that can be merged with
+  another tree using ``merge_config()`` (this is probably rarely used
+  by plugins)
+* ``download()`` downloads something to disk
+* ``get_tree()`` gets the global configuration tree (which may be
+  necessary sometime when it is not passed into a plugin hook by spin
+  automatically)
+* ``task()``, ``argument()`` and ``option()`` are used to define
+  subcommands and their options and arguments; those -- like spin
+  itself -- use the `Click framework
+  <https://click.palletsprojects.com>`_ for command line processing.
+* ``invoke()`` invokes tasks
+
+
+Simple example:
+
+.. code-block:: python
+
+   from spin.api import cd, die, echo, exists, sh
+
+   def meaningless_example():
+       echo("This project is located in {spin.project_root}")
+       with cd("{spin.project_root}"):
+           # We can pass each argument to a command separately,
+	   # which saves us from quoting stuff correctly:
+	   sh("ls", "-l", "spinfile.yaml")
+
+	   # We can also simply use whole command lines:
+	   sh("echo {spin.project_root} > project_root.txt")
+
+       if not exists("project_root.txt"):
+	   die("I didn't expect that!")
+
