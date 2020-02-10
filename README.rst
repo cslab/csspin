@@ -149,6 +149,73 @@ Workflows
  for `cs.platform`.
 
 
+Cruising
+--------
+
+`spin` supports running itself in one or many docker containers (and
+maybe elsewhere in the future). This is called *cruising*, and it is
+useful to validate projects from a development sandbox for different
+platforms. The ``spinfile.yaml`` of `spin` defines the following
+cruises:
+
+.. code-block:: yaml
+
+   cruise:
+     "@docker":
+       # The docker containers are set up to have 'python' in PATH as the
+       # Python version they announce in their name.
+       opts: [-p, python.use=python]
+     cp27-win:
+       banner: Manylinux Container with Python 2.7 on Windows
+       image: registry.contact.de/cp27m-win_amd64
+       tags: docker windows
+     cp38-win:
+       image: registry.contact.de/cp38-win_amd64
+       tags: docker windows
+     cp27-linux:
+       image: registry.contact.de/cp27m-manylinux2010_x86_64
+       tags: docker linux
+     cp38-linux:
+       image: registry.contact.de/cp38-manylinux2014_x86_64
+       tags: docker linux
+     host:
+       tags: host
+
+
+This set includes docker images for Windows as well as Linux, which
+means we need to have one docker daemon available for each
+platform. These are defined as user-specific settings in
+``$HOME/.spin/global.yaml``:
+
+.. code-block:: yaml
+
+   cruise:
+     "@windows":
+       context: winsrv2019
+       volprefix: "c:"
+     "@linux":
+       context: default
+
+Each "cruise" is defined by merging its settings with all settings
+from matching tags. Cruises are selected by using the ``-c`` (or
+``--cruise``) option to ``spin``.
+
+The following will run spin in the ``cp38-linux`` container.
+
+.. code-block:: console
+
+   $ spin -c cp38-linux <whatever> ...
+
+Cruises can also be selected by specifying tags (which are prefixed by
+``"@"``). This will run all Linux containers:
+
+.. code-block:: console
+
+   $ spin -c @linux <whatever> ...
+
+A special selector is ``@all``, selecting all cruises.
+
+
 Examples
 ========
 
