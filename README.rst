@@ -74,13 +74,24 @@ Plugin API
 The API for plugin development is defined in ``spin.api`` (sorry, not
 really documented yet).
 
-Motivating Example
-==================
+Example
+=======
+
+The following shows an invocation of ``spin lint`` when nothing has
+been provisioned yet (the 
 
 .. code-block:: console
 
    $ spin lint
    spin: cd /Users/frank/Projects/spin
+
+
+The project requires Python 3.8.1 which is provisioned by the
+**python** plugin using ``python-build`` from the ``pyenv``
+distribution (on Windows **python** would use ``nuget``).
+
+.. code-block:: console
+
    spin: Installing Python 3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
    spin: set PYTHON_BUILD_CACHE_PATH=/Users/frank/.spin/cache
    spin: /Users/frank/.spin/pyenv/plugins/python-build/bin/python-build 3.8.1 /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
@@ -92,7 +103,18 @@ Motivating Example
    Installed Python-3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
    spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install -q --upgrade pip wheel
    spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install virtualenv
-   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m virtualenv -q -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python ./cp38-macosx_10_15_x86_64
+
+
+Next, the **virtualenv** plugin creates a virtual environment in the
+project directory and installs all packages required by the project
+(via the ``requires`` key in ``spinfile.yaml``), or by the plugins
+used.
+
+.. code-block:: console
+   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
+         -m virtualenv -q \
+         -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
+         ./cp38-macosx_10_15_x86_64
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install radon
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-cov
@@ -106,7 +128,16 @@ Motivating Example
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install devpi-client
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install keyring
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install -e .
+
+
+Finally, ``spin`` modifies ``PATH`` to include the virtual environment
+and launches all linters (``flake8`` and ``radon`` in this case).
+
+
+.. code-block:: console
+   
    spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
    spin: flake8 ./src ./tests
+   spin: radon mi -n B ./src ./tests
 
 
