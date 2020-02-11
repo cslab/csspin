@@ -1,3 +1,12 @@
+======
+ spin
+======
+
+Spin is a task runner that aims so solve the problem of standardizing
+workflows for many similar projects. It does this by encapsulating
+task definitions in Python packages and automating the provisioning of
+development sandboxes and dependencies.
+
 Installing
 ==========
 
@@ -96,9 +105,9 @@ are replaced by the setting given. E.g. ``{spin.project_root}`` is the
 setting ``project_root`` in the subtree ``spin`` and is the root
 directory of the project (i.e. where ``spinfile.yaml`` is located).
 
-Braces a meta-characters in the syntax of YAML that indicate a literal
-dictionary (very much like with JSON, of which YAML is
-super-set). Settings using string interpolation must there be
+Braces are meta-characters in the syntax of YAML that indicate a
+literal dictionary (like in JSON, of which YAML is
+super-set). Settings using string interpolation must therefore be
 quoted. Example:
 
 .. code-block:: yaml
@@ -143,10 +152,10 @@ Built-in Plugins
 Workflows
 ---------
 
-*TBD* -- workflows are simply plugins that trigger tasks from other
- plugins. **lint** is already similar to that. We plan to add things
- similar (and better) than those in driver ``Makefile`` currently used
- for `cs.platform`.
+Workflows are simply plugins that trigger tasks from other
+plugins. **lint** is already similar to that. We plan to add things
+similar (and better) than those in driver ``Makefile`` currently used
+for `cs.platform` (**to be done**).
 
 
 Cruising
@@ -197,10 +206,13 @@ platform. These are defined as user-specific settings in
        context: default
 
 Each "cruise" is defined by merging its settings with all settings
-from matching tags. Cruises are selected by using the ``-c`` (or
-``--cruise``) option to ``spin``.
+from matching tags. I.e. a cruise tagged with ``windows`` will inherit
+the configuration from the ``@windows`` key.
 
-The following will run spin in the ``cp38-linux`` container.
+
+Cruises are selected by using the ``-c`` (or ``--cruise``) option to
+``spin``.  The following will run spin in the ``cp38-linux``
+container.
 
 .. code-block:: console
 
@@ -249,7 +261,7 @@ distribution (on Windows **python** would use ``nuget``).
 
 Next, the **virtualenv** plugin creates a virtual environment in the
 project directory and installs all packages required by the project
-(via the ``requires`` key in ``spinfile.yaml``), or by the plugins
+(via the ``requirements`` key in ``spinfile.yaml``), or by the plugins
 used.
 
 .. code-block:: console
@@ -270,6 +282,12 @@ used.
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-bugbear
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install devpi-client
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install keyring
+
+If the project has a ``setup.py`` it is installed into the virtual
+environment in development mode:
+   
+.. code-block:: console
+   
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install -e .
 
 
@@ -296,7 +314,7 @@ re-provision everything, but simply call ``flake8``:
    spin: flake8 ./src ./tests
    spin: radon mi -n B ./src ./tests
 
-Note that dependencies are taken care off automatically.
+Note that dependencies are taken care off automatically. Adding
 
 .. code-block:: yaml
 
@@ -351,7 +369,7 @@ Plugin API
 
 The API for plugin development is defined in ``spin.api`` (sorry,
 documentation pretty incomplete right now). The general idea is to
-keep plugin scripts short and tidy. Therefore there a lot for simple
+keep plugin scripts short and tidy. ``spin.api`` provides simple
 Python function to do basic things like manipulating files and running
 programs. String arguments to spin APIs are automatically interpolated
 agains the configuration tree.
