@@ -36,12 +36,7 @@ defaults = config(
     ),
     python="{virtualenv.bindir}/python",
     requires=[".python"],
-    pipconf=config(
-        config=[
-            "global.extra-index-url",
-            "https://packages.contact.de/apps/16.0-dev/+simple",
-        ],
-    ),
+    pipconf=config(),
 )
 
 
@@ -106,9 +101,9 @@ def init(cfg):
     if True:
         pip.append("-q")
 
-    if not exists("{virtualenv.venv}/pip.conf"):
-        # pip("config", "--site", "set", *cfg.virtualenv.pip.config)
-        pass
+    for group, settings in cfg.virtualenv.pipconf.items():
+        for key, value in settings.items():
+            pip("config", "--site", "set", f"{group}.{key}", value)
 
     with memoizer("{virtualenv.memo}") as m:
 
