@@ -342,8 +342,9 @@ def cli(
 
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
-    spinfile_dir = os.path.dirname(cfg.spin.spinfile)
-    cd(spinfile_dir)
+    spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
+    if not cwd:
+        cd(spinfile_dir)
 
     # Setup plugin_dir, where spin installs plugin packages.
     if plugin_dir:
