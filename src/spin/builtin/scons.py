@@ -6,17 +6,17 @@
 
 import os
 
-from spin.api import config, sh, task
+from spin.api import argument, config, sh, task
 
 defaults = config(
     cmd="scons",
-    opts=["-j{}".format(os.cpu_count() or 1)],
+    opts=[f"-j{os.cpu_count()}"],
     requires=[".virtualenv"],
-    packages=["scons", "pyyaml", "cpytoolchain", "cs.acetao-dev"]
+    packages=["scons"],
 )
 
 
 @task()
-def scons(cfg):
+def scons(cfg, passthrough: argument(nargs=-1)):
     """Run scons command"""
-    sh("{scons.cmd}", *cfg.scons.opts)
+    sh("{scons.cmd}", *cfg.scons.opts, *passthrough)
