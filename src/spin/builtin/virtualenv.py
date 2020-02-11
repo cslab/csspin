@@ -36,11 +36,12 @@ defaults = config(
     ),
     python="{virtualenv.bindir}/python",
     requires=[".python"],
-    pip=config(
-        cmd="{virtualenv.scriptdir}/pip",
-        config=["global.extra-index-url",
-                "https://packages.contact.de/apps/16.0-dev/+simple"]
-    )
+    pipconf=config(
+        config=[
+            "global.extra-index-url",
+            "https://packages.contact.de/apps/16.0-dev/+simple",
+        ],
+    ),
 )
 
 
@@ -80,30 +81,9 @@ def init(cfg):
         sh("{python.interpreter} -m pip install virtualenv")
 
     virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
-    pip = Command("{virtualenv.pip.cmd}", "-q")
 
     if not exists("{virtualenv.venv}"):
         virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
-    if not exists("{virtualenv.venv}/pip.conf"):
-        pip("config", "--site", "set", *cfg.virtualenv.pip.config)
-
-    with memoizer("{virtualenv.memo}") as m:
-
-        def pipit(*req):
-            if not m.check(req):
-                pip("install", *req)
-                m.add(req)
-
-        for req in cfg.requirements:
-            pipit(req)
-
-        for plugin in cfg.topo_plugins:
-            plugin_module = cfg.loaded[plugin]
-            for req in plugin_module.defaults.get("packages", []):
-                pipit(req)
-
-        if exists("setup.py"):
-            pipit("-e", ".")
 
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
@@ -121,6 +101,42 @@ def init(cfg):
         f"set PATH={venvabs}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
     )
+
+    pip = Command("pip")
+    if True:
+        pip.append("-q")
+
+    if not exists("{virtualenv.venv}/pip.conf"):
+        # pip("config", "--site", "set", *cfg.virtualenv.pip.config)
+        pass
+
+    with memoizer("{virtualenv.memo}") as m:
+
+        replacements = cfg.get("devpackages", {})
+
+        def pipit(req):
+            req = replacements.get(req, req)
+            if not m.check(req):
+                pip("install", *req.split())
+                m.add(req)
+
+        # Install packages required by the project ('requirements')
+        for req in cfg.requirements:
+            pipit(req)
+
+        # Install packages required by plugins used
+        # ('<plugin>.packages')
+        for plugin in cfg.topo_plugins:
+            plugin_module = cfg.loaded[plugin]
+            for req in plugin_module.defaults.get("packages", []):
+                pipit(req)
+
+        # If there is a setup.py, make an editable install (which
+        # transitively also installs runtime dependencies of the
+        # project).  FIXME: filename/location of setup.py should
+        # probably be configurable
+        if exists("setup.py"):
+            pipit("-e .")
 
 
 def cleanup(cfg):
