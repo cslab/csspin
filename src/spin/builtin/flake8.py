@@ -6,21 +6,22 @@
 
 from spin.api import argument, config, option, sh, task
 
-defaults = config(cmd="flake8", opts=[],)
-
-requires = [".virtualenv", ".lint"]
-
-# These are the flake8 plugins we want to use. Maybe this should be
-# configurable in spinfile (candidates are "flake8-spellcheck" or
-# "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
-packages = [
-    "flake8",
-    "flake8-fixme",
-    "flake8-import-order",
-    "flake8-comprehensions",
-    "flake8-copyright",
-    "flake8-bugbear",
-]
+defaults = config(
+    cmd="flake8",
+    opts=[],
+    requires=[".virtualenv", ".lint"],
+    # These are the flake8 plugins we want to use. Maybe this should
+    # be configurable in spinfile (candidates are "flake8-spellcheck"
+    # or "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
+    packages=[
+        "flake8",
+        "flake8-fixme",
+        "flake8-import-order",
+        "flake8-comprehensions",
+        "flake8-copyright",
+        "flake8-bugbear",
+    ],
+)
 
 
 @task(when="lint")

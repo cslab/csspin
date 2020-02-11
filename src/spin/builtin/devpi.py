@@ -20,9 +20,11 @@ from spin.api import (
 )
 
 
-defaults = config(formats=["bdist_wheel"])
-requires = [".virtualenv"]
-packages = ["devpi-client", "keyring"]
+defaults = config(
+    formats=["bdist_wheel"],
+    requires=[".virtualenv"],
+    packages=["devpi-client", "keyring"],
+)
 
 
 def prepare_environment():

@@ -7,10 +7,12 @@
 from spin.api import argument, config, option, sh, task
 
 defaults = config(
-    opts=["-n", "{radon.mi_treshold}"], cmd="radon", mi_treshold="B"
+    opts=["-n", "{radon.mi_treshold}"],
+    cmd="radon",
+    mi_treshold="B",
+    requires=[".lint"],
+    packages=["radon"],
 )
-requires = [".lint"]
-packages = ["radon"]
 
 
 @task(when="lint")

@@ -6,10 +6,10 @@
 
 from spin.api import argument, config, sh, task
 
-defaults = config()
-
-requires = [".virtualenv", ".test"]
-packages = ["pytest", "pytest-cov", "pytest-tldr"]
+defaults = config(
+    requires=[".virtualenv", ".test"],
+    packages=["pytest", "pytest-cov", "pytest-tldr"],
+)
 
 
 @task(when="test")

@@ -20,7 +20,6 @@ from spin.api import (
     sh,
 )
 
-requires = [".python"]
 
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
@@ -37,6 +36,7 @@ defaults = config(
     ),
     python="{virtualenv.bindir}/python",
     pip="{virtualenv.scriptdir}/pip",
+    requires=[".python"],
 )
 
 
@@ -93,7 +93,7 @@ def init(cfg):
 
         for plugin in cfg.topo_plugins:
             plugin_module = cfg.loaded[plugin]
-            for req in getattr(plugin_module, "packages", []):
+            for req in plugin_module.defaults.get("packages", []):
                 pipit(req)
 
         if exists("setup.py"):

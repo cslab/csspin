@@ -85,8 +85,9 @@ def load_plugin(cfg, import_spec, package=None):
     """Recursively load a plugin module.
 
     Load the plugin given by 'import_spec' and its dependencies
-    specified in the module-level attribute 'requires' (list of
-    absolute or relative import specs).
+    specified in the module-level configuration key 'requires' (list
+    of absolute or relative import specs).
+
     """
     if len(import_spec.split(".")) < 2:
         import_spec = "spin.builtin." + import_spec
@@ -105,9 +106,10 @@ def load_plugin(cfg, import_spec, package=None):
         merge_config(plugin_config_tree, plugin_defaults)
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__)
-            for requirement in getattr(mod, "requires", [])
+            for requirement in plugin_config_tree.get("requires", [])
         ]
-        mod.requires = [dep.__name__ for dep in dependencies]
+        plugin_config_tree.requires = [dep.__name__ for dep in dependencies]
+        mod.defaults = plugin_config_tree
     return mod
 
 
@@ -386,7 +388,10 @@ def cli(
     # is provided by the 'virtualenv' plugin, which in turn requires
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
-    graph = {n: getattr(mod, "requires", []) for n, mod in cfg.loaded.items()}
+    graph = {
+        n: getattr(mod.defaults, "requires", [])
+        for n, mod in cfg.loaded.items()
+    }
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Add command line settings.
