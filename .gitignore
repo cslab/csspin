@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 *.memo
 .coverage
+/conf.py
 /htmlcov/
 /cp38-linux_x86_64/
 /dist/
