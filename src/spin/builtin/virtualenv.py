@@ -35,8 +35,12 @@ defaults = config(
         else "{virtualenv.venv}/Scripts"
     ),
     python="{virtualenv.bindir}/python",
-    pip="{virtualenv.scriptdir}/pip",
     requires=[".python"],
+    pip=config(
+        cmd="{virtualenv.scriptdir}/pip",
+        config=["global.extra-index-url",
+                "https://packages.contact.de/apps/16.0-dev/+simple"]
+    )
 )
 
 
@@ -76,10 +80,12 @@ def init(cfg):
         sh("{python.interpreter} -m pip install virtualenv")
 
     virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
-    pip = Command("{virtualenv.pip}", "-q")
+    pip = Command("{virtualenv.pip.cmd}", "-q")
 
     if not exists("{virtualenv.venv}"):
         virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
+    if not exists("{virtualenv.venv}/pip.conf"):
+        pip("config", "--site", "set", *cfg.virtualenv.pip.config)
 
     with memoizer("{virtualenv.memo}") as m:
 
