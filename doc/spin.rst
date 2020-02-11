@@ -11,18 +11,26 @@ Subpackages
 Submodules
 ----------
 
-spin.plugin module
-------------------
+spin.api module
+---------------
 
-.. automodule:: spin.plugin
+.. automodule:: spin.api
    :members:
    :undoc-members:
    :show-inheritance:
 
-spin.util module
-----------------
+spin.cli module
+---------------
 
-.. automodule:: spin.util
+.. automodule:: spin.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+spin.cruise module
+------------------
+
+.. automodule:: spin.cruise
    :members:
    :undoc-members:
    :show-inheritance:
