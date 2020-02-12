@@ -427,3 +427,39 @@ Simple example:
        if not exists("project_root.txt"):
 	   die("I didn't expect that!")
 
+
+Sample ``global.yaml``
+======================
+
+.. code-block:: yaml
+
+   # Settings for frank@haskell
+
+   # Cruise needs different docker contexts for Windows and Linux
+   # containers. This way, my (machine-specific) settings get merged into
+   # cruise definitions for project-specific containers.
+   cruise:
+     "@windows":
+       context: winsrv2019
+       volprefix: "c:"
+     "@linux":
+       context: default
+       
+   # I use a local devpi mirror. Set its properties here.
+   devpi:
+     user: frank
+     url: http://haskell:4033
+     stage: "{devpi.url}/{devpi.user}/staging"
+
+   # Override pipconf settings in virtualenv to use my devpi mirror.
+   virtualenv:
+     pipconf:
+       global:
+         extra-index-url: "{devpi.stage}/+simple/"
+
+   # The 'devpackages' key defines mappings from dependency names to
+   # actual pip specs. This can be used like below to install certain
+   # packages from local sandboxes or elsewhere instead from the package
+   # server used.
+   devpackages:
+     cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
