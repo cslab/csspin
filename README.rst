@@ -103,7 +103,10 @@ Settings in the configuration tree can refer to other settings by
 using *string interpolation*: path expressions surrounded by braces
 are replaced by the setting given. E.g. ``{spin.project_root}`` is the
 setting ``project_root`` in the subtree ``spin`` and is the root
-directory of the project (i.e. where ``spinfile.yaml`` is located).
+directory of the project (i.e. where ``spinfile.yaml`` is
+located). Strings are interpolated until they no longer contain an
+expression, i.e. expressions are resolved recursively and an
+interpolation can result in an interpolatable expression.
 
 Braces are meta-characters in the syntax of YAML that indicate a
 literal dictionary (like in JSON, of which YAML is
