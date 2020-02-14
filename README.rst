@@ -474,28 +474,28 @@ annotated with the places settings came from. Example::
 .. code-block:: console
 
    $ spin --debug test
-   spinfile.yaml:1:                   |plugins:
-                                      |  - 'flake8'
-                                      |  - 'pytest'
-                                      |  - 'devpi'
-                                      |  - 'git'
-                                      |  - 'radon'
-   spinfile.yaml:10:                  |cruise:
-   spinfile.yaml:11:                  |  @docker:
-   spinfile.yaml:14:                  |    opts:
-                                      |      - '-p'
-                                      |      - 'python.use=python'
-   src/spin/cli.py:38:                |    executor: <class 'spin.cruise.DockerExecutor'>
-   spinfile.yaml:15:                  |  cp27-win:
-   spinfile.yaml:16:                  |    banner: 'Manylinux Container with Python 2.7 on Windows'
-   spinfile.yaml:17:                  |    image: 'registry.contact.de/cp27m-win_amd64'
-   spinfile.yaml:18:                  |    tags:
-                                      |      - 'docker'
-                                      |      - 'windows'
-   spinfile.yaml:14:                  |    opts:
-                                      |      - '-p'
-                                      |      - 'python.use=python'
-   src/spin/cli.py:38:                |    executor: <class 'spin.cruise.DockerExecutor'>
-   ~/.spin/global.yaml:8:             |    context: 'winsrv2019'
-   ~/.spin/global.yaml:9:             |    volprefix: 'c:'
+   spinfile.yaml:1:                    plugins:
+                                         - 'flake8'
+                                         - 'pytest'
+                                         - 'devpi'
+                                         - 'git'
+                                         - 'radon'
+   spinfile.yaml:10:                   cruise:
+   spinfile.yaml:11:                     @docker:
+   spinfile.yaml:14:                       opts:
+                                             - '-p'
+                                             - 'python.use=python'
+   src/spin/cli.py:38:                     executor: <class 'spin.cruise.DockerExecutor'>
+   spinfile.yaml:15:                     cp27-win:
+   spinfile.yaml:16:                       banner: 'Manylinux Container with Python 2.7 on Windows'
+   spinfile.yaml:17:                       image: 'registry.contact.de/cp27m-win_amd64'
+   spinfile.yaml:18:                       tags:
+                                             - 'docker'
+                                             - 'windows'
+   spinfile.yaml:14:                       opts:
+                                             - '-p'
+                                             - 'python.use=python'
+   src/spin/cli.py:38:                     executor: <class 'spin.cruise.DockerExecutor'>
+   ~/.spin/global.yaml:8:                  context: 'winsrv2019'
+   ~/.spin/global.yaml:9:                  volprefix: 'c:'
    ...
