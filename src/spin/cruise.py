@@ -9,6 +9,7 @@
 import os
 import sys
 
+from . import tree
 from .api import echo, merge_config, sh
 
 
@@ -16,7 +17,7 @@ def build_cruises(cfg):
     for key in cfg.cruise.keys():
         if not key.startswith("@"):
             cruise = cfg.cruise[key]
-            cruise.tags = cruise.tags.split()
+            tree.set_item_no_keyinfo(cruise, "tags", cruise.tags.split())
             for tag in ["@" + tag for tag in cruise.tags]:
                 if tag in cfg.cruise:
                     merge_config(cruise, cfg.cruise[tag])

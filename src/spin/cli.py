@@ -14,17 +14,14 @@ that are automatically provisioned.
 import importlib
 import os
 import sys
-from pprint import pprint
 
 import click
 
-from . import cruise
+from . import cruise, tree
 from .api import (
-    Config,
     cd,
     config,
     die,
-    echo,
     exists,
     get_tree,
     interpolate1,
@@ -59,7 +56,7 @@ DEFAULTS = config(
     quiet=False,
     verbose=False,
     hooks=config(),
-    cruise=Config(CRUISE_EXECUTOR_MAPPINGS),
+    cruise=config(CRUISE_EXECUTOR_MAPPINGS),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
     ),
@@ -103,12 +100,23 @@ def load_plugin(cfg, import_spec, package=None):
         settings_name = full_name.split(".")[-1]
         plugin_defaults = getattr(mod, "defaults", config())
         plugin_config_tree = cfg.setdefault(settings_name, config())
+        if plugin_defaults:
+            tree._set_keyinfo(
+                cfg,
+                settings_name,
+                tree.keyinfo(plugin_defaults, list(plugin_defaults.keys())[0])
+            )
         merge_config(plugin_config_tree, plugin_defaults)
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__)
             for requirement in plugin_config_tree.get("requires", [])
         ]
+        ki = None
+        if "requires" in plugin_config_tree:
+            ki = tree.keyinfo(plugin_config_tree, "requires")
         plugin_config_tree.requires = [dep.__name__ for dep in dependencies]
+        if ki:
+            tree._set_keyinfo(plugin_config_tree, "requires", ki)
         mod.defaults = plugin_config_tree
     return mod
 
@@ -409,8 +417,7 @@ def cli(
 
     # Debug aid: dump config tree for --debug
     if debug:
-        echo("Configuration tree (debug):")
-        pprint(cfg)
+        print(tree.dumptree(cfg))
 
     if not cruiseopt:
         # Invoke the main command group, which by now has all the

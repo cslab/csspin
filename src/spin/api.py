@@ -21,6 +21,8 @@ import click
 
 import yaml
 
+from . import tree
+
 
 def echo(*msg, **kwargs):
     """Say something."""
@@ -369,6 +371,7 @@ def merge_config(target, source):
         if key not in target:
             try:
                 target[key] = value
+                tree._set_keyinfo(target, key, tree.keyinfo(source, key))
             except Exception:
                 die(f"cannot merge {value} into '{target}[{key}]'")
         elif isinstance(value, dict):
@@ -383,21 +386,11 @@ def merge_config(target, source):
             del target[clause]
 
 
-def config(**kwargs):
-    """Create a configuration tree, setting the keywords to the given
-    values.
-
-    Nested trees are build by using `config()` for values:
-
-    >>> config(subtree=config(key1="...", key2="..."))
-    """
-    return Config(kwargs)
+config = tree.ConfigDict
 
 
 def readyaml(fname):
-    fname = interpolate1(fname)
-    with open(fname) as f:
-        return yaml.load(f, _ConfigLoader)
+    return tree.loadyaml(fname)
 
 
 def download(url, location):
@@ -440,7 +433,6 @@ def task(*args, **kwargs):
     from . import cli
 
     def task_wrapper(fn, group=cli.commands):
-
         def alternate_callback(*args, **kwargs):
             return fn(get_tree(), *args, **kwargs)
 
