@@ -101,9 +101,9 @@ def init(cfg):
     if True:
         pip.append("-q")
 
-    for group, settings in cfg.virtualenv.pipconf.items():
+    for section, settings in cfg.virtualenv.pipconf.items():
         for key, value in settings.items():
-            pip("config", "--site", "set", f"{group}.{key}", value)
+            pip("config", "--site", "set", f"{section}.{key}", value)
 
     with memoizer("{virtualenv.memo}") as m:
 
