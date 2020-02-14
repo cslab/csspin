@@ -19,6 +19,7 @@ def pytest(passthrough: argument(nargs=-1)):
     sh(
         "{virtualenv.scriptdir}/pytest",
         "--cov=spin",
+        "--cov=tests",
         "--cov-report=html",
         *passthrough
     )
