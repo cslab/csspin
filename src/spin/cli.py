@@ -104,7 +104,7 @@ def load_plugin(cfg, import_spec, package=None):
             tree._set_keyinfo(
                 cfg,
                 settings_name,
-                tree.keyinfo(plugin_defaults, list(plugin_defaults.keys())[0])
+                tree.keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),
             )
         merge_config(plugin_config_tree, plugin_defaults)
         dependencies = [
@@ -336,6 +336,27 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
+    cfg = load_spinfile(spinfile, cwd, quiet, plugin_dir, properties)
+
+    # Debug aid: dump config tree for --debug
+    if debug:
+        print(tree.dumptree(cfg))
+
+    if not cruiseopt:
+        # Invoke the main command group, which by now has all the
+        # sub-commands from the plugins.
+        commands.main(args=ctx.args)
+    else:
+        cruise.do_cruise(cfg, cruiseopt, interactive)
+
+
+def main():
+    cli(auto_envvar_prefix="SPIN")
+
+
+def load_spinfile(
+    spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
+):
     cfg = set_tree(readyaml(spinfile))
     merge_config(cfg, DEFAULTS)
 
@@ -414,18 +435,4 @@ def cli(
 
     # We do this before 'debug' so people see the cruise config
     cruise.build_cruises(cfg)
-
-    # Debug aid: dump config tree for --debug
-    if debug:
-        print(tree.dumptree(cfg))
-
-    if not cruiseopt:
-        # Invoke the main command group, which by now has all the
-        # sub-commands from the plugins.
-        commands.main(args=ctx.args)
-    else:
-        cruise.do_cruise(cfg, cruiseopt, interactive)
-
-
-def main():
-    cli(auto_envvar_prefix="SPIN")
+    return cfg
