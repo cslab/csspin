@@ -19,8 +19,6 @@ from contextlib import contextmanager
 
 import click
 
-import yaml
-
 from . import tree
 
 
@@ -290,7 +288,10 @@ def interpolate1(literal, *extra_dicts):
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
-        literal = eval("rf'''%s'''" % literal, {}, where_to_look)
+        try:
+            literal = eval("rf'''%s'''" % literal, {}, where_to_look)
+        except AttributeError as ex:
+            die(str(ex))
         if previous == literal:
             break
     return literal
@@ -303,30 +304,7 @@ def interpolate(literals, *extra_dicts):
     return out
 
 
-class _ConfigLoader(yaml.Loader):
-    pass
-
-
-def construct_mapping(loader, node):
-    loader.flatten_mapping(node)
-    return Config(loader.construct_pairs(node))
-
-
-_ConfigLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
-)
-
 _sentinel = object()
-
-
-class Config(dict):
-    def __getattr__(self, name, default=_sentinel):
-        if name not in self and default is _sentinel:
-            die(f"config key '{name}' not found")
-        return self.get(name, default)
-
-    def __setattr__(self, name, value):
-        self[name] = value
 
 
 def rpad(seq, length, padding=None):
