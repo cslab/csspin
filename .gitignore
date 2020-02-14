@@ -13,3 +13,4 @@ __pycache__/
 .DS_Store
 /cp38-win_amd64/
 /.spin/
+/_phix/
