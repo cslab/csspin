@@ -13,12 +13,12 @@ defaults = config(
 
 
 @task(when="test")
-def pytest(files: argument(nargs=-1)):
-    if not files:
-        files = ["./tests"]
+def pytest(passthrough: argument(nargs=-1)):
+    if not passthrough:
+        passthrough = ["./tests"]
     sh(
         "{virtualenv.scriptdir}/pytest",
         "--cov=spin",
         "--cov-report=html",
-        *files
+        *passthrough
     )
