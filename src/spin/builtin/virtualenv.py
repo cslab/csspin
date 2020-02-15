@@ -40,17 +40,17 @@ defaults = config(
 )
 
 
-@group
+@group()
 def venv(ctx):
     pass
 
 
-@venv.task
+@venv.task()
 def info(ctx):
     echo("{virtualenv.venv}")
 
 
-@venv.task
+@venv.task()
 def rm(cfg):
     cleanup(cfg)
 

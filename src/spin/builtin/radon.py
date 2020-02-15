@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import argument, config, option, sh, task
+from spin.api import config, option, sh, task
 
 defaults = config(
     opts=["-n", "{radon.mi_treshold}"],
@@ -17,12 +17,10 @@ defaults = config(
 
 @task(when="lint")
 def radon(
-    cfg,
-    allsource: option("--all", "allsource", is_flag=True),
-    passthrough: argument(nargs=-1),
+    cfg, allsource: option("--all", "allsource", is_flag=True), args,
 ):
     """Run radon to measure code complexity."""
-    files = passthrough
+    files = args
     if not files:
         files = [f for f in cfg.vcs.modified if f.endswith(".py")]
     if allsource:

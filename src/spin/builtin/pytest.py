@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import argument, config, sh, task
+from spin.api import config, sh, task
 
 defaults = config(
     requires=[".virtualenv", ".test"],
@@ -13,13 +13,13 @@ defaults = config(
 
 
 @task(when="test")
-def pytest(passthrough: argument(nargs=-1)):
-    if not passthrough:
-        passthrough = ["./tests"]
+def pytest(args):
+    if not args:
+        args = ["./tests"]
     sh(
         "{virtualenv.scriptdir}/pytest",
         "--cov=spin",
         "--cov=tests",
         "--cov-report=html",
-        *passthrough
+        *args
     )

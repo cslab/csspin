@@ -17,6 +17,8 @@ import sys
 
 import click
 
+import entrypoints
+
 from . import cruise, tree
 from .api import (
     cd,
@@ -31,6 +33,7 @@ from .api import (
     readyaml,
     set_tree,
     sh,
+    toporun,
 )
 
 
@@ -48,6 +51,7 @@ DEFAULTS = config(
         spinfile="spinfile.yaml",
         spin_dir=".spin",
         spin_global="{spin.userprofile}/global.yaml",
+        spin_global_plugins="{spin.userprofile}/plugins",
         plugin_dir="{spin.spin_dir}/plugins",
         plugin_packages=[],
         userprofile=os.path.expanduser("~/.spin"),
@@ -75,7 +79,7 @@ def find_spinfile(spinfile):
         spinfile_ = os.path.join(cwd, spinfile)
     if os.path.exists(spinfile_):
         return os.path.abspath(spinfile_)
-    die(f"{spinfile_} not found")
+    return None
 
 
 def load_plugin(cfg, import_spec, package=None):
@@ -86,11 +90,13 @@ def load_plugin(cfg, import_spec, package=None):
     of absolute or relative import specs).
 
     """
-    if len(import_spec.split(".")) < 2:
-        import_spec = "spin.builtin." + import_spec
-    try:
-        mod = importlib.import_module(import_spec, package)
-    except ModuleNotFoundError:
+    mod = None
+    for spec in (import_spec, "spin.builtin." + import_spec):
+        try:
+            mod = importlib.import_module(spec, package)
+        except ModuleNotFoundError:
+            pass
+    if mod is None:
         die(f"no such module: '{import_spec}'")
     full_name = mod.__name__
     if full_name not in cfg.loaded:
@@ -145,18 +151,6 @@ def reverse_toposort(nodes, graph):
         die("dependency graph has at least one cycle")
 
     return result
-
-
-def toporun(cfg, *fn_names):
-    """Run plugin functions named in 'fn_names' in topological order.
-
-    """
-    for func_name in fn_names:
-        for pi_name in cfg.topo_plugins:
-            pi_mod = cfg.loaded[pi_name]
-            initf = getattr(pi_mod, func_name, None)
-            if initf:
-                initf(cfg)
 
 
 # This is a click-style decorator that adds the basic command line
@@ -275,33 +269,6 @@ def commands(ctx, **kwargs):
     toporun(ctx.obj, "configure", "init")
 
 
-@commands.command(
-    "exec",
-    context_settings={
-        "ignore_unknown_options": True,
-        "allow_extra_args": True,
-    },
-)
-@click.pass_context
-def exec_shell(ctx):
-    cmd = ctx.args
-    if not cmd:
-        cmd = ("{platform.shell}",)
-    sh(*cmd)
-
-
-@commands.command()
-@click.pass_context
-def cleanup(ctx):
-    """Call the 'cleanup' hook in all plugins.
-
-    This is expected to eventually remove provisioned software
-    (e.g. spin's Python interpreter, virtualenv etc.), but never
-    remove user-supplied data.
-    """
-    toporun(ctx.obj, "cleanup")
-
-
 @click.command(
     context_settings={
         "allow_extra_args": True,
@@ -359,7 +326,7 @@ def main():
 def load_spinfile(
     spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
 ):
-    cfg = set_tree(readyaml(spinfile))
+    cfg = set_tree(readyaml(spinfile) if spinfile else config())
     merge_config(cfg, DEFAULTS)
 
     # Merge user-specific globals if they exist
@@ -373,37 +340,38 @@ def load_spinfile(
 
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
-    spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
-    if not cwd:
-        cd(spinfile_dir)
+    if spinfile:
+        spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
+        if not cwd:
+            cd(spinfile_dir)
 
-    # Setup plugin_dir, where spin installs plugin packages.
-    if plugin_dir:
-        cfg.spin.plugin_dir = plugin_dir
-    if not os.path.isabs(cfg.spin.plugin_dir):
-        cfg.spin.plugin_dir = os.path.abspath(
-            os.path.join(spinfile_dir, cfg.spin.plugin_dir)
-        )
-    if not exists(cfg.spin.plugin_dir):
-        mkdir(cfg.spin.plugin_dir)
-    sys.path.insert(0, cfg.spin.plugin_dir)
+        # Setup plugin_dir, where spin installs plugin packages.
+        if plugin_dir:
+            cfg.spin.plugin_dir = plugin_dir
+        if not os.path.isabs(cfg.spin.plugin_dir):
+            cfg.spin.plugin_dir = os.path.abspath(
+                os.path.join(spinfile_dir, cfg.spin.plugin_dir)
+            )
+        if not exists(cfg.spin.plugin_dir):
+            mkdir(cfg.spin.plugin_dir)
+        sys.path.insert(0, cfg.spin.plugin_dir)
 
-    # Install plugin packages that are not yet installed, using pip
-    # with the "-t" (target) option pointing to the plugin directory.
-    with memoizer("{spin.spin_dir}/packages.memo") as m:
-        for pkg in cfg.spin.plugin_packages:
-            if not m.check(pkg):
-                sh(
-                    f"{sys.executable}",
-                    "-m",
-                    "pip",
-                    "install",
-                    "-q",
-                    "-t",
-                    "{spin.plugin_dir}",
-                    f"{pkg}",
-                )
-                m.add(pkg)
+        # Install plugin packages that are not yet installed, using pip
+        # with the "-t" (target) option pointing to the plugin directory.
+        with memoizer("{spin.spin_dir}/packages.memo") as m:
+            for pkg in cfg.spin.plugin_packages:
+                if not m.check(pkg):
+                    sh(
+                        f"{sys.executable}",
+                        "-m",
+                        "pip",
+                        "install",
+                        "-q",
+                        "-t",
+                        "{spin.plugin_dir}",
+                        f"{pkg}",
+                    )
+                    m.add(pkg)
 
     # Load plugins. "Plugins" are not plugin packages, but modules
     # which we expect to live in plugin packages. Afterwards
@@ -412,6 +380,13 @@ def load_spinfile(
     cfg.loaded = config()
     for import_spec in cfg.get("plugins", []):
         load_plugin(cfg, import_spec)
+
+    # Also load global plugins
+    sys.path.insert(
+        0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins))
+    )
+    for ep in entrypoints.get_group_all("spin.plugin"):
+        load_plugin(cfg, ep.module_name)
 
     # Create a topologically sorted list of the plugins by their
     # 'requires' dependencies. This will be used later by 'toporun' to

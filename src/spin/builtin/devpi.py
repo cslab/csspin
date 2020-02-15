@@ -8,7 +8,6 @@ import os
 
 from spin.api import (
     Command,
-    argument,
     config,
     exists,
     get_tree,
@@ -33,7 +32,7 @@ def prepare_environment():
     )
 
 
-@task
+@task()
 def stage():
     prepare_environment()
     data = {}
@@ -53,7 +52,7 @@ def stage():
     )
 
 
-@task
-def devpi(passthrough: argument(nargs=-1)):
+@task()
+def devpi(args):
     prepare_environment()
-    sh("devpi", *passthrough)
+    sh("devpi", *args)

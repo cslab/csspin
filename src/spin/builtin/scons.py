@@ -6,7 +6,7 @@
 
 import os
 
-from spin.api import argument, config, sh, task
+from spin.api import config, sh, task
 
 defaults = config(
     cmd="scons",
@@ -17,6 +17,6 @@ defaults = config(
 
 
 @task()
-def scons(cfg, passthrough: argument(nargs=-1)):
+def scons(cfg, args):
     """Run scons command"""
-    sh("{scons.cmd}", *cfg.scons.opts, *passthrough)
+    sh("{scons.cmd}", *cfg.scons.opts, *args)

@@ -8,7 +8,6 @@ import os
 import sys
 
 from spin.api import (
-    argument,
     config,
     download,
     echo,
@@ -69,14 +68,14 @@ defaults = config(
 )
 
 
-@task
-def python(passthrough: argument(nargs=-1)):
+@task()
+def python(args):
     """Run the Python interpreter used for this projects.
 
     Provisioning happens automatically. The 'python' task makes sure
     the requested Python release is installed.
     """
-    sh("{python.interpreter}", *passthrough)
+    sh("{python.interpreter}", *args)
 
 
 def pyenv_install(cfg):

@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import argument, config, option, sh, task
+from spin.api import config, option, sh, task
 
 defaults = config(
     cmd="flake8",
@@ -25,13 +25,9 @@ defaults = config(
 
 
 @task(when="lint")
-def flake8(
-    cfg,
-    allsource: option("--all", "allsource", is_flag=True),
-    passthrough: argument(nargs=-1),
-):
+def flake8(cfg, allsource: option("--all", "allsource", is_flag=True), args):
     """Run flake8 to lint Python code."""
-    files = passthrough
+    files = args
     if not files:
         files = [f for f in cfg.vcs.modified if f.endswith(".py")]
     if allsource:

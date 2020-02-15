@@ -244,6 +244,9 @@ class Memoizer(object):
         """Check wether `item` is a know fact."""
         return item in self._items
 
+    def items(self):
+        return self._items
+
     def add(self, item):
         """Add `item` to the fact base."""
         self._items.append(item)
@@ -439,44 +442,49 @@ def task(*args, **kwargs):
             if pn == "cfg":
                 pass_config = True
                 continue
-            if pn == "passthrough":
+            if pn == "args":
                 context_settings.ignore_unknown_options = True
                 context_settings.allow_extra_args = True
+                task_object = click.argument("args", nargs=-1)(task_object)
+                continue
             param = sig.parameters[pn]
             task_object = param.annotation(pn)(task_object)
-        task_object = group.command(context_settings=context_settings)(
-            task_object
-        )
         hook = kwargs.pop("when", None)
+        aliases = kwargs.pop("aliases", [])
+        group = kwargs.pop("group", group)
+        task_object = group.command(
+            *args, **kwargs, context_settings=context_settings
+        )(task_object)
         if hook:
             cfg = get_tree()
             hook_tree = cfg.get("hooks", config())
             hooks = hook_tree.setdefault(hook, [])
             hooks.append(task_object)
-        for alias in kwargs.pop("aliases", []):
+        for alias in aliases:
             group.register_alias(alias, task_object)
         if pass_config:
             task_object.callback = alternate_callback
         return task_object
 
-    if args:
-        # We have positional arguments, assume @task without
-        # parentheses
-        return task_wrapper(*args, **kwargs)
-
-    # Else, assume @task(<options>)
     return task_wrapper
 
 
-def group(fn):
+def group(*args, **kwargs):
     from . import cli
 
-    def subtask(fn):
-        return task(fn, grp)
+    def group_decorator(fn):
+        def subtask(*args, **kwargs):
+            def task_decorator(fn):
+                cmd = task(*args, **kwargs, group=grp)(fn)
+                return cmd
 
-    grp = cli.commands.group()(click.pass_context(fn))
-    grp.task = subtask
-    return grp
+            return task_decorator
+
+        grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))
+        grp.task = subtask
+        return grp
+
+    return group_decorator
 
 
 def invoke(hook, *args, **kwargs):
@@ -484,3 +492,15 @@ def invoke(hook, *args, **kwargs):
     cfg = get_tree()
     for task_object in cfg.hooks.setdefault(hook, []):
         ctx.invoke(task_object, *args, **kwargs)
+
+
+def toporun(cfg, *fn_names):
+    """Run plugin functions named in 'fn_names' in topological order.
+
+    """
+    for func_name in fn_names:
+        for pi_name in cfg.topo_plugins:
+            pi_mod = cfg.loaded[pi_name]
+            initf = getattr(pi_mod, func_name, None)
+            if initf:
+                initf(cfg)
