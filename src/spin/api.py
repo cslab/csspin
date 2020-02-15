@@ -308,6 +308,16 @@ _sentinel = object()
 
 
 def rpad(seq, length, padding=None):
+    """Right pad a sequence to become at least `length` long with `padding` items.
+
+    Post-condition ``len(rpad(seq, n)) >= n``.
+
+    Example:
+
+    >>> rpad([1], 3)
+    [None, None, 1]
+
+    """
     while True:
         pad_length = length - len(seq)
         if pad_length > 0:
@@ -332,7 +342,7 @@ def directive_prepend(target, key, value):
 
 
 def directive_interpolate(target, key, value):
-    target[key] = interpolate1(value)
+    tree.tree_update_key(target, key, interpolate1(value))
 
 
 def merge_config(target, source):
@@ -349,7 +359,9 @@ def merge_config(target, source):
         if key not in target:
             try:
                 target[key] = value
-                tree._set_keyinfo(target, key, tree.keyinfo(source, key))
+                tree.tree_set_keyinfo(
+                    target, key, tree.tree_keyinfo(source, key)
+                )
             except Exception:
                 die(f"cannot merge {value} into '{target}[{key}]'")
         elif isinstance(value, dict):
@@ -364,11 +376,11 @@ def merge_config(target, source):
             del target[clause]
 
 
-config = tree.ConfigDict
+config = tree.ConfigTree
 
 
 def readyaml(fname):
-    return tree.loadyaml(fname)
+    return tree.tree_load(fname)
 
 
 def download(url, location):

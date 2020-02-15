@@ -101,10 +101,12 @@ def load_plugin(cfg, import_spec, package=None):
         plugin_defaults = getattr(mod, "defaults", config())
         plugin_config_tree = cfg.setdefault(settings_name, config())
         if plugin_defaults:
-            tree._set_keyinfo(
+            tree.tree_set_keyinfo(
                 cfg,
                 settings_name,
-                tree.keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),
+                tree.tree_keyinfo(
+                    plugin_defaults, list(plugin_defaults.keys())[0]
+                ),
             )
         merge_config(plugin_config_tree, plugin_defaults)
         dependencies = [
@@ -113,10 +115,10 @@ def load_plugin(cfg, import_spec, package=None):
         ]
         ki = None
         if "requires" in plugin_config_tree:
-            ki = tree.keyinfo(plugin_config_tree, "requires")
+            ki = tree.tree_keyinfo(plugin_config_tree, "requires")
         plugin_config_tree.requires = [dep.__name__ for dep in dependencies]
         if ki:
-            tree._set_keyinfo(plugin_config_tree, "requires", ki)
+            tree.tree_set_keyinfo(plugin_config_tree, "requires", ki)
         mod.defaults = plugin_config_tree
     return mod
 
@@ -340,7 +342,7 @@ def cli(
 
     # Debug aid: dump config tree for --debug
     if debug:
-        print(tree.dumptree(cfg))
+        print(tree.tree_dump(cfg))
 
     if not cruiseopt:
         # Invoke the main command group, which by now has all the

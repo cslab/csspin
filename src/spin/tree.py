@@ -16,14 +16,36 @@ KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
 
 
-class ConfigDict(OrderedDict):
+class ConfigTree(OrderedDict):
+    """A specialization of `OrderedDict` that we use to store the
+    configuration tree internally.
+
+    `ConfigTree` has three features over `OrderedDict`: first, it
+    behaves like a "bunch", i.e. items can be access as dot
+    expressions (``config.myprop``). Second, each subtree is linked to
+    its parent, to enable the computation of full names:
+
+    >>> tree_keyname(parent.subtree, "prop")
+    'parent.subtree.prop'
+
+    Third, we keep track of the locations settings came from. This is
+    done automatically, i.e for each update operation we inspect the
+    callstack and store source file name and line number. For data
+    read from another source (e.g. a YAML file), the location
+    information can be update manually via `tree_set_keyinfo`.
+
+    Note that APIs used to access tracking information are *not* part
+    of this class, as each identifier we add may clash with property
+    names used.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__keyinfo = {}
         self.__parentinfo = None
         for key, value in self.items():
             self.__keyinfo[key] = _call_location(2)
-            if isinstance(value, ConfigDict):
+            if isinstance(value, ConfigTree):
                 value.__parentinfo = ParentInfo(self, key)
 
     def __setitem__(self, key, value):
@@ -35,8 +57,15 @@ class ConfigDict(OrderedDict):
         _set_callsite(self, key, 3, default)
         return val
 
+    # __setattr__ and __getattr__ give the configuration tree "bunch"
+    # behaviour, i.e. one can access the dictionary items as if they
+    # were properties; this makes for a more convenient notation when
+    # using the settings in code and f-like interpolation expressions.
+
     def __setattr__(self, name, value):
-        if name.startswith("_ConfigDict__"):
+        if name.startswith("_ConfigTree__"):
+            # "private" variables must not go into the dictionary,
+            # obviously.
             object.__setattr__(self, name, value)
         else:
             self[name] = value
@@ -48,7 +77,7 @@ class ConfigDict(OrderedDict):
         raise AttributeError(f"No property '{name}'")
 
 
-def set_item_no_keyinfo(config, key, value):
+def tree_update_key(config, key, value):
     OrderedDict.__setitem__(config, key, value)
 
 
@@ -58,66 +87,72 @@ def _call_location(depth):
 
 
 def _set_callsite(self, key, depth, value):
-    if hasattr(self, "_ConfigDict__keyinfo"):
-        self._ConfigDict__keyinfo[key] = _call_location(depth)
-    set_parent(value, self, key)
+    if hasattr(self, "_ConfigTree__keyinfo"):
+        self._ConfigTree__keyinfo[key] = _call_location(depth)
+    tree_set_parent(value, self, key)
 
 
-def _set_keyinfo(self, key, ki):
-    if hasattr(self, "_ConfigDict__keyinfo"):
-        self._ConfigDict__keyinfo[key] = ki
+def tree_set_keyinfo(self, key, ki):
+    if hasattr(self, "_ConfigTree__keyinfo"):
+        self._ConfigTree__keyinfo[key] = ki
 
 
-def keyinfo(self, k):
-    return self._ConfigDict__keyinfo[k]
+def tree_keyinfo(self, k):
+    return self._ConfigTree__keyinfo[k]
 
 
-def set_parent(self, parent, name):
-    if hasattr(self, "_ConfigDict__parentinfo"):
-        self._ConfigDict__parentinfo = ParentInfo(parent, name)
+def tree_set_parent(self, parent, name):
+    if hasattr(self, "_ConfigTree__parentinfo"):
+        self._ConfigTree__parentinfo = ParentInfo(parent, name)
 
 
-def keyname(self, key):
+def tree_keyname(self, key):
     path = [key]
     try:
-        parentinfo = self._ConfigDict__parentinfo
+        parentinfo = self._ConfigTree__parentinfo
         while parentinfo:
             path.insert(0, parentinfo.key)
-            parentinfo = parentinfo.parent._ConfigDict__parentinfo
+            parentinfo = parentinfo.parent._ConfigTree__parentinfo
     except AttributeError:
         pass
     return ".".join(path)
 
 
-def build_tree(data, fn):
-    config = ConfigDict(data)
+def tree_build(data, fn):
+    config = ConfigTree(data)
     for key, value in data.items():
         if isinstance(value, dict):
-            config[key] = build_tree(value, fn)
-            set_parent(config[key], config, key)
+            config[key] = tree_build(value, fn)
+            tree_set_parent(config[key], config, key)
         ki = KeyInfo(fn, data.lc.key(key)[0] + 1)
-        _set_keyinfo(config, key, ki)
+        tree_set_keyinfo(config, key, ki)
     return config
 
 
-def loadyaml(fn):
+def tree_load(fn):
     yaml = ruamel.yaml.YAML()
     with open(fn) as f:
         data = yaml.load(f)
-    return build_tree(data, fn)
+    return tree_build(data, fn)
 
 
-def walk_tree(config, indent=""):
+def tree_walk(config, indent=""):
+    """Walk configuration tree depth-first, yielding the key, its value,
+    the full name of the key, the tracking information and an
+    indentation string that increases by ``" "`` for each level.
+    """
     for key, value in config.items():
-        yield key, value, keyname(config, key), keyinfo(config, key), indent
-        if isinstance(value, ConfigDict):
-            for key, value, fullname, info, subindent in walk_tree(
+        yield key, value, tree_keyname(config, key), tree_keyinfo(
+            config, key
+        ), indent
+        if isinstance(value, ConfigTree):
+            for key, value, fullname, info, subindent in tree_walk(
                 value, indent + "  "
             ):
                 yield key, value, fullname, info, subindent
 
 
-def dumptree(tree):
+def tree_dump(tree):
     text = []
 
     def write(line):
@@ -135,10 +170,10 @@ def dumptree(tree):
 
     tagcolumn = max(
         len(f"{shorten_filename(info.file)}:{info.line}:")
-        for _, _, _, info, _ in walk_tree(tree)
+        for _, _, _, info, _ in tree_walk(tree)
     )
     separator = "|"
-    for key, value, _fullname, info, indent in walk_tree(tree):
+    for key, value, _fullname, info, indent in tree_walk(tree):
         tag = f"{shorten_filename(info.file)}:{info.line}:"
         space = (tagcolumn - len(tag) + 1) * " "
         if isinstance(value, list):
