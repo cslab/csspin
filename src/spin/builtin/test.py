@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import invoke, task
+from spin import invoke, task
 
 
 @task(aliases=["tests"])

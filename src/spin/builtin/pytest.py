@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import config, sh, task
+from spin import config, sh, task
 
 defaults = config(
     requires=[".virtualenv", ".test"],

@@ -6,7 +6,7 @@
 
 import os
 
-from spin.api import (
+from spin import (
     Command,
     config,
     exists,

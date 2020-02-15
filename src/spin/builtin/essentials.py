@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin.api import sh, task, toporun
+from spin import sh, task, toporun
 
 
 @task("exec")

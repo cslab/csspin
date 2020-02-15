@@ -19,10 +19,10 @@ import click
 
 import entrypoints
 
-from . import cruise, tree
-from .api import (
+from . import (
     cd,
     config,
+    cruise,
     die,
     exists,
     get_tree,
@@ -34,6 +34,7 @@ from .api import (
     set_tree,
     sh,
     toporun,
+    tree,
 )
 
 

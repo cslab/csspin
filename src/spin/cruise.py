@@ -9,8 +9,7 @@
 import os
 import sys
 
-from . import tree
-from .api import echo, merge_config, sh
+from . import echo, merge_config, sh, tree
 
 
 def build_cruises(cfg):

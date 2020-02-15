@@ -6,7 +6,7 @@
 
 import os
 
-from spin.api import config, sh, task
+from spin import config, sh, task
 
 defaults = config(
     cmd="scons",

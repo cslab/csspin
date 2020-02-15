@@ -7,7 +7,7 @@
 import os
 import sys
 
-from spin.api import (
+from spin import (
     Command,
     config,
     echo,

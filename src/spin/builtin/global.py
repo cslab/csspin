@@ -8,7 +8,7 @@ import sys
 
 import entrypoints
 
-from spin.api import argument, group, memoizer, sh
+from spin import argument, group, memoizer, sh
 
 
 @group("global")
