@@ -6,7 +6,7 @@
 
 from pytest import raises
 
-from spin.api import SpinError
+from spin import SpinError
 from spin.cli import reverse_toposort
 
 
