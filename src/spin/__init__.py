@@ -383,7 +383,7 @@ config = tree.ConfigTree
 
 
 def readyaml(fname):
-    return tree.tree_load(fname)
+    return tree.tree_load(interpolate1(fname))
 
 
 def download(url, location):
