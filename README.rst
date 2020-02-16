@@ -7,21 +7,26 @@ workflows for many similar projects. It does this by encapsulating
 task definitions in Python packages and automating the provisioning of
 development sandboxes and dependencies.
 
-Installing
-==========
+.. toctree::
+
+   README
+
+Installation
+============
 
 Basic information:
 
-* requires Python 3.8
-* currently under development
-* should be available on ``PATH``
+* ``spin`` requires Python 3.8
+* it is currently under development, pull often
+* it's most convenient to have the ``spin`` command available on your
+  ``PATH``
 
-Recommendation: install from git clone using `pipx
-<https://pipxproject.github.io/pipx/>`_. `pipx` is a tool that
-installs Python packages into a user-specific location in a user's
-``HOME`` directory.
+We currently recommend to install ``spin`` directly from its cloned
+repository using `pipx <https://pipxproject.github.io/pipx/>`_. `pipx`
+is a tool that installs Python packages into a user-specific location
+in a user's ``HOME`` directory.
 
-Example:
+Install `pipx`:
 
 .. code-block:: console
 
@@ -33,13 +38,48 @@ configuration, so commands from packages installed by `pipx` are
 available in ``PATH``. Make sure to restart your shell to make the
 setting effective.
 
+Use `pipx` to install `spin`:
+
 .. code-block:: console
 
    $ git clone git@git.contact.de:frank/spin.git
    $ cd spin
    $ pipx install --spec . --editable spin
 
-The ``spin`` command is now available in your PATH.
+The ``spin`` command is now available in your ``PATH``, linked to your
+clone of the ``spin`` repository. Updating the repository will
+automatically give you the most up-to-date code.
+
+
+Usage
+=====
+
+``spin`` provides subcommands that normally simply call other
+tools::
+
+  spin [OPTIONS] COMMAND [ARGS]...
+
+Here are examples from ``spin`` itself.
+
+* Run spin's test suite:
+
+  .. code-block:: console
+
+     $ spin tests
+     spin: cd /Users/frank/Projects/spin
+     spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
+     spin: pip -q config --site set global.extra-index-url http://haskell:4033/frank/staging/+simple/
+     spin: ./cp38-macosx_10_15_x86_64/bin/pytest --cov=spin --cov=tests --cov-report=html ./tests
+     .........
+     ------------------------------------------------------------------------------
+     Ran 9 tests in 1.10s
+     
+     ---------- coverage: platform darwin, python 3.8.1-final-0 -----------
+     Coverage HTML written to dir htmlcov
+     
+     
+     OK
+
 
 
 Overview
@@ -63,10 +103,11 @@ A plugin can do one or more of the following:
   subcommand ``lint``; this can be verified by calling ``spin
   --help``, which displays all know subcommands
 
-* declare plugin dependencies, e.g. **flake8** depends on **lint** (so
-  it can be called as one the linters know to **lint**), and
-  **virtualenv** (because we need a place to install the ``flake8``
-  package from PyPI)
+* declare plugin dependencies, e.g. the **flake8** plugin depends on
+  the **lint** and **virtualenv** plugins. **lint** is required,
+  because **flake8** registers itself as a linter for the
+  project. **virtualenv** is required because we need 'virtualenv' to
+  install the actual ``flake8`` package from PyPI.
 
 * declare package requirements, that are installed into a virtual
   environment
@@ -102,13 +143,14 @@ from (in this order):
 Settings in the configuration tree can refer to other settings by
 using *string interpolation*: path expressions surrounded by braces
 are replaced by the setting given. E.g. ``{spin.project_root}`` is the
-setting ``project_root`` in the subtree ``spin`` and is the root
-directory of the project (i.e. where ``spinfile.yaml`` is
-located). Strings are interpolated until they no longer contain an
-expression, i.e. expressions are resolved recursively and an
-interpolation can result in an interpolatable expression.
+setting ``project_root`` in the subtree ``spin`` and its semantic is
+to hold the relative path of root directory of the project (i.e. where
+``spinfile.yaml`` is located). Strings are interpolated until they no
+longer contain an expression. Expressions are resolved recursively so
+an interpolation can result in another interpolatable expression, that
+will be interpolated as well, until the process reaches its fix point.
 
-Braces are meta-characters in the syntax of YAML that indicate a
+In YAML, braces are syntactical meta-characters that indicate a
 literal dictionary (like in JSON, of which YAML is
 super-set). Settings using string interpolation must therefore be
 quoted. Example:
@@ -124,12 +166,19 @@ There are dozens of settings defined by the spin framework, and each
 plugin comes with its own set of settings and uses settings from other
 plugins and the framework.
 
-Note that YAML has the information model as JSON: supported data types
-include dictionaries, lists and literals (mostly strings). Spin and
-its plugins require each entry to be of a particular type. Destroying
-the structure of the tree by setting a key that is expected to be a
-dictionary to a string value will likely break the code and make the
-``spin`` command fail.
+
+Why YAML?
+---------
+
+Good question. To me it seemed like the choice that sucked least. It
+has comments, it is well supported by text editors, and its data model
+blends naturally with the configuration tree paradigm of
+``spin``. YAML has the same information model as JSON: supported data
+types include dictionaries, lists and literals (mostly strings).
+
+However, YAML is a complex beast. You can do all kinds of mischievous
+tricks with YAML, and if you mess up the tree, ``spin`` will most
+likely fail to run.
 
 
 
@@ -231,8 +280,8 @@ Cruises can also be selected by specifying tags (which are prefixed by
 A special selector is ``@all``, selecting all cruises.
 
 
-Examples
-========
+Example
+=======
 
 The following shows an invocation of ``spin lint`` when nothing has
 been provisioned yet.
@@ -307,7 +356,7 @@ and launches all linters declared for this project (``flake8`` and
 
 
 Invoking the same command a second time will naturally not
-re-provision everything, but simply call ``flake8``:
+re-provision everything, but simply launch the linters:
 
 .. code-block:: console
 
@@ -341,9 +390,9 @@ the virtual environment:
 
 
 Simply removing the ``requirements`` setting from ``spinfile.yaml``
-will not remove that package from provisioned virtual environment,
-though. We can either simply remove that environment, or use ``spin
-exec`` to run ``pip`` inside the environment:
+will not remove that package, though. We can either simply remove that
+environment, or use ``spin exec`` to run ``pip`` inside the
+environment:
 
 .. code-block:: console
 
@@ -367,26 +416,174 @@ Where files go
   environment (provisioned by the built-in plugin *virtualenv*)
 
 
+Developing Plugins
+------------------
+
+Plugins are Python modules that are imported by ``spin``, doing
+whatever side-effects are required. Plugins are loaded in one the
+following three ways:
+
+* plugins that are listed under the ``plugins`` key of ``spinfile.yaml``
+
+* plugins that are listed as requirements in another plugin's
+  configuration subtree under the ``requires`` key
+
+* lastly, ``spin`` loads all plugins registered as Python
+  *entrypoints* in the ``spin.plugin`` group automatically; this is
+  useful for plugins that provide globally available commands which
+  are not specific to a particular project; plugins meant to be used
+  in the context of a project do not provide entrypoints for automatic
+  loading.
+
+
+The API of plugins consists of the following:
+
+* an optional module-level variable ``defaults`` holding a
+  configuration subtree created by the `config()`; this configuration
+  tree will be merged with project and global settings and become the
+  configuration subtree named like the plugin
+
+* an optional ``init(cfg)`` callback that is called before any
+  subcommand is executed; ``init`` can be used to provision
+  dependencies, e.g. the **python** plugin provisions a Python
+  interpreter in its ``init``
+
+* an optional ``cleanup(cfg)`` callback that is called when running
+  ``spin cleanup``; this is used to unprovision dependencies, e.g. the
+  **python** plugin removes the installation tree of the Python
+  interpreter it provided it ``init`` callback
+
+* an optional ``configure(cfg)`` callback that is called before
+  ``init``; here, plugins can manipulate the configuration tree so
+  that subsequent callbacks of other plugins behave differently
+
+Callbacks are called in "dependency" order, i.e. the plugin dependency
+graph (as given by ``requires``) is topologically sorted.
+
+
+Further, importing a plugin can have side-effects like adding
+subcommands to ``spin`` by using the decorators ``@task`` and
+``@group``.
+
+Here is an example for a very simple plugin:
+
+.. code-block:: python
+ 
+   # We assume that this plugin module is called `example`, providing
+   # a subcommand of the same name.
+   
+   from spin import config, echo, task
+
+   defaults = config(msg="This projects lives in {spin.project_root}")
+
+   @task()
+   def example(cfg):
+       """Example plugin"""
+       echo(cfg.example.msg)
+
+To activate this plugin, it has to be declared in ``spinfile.yaml``:
+
+.. code-block:: yaml
+
+   # spinfile.yaml
+   plugins:
+     - example   # assuming 'example' is availabe somewhere in sys.path
+
+By this ``spin`` gains a new subcommand ``example`` which we can use
+to print our message:
+
+.. code-block:: console
+
+   $ spin --help
+   ...
+   Commands:
+   ...
+     example    Example plugin
+   ...
+   $ spin example
+   spin: This project lives in .
+     
+   
+
 Plugin API
 ----------
 
-The API for plugin development is defined in ``spin.api`` (sorry,
+The API for plugin development is defined in ``spin`` (sorry,
 documentation pretty incomplete right now). The general idea is to
-keep plugin scripts short and tidy. ``spin.api`` provides simple
-Python function to do basic things like manipulating files and running
-programs. String arguments to spin APIs are automatically interpolated
-agains the configuration tree.
+keep plugin scripts short and tidy, similar to shell scripts of
+commands in a Makefile. Thus, ``spin`` provides simple, short-named
+Python function to do things like manipulating files and running
+programs.
 
-Overview:
+Arguments to spin APIs are automatically interpolated agains
+the configuration tree.
 
-* ``echo()`` prints messages (unless silenced by the ``-q`` option)
-* ``cd()`` changes the current working directory
-* ``exists()`` checks wether a file or directory exists
-* ``mkdir()`` makes sure a path exists, creating it if necessary
-* ``rmtree()`` removes a directory tree
-* ``die()`` terminates with an error message
-* ``sh()`` runs a program
-* ``setenv()`` sets or deletes one or more environment variables
+.. py:function:: echo(*msg, **kwargs)
+
+   Print a message to the console by joining the positional arguments
+   `msg` with spaces. Arguments are interpolated against the
+   configuration tree. `echo` will remain silent when ``spin`` is run
+   with the ``--quiet`` flag.
+
+   `echo` supports the same keyword arguments as Click's `echo
+   <https://click.palletsprojects.com/en/7.x/api/#echo>`_.
+
+
+.. py:function:: cd(path)
+
+   Change the current working directory to `path`, which is
+   interpolated against the configuration tree. `cd` can be used as a
+   context manager using ``with``, in that case it changes the working
+   directory back to the original one when the ``with`` clause ends.
+
+
+.. py:function:: exists(path)
+
+   Checks wether `path` exists. `path` is interpolated against the
+   configuration tree.
+
+
+.. py:function:: mkdir(path)
+
+   Ensures that the directory hierarchy `path` exist, creating
+   directories if necessary. The argument is interpolated against the
+   configuration tree.
+
+
+.. py:function:: rmtree(path)
+
+   Recursively removes the directory `path`. The argument is
+   interpolated against the configuration tree.
+
+
+.. py:function:: die(*msg)
+
+   Terminates ``spin`` with a non-zero return code and print the error
+   message `msg`. Arguments are interpolated against the configuration
+   tree.
+
+
+.. py:function:: sh(*cmd, silent=False, shell=False, **kwargs)
+
+   Run a program by building a command line from `cmd`. When multiple
+   positional arguments are given, each is treated as one element of
+   the command. When just one positional argument is used, `sh`
+   assumes it to be a single command and splits it into multiple
+   arguments using `shlex.split`. The `cmd` arguments are interpolated
+   against the configuration tree. When `silent` is ``False``, the
+   resulting command line will be echoed. When `shell` is ``True``,
+   the command line is passed to the system's shell. Other keyword
+   arguments are passed into `subprocess.run`.
+
+
+.. py:function:: setenv(**kwargs)
+
+   Manipulate environment variables. Assigning ``None`` will remove
+   the environment variable. Argument values are interpolated against
+   the configuration tree.
+
+Others (not yet really documented):
+
 * ``[read|write][bytes|text]()`` reads/writes binary data or text
   from/to a file
 * ``persist()`` and ``unpersist()`` read and write Python objects
@@ -399,7 +596,7 @@ Overview:
   by plugins)
 * ``download()`` downloads something to disk
 * ``get_tree()`` gets the global configuration tree (which may be
-  necessary sometime when it is not passed into a plugin hook by spin
+  necessary sometimes when it is not passed into a plugin hook by spin
   automatically)
 * ``task()``, ``argument()`` and ``option()`` are used to define
   subcommands and their options and arguments; those -- like spin
@@ -412,7 +609,7 @@ Simple example:
 
 .. code-block:: python
 
-   from spin.api import cd, die, echo, exists, sh
+   from spin import cd, die, echo, exists, sh
 
    def meaningless_example():
        echo("This project is located in {spin.project_root}")
@@ -430,6 +627,11 @@ Simple example:
 
 Sample ``global.yaml``
 ======================
+
+``spin`` looks for a file called ``global.yaml`` in
+``~/.spin``. Settings from this file are merged into the project
+configuration tree. This facility can be used to provide user/machine
+specific settings like in the example below.
 
 .. code-block:: yaml
 
