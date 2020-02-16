@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""This is the fabulous scripting API, concise and powerful."""
+"""This is the core API of spin."""
 
 import collections
 import inspect
@@ -112,7 +112,7 @@ class SpinError(click.ClickException):
     pass
 
 
-def die(*msg, **kwargs):
+def die(*msg):
     """Print error message to stderr and terminate ``spin`` with an error
     return code."""
     raise SpinError(" ".join(msg))
