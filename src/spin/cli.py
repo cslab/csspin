@@ -91,14 +91,10 @@ def load_plugin(cfg, import_spec, package=None):
     of absolute or relative import specs).
 
     """
-    mod = None
-    for spec in (import_spec, "spin.builtin." + import_spec):
-        try:
-            mod = importlib.import_module(spec, package)
-        except ModuleNotFoundError:
-            pass
-    if mod is None:
-        die(f"no such module: '{import_spec}'")
+    try:
+        mod = importlib.import_module(import_spec, package)
+    except ModuleNotFoundError:
+        die(f"failed to load plugin '{import_spec}'")
     full_name = mod.__name__
     if full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
@@ -320,6 +316,28 @@ def cli(
         cruise.do_cruise(cfg, cruiseopt, interactive)
 
 
+def find_plugin_packages(cfg):
+    # Packages that are required to load plugins are identified by
+    # the keys in dict-valued list items of the 'plugins' setting
+    for item in cfg.get("plugins", []):
+        if isinstance(item, dict):
+            for key in item.keys():
+                yield key
+
+
+def yield_plugin_import_specs(cfg):
+    for item in cfg.get("plugins", []):
+        if isinstance(item, dict):
+            for package_value in item.values():
+                if isinstance(package_value, list):
+                    for import_spec in package_value:
+                        yield import_spec
+                else:
+                    yield package_value
+        else:
+            yield f"spin.builtin.{item}"
+
+
 def load_spinfile(
     spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
 ):
@@ -351,12 +369,14 @@ def load_spinfile(
             )
         if not exists(cfg.spin.plugin_dir):
             mkdir(cfg.spin.plugin_dir)
-        sys.path.insert(0, cfg.spin.plugin_dir)
+        sys.path.insert(0, interpolate1(cfg.spin.plugin_dir))
 
         # Install plugin packages that are not yet installed, using pip
         # with the "-t" (target) option pointing to the plugin directory.
-        with memoizer("{spin.spin_dir}/packages.memo") as m:
-            for pkg in cfg.spin.plugin_packages:
+        with memoizer("{spin.plugin_dir}/packages.memo") as m:
+            replacements = cfg.get("devpackages", {})
+            for pkg in find_plugin_packages(cfg):
+                pkg = replacements.get(pkg, pkg)
                 if not m.check(pkg):
                     sh(
                         f"{sys.executable}",
@@ -375,7 +395,7 @@ def load_spinfile(
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
-    for import_spec in cfg.get("plugins", []):
+    for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec)
 
     # Also load global plugins
