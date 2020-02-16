@@ -10,7 +10,7 @@ defaults = config(
     opts=["-n", "{radon.mi_treshold}"],
     cmd="radon",
     mi_treshold="B",
-    requires=[".lint"],
+    requires=["preflight"],
     packages=["radon"],
 )
 

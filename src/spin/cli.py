@@ -267,7 +267,7 @@ def commands(ctx, **kwargs):
     # For commands like "cleanup" or "venv ..." it is idiotic to run
     # all initializations first. This should be supressable, possibly
     # by augmenting 'spin.plugin.task' or something ...
-    toporun(ctx.obj, "configure", "init")
+    toporun(ctx.obj, "init")
 
 
 @click.command(
@@ -397,6 +397,8 @@ def load_spinfile(
         for n, mod in cfg.loaded.items()
     }
     cfg.topo_plugins = reverse_toposort(nodes, graph)
+
+    toporun(cfg, "configure")
 
     # Add command line settings.
     for prop in properties:

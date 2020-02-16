@@ -7,7 +7,7 @@
 from spin import config, sh, task
 
 defaults = config(
-    requires=[".virtualenv", ".test"],
+    requires=["virtualenv", "preflight"],
     packages=["pytest", "pytest-cov", "pytest-tldr"],
 )
 
