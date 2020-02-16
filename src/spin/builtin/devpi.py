@@ -34,6 +34,7 @@ def prepare_environment():
 
 @task()
 def stage():
+    """Upload project wheel to the staging area."""
     prepare_environment()
     data = {}
     devpi = Command("devpi")
@@ -54,5 +55,10 @@ def stage():
 
 @task()
 def devpi(args):
+    """Run the 'devpi' command inside the project's virtual environment.
+
+    All command line arguments are simply passed through to 'devpi'.
+
+    """
     prepare_environment()
     sh("devpi", *args)

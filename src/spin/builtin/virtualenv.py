@@ -42,6 +42,7 @@ defaults = config(
 
 @group()
 def venv(ctx):
+    """Manage the project's virtual environment."""
     pass
 
 

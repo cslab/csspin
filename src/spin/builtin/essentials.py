@@ -9,6 +9,7 @@ from spin import sh, task, toporun
 
 @task("exec")
 def exec_shell(args):
+    """Run a shell command in the project context."""
     if not args:
         args = ("{platform.shell}",)
     sh(*args)
@@ -18,8 +19,14 @@ def exec_shell(args):
 def cleanup(cfg):
     """Call the 'cleanup' hook in all plugins.
 
-    This is expected to eventually remove provisioned software
-    (e.g. spin's Python interpreter, virtualenv etc.), but never
-    remove user-supplied data.
+    'cleanup' eventually reverses what provisioning has done before by
+    removing what has been provisioned by plugins. E.g. the Python
+    interpreter provisioned by the built-in 'python' plugin, or the
+    virtual environment created for the project.
+
+    'cleanup' should never remove user-supplied files that cannot be
+    re-provisioned (unless you're using ill behaved plugins, that is
+    ...)
+
     """
     toporun(cfg, "cleanup")

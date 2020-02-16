@@ -14,6 +14,7 @@ defaults = config(
 
 @task(when="test")
 def pytest(args):
+    """Run the 'pytest' command."""
     if not args:
         args = ["./tests"]
     sh(

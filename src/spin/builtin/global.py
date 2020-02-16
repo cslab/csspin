@@ -13,6 +13,7 @@ from spin import argument, group, memoizer, sh
 
 @group("global")
 def globalgroup(ctx):
+    """Subcommands for managing globally available plugins."""
     pass
 
 
