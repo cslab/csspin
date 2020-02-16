@@ -504,3 +504,10 @@ def toporun(cfg, *fn_names):
             initf = getattr(pi_mod, func_name, None)
             if initf:
                 initf(cfg)
+
+
+def main(*args, **kwargs):
+    from .cli import cli
+    cli.main(*args, auto_envvar_prefix="SPIN", **kwargs)
+
+

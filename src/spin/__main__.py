@@ -4,6 +4,6 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from .cli import main
+from . import main
 
 main()

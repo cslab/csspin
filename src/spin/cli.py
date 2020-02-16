@@ -320,10 +320,6 @@ def cli(
         cruise.do_cruise(cfg, cruiseopt, interactive)
 
 
-def main():
-    cli(auto_envvar_prefix="SPIN")
-
-
 def load_spinfile(
     spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
 ):
