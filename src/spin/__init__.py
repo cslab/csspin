@@ -508,6 +508,13 @@ def toporun(cfg, *fn_names):
 
 def main(*args, **kwargs):
     from .cli import cli
-    cli.main(*args, auto_envvar_prefix="SPIN", **kwargs)
+    if not args:
+        args = None
+    kwargs["auto_envvar_prefix"] = "SPIN"
+    kwargs.setdefault("standalone_mode", False)
+    cli.click_main_kwargs = kwargs
+    cli.main(args, **kwargs)
 
 
+def _main(*args, **kwargs):
+    return main(*args, standalone_mode=True, **kwargs)

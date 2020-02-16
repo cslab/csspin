@@ -625,6 +625,28 @@ Simple example:
 	   die("I didn't expect that!")
 
 
+Using spin programmatically
+---------------------------
+
+.. py:function:: main(*cmd)
+
+   Run ``spin`` from a program, propagating exception etc.
+
+   Example:
+
+   .. code-block:: pycon
+
+      >>> import spin
+      >>> spin.main("lint", "--all")
+      spin: cd /Users/frank/Projects/spin
+      spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
+      spin: pip -q config --site set global.extra-index-url http://haskell:4033/frank/staging/+simple/
+      spin: flake8 --exit-zero ./src ./tests
+      ./src/spin/builtin/virtualenv.py:132:22: T100 fixme found (FIXME)
+      spin: radon mi -n B ./src ./tests
+      >>> ...
+
+
 Sample ``global.yaml``
 ======================
 
