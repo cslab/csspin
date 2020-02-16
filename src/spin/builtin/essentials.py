@@ -15,8 +15,8 @@ def exec_shell(args):
     sh(*args)
 
 
-@task()
-def cleanup(cfg):
+@task("cleanup")
+def cleanup_task(cfg):
     """Call the 'cleanup' hook in all plugins.
 
     'cleanup' eventually reverses what provisioning has done before by
