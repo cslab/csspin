@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+# import time
 import urllib.request
 from contextlib import contextmanager
 
@@ -151,6 +152,7 @@ def sh(*cmd, **kwargs):
     >>> sh("ls", "{HOME}")
 
     """
+    # t0 = time.time()
     cmd = interpolate(cmd)
     if not kwargs.pop("silent", False):
         echo(click.style(" ".join(cmd), bold=True))
@@ -163,6 +165,13 @@ def sh(*cmd, **kwargs):
         die(str(ex))
     if cpi.returncode:
         die(f"Command failed with return code {cpi.returncode}")
+
+    # t1 = time.time()
+    # This instrumentation should probably be activated through a
+    # command line switch
+    # echo(f"{cmd}")
+    # echo(f"time elapsed {t1-t0:g} sec")
+
     return cpi
 
 
@@ -182,10 +191,11 @@ def setenv(*args, **kwargs):
             os.environ.pop(key, None)
         else:
             value = interpolate1(value)
-            if not args:
-                echo(click.style(f"set {key}={value}", bold=True))
-            else:
-                echo(click.style(args[0], bold=True))
+            if get_tree().verbose:
+                if not args:
+                    echo(click.style(f"set {key}={value}", bold=True))
+                else:
+                    echo(click.style(args[0], bold=True))
             os.environ[key] = value
 
 
