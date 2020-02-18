@@ -18,6 +18,7 @@ from spin import (
     rmtree,
     setenv,
     sh,
+    writetext,
 )
 
 
@@ -103,9 +104,28 @@ def init(cfg):
     if True:
         pip.append("-q")
 
-    for section, settings in cfg.virtualenv.pipconf.items():
-        for key, value in settings.items():
-            pip("config", "--site", "set", f"{section}.{key}", value)
+    if True:
+        # This is a much faster alternative to calling pip config
+        # below; we leave it active here for now, enjoying a faster
+        # spin until we better understand the drawbacks.
+        text = []
+        for section, settings in cfg.virtualenv.pipconf.items():
+            text.append(f"[{section}]")
+            for key, value in settings.items():
+                text.append(f"{key} = {value}")
+        writetext("{virtualenv.venv}/pip.conf", "\n".join(text))
+
+    else:
+        for section, settings in cfg.virtualenv.pipconf.items():
+            for key, value in settings.items():
+                pip(
+                    "config",
+                    "--site",
+                    "set",
+                    f"{section}.{key}",
+                    value,
+                    silent=True,
+                )
 
     with memoizer("{virtualenv.memo}") as m:
 
