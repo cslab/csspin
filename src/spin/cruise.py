@@ -50,7 +50,9 @@ def do_cruise(cfg, cruiseopt, interactive):
         i += 1
     for name, definition in match_cruises(cfg, cruiseopt):
         executor = definition.executor(name, definition, interactive)
-        cmd = ["{spin.cruise_spin}"] + getattr(definition, "opts", [])
+        cmd = [
+            getattr(definition, "cruise_spin", cfg.spin.cruise_spin)
+        ] + getattr(definition, "opts", [])
         for pname, pvalue in getattr(definition, "properties", {}).items():
             cmd += ["-p", f"{pname}={pvalue}"]
         cmd += spin_args
