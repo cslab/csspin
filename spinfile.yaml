@@ -6,6 +6,10 @@ plugins:
   - devpi
   - git
   - radon
+  - cedm:
+      - cedm
+  - demo-plugin:
+      - demo_plugin
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
@@ -13,21 +17,20 @@ extra-tasks:
   pipx-install:
     script:
       - pipx install --force --spec . --editable spin
-  
-# Example for a directive: add --statistics to the flake8 command
-#flake8:
-#  append opts: [--statistics]
+
 cruise:
   "@docker":
     # The docker containers are set up to have 'python' in PATH as the
     # Python version they announce in their name.
     properties:
       python.use: python
-  cp38-win:
+  windows:
     image: registry.contact.de/cp38-win_amd64
     tags: docker windows
-  cp38-linux:
+    cruise_spin: devrun.bat
+  linux:
     image: registry.contact.de/cp38-manylinux2014_x86_64
     tags: docker linux
+    cruise_spin: ./devrun.sh
   host:
     tags: host
