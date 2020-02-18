@@ -56,6 +56,7 @@ DEFAULTS = config(
         plugin_dir="{spin.spin_dir}/plugins",
         plugin_packages=[],
         userprofile=os.path.expanduser("~/.spin"),
+        cruise_spin="spin",
     ),
     requirements=[],
     quiet=False,
@@ -63,7 +64,8 @@ DEFAULTS = config(
     hooks=config(),
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
     platform=config(
-        exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
+        exe=".exe" if sys.platform == "win32" else "",
+        shell="{SHELL}",
     ),
 )
 
@@ -419,8 +421,6 @@ def load_spinfile(
     }
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
-    toporun(cfg, "configure")
-
     # Add command line settings.
     for prop in properties:
         k, v = prop.split("=")
@@ -429,6 +429,9 @@ def load_spinfile(
         while len(path) > 1:
             scope = getattr(scope, path.pop(0))
         setattr(scope, path[0], v)
+
+    # Run 'configure' hooks of plugins
+    toporun(cfg, "configure")
 
     # We do this before 'debug' so people see the cruise config
     cruise.build_cruises(cfg)

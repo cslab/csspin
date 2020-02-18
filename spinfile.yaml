@@ -21,17 +21,11 @@ cruise:
   "@docker":
     # The docker containers are set up to have 'python' in PATH as the
     # Python version they announce in their name.
-    opts: [-p, python.use=python]
-  cp27-win:
-    banner: Manylinux Container with Python 2.7 on Windows
-    image: registry.contact.de/cp27m-win_amd64
-    tags: docker windows
+    properties:
+      python.use: python
   cp38-win:
     image: registry.contact.de/cp38-win_amd64
     tags: docker windows
-  cp27-linux:
-    image: registry.contact.de/cp27m-manylinux2010_x86_64
-    tags: docker linux
   cp38-linux:
     image: registry.contact.de/cp38-manylinux2014_x86_64
     tags: docker linux
