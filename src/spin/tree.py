@@ -119,6 +119,8 @@ def tree_keyname(self, key):
 
 
 def tree_build(data, fn):
+    if not data:
+        data = {}
     config = ConfigTree(data)
     for key, value in data.items():
         if isinstance(value, dict):
