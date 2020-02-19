@@ -16,17 +16,18 @@ Installation
 
 Basic information:
 
-* ``spin`` requires Python 3.8
+* Spin requires Python 3.8
 * it is currently under development, pull often
 * it's most convenient to have the ``spin`` command available on your
   ``PATH``
 
-We currently recommend to install ``spin`` directly from its cloned
-repository using `pipx <https://pipxproject.github.io/pipx/>`_. `pipx`
-is a tool that installs Python packages into a user-specific location
-in a user's ``HOME`` directory.
+We currently recommend to install spin directly from its cloned
+repository using `pipx
+<https://pipxproject.github.io/pipx/>`_. ``pipx`` is a tool that
+installs Python packages into a user-specific location in a user's
+``HOME`` directory.
 
-Install `pipx`:
+Install ``pipx``:
 
 .. code-block:: console
 
@@ -34,11 +35,11 @@ Install `pipx`:
    $ python38 -m pipx ensurepath
 
 ``ensurepath`` adds ``$HOME/.local/bin`` to your shell's
-configuration, so commands from packages installed by `pipx` are
+configuration, so commands from packages installed by ``pipx`` are
 available in ``PATH``. Make sure to restart your shell to make the
 setting effective.
 
-Use `pipx` to install `spin`:
+Use ``pipx`` to install spin:
 
 .. code-block:: console
 
@@ -47,7 +48,7 @@ Use `pipx` to install `spin`:
    $ pipx install --spec . --editable spin
 
 The ``spin`` command is now available in your ``PATH``, linked to your
-clone of the ``spin`` repository. Updating the repository will
+clone of the spin repository. Updating the repository will
 automatically give you the most up-to-date code.
 
 
@@ -59,7 +60,7 @@ tools::
 
   spin [OPTIONS] COMMAND [ARGS]...
 
-Here are examples from ``spin`` itself.
+Here are examples from spin itself.
 
 * Run spin's test suite:
 
@@ -68,7 +69,6 @@ Here are examples from ``spin`` itself.
      $ spin tests
      spin: cd /Users/frank/Projects/spin
      spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
-     spin: pip -q config --site set global.extra-index-url http://haskell:4033/frank/staging/+simple/
      spin: ./cp38-macosx_10_15_x86_64/bin/pytest --cov=spin --cov=tests --cov-report=html ./tests
      .........
      ------------------------------------------------------------------------------
@@ -80,6 +80,25 @@ Here are examples from ``spin`` itself.
      
      OK
 
+* Run preflight checks. This includes the tests, and also runs
+  available linters.
+
+  .. code-block:: console
+
+     $ spin preflight
+     spin: cd /Users/frank/Projects/spin
+     spin: ./cp38-macosx_10_15_x86_64/bin/pytest --cov=spin --cov=tests --cov-report=html ./tests
+     ........
+     ------------------------------------------------------------------------------
+     Ran 8 tests in 0.42s
+
+     ---------- coverage: platform darwin, python 3.8.1-final-0 -----------
+     Coverage HTML written to dir htmlcov
+
+
+     OK
+     spin: flake8 --exit-zero tests/test_cruise.py tests/test_flake8.py
+     spin: radon mi -n B tests/test_cruise.py tests/test_flake8.py
 
 
 Overview
@@ -89,7 +108,7 @@ Overview
 Plugins
 -------
 
-``spin`` by itself does nothing. All tasks are defined in *plugins*.
+Spin by itself does nothing. All tasks are defined in *plugins*.
 Plugins have to be declared in ``spinfile.yaml`` using the ``plugins``
 key, for example::
 
@@ -112,7 +131,7 @@ A plugin can do one or more of the following:
 * declare package requirements, that are installed into a virtual
   environment
 
-* declare *hooks* that are called while ``spin`` runs; e.g. the
+* declare *hooks* that are called while spin runs; e.g. the
   **python** plugin declares a hook that provisions the required
   Python release
 
@@ -120,7 +139,7 @@ A plugin can do one or more of the following:
 The Configuration Tree
 ----------------------
 
-``spin`` expects a `YAML <https://yaml.org/>`_ file named
+Spin expects a `YAML <https://yaml.org/>`_ file named
 ``spinfile.yaml`` in the top-level folder of the project that declares
 tasks, dependencies etc. This file is used to construct a
 *configuration tree*, a nested data structure that defines the project
@@ -172,20 +191,20 @@ Why YAML?
 
 Good question. To me it seemed like the choice that sucked least. It
 has comments, it is well supported by text editors, and its data model
-blends naturally with the configuration tree paradigm of
-``spin``. YAML has the same information model as JSON: supported data
-types include dictionaries, lists and literals (mostly strings).
+blends naturally with the configuration tree paradigm of spin. YAML
+has the same information model as JSON: supported data types include
+dictionaries, lists and literals (mostly strings).
 
 However, YAML is a complex beast. You can do all kinds of mischievous
-tricks with YAML, and if you mess up the tree, ``spin`` will most
-likely fail to run.
+tricks with YAML, and if you mess up the tree, the ``spin`` command
+will most likely fail to run.
 
 
 
 Built-in Plugins
 ----------------
 
-``spin`` comes with a set of built-in plugins:
+Spin comes with a set of built-in plugins:
 
 * **python** -- provision Python by using a pre-existing Python
   installation or automatically install the requested Python release
@@ -205,19 +224,22 @@ Workflows
 ---------
 
 Workflows are simply plugins that trigger tasks from other
-plugins. **lint** is already similar to that. We plan to add things
-similar (and better) than those in driver ``Makefile`` currently used
-for `cs.platform` (**to be done**).
+plugins. **lint** is a very simple workflow that launches all linters
+set for the project. Another workflow is **preflight** that runs tests
+and lint checks.
+
+We plan to add things similar (and better) than those in the driver
+``Makefile`` currently used for `cs.platform` (**to be completed**).
 
 
 Cruising
 --------
 
-`spin` supports running itself in one or many docker containers (and
+Spin supports running itself in one or many docker containers (and
 maybe elsewhere in the future). This is called *cruising*, and it is
 useful to validate projects from a development sandbox for different
-platforms. The ``spinfile.yaml`` of `spin` defines the following
-cruises:
+platforms. The ``spinfile.yaml`` of the spin project itself defines
+the following cruises:
 
 .. code-block:: yaml
 
@@ -225,24 +247,25 @@ cruises:
      "@docker":
        # The docker containers are set up to have 'python' in PATH as the
        # Python version they announce in their name.
-       opts: [-p, python.use=python]
-     cp27-win:
-       banner: Manylinux Container with Python 2.7 on Windows
-       image: registry.contact.de/cp27m-win_amd64
-       tags: docker windows
-     cp38-win:
+       properties:
+         python.use: python
+     windows:
        image: registry.contact.de/cp38-win_amd64
        tags: docker windows
-     cp27-linux:
-       image: registry.contact.de/cp27m-manylinux2010_x86_64
-       tags: docker linux
-     cp38-linux:
+       cruise_spin: devrun.bat
+     linux:
        image: registry.contact.de/cp38-manylinux2014_x86_64
        tags: docker linux
+       cruise_spin: ./devrun.sh
      host:
        tags: host
 
-
+The ``properties`` setting in the ``@docker`` subtree sets the command
+line option ``-p python.use=python`` for all Docker containers. This
+is useful as spin otherwise would provision a Python installation
+inside the container, which is unnecessary because the images used are
+already prepared to have the required Python release.
+		
 This set includes docker images for Windows as well as Linux, which
 means we need to have one docker daemon available for each
 platform. These are defined as user-specific settings in
@@ -263,21 +286,21 @@ the configuration from the ``@windows`` key.
 
 
 Cruises are selected by using the ``-c`` (or ``--cruise``) option to
-``spin``.  The following will run spin in the ``cp38-linux``
-container.
+``spin``.  The following will run spin in the Linux container.
 
 .. code-block:: console
 
-   $ spin -c cp38-linux <whatever> ...
+   $ spin -c linux <whatever> ...
 
 Cruises can also be selected by specifying tags (which are prefixed by
-``"@"``). This will run all Linux containers:
+``"@"``). This will run all Docker containers:
 
 .. code-block:: console
 
-   $ spin -c @linux <whatever> ...
+   $ spin -c @docker <whatever> ...
 
-A special selector is ``@all``, selecting all cruises.
+A special selector is ``@all``, selecting all cruises. In spin's case
+this means running the requested task for all supported platforms.
 
 
 Example
@@ -518,6 +541,31 @@ programs.
 Arguments to spin APIs are automatically interpolated agains
 the configuration tree.
 
+.. py:function:: cd(path)
+
+   Change the current working directory to `path`, which is
+   interpolated against the configuration tree. `cd` can be used as a
+   context manager using ``with``, in that case it changes the working
+   directory back to the original one when the ``with`` clause ends.
+
+
+.. py:function:: config(**kwargs)
+		 
+   `config` creates a configuration subtree::
+
+     >>> config(a="alpha", b="beta)
+     {"a": "alpha", "b": "beta")
+
+   Plugins use `config` to declare their ``defaults`` tree.
+
+
+.. py:function:: die(*msg)
+
+   Terminates ``spin`` with a non-zero return code and print the error
+   message `msg`. Arguments are interpolated against the configuration
+   tree.
+
+
 .. py:function:: echo(*msg, **kwargs)
 
    Print a message to the console by joining the positional arguments
@@ -527,14 +575,6 @@ the configuration tree.
 
    `echo` supports the same keyword arguments as Click's `echo
    <https://click.palletsprojects.com/en/7.x/api/#echo>`_.
-
-
-.. py:function:: cd(path)
-
-   Change the current working directory to `path`, which is
-   interpolated against the configuration tree. `cd` can be used as a
-   context manager using ``with``, in that case it changes the working
-   directory back to the original one when the ``with`` clause ends.
 
 
 .. py:function:: exists(path)
@@ -554,13 +594,6 @@ the configuration tree.
 
    Recursively removes the directory `path`. The argument is
    interpolated against the configuration tree.
-
-
-.. py:function:: die(*msg)
-
-   Terminates ``spin`` with a non-zero return code and print the error
-   message `msg`. Arguments are interpolated against the configuration
-   tree.
 
 
 .. py:function:: sh(*cmd, silent=False, shell=False, **kwargs)
@@ -641,25 +674,80 @@ the configuration tree.
       Persist the current state of the memoizer. This is done
       automatically when using `memoizer` as a context manager.
 
+
+.. py:function:: task([name,] *args, *, when, aliases, **clickargs)
+
+   Decorater that creates a task. This is a wrapper around Click's
+   `command` decorator, with some extras:
+
+   * a string keyword argument `when` adds the task to the list of
+     commands to run using `invoke`
+   * `aliases` is a list of aliases for the command (e.g. "check" is
+     an alias for "lint")
+   * `task` introspects the signature of the decorated function and
+     handles certain argument names automatically:
+
+     * ``ctx`` will pass the Click context object into the task; this
+       is rarely useful for spin tasks
+     * ``cfg`` will automatically pass the configuration tree; this
+       very useful most of the time, except for the simplest of tasks
+     * ``args`` will simply pass through all command line arguments by
+       using the ``ignore_unknown_options`` and ``allow_extra_args``
+       options of the Click context; this is often used for tasks that
+       launch a specific command line tool to enable arbitrary
+       arguments
+
+   All other arguments to the task must be annotated with either
+   `option` or `argument` that support the same settings as the
+   corresponding decorators from the `Click framework
+   <https://click.palletsprojects.com>`_
+
+   A simple example:
+
+   .. code-block:: python
+
+      @task()
+      def simple_task(cfg, args):
+          # do something
+
+   This would make ``simple_task`` available as a new subcommand of
+   spin.
+
+   More elaborate examples can be found in the built-in plugins
+   shipping with spin.
+
+
+.. py:function:: invoke(hook, *args, **kwargs)
+
+   ``invoke()`` invokes the tasks that have a ``when`` hook. As an
+   example, here is the implemtation of **lint**:
+
+   .. code-block:: python
+
+     @task(aliases=["check"])
+     def lint(allsource: option("--all", "allsource", is_flag=True)):
+         """Run all linters defined in this project."""
+	 invoke("lint", allsource=allsource)
+		  
+   Note that in this case, all linters are required to support the
+   ``allsource`` argument, i.e. the way a task that uses `invoke` is
+   invoking other tasks is part of the call interface contract for
+   linters: *all* linter tasks *must* support the ``allsource``
+   argument as part of their Python function signature (albeit not
+   necessarily the exact same command line flag ``--all``).
+   
+
 Others (not yet really documented):
 
 * ``persist()`` and ``unpersist()`` read and write Python objects
   from/to the file system
-* ``config()`` creates a configuration tree, that can be merged with
-  another tree using ``merge_config()`` (this is probably rarely used
-  by plugins)
 * ``download()`` downloads something to disk
 * ``get_tree()`` gets the global configuration tree (which may be
   necessary sometimes when it is not passed into a plugin hook by spin
   automatically)
-* ``task()``, ``argument()`` and ``option()`` are used to define
-  subcommands and their options and arguments; those -- like spin
-  itself -- use the `Click framework
-  <https://click.palletsprojects.com>`_ for command line processing.
-* ``invoke()`` invokes tasks
 
 
-Simple example:
+Here is a simple example of using the spin API:
 
 .. code-block:: python
 
