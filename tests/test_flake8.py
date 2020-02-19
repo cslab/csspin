@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from spin.cli import cli
 
 
-def test_flake8():
+def not_a_test_flake8():
     runner = CliRunner()
     result = runner.invoke(
         cli, ["--debug", "flake8", "--exit-zero", "tests/test_flake8.py"]
@@ -19,4 +19,4 @@ def test_flake8():
 
 
 if __name__ == "__main__":
-    test_flake8()
+    not_a_test_flake8()
