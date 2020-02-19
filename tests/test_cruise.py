@@ -13,6 +13,6 @@ def test_cruise():
     def match(*selectors):
         return [name for name, _ in cruise.match_cruises(cfg, *selectors)]
 
-    assert "cp38-win" in match("cp38-win")
+    assert "linux" in match("linux")
     assert "host" in match("@all")
     assert "host" not in match("@docker")
