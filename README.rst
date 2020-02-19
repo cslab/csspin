@@ -1,3 +1,7 @@
+:category: README
+:author: Frank Patz-Brockmann
+:link_pdf:
+
 ======
  spin
 ======
