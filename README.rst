@@ -106,8 +106,8 @@ A plugin can do one or more of the following:
 * declare plugin dependencies, e.g. the **flake8** plugin depends on
   the **lint** and **virtualenv** plugins. **lint** is required,
   because **flake8** registers itself as a linter for the
-  project. **virtualenv** is required because we need 'virtualenv' to
-  install the actual ``flake8`` package from PyPI.
+  project. **virtualenv** is required because we need virtual
+  environment to install the actual ``flake8`` package from PyPI.
 
 * declare package requirements, that are installed into a virtual
   environment
@@ -576,21 +576,75 @@ the configuration tree.
    arguments are passed into `subprocess.run`.
 
 
+.. py:class:: Command(*cmd)
+
+   Wraps a partial command into a callable object. Arguments given to
+   the new callable will be appended to the wrapped command. Example::
+
+   >>> pipinstall = Command("pip", "-q", "install")
+   >>> pipinstall("flake8")
+
+
 .. py:function:: setenv(**kwargs)
 
    Manipulate environment variables. Assigning ``None`` will remove
    the environment variable. Argument values are interpolated against
    the configuration tree.
 
+
+.. py:function:: read[text|bytes](fn)
+
+   `readtext` reads an UTF8 encoded text from the file
+   'fn'. `readbytes` reads binary data. The file name argument is
+   interpolated against the configuration tree.
+
+
+.. py:function:: write[text|bytes](fn, data)
+
+   Write `data`, which is either text (Unicode object of type `str`)
+   or binary data (`bytes`) from the file named `fn`. The file name
+   argument is interpolated against the configuration tree.
+
+.. py:class:: Memoizer(fn)
+
+   The `Memoizer` class stores and retrieves Python objects from the
+   binary file named `fn`. The argument is interpolated against the
+   configuration tree. `Memoizer` can be used to keep a very simple
+   "database". Spin internally uses Memoizers for e.g. keeping track
+   of packages installed in a virtual environment.
+
+   To ease the handling in `spin` scripts, there also is context
+   manager called `memoizer` (note the lower case "m"). The context
+   manager retrieves the database from the file and saves it back when
+   the context is closed::
+
+     >>> with memoizer(fn) as m:
+     ...    if m.check("test"): ...
+
+   There are *no* precautions for simultanous access from multiple
+   processes, writes will likely silently become lost.
+
+   .. py:method:: check(item)
+
+      Checks wether `item` is stored in the memoizer.
+
+   .. py:method:: items()
+
+      Returns the list of items in the memoizer.
+
+   .. py:method:: add(item)
+
+      Add `item` to the memoizer.
+
+   .. py:method:: save()
+
+      Persist the current state of the memoizer. This is done
+      automatically when using `memoizer` as a context manager.
+
 Others (not yet really documented):
 
-* ``[read|write][bytes|text]()`` reads/writes binary data or text
-  from/to a file
 * ``persist()`` and ``unpersist()`` read and write Python objects
   from/to the file system
-* ``memoizer()`` is a context manager that manages a database of
-  simple facts (i.e. strings) -- this is for example used to maintain
-  which dependencies have already installed into a virtual environment
 * ``config()`` creates a configuration tree, that can be merged with
   another tree using ``merge_config()`` (this is probably rarely used
   by plugins)
