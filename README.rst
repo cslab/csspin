@@ -143,7 +143,7 @@ Spin expects a `YAML <https://yaml.org/>`_ file named
 ``spinfile.yaml`` in the top-level folder of the project that declares
 tasks, dependencies etc. This file is used to construct a
 *configuration tree*, a nested data structure that defines the project
-and the behaviour of the task plugins. The configuration tree is built
+and the behavior of the task plugins. The configuration tree is built
 from (in this order):
 
 * the default configuration of each plugin and spin itself. E.g. the
@@ -452,10 +452,10 @@ following three ways:
   configuration subtree under the ``requires`` key
 
 * lastly, ``spin`` loads all plugins registered as Python
-  *entrypoints* in the ``spin.plugin`` group automatically; this is
+  *entry points* in the ``spin.plugin`` group automatically; this is
   useful for plugins that provide globally available commands which
   are not specific to a particular project; plugins meant to be used
-  in the context of a project do not provide entrypoints for automatic
+  in the context of a project do not provide entry points for automatic
   loading.
 
 
@@ -510,7 +510,7 @@ To activate this plugin, it has to be declared in ``spinfile.yaml``:
 
    # spinfile.yaml
    plugins:
-     - example   # assuming 'example' is availabe somewhere in sys.path
+     - example   # assuming 'example' is available somewhere in sys.path
 
 By this ``spin`` gains a new subcommand ``example`` which we can use
 to print our message:
@@ -538,7 +538,7 @@ commands in a Makefile. Thus, ``spin`` provides simple, short-named
 Python function to do things like manipulating files and running
 programs.
 
-Arguments to spin APIs are automatically interpolated agains
+Arguments to spin APIs are automatically interpolated against
 the configuration tree.
 
 .. py:function:: cd(path)
@@ -573,13 +573,13 @@ the configuration tree.
    configuration tree. `echo` will remain silent when ``spin`` is run
    with the ``--quiet`` flag.
 
-   `echo` supports the same keyword arguments as Click's `echo
-   <https://click.palletsprojects.com/en/7.x/api/#echo>`_.
+   `echo` supports the same keyword arguments as Click's
+   :py:func:`click.echo`.
 
 
 .. py:function:: exists(path)
 
-   Checks wether `path` exists. `path` is interpolated against the
+   Checks whether `path` exists. `path` is interpolated against the
    configuration tree.
 
 
@@ -654,12 +654,12 @@ the configuration tree.
      >>> with memoizer(fn) as m:
      ...    if m.check("test"): ...
 
-   There are *no* precautions for simultanous access from multiple
+   There are *no* precautions for simultaneous access from multiple
    processes, writes will likely silently become lost.
 
    .. py:method:: check(item)
 
-      Checks wether `item` is stored in the memoizer.
+      Checks whether `item` is stored in the memoizer.
 
    .. py:method:: items()
 
@@ -677,8 +677,8 @@ the configuration tree.
 
 .. py:function:: task([name,] *args, *, when, aliases, **clickargs)
 
-   Decorater that creates a task. This is a wrapper around Click's
-   `command` decorator, with some extras:
+   Decorator that creates a task. This is a wrapper around Click's
+   `click.command` decorator, with some extras:
 
    * a string keyword argument `when` adds the task to the list of
      commands to run using `invoke`
@@ -698,9 +698,8 @@ the configuration tree.
        arguments
 
    All other arguments to the task must be annotated with either
-   `option` or `argument` that support the same settings as the
-   corresponding decorators from the `Click framework
-   <https://click.palletsprojects.com>`_
+   `option` or `argument`. They both support the same arguments as the
+   corresponding decorators `click.option` and `click.argument`.
 
    A simple example:
 
@@ -719,8 +718,8 @@ the configuration tree.
 
 .. py:function:: invoke(hook, *args, **kwargs)
 
-   ``invoke()`` invokes the tasks that have a ``when`` hook. As an
-   example, here is the implemtation of **lint**:
+   ``invoke()`` invokes the tasks that have the ``when`` hook
+   `hook`. As an example, here is the implementation of **lint**:
 
    .. code-block:: python
 
