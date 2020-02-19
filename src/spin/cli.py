@@ -155,7 +155,7 @@ def reverse_toposort(nodes, graph):
 # This is a click-style decorator that adds the basic command line
 # options of spin to a click.command or click.group; we have this
 # separately here, because we'll use it twice: a) for 'cli' below,
-# which is our boostrap command, and b) for 'commands' which is the
+# which is our bootstrap command, and b) for 'commands' which is the
 # actual click group that collects sub commands from plugins. 'cli'
 # uses these options to find the the configuration file, the project
 # root and plugin directory, and then loads the plugins. 'commands'

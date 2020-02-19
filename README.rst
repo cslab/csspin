@@ -224,9 +224,9 @@ Workflows
 ---------
 
 Workflows are simply plugins that trigger tasks from other
-plugins. **lint** is a very simple workflow that launches all linters
-set for the project. Another workflow is **preflight** that runs tests
-and lint checks.
+plugins. **lint** is a simple workflow that launches all linters set
+for the project. Another workflow is **preflight** that runs tests and
+lint checks.
 
 We plan to add things similar (and better) than those in the driver
 ``Makefile`` currently used for `cs.platform` (**to be completed**).
@@ -286,7 +286,7 @@ the configuration from the ``@windows`` key.
 
 
 Cruises are selected by using the ``-c`` (or ``--cruise``) option to
-``spin``.  The following will run spin in the Linux container.
+``spin``. The following will run spin in the Linux container.
 
 .. code-block:: console
 
@@ -488,7 +488,7 @@ Further, importing a plugin can have side-effects like adding
 subcommands to ``spin`` by using the decorators ``@task`` and
 ``@group``.
 
-Here is an example for a very simple plugin:
+Here is an example for a simple plugin:
 
 .. code-block:: python
  
@@ -642,7 +642,7 @@ the configuration tree.
 
    The `Memoizer` class stores and retrieves Python objects from the
    binary file named `fn`. The argument is interpolated against the
-   configuration tree. `Memoizer` can be used to keep a very simple
+   configuration tree. `Memoizer` can be used to keep a simple
    "database". Spin internally uses Memoizers for e.g. keeping track
    of packages installed in a virtual environment.
 
@@ -733,7 +733,7 @@ the configuration tree.
    invoking other tasks is part of the call interface contract for
    linters: *all* linter tasks *must* support the ``allsource``
    argument as part of their Python function signature (albeit not
-   necessarily the exact same command line flag ``--all``).
+   necessarily the same command line flag ``--all``).
    
 
 Others (not yet really documented):

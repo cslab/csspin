@@ -77,8 +77,10 @@ def cd(path):
 
 
 def exists(path):
-    """Check wether `path` exists. The argument is interpolated against
-    the configuration tree."""
+    """Check whether `path` exists. The argument is interpolated against
+    the configuration tree.
+
+    """
     path = interpolate1(path)
     return os.path.exists(path)
 
@@ -99,7 +101,7 @@ def mkdir(path):
 
 def rmtree(path):
     """Recursively remove `path` and everything it contains. The argument
-    is interpolated agains the configuration tree.
+    is interpolated against the configuration tree.
 
     Obviously, this should be used with care.
 
@@ -251,7 +253,7 @@ class Memoizer(object):
         self._items = unpersist(fn, [])
 
     def check(self, item):
-        """Check wether `item` is a know fact."""
+        """Check whether `item` is a know fact."""
         return item in self._items
 
     def items(self):

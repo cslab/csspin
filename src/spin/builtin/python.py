@@ -107,10 +107,10 @@ def nuget_install(cfg):
         "-version",
         "{python.version}",
     )
-    pathes = interpolate1("{python.inst_dir};" "{python.inst_dir}/Scripts")
+    paths = interpolate1("{python.inst_dir};" "{python.inst_dir}/Scripts")
     setenv(
-        f"set PATH={pathes}{os.pathsep}$PATH",
-        PATH=os.pathsep.join((f"{pathes}", os.environ["PATH"])),
+        f"set PATH={paths}{os.pathsep}$PATH",
+        PATH=os.pathsep.join((f"{paths}", os.environ["PATH"])),
     )
     sh("{python.interpreter} -m ensurepip")
     sh("{python.interpreter} -m pip install -q --upgrade pip wheel")
