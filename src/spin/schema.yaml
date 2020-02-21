@@ -1,0 +1,48 @@
+# Schema definitions for spin.
+
+# 'path' --> values will be converted to py.path objects
+
+# 'internal' --> settings must not come from a configuration file, can
+# only be set internally
+
+# 'usersetting' --> can only(?) be set via a configuration file; it
+# would be a bug, if the code does it
+
+# 'list' --> a literal list *or* simply a string that is space-split
+
+spin:
+  type: object
+  help: |
+    Settings required for running spin. Many of these cannot be set
+    via a spinfile or via the command line, but are computed by spin.
+  properties:
+    spinfile:
+      type: path
+      help: |
+        The name of the configuration file for the project. This can
+        be overriden via 'spin -f <filename>'.
+      default: spinfile.yaml
+    spin_dir:
+      type: path internal
+      help: |
+        The relative path from <project_root> to spin's project
+        related data.
+      default: .spin
+    spin_global:
+      type: path internal
+      help: |
+        User settings that will apply to all projects are read from
+        this file.
+      default: "{spin.userprofile}/global.yaml"
+  # disallow plugins or user setting to write to the 'spin' context to
+  # keep sanity
+  unknown-properties: false
+
+requirements:
+  type: list usersetting
+  help: |
+    The list of this project's external Python requirements, that have
+    to be installed into the project's virtual environment. This
+    excludes requirements stated as 'install_requires' in
+    setup.py/setup.cfg.
+  
