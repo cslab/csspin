@@ -25,27 +25,15 @@ cruise:
     properties:
       python.use: python
   windows:
-    banner: |
-
-      
-      *** Windows
-      
+    banner: "\n\n*** Windows\n"
     image: registry.contact.de/cp38-win_amd64
     tags: docker windows
     cruise_spin: devrun.bat
   linux:
-    banner: |
-
-      
-      *** Linux
-      
+    banner: "\n\n*** Linux\n"
     image: registry.contact.de/cp38-manylinux2014_x86_64
     tags: docker linux
     cruise_spin: ./devrun.sh
   host:
-    banner: |
-
-      
-      *** Host
-      
+    banner: "\n\n*** Host\n"
     tags: host
