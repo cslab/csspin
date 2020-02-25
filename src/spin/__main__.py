@@ -4,6 +4,6 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from . import _main
+from spin import _main
 
 _main()
