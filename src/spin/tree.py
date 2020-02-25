@@ -179,12 +179,18 @@ def tree_dump(tree):
         tag = f"{shorten_filename(info.file)}:{info.line}:"
         space = (tagcolumn - len(tag) + 1) * " "
         if isinstance(value, list):
-            write(f"{tag}{space}{separator}{indent}{key}:")
-            blank_location = len(f"{tag}{space}") * " "
-            for item in value:
-                write(f"{blank_location}{separator}{indent}  - {repr(item)}")
+            if value:
+                write(f"{tag}{space}{separator}{indent}{key}:")
+                blank_location = len(f"{tag}{space}") * " "
+                for item in value:
+                    write(f"{blank_location}{separator}{indent}  - {repr(item)}")
+            else:
+                write(f"{tag}{space}{separator}{indent}{key}: []")
         elif isinstance(value, dict):
-            write(f"{tag}{space}{separator}{indent}{key}:")
+            if value:
+                write(f"{tag}{space}{separator}{indent}{key}:")
+            else:
+                write(f"{tag}{space}{separator}{indent}{key}: {{}}")
         else:
             write(f"{tag}{space}{separator}{indent}{key}: {repr(value)}")
     return "\n".join(text)
