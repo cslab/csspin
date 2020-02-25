@@ -11,6 +11,8 @@ from collections import OrderedDict, namedtuple
 
 import ruamel.yaml
 
+from . import die, interpolate1
+
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -40,19 +42,23 @@ class ConfigTree(OrderedDict):
     """
 
     def __init__(self, *args, **kwargs):
+        ofsframes = kwargs.pop("__ofs_frames__", 0)
         super().__init__(*args, **kwargs)
+        self.__schema = None
         self.__keyinfo = {}
         self.__parentinfo = None
         for key, value in self.items():
-            self.__keyinfo[key] = _call_location(2)
+            self.__keyinfo[key] = _call_location(2+ofsframes)
             if isinstance(value, ConfigTree):
                 value.__parentinfo = ParentInfo(self, key)
 
     def __setitem__(self, key, value):
+        value = tree_typecheck(self, key, value)
         super().__setitem__(key, value)
         _set_callsite(self, key, 3, value)
 
     def setdefault(self, key, default=None):
+        default = tree_typecheck(self, key, default)
         val = super().setdefault(key, default)
         _set_callsite(self, key, 3, default)
         return val
@@ -68,6 +74,7 @@ class ConfigTree(OrderedDict):
             # obviously.
             object.__setattr__(self, name, value)
         else:
+            value = tree_typecheck(self, name, value)
             self[name] = value
             _set_callsite(self, name, 3, value)
 
@@ -77,8 +84,17 @@ class ConfigTree(OrderedDict):
         raise AttributeError(f"No property '{name}'")
 
 
-def tree_update_key(config, key, value):
-    OrderedDict.__setitem__(config, key, value)
+def tree_typecheck(tree, key, value):
+    schema = getattr(tree, "_ConfigTree__schema", None)
+    if schema:
+        desc = schema.properties.get(key, None)
+        if desc:
+            value = desc.coerce(value)
+    return value
+
+
+def tree_update_key(tree, key, value):
+    OrderedDict.__setitem__(tree, key, value)
 
 
 def _call_location(depth):
@@ -86,30 +102,30 @@ def _call_location(depth):
     return KeyInfo(fn, lno)
 
 
-def _set_callsite(self, key, depth, value):
-    if hasattr(self, "_ConfigTree__keyinfo"):
-        self._ConfigTree__keyinfo[key] = _call_location(depth)
-    tree_set_parent(value, self, key)
+def _set_callsite(tree, key, depth, value):
+    if hasattr(tree, "_ConfigTree__keyinfo"):
+        tree._ConfigTree__keyinfo[key] = _call_location(depth)
+    tree_set_parent(value, tree, key)
 
 
-def tree_set_keyinfo(self, key, ki):
-    if hasattr(self, "_ConfigTree__keyinfo"):
-        self._ConfigTree__keyinfo[key] = ki
+def tree_set_keyinfo(tree, key, ki):
+    if hasattr(tree, "_ConfigTree__keyinfo"):
+        tree._ConfigTree__keyinfo[key] = ki
 
 
-def tree_keyinfo(self, k):
-    return self._ConfigTree__keyinfo[k]
+def tree_keyinfo(tree, k):
+    return tree._ConfigTree__keyinfo[k]
 
 
-def tree_set_parent(self, parent, name):
-    if hasattr(self, "_ConfigTree__parentinfo"):
-        self._ConfigTree__parentinfo = ParentInfo(parent, name)
+def tree_set_parent(tree, parent, name):
+    if hasattr(tree, "_ConfigTree__parentinfo"):
+        tree._ConfigTree__parentinfo = ParentInfo(parent, name)
 
 
-def tree_keyname(self, key):
+def tree_keyname(tree, key):
     path = [key]
     try:
-        parentinfo = self._ConfigTree__parentinfo
+        parentinfo = tree._ConfigTree__parentinfo
         while parentinfo:
             path.insert(0, parentinfo.key)
             parentinfo = parentinfo.parent._ConfigTree__parentinfo
@@ -183,7 +199,9 @@ def tree_dump(tree):
                 write(f"{tag}{space}{separator}{indent}{key}:")
                 blank_location = len(f"{tag}{space}") * " "
                 for item in value:
-                    write(f"{blank_location}{separator}{indent}  - {repr(item)}")
+                    write(
+                        f"{blank_location}{separator}{indent}  - {repr(item)}"
+                    )
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: []")
         elif isinstance(value, dict):
@@ -194,3 +212,94 @@ def tree_dump(tree):
         else:
             write(f"{tag}{space}{separator}{indent}{key}: {repr(value)}")
     return "\n".join(text)
+
+
+def directive_append(target, key, value):
+    if isinstance(value, list):
+        target[key].extend(value)
+    else:
+        target[key].append(value)
+
+
+def directive_prepend(target, key, value):
+    if isinstance(value, list):
+        target[key][0:0] = value
+    else:
+        target[key].insert(0, value)
+
+
+def directive_interpolate(target, key, value):
+    tree_update_key(target, key, interpolate1(value))
+
+
+def rpad(seq, length, padding=None):
+    """Right pad a sequence to become at least `length` long with `padding` items.
+
+    Post-condition ``len(rpad(seq, n)) >= n``.
+
+    Example:
+
+    >>> rpad([1], 3)
+    [None, None, 1]
+
+    """
+    while True:
+        pad_length = length - len(seq)
+        if pad_length > 0:
+            seq.insert(0, padding)
+        else:
+            break
+    return seq
+
+
+def tree_merge(target, source):
+    """Merge the 'source' configuration tree into 'target'.
+
+    Merging is done by adding values from 'source' to 'target' if they
+    do not yet exist. Subtrees are merged recursively. In a second
+    pass, special keys of the form "directive key" (i.e. separated by
+    space) in 'target' are processed. Supported directives include
+    "append" for adding values or lists to a list, and "interpolate"
+    for replacing configuration variables.
+    """
+    for key, value in source.items():
+        if target.get(key, None) is None:
+            try:
+                target[key] = value
+                tree_set_keyinfo(target, key, tree_keyinfo(source, key))
+            except Exception:
+                die(f"cannot merge {value} into '{target}[{key}]'")
+        elif isinstance(value, dict):
+            tree_merge(target[key], value)
+    # Pass 2: process directives. Note that we need a list for the
+    # iteration, as we remove directive keys on the fly.
+    for clause, value in list(target.items()):
+        directive, key = rpad(clause.split(maxsplit=1), 2)
+        fn = globals().get(f"directive_{directive}", None)
+        if fn:
+            fn(target, key, value)
+            del target[clause]
+
+
+def tree_update(target, source):
+    # This will *overwrite*, not fill up, like tree_merge
+    from . import schema
+
+    for key, value in source.items():
+        ki = tree_keyinfo(source, key)
+        try:
+            if isinstance(value, dict):
+                if key not in target:
+                    target[key] = ConfigTree()
+                    tree_update(target[key], value)
+                    tree_set_keyinfo(target, key, ki)
+                else:
+                    tree_update(target[key], value)
+            else:
+                target[key] = value
+                tree_set_keyinfo(target, key, ki)
+        except schema.SchemaError as se:
+            die(
+                f"{ki.file}:{ki.line}: cannot assign "
+                f"'{value}' to '{key}': {se}"
+            )

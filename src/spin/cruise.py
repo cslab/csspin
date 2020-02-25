@@ -9,7 +9,7 @@
 import os
 import sys
 
-from . import echo, merge_config, sh, tree
+from . import echo, sh, tree
 
 
 def build_cruises(cfg):
@@ -19,7 +19,7 @@ def build_cruises(cfg):
             tree.tree_update_key(cruise, "tags", cruise.tags.split())
             for tag in ["@" + tag for tag in cruise.tags]:
                 if tag in cfg.cruise:
-                    merge_config(cruise, cfg.cruise[tag])
+                    tree.tree_merge(cruise, cfg.cruise[tag])
 
 
 def match_cruises(cfg, selectors):

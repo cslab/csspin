@@ -34,6 +34,19 @@ spin:
         User settings that will apply to all projects are read from
         this file.
       default: "{spin.userprofile}/global.yaml"
+    spin_global_plugins:
+      type: path internal
+      default: "{spin.userprofile}/plugins"
+    plugin_dir:
+      type: path internal
+      default: "{spin.spin_dir}/plugins"
+    plugin_packages:
+      type: list
+    cruise_spin:
+      type: path
+      default: spin
+    userprofile:
+      type: path internal
   # disallow plugins or user setting to write to the 'spin' context to
   # keep sanity
   unknown-properties: false
@@ -45,4 +58,30 @@ requirements:
     to be installed into the project's virtual environment. This
     excludes requirements stated as 'install_requires' in
     setup.py/setup.cfg.
+
+extra-tasks:
+  type: object
   
+quiet:
+  type: boolean
+
+verbose:
+  type: boolean
+  default: true
+
+hooks:
+  type: object
+
+cruise:
+  type: object
+
+plugins:
+  type: list
+
+platform:
+  type: object
+  properties:
+    exe:
+      type: path
+    shell:
+      type: path

@@ -14,13 +14,10 @@ import shlex
 import shutil
 import subprocess
 import sys
-# import time
 import urllib.request
 from contextlib import contextmanager
 
 import click
-
-from . import tree
 
 
 def echo(*msg, **kwargs):
@@ -154,7 +151,6 @@ def sh(*cmd, **kwargs):
     >>> sh("ls", "{HOME}")
 
     """
-    # t0 = time.time()
     cmd = interpolate(cmd)
     if not kwargs.pop("silent", False):
         echo(click.style(" ".join(cmd), bold=True))
@@ -167,13 +163,6 @@ def sh(*cmd, **kwargs):
         die(str(ex))
     if cpi.returncode:
         die(f"Command failed with return code {cpi.returncode}")
-
-    # t1 = time.time()
-    # This instrumentation should probably be activated through a
-    # command line switch
-    # echo(f"{cmd}")
-    # echo(f"time elapsed {t1-t0:g} sec")
-
     return cpi
 
 
@@ -319,84 +308,17 @@ def interpolate(literals, *extra_dicts):
     return out
 
 
-_sentinel = object()
+def config(*args, **kwargs):
+    from .tree import ConfigTree
 
-
-def rpad(seq, length, padding=None):
-    """Right pad a sequence to become at least `length` long with `padding` items.
-
-    Post-condition ``len(rpad(seq, n)) >= n``.
-
-    Example:
-
-    >>> rpad([1], 3)
-    [None, None, 1]
-
-    """
-    while True:
-        pad_length = length - len(seq)
-        if pad_length > 0:
-            seq.insert(0, padding)
-        else:
-            break
-    return seq
-
-
-def directive_append(target, key, value):
-    if isinstance(value, list):
-        target[key].extend(value)
-    else:
-        target[key].append(value)
-
-
-def directive_prepend(target, key, value):
-    if isinstance(value, list):
-        target[key][0:0] = value
-    else:
-        target[key].insert(0, value)
-
-
-def directive_interpolate(target, key, value):
-    tree.tree_update_key(target, key, interpolate1(value))
-
-
-def merge_config(target, source):
-    """Merge the 'source' configuration tree into 'target'.
-
-    Merging is done by adding values from 'source' to 'target' if they
-    do not yet exist. Subtrees are merged recursively. In a second
-    pass, special keys of the form "directive key" (i.e. separated by
-    space) in 'target' are processed. Supported directives include
-    "append" for adding values or lists to a list, and "interpolate"
-    for replacing configuration variables.
-    """
-    for key, value in source.items():
-        if key not in target:
-            try:
-                target[key] = value
-                tree.tree_set_keyinfo(
-                    target, key, tree.tree_keyinfo(source, key)
-                )
-            except Exception:
-                die(f"cannot merge {value} into '{target}[{key}]'")
-        elif isinstance(value, dict):
-            merge_config(target[key], value)
-    # Pass 2: process directives. Note that we need a list for the
-    # iteration, as we remove directive keys on the fly.
-    for clause, value in list(target.items()):
-        directive, key = rpad(clause.split(maxsplit=1), 2)
-        fn = globals().get(f"directive_{directive}", None)
-        if fn:
-            fn(target, key, value)
-            del target[clause]
-
-
-config = tree.ConfigTree
+    return ConfigTree(*args, **kwargs, __ofs_frames__=1)
 
 
 def readyaml(fname):
+    from .tree import tree_load
+
     fname = interpolate1(fname)
-    return tree.tree_load(fname)
+    return tree_load(fname)
 
 
 def download(url, location):
@@ -521,6 +443,7 @@ def toporun(cfg, *fn_names):
 
 def main(*args, **kwargs):
     from .cli import cli
+
     if not args:
         args = None
     kwargs["auto_envvar_prefix"] = "SPIN"

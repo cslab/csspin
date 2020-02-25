@@ -28,9 +28,9 @@ from . import (
     get_tree,
     interpolate1,
     memoizer,
-    merge_config,
     mkdir,
     readyaml,
+    schema,
     set_tree,
     sh,
     toporun,
@@ -49,23 +49,13 @@ CRUISE_EXECUTOR_MAPPINGS = {
 # reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
     spin=config(
-        spinfile="spinfile.yaml",
-        spin_dir=".spin",
-        spin_global="{spin.userprofile}/global.yaml",
-        spin_global_plugins="{spin.userprofile}/plugins",
-        plugin_dir="{spin.spin_dir}/plugins",
-        plugin_packages=[],
-        userprofile=os.path.expanduser("~/.spin"),
-        cruise_spin="spin",
+        spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin"),
     ),
-    requirements=[],
     quiet=False,
     verbose=False,
-    hooks=config(),
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
     platform=config(
-        exe=".exe" if sys.platform == "win32" else "",
-        shell="{SHELL}",
+        exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
     ),
 )
 
@@ -113,7 +103,7 @@ def load_plugin(cfg, import_spec, package=None):
                     plugin_defaults, list(plugin_defaults.keys())[0]
                 ),
             )
-        merge_config(plugin_config_tree, plugin_defaults)
+        tree.tree_merge(plugin_config_tree, plugin_defaults)
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__)
             for requirement in plugin_config_tree.get("requires", [])
@@ -344,12 +334,18 @@ def yield_plugin_import_specs(cfg):
 def load_spinfile(
     spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
 ):
-    cfg = set_tree(readyaml(spinfile) if spinfile else config())
-    merge_config(cfg, DEFAULTS)
+    spinschema = schema.schema_load(
+        os.path.join(os.path.dirname(__file__), "schema.yaml")
+    )
+    cfg = spinschema.get_default()
+    set_tree(cfg)
+    userdata = readyaml(spinfile) if spinfile else config()
+    tree.tree_update(cfg, userdata)
+    tree.tree_merge(cfg, DEFAULTS)
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        merge_config(cfg, readyaml(interpolate1("{spin.spin_global}")))
+        tree.tree_merge(cfg, readyaml(interpolate1("{spin.spin_global}")))
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
