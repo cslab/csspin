@@ -113,7 +113,12 @@ def init(cfg):
             text.append(f"[{section}]")
             for key, value in settings.items():
                 text.append(f"{key} = {interpolate1(value)}")
-        writetext("{virtualenv.venv}/pip.conf", "\n".join(text))
+        if sys.platform.startswith('linux'):
+            pipconf = "pip.conf"
+        else:
+            pipconf = "pip.ini"
+
+        writetext("{virtualenv.venv}/" + pipconf, "\n".join(text))
 
     else:
         for section, settings in cfg.virtualenv.pipconf.items():
