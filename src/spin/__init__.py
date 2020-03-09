@@ -251,6 +251,7 @@ class Memoizer(object):
     def add(self, item):
         """Add `item` to the fact base."""
         self._items.append(item)
+        self.save()
 
     def save(self):
         """Save the updated fact base."""
