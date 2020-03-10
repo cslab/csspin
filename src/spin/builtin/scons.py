@@ -5,6 +5,7 @@
 # http://www.contact.de/
 
 import os
+import sys
 
 from spin import config, sh, task
 
@@ -19,4 +20,7 @@ defaults = config(
 @task()
 def scons(cfg, args):
     """Run scons command"""
-    sh("{scons.cmd}", *cfg.scons.opts, *args)
+    cmd = "{scons.cmd}"
+    if sys.platform.startswith("win32"):
+        cmd += ".bat"
+    sh(cmd, *cfg.scons.opts, *args)
