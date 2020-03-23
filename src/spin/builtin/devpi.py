@@ -54,11 +54,16 @@ def stage():
 
 
 @task()
-def devpi(args):
+def devpi(cfg, args):
     """Run the 'devpi' command inside the project's virtual environment.
 
     All command line arguments are simply passed through to 'devpi'.
 
     """
     prepare_environment()
+    if hasattr(cfg.devpi, "url"):
+        sh("devpi", "use", cfg.devpi.url)
+    if hasattr(cfg.devpi, "user"):
+        sh("devpi", "login", cfg.devpi.user)
+
     sh("devpi", *args)
