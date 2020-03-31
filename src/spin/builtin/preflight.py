@@ -8,9 +8,9 @@ from spin import invoke, option, task
 
 
 @task(aliases=["tests"])
-def test():
+def test(instance: option("--instance", "instance")):
     """Run all tests defined in this project."""
-    invoke("test")
+    invoke("test", instance=instance)
 
 
 @task(aliases=["check"])

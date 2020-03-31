@@ -4,7 +4,8 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, sh, task
+import os
+from spin import config, option, sh, task
 
 defaults = config(
     requires=[".virtualenv", ".preflight"],
@@ -13,14 +14,16 @@ defaults = config(
 
 
 @task(when="test")
-def pytest(args):
+def pytest(instance: option("--instance", "instance"), args):
     """Run the 'pytest' command."""
     if not args:
-        args = ["./tests"]
-    sh(
-        "{virtualenv.scriptdir}/pytest",
-        "--cov=spin",
-        "--cov=tests",
-        "--cov-report=html",
-        *args
-    )
+        if os.path.isdir("./tests"):
+            args = ["./tests"]
+    if args:
+        sh(
+            "{virtualenv.scriptdir}/pytest",
+            "--cov=spin",
+            "--cov=tests",
+            "--cov-report=html",
+            *args
+        )
