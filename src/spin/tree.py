@@ -6,6 +6,7 @@
 
 import inspect
 import os
+import re
 import sys
 from collections import OrderedDict, namedtuple
 
@@ -151,7 +152,8 @@ def tree_load(fn):
     yaml = ruamel.yaml.YAML()
     with open(fn) as f:
         data = yaml.load(f)
-    return tree_build(data, fn)
+    data = parse_yaml(data, fn)
+    return data
 
 
 def tree_walk(config, indent=""):
@@ -187,9 +189,9 @@ def tree_dump(tree):
         return fn
 
     tagcolumn = max(
-        len(f"{shorten_filename(info.file)}:{info.line}:")
-        for _, _, _, info, _ in tree_walk(tree)
-    )
+        (len(f"{shorten_filename(info.file)}:{info.line}:")
+        for _, _, _, info, _ in tree_walk(tree))
+    ,default=0)
     separator = "|"
     for key, value, _fullname, info, indent in tree_walk(tree):
         tag = f"{shorten_filename(info.file)}:{info.line}:"
@@ -303,3 +305,109 @@ def tree_update(target, source):
                 f"{ki.file}:{ki.line}: cannot assign "
                 f"'{value}' to '{key}': {se}"
             )
+
+
+# Variable references are names prefixed by '$' (like $port, $version,
+# $name etc.)
+RE_VAR = re.compile(r"\$(\w+)")
+
+
+class YamlParser(object):
+
+    def __init__(self, fn, facts, variables):
+        self._facts = {
+                "win32": sys.platform == "win32",
+                "darwin": sys.platform == "darwin",
+                "linux": sys.platform.startswith("linux"),
+                "posix": os.name == "posix",
+                "nt": os.name == "nt",
+        }
+        self._var = {}
+
+        self._facts.update(facts)
+        self._var.update(variables)
+        self._fn = fn
+
+    def parse_yaml(self, data):
+        if isinstance(data, str):
+            return self.parse_str(data)
+        elif isinstance(data, list):
+            return self.parse_list(data)
+        elif isinstance(data, dict):
+            return self.parse_dict(data)
+        return data
+
+    def parse_str(self, data):
+        def replacer(mo):
+            return self._var.get(mo.group(1))
+
+        return RE_VAR.sub(replacer, data)
+
+    def parse_list(self, data):
+        return [self.parse_yaml(x) for x in data]
+
+    def parse_dict(self, data):
+        if not data:
+            data = {}
+        config = ConfigTree(data)
+        for key, value in data.items():
+            key = self.parse_yaml(key)
+            if " " in key:
+                # This is a directive -- lookup the appropriate
+                # handler to process it
+                directive, expression = key.split(" ", 1)
+                method = getattr(self, "directive_" + directive,
+                                 self.parse_key)
+                method(key, expression, value, config)
+            else:
+                self.parse_key(key, key, value, config)
+            if hasattr(config, key):
+                if isinstance(value, dict):
+                    tree_set_parent(config[key], config, key)
+
+                ki = KeyInfo(self._fn, data.lc.key(key)[0] + 1)
+                tree_set_keyinfo(config, key, ki)
+
+        # If parsing this dict resulted in a list (which can happen by
+        # using e.g. if), the result has been stored under the magic
+        # key '$' and we return that instead of the parsed dict.
+        if "$" in config:
+            config = config["$"]
+        # if the config is empty, it should be replaced by None
+        if len(config) == 0:
+            config = None
+        return config
+
+    def directive_var(self, key, expression, value, out):
+        value = self.parse_yaml(value)
+        if isinstance(value, int):
+            # re.sub works with str only
+            value = str(value)
+        self._var[expression] = value
+        del out[key]
+
+    def directive_if(self, key, expression, value, out):
+        if eval(expression, self._facts):
+            # We have to take care to not evaluate clauses
+            # for falsy if statements -- thus
+            # 'parse_yaml(v)' below, only when the
+            # expression was true.
+            value = self.parse_yaml(value)
+            if isinstance(value, list):
+                listout = out.setdefault("$", [])
+                listout.extend(value)
+            elif isinstance(value, dict):
+                for ifk, ifv in value.items():
+                    out[ifk] = ifv
+        del out[key]
+
+    def parse_key(self, key, expression, value, out):
+        value = self.parse_yaml(value)
+        if isinstance(value, str):
+            self._var[expression] = value
+        out[key] = value
+
+
+def parse_yaml(yaml_file, fn, facts={}, variables={}):
+    yamlparser = YamlParser(fn, facts, variables)
+    return yamlparser.parse_yaml(yaml_file)
