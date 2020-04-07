@@ -1,0 +1,26 @@
+test_empty:
+    var key: value
+    if False:
+        li:
+          - eins
+          - zwei
+          - drei
+
+test_if:
+    if True:
+        check_true:
+    if False:
+        check_false:
+    list_with_item:
+        if True:
+            - item
+    list_without_item:
+        if False:
+            - item
+
+test_var:
+    var test: 1
+    key1: $test
+    key2: 32$test
+
+
