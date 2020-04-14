@@ -8,9 +8,10 @@ from spin import invoke, option, task
 
 
 @task(aliases=["tests"])
-def test(instance: option("--instance", "instance")):
+def test(instance: option("--instance", "instance"),
+         coverage: option("--coverage", "coverage", is_flag=True)):
     """Run all tests defined in this project."""
-    invoke("test", instance=instance)
+    invoke("test", instance=instance, coverage=coverage)
 
 
 @task(aliases=["check"])
@@ -20,11 +21,11 @@ def lint(allsource: option("--all", "allsource", is_flag=True)):
 
 
 @task()
-def preflight(ctx):
+def preflight(ctx, instance: option("--instance", "instance")):
     """Pre-flight checks.
 
     Do this before committing else baby seals will die!
 
     """
-    ctx.invoke(test)
+    ctx.invoke(test, instance=instance)
     ctx.invoke(lint, allsource=False)

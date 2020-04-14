@@ -9,21 +9,29 @@ from spin import config, option, sh, task
 
 defaults = config(
     requires=[".virtualenv", ".preflight"],
+    opts=[""],
+    coverage_opts=["--cov=spin",
+                   "--cov=tests",
+                   "--cov-report=html"],
     packages=["pytest", "pytest-cov", "pytest-tldr"],
 )
 
 
 @task(when="test")
-def pytest(instance: option("--instance", "instance"), args):
+def pytest(cfg,
+           instance: option("--instance", "instance"),
+           coverage: option("--coverage", "coverage", is_flag=True),
+           args):
     """Run the 'pytest' command."""
     if not args:
         if os.path.isdir("./tests"):
             args = ["./tests"]
     if args:
+        opts = cfg.pytest.opts
+        if coverage:
+            opts.extend(cfg.pytest.coverage_opts)
         sh(
-            "{virtualenv.scriptdir}/pytest",
-            "--cov=spin",
-            "--cov=tests",
-            "--cov-report=html",
+           "{virtualenv.scriptdir}/pytest",
+            *opts,
             *args
         )

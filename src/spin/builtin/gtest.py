@@ -31,6 +31,7 @@ def get_bin_dir():
 @task(when="test", aliases=["gtests"])
 def gtest(cfg,
           instance: option("--instance", "instance"),
+          coverage: option("--coverage", "coverage", is_flag=True),
           args):
     """Run the 'gtest' command."""
     if not args:
