@@ -162,7 +162,7 @@ def sh(*cmd, **kwargs):
     except FileNotFoundError as ex:
         die(str(ex))
     if cpi.returncode:
-        die(f"Command failed with return code {cpi.returncode}")
+        die(f"Command {cmd} failed with return code {cpi.returncode}")
     return cpi
 
 
