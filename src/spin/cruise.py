@@ -12,6 +12,17 @@ import sys
 from . import echo, sh, tree
 
 
+def spin_is_editable():
+    editable = None
+    for path_item in sys.path:
+        egg_link = os.path.join(path_item, "spin.egg-link")
+        if os.path.isfile(egg_link):
+            with open(egg_link) as f:
+                editable = os.path.normpath(
+                    os.path.join(*[line.strip() for line in f.readlines()]))
+    return editable
+
+
 def build_cruises(cfg):
     for key in cfg.cruise.keys():
         if not key.startswith("@"):
@@ -101,6 +112,10 @@ class DockerExecutor(BaseExecutor):
             cmd += ["-e", f"USERPROFILE={volprefix}{home}"]
         else:
             cmd += ["-e", f"HOME={volprefix}{home}"]
+
+        devspin = spin_is_editable()
+        if devspin:
+            cmd += ["-e", f"SPIN_SANDBOX={volprefix}{devspin}"]
 
         workdir = os.getcwd()
         cmd += ["-w", f"{volprefix}{workdir}"]

@@ -33,7 +33,9 @@ cruise:
     banner: "\n\n*** Linux\n"
     image: registry.contact.de/cp38-manylinux2014_x86_64
     tags: docker linux
-    cruise_spin: ./devrun.sh
+    cruise_spin: ensure-spin
+    env:
+      LOGLEVEL: DEBUG
   host:
     banner: "\n\n*** Host\n"
     tags: host

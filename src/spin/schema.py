@@ -41,7 +41,9 @@ def descriptor(tag):
 @descriptor("path")
 class PathDescriptor(BaseDescriptor):
     def coerce(self, value):
-        return Path(value)
+        if value is not None:
+            return Path(value)
+        return value
 
 
 @descriptor("str")
