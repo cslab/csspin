@@ -49,7 +49,7 @@ Use ``pipx`` to install spin:
 
    $ git clone git@git.contact.de:frank/spin.git
    $ cd spin
-   $ pipx install --spec . --editable spin
+   $ pipx install --editable .
 
 The ``spin`` command is now available in your ``PATH``, linked to your
 clone of the spin repository. Updating the repository will
