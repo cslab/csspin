@@ -13,6 +13,7 @@ defaults = config(
     opts=[f"-j{os.cpu_count()}"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
     requires=[".virtualenv", ".preflight"],
+    packages=["cs.cppcheck-dev"],
 )
 
 

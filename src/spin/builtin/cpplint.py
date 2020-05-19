@@ -13,6 +13,7 @@ defaults = config(
     opts=["--extensions=h,hh,hpp,c,cc,cpp,i"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
     requires=[".virtualenv", ".preflight"],
+    packages=["cpplint"]
 )
 
 
@@ -28,5 +29,5 @@ def cpplint(cfg, args):
         cmd = " ".join([cmd, " ".join(cfg.cpplint.opts), c_files_str])
         sh(cmd)
     else:
-        print("cppcheck: no modified C/C++ files")
+        print("cpplint: no modified C/C++ files")
 
