@@ -25,7 +25,6 @@ from spin import (
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     memo="{virtualenv.venv}/spininfo.memo",
-    install_spec="virtualenv<20.0",
     bindir=(
         "{virtualenv.venv}/bin"
         if sys.platform != "win32"
@@ -76,7 +75,7 @@ def init(cfg):
     ):
         # If we use Python provisioned by spin, add virtualenv if
         # necessary.
-        sh("{python.interpreter} -m pip install \"{virtualenv.install_spec}\"")
+        sh("{python.interpreter} -m pip install virtualenv")
 
     virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
 
