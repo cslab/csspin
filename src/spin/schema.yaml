@@ -61,7 +61,7 @@ requirements:
 
 extra-tasks:
   type: object
-  
+
 quiet:
   type: boolean
 

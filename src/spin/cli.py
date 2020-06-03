@@ -48,11 +48,11 @@ CRUISE_EXECUTOR_MAPPINGS = {
 # tree. Sections and values will be added by loading plugins and
 # reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
-    spin=config(spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin"),),
+    spin=config(spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin")),
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
-    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",),
+    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}"),
 )
 
 
@@ -177,7 +177,7 @@ def base_options(fn):
             "the 'spin.plugin_dir' setting.",
         ),
         click.option(
-            "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet",
+            "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet"
         ),
         click.option(
             "--verbose",
@@ -207,7 +207,7 @@ def base_options(fn):
             help="Run docker commands using -it.",
         ),
         click.option(
-            "-p", "properties", multiple=True, help="Set configuration property",
+            "-p", "properties", multiple=True, help="Set configuration property"
         ),
     ]
     for d in decorators:
@@ -230,9 +230,7 @@ class GroupWithAliases(click.Group):
         return cmd
 
 
-@click.command(
-    cls=GroupWithAliases, help=__doc__,
-)
+@click.command(cls=GroupWithAliases, help=__doc__)
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options

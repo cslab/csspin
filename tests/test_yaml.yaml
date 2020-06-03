@@ -22,5 +22,3 @@ test_var:
     var test: 1
     key1: $test
     key2: 32$test
-
-

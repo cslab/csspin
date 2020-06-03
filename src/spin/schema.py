@@ -114,9 +114,6 @@ def schema_load(fn):
 
 
 def build_schema(props):
-    desc = {
-        "type": "object",
-        "properties": props,
-    }
+    desc = {"type": "object", "properties": props}
     schema = build_descriptor(desc)
     return schema

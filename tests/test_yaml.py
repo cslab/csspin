@@ -7,8 +7,7 @@
 from spin import tree
 
 
-class TestYaml():
-
+class TestYaml:
     def setup(self):
         self.config = tree.tree_load("tests/test_yaml.yaml")
 
@@ -20,11 +19,11 @@ class TestYaml():
         cfg = self.config["test_if"]
         assert hasattr(cfg, "check_true")
         assert not hasattr(cfg, "check_false")
-        assert cfg['list_with_item'] == ['item']
-        assert cfg['list_without_item'] is None
+        assert cfg["list_with_item"] == ["item"]
+        assert cfg["list_without_item"] is None
 
     def test_var(self):
         cfg = self.config["test_var"]
-        assert not hasattr(cfg, 'var test')
-        assert cfg['key1'] == "1"
-        assert cfg['key2'] == "321"
+        assert not hasattr(cfg, "var test")
+        assert cfg["key1"] == "1"
+        assert cfg["key2"] == "321"

@@ -13,9 +13,7 @@ def test_simple():
     sch = schema.build_schema(
         config(
             x=config(type="list"),
-            subtree=config(
-                type="object", properties=config(a=config(type="path"))
-            ),
+            subtree=config(type="object", properties=config(a=config(type="path"))),
         )
     )
     i = sch.get_default()

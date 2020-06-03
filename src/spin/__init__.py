@@ -157,12 +157,13 @@ def sh(*cmd, **kwargs):
     shell = kwargs.pop("shell", len(cmd) == 1)
     if sys.platform == "win32" and len(cmd) == 1:
         cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
+
     try:
-        cpi = subprocess.run(cmd, shell=shell, **kwargs)
+        cpi = subprocess.run(cmd, shell=shell, check=True, **kwargs)
     except FileNotFoundError as ex:
         die(str(ex))
-    if cpi.returncode:
-        die(f"Command {cmd} failed with return code {cpi.returncode}")
+    except subprocess.CalledProcessError as ex:
+        die(f"Command {cmd} failed with return code {ex.returncode}")
     return cpi
 
 
@@ -229,7 +230,7 @@ def unpersist(fn, default=None):
         return default
 
 
-class Memoizer(object):
+class Memoizer:
     """Maintain a persistent base of simple facts.
 
     Facts are loaded from file `fn`. The argument is interpolated
@@ -287,14 +288,14 @@ def namespaces(*nslist):
 
 def interpolate1(literal, *extra_dicts):
     where_to_look = collections.ChainMap(
-        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK,
+        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
         try:
-            literal = eval("rf'''%s'''" % literal, {}, where_to_look)
+            literal = eval("rf'''%s'''" % literal, {}, where_to_look)  # noqa
         except AttributeError as ex:
             die(str(ex))
         if previous == literal:

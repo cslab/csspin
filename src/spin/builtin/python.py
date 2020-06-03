@@ -8,6 +8,7 @@ import os
 import sys
 
 from spin import (
+    cd,
     config,
     download,
     echo,
@@ -43,7 +44,7 @@ defaults = config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
         exe="{spin.userprofile}/nuget.exe",
     ),
-    version="3.8.1",
+    version="3.8.3",
     platform=pep425_platform,
     plat_dir="{spin.userprofile}/{python.platform}",
     inst_dir=(
@@ -82,6 +83,9 @@ def pyenv_install(cfg):
         # version of Python.
         if not exists("{pyenv.path}"):
             sh("git clone {pyenv.url} {pyenv.path}")
+        else:
+            with cd("{pyenv.path}"):
+                sh("git pull")
         # we should set
         setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
         sh("{pyenv.python_build} {version} {inst_dir}")

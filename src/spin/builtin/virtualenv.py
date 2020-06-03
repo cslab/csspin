@@ -59,14 +59,17 @@ def init(cfg):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
-    cpi = sh(
-        "{python.interpreter}",
-        "-c",
-        "from wheel.pep425tags import get_abi_tag; print(get_abi_tag())",
-        capture_output=True,
-        silent=True,
+    cfg.virtualenv.abitag = (
+        sh(
+            "{python.interpreter}",
+            "-c",
+            "from wheel.pep425tags import get_abi_tag; print(get_abi_tag())",
+            capture_output=True,
+            silent=True,
+        )
+        .stdout.decode()
+        .strip()
     )
-    cfg.virtualenv.abitag = cpi.stdout.decode().strip()
 
     if not cfg.python.use and not exists(
         "{python.script_dir}/virtualenv{platform.exe}"
@@ -97,32 +100,22 @@ def init(cfg):
         PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
     )
 
-    pip = Command("pip")
-    if True:
-        pip.append("-q")
+    pip = Command("pip", "-q")
 
-    if True:
-        # This is a much faster alternative to calling pip config
-        # below; we leave it active here for now, enjoying a faster
-        # spin until we better understand the drawbacks.
-        text = []
-        for section, settings in cfg.virtualenv.pipconf.items():
-            text.append(f"[{section}]")
-            for key, value in settings.items():
-                text.append(f"{key} = {interpolate1(value)}")
-        if sys.platform.startswith("linux"):
-            pipconf = "pip.conf"
-        else:
-            pipconf = "pip.ini"
-
-        writetext("{virtualenv.venv}/" + pipconf, "\n".join(text))
-
+    # This is a much faster alternative to calling pip config
+    # below; we leave it active here for now, enjoying a faster
+    # spin until we better understand the drawbacks.
+    text = []
+    for section, settings in cfg.virtualenv.pipconf.items():
+        text.append(f"[{section}]")
+        for key, value in settings.items():
+            text.append(f"{key} = {interpolate1(value)}")
+    if sys.platform.startswith("linux"):
+        pipconf = "pip.conf"
     else:
-        for section, settings in cfg.virtualenv.pipconf.items():
-            for key, value in settings.items():
-                pip(
-                    "config", "--site", "set", f"{section}.{key}", value, silent=True,
-                )
+        pipconf = "pip.ini"
+
+    writetext("{virtualenv.venv}/" + pipconf, "\n".join(text))
 
     with memoizer("{virtualenv.memo}") as m:
 
