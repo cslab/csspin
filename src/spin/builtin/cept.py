@@ -4,14 +4,14 @@
 # All rights reserved.
 # http://www.contact.de/
 
-import sys
 import os
+import sys
 
 from spin import config, option, sh, task
 
 
 defaults = config(
-    cmd="cdbtest", opts=[], requires=[".virtualenv", ".preflight"], packages=["behave"],
+    cmd="cdbtest", opts=[], requires=[".virtualenv", ".preflight"], packages=["behave"]
 )
 
 

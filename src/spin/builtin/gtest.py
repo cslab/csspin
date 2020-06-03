@@ -4,15 +4,16 @@
 # All rights reserved.
 # http://www.contact.de/
 
-import sys
 import os
+import sys
 import warnings
-import wheel.pep425tags
 
 from spin import config, option, sh, task
 
+import wheel.pep425tags
 
-defaults = config(requires=[".virtualenv", ".preflight"],)
+
+defaults = config(requires=[".virtualenv", ".preflight"])
 
 
 def get_bin_dir():

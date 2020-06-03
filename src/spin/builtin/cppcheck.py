@@ -5,6 +5,7 @@
 # http://www.contact.de/
 
 import os
+
 from spin import config, sh, task
 
 

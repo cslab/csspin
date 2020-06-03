@@ -42,9 +42,7 @@ def stage():
         devpi("use", "-t", "yes", "{devpi.stage}")
     devpi("login", "{devpi.user}")
     python = os.path.abspath(get_tree().virtualenv.python)
-    devpi(
-        "upload", "-p", python, "--no-vcs", "--formats={','.join(devpi.formats)}",
-    )
+    devpi("upload", "-p", python, "--no-vcs", "--formats={','.join(devpi.formats)}")
 
 
 @task()

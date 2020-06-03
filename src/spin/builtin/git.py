@@ -4,8 +4,9 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, sh
 from git import Repo
+
+from spin import config, sh
 
 
 def init(cfg):

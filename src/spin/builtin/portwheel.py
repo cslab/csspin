@@ -4,14 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-import os
-
-from spin import (
-    config,
-    exists,
-    sh,
-    task,
-)
+from spin import config, exists, sh, task
 
 
 defaults = config(

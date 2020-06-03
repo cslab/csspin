@@ -36,9 +36,6 @@ def flake8(
     if not files:
         files = [f for f in cfg.vcs.modified if f.endswith(".py")]
     if allsource:
-        files = (
-            "{spin.project_root}/src",
-            "{spin.project_root}/tests",
-        )
+        files = ("{spin.project_root}/src", "{spin.project_root}/tests")
     if files:
         sh("{flake8.cmd}", *cfg.flake8.opts, *files)
