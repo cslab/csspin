@@ -19,10 +19,12 @@ defaults = config(
 
 
 @task(when="test", aliases=["nosetests"])
-def nosetest(cfg,
-             instance: option("--instance", "instance"),
-             coverage: option("--coverage", "coverage", is_flag=True),
-             args):
+def nosetest(
+    cfg,
+    instance: option("--instance", "instance"),
+    coverage: option("--coverage", "coverage", is_flag=True),
+    args,
+):
     """Run the 'nosetest' command."""
     if not instance:
         instance = cfg.nosetest.instance
@@ -32,8 +34,11 @@ def nosetest(cfg,
         nosetests += ".exe"
     nosetests = os.path.join(instance, "bin", nosetests)
     nosetests = " ".join(
-        [nosetests,
-         " ".join(cfg.nosetest.coverage_opts) if coverage else "",
-         " ".join(cfg.nosetest.opts),
-         " ".join(cfg.nosetest.tests)])
+        [
+            nosetests,
+            " ".join(cfg.nosetest.coverage_opts) if coverage else "",
+            " ".join(cfg.nosetest.opts),
+            " ".join(cfg.nosetest.tests),
+        ]
+    )
     sh(nosetests, *args)

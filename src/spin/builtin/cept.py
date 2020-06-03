@@ -11,18 +11,17 @@ from spin import config, option, sh, task
 
 
 defaults = config(
-    cmd="cdbtest",
-    opts=[],
-    requires=[".virtualenv", ".preflight"],
-    packages=["behave"],
+    cmd="cdbtest", opts=[], requires=[".virtualenv", ".preflight"], packages=["behave"],
 )
 
 
 @task(when="test", aliases=["acceptance"])
-def cept(cfg,
-         instance: option("--instance", "instance"),
-         coverage: option("--coverage", "coverage", is_flag=True),
-         args):
+def cept(
+    cfg,
+    instance: option("--instance", "instance"),
+    coverage: option("--coverage", "coverage", is_flag=True),
+    args,
+):
     """Run the acceptance tests."""
     if not instance:
         instance = cfg.cept.instance
@@ -31,7 +30,5 @@ def cept(cfg,
     if sys.platform.startswith("win32"):
         cept += ".exe"
     cept = os.path.join(instance, "bin", cept)
-    cept = " ".join(
-        [cept,
-         " ".join(cfg.cept.opts)])
+    cept = " ".join([cept, " ".join(cfg.cept.opts)])
     sh(cept, *args)

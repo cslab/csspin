@@ -20,8 +20,9 @@ defaults = config(
 @task(when="check")
 def cppcheck(cfg, args):
     """Run the 'cppcheck' command."""
-    c_files = [f for f in cfg.vcs.modified
-               if os.path.splitext(f)[1] in cfg.cppcheck.extensions]
+    c_files = [
+        f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cppcheck.extensions
+    ]
     print(c_files)
     if c_files:
         cmd = "{cppcheck.cmd}"
@@ -30,4 +31,3 @@ def cppcheck(cfg, args):
         sh(cmd)
     else:
         print("cppcheck: no modified C/C++ files")
-

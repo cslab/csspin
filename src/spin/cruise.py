@@ -19,7 +19,8 @@ def spin_is_editable():
         if os.path.isfile(egg_link):
             with open(egg_link) as f:
                 editable = os.path.normpath(
-                    os.path.join(*[line.strip() for line in f.readlines()]))
+                    os.path.join(*[line.strip() for line in f.readlines()])
+                )
     return editable
 
 
@@ -41,9 +42,7 @@ def match_cruises(cfg, selectors):
             yield name, definition
         if name in selectors:
             yield name, definition
-        elif any(
-            ("@" + tag in selectors) for tag in getattr(definition, "tags", [])
-        ):
+        elif any(("@" + tag in selectors) for tag in getattr(definition, "tags", [])):
             yield name, definition
 
 
@@ -61,9 +60,9 @@ def do_cruise(cfg, cruiseopt, interactive):
         i += 1
     for name, definition in match_cruises(cfg, cruiseopt):
         executor = definition.executor(name, definition, interactive)
-        cmd = [
-            getattr(definition, "cruise_spin", cfg.spin.cruise_spin)
-        ] + getattr(definition, "opts", [])
+        cmd = [getattr(definition, "cruise_spin", cfg.spin.cruise_spin)] + getattr(
+            definition, "opts", []
+        )
         for pname, pvalue in getattr(definition, "properties", {}).items():
             cmd += ["-p", f"{pname}={pvalue}"]
         cmd += spin_args

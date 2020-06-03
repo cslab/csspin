@@ -8,8 +8,10 @@ from spin import invoke, option, task
 
 
 @task(aliases=["tests"])
-def test(instance: option("--instance", "instance"),
-         coverage: option("--coverage", "coverage", is_flag=True)):
+def test(
+    instance: option("--instance", "instance"),
+    coverage: option("--coverage", "coverage", is_flag=True),
+):
     """Run all tests defined in this project."""
     invoke("test", instance=instance, coverage=coverage)
 

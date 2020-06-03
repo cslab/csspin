@@ -11,17 +11,17 @@ from spin import config, option, sh, task
 
 
 defaults = config(
-    opts=["-q", "-N"],
-    requires=[".virtualenv"],
-    packages=["zc.buildout"],
+    opts=["-q", "-N"], requires=[".virtualenv"], packages=["zc.buildout"],
 )
 
 
 @task()
-def buildout(cfg,
-             instance: option("--instance", "instance"),
-             rebuild: option("--rebuild", is_flag=True),
-             args):
+def buildout(
+    cfg,
+    instance: option("--instance", "instance"),
+    rebuild: option("--rebuild", is_flag=True),
+    args,
+):
     """Run the 'buildout' command."""
     if not instance:
         instance = cfg.buildout.instance

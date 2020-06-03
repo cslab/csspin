@@ -10,18 +10,18 @@ from spin import config, option, sh, task
 defaults = config(
     requires=[".virtualenv", ".preflight"],
     opts=[""],
-    coverage_opts=["--cov=spin",
-                   "--cov=tests",
-                   "--cov-report=html"],
+    coverage_opts=["--cov=spin", "--cov=tests", "--cov-report=html"],
     packages=["pytest", "pytest-cov", "pytest-tldr"],
 )
 
 
 @task(when="test")
-def pytest(cfg,
-           instance: option("--instance", "instance"),
-           coverage: option("--coverage", "coverage", is_flag=True),
-           args):
+def pytest(
+    cfg,
+    instance: option("--instance", "instance"),
+    coverage: option("--coverage", "coverage", is_flag=True),
+    args,
+):
     """Run the 'pytest' command."""
     if not args:
         if os.path.isdir("./tests"):
@@ -30,8 +30,4 @@ def pytest(cfg,
         opts = cfg.pytest.opts
         if coverage:
             opts.extend(cfg.pytest.coverage_opts)
-        sh(
-           "{virtualenv.scriptdir}/pytest",
-            *opts,
-            *args
-        )
+        sh("{virtualenv.scriptdir}/pytest", *opts, *args)

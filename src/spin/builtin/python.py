@@ -37,9 +37,7 @@ defaults = config(
         url="https://github.com/pyenv/pyenv.git",
         path="{spin.userprofile}/pyenv",
         cache="{spin.userprofile}/cache",
-        python_build=(
-            "{python.pyenv.path}/plugins/python-build/bin/python-build"
-        ),
+        python_build=("{python.pyenv.path}/plugins/python-build/bin/python-build"),
     ),
     nuget=config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
@@ -54,9 +52,7 @@ defaults = config(
         else "{python.plat_dir}/python.{python.version}/tools"
     ),
     bin_dir=(
-        "{python.inst_dir}/bin"
-        if sys.platform != "win32"
-        else "{python.inst_dir}"
+        "{python.inst_dir}/bin" if sys.platform != "win32" else "{python.inst_dir}"
     ),
     script_dir=(
         "{python.inst_dir}/bin"

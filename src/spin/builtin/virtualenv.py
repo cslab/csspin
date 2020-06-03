@@ -26,9 +26,7 @@ defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     memo="{virtualenv.venv}/spininfo.memo",
     bindir=(
-        "{virtualenv.venv}/bin"
-        if sys.platform != "win32"
-        else "{virtualenv.venv}"
+        "{virtualenv.venv}/bin" if sys.platform != "win32" else "{virtualenv.venv}"
     ),
     scriptdir=(
         "{virtualenv.venv}/bin"
@@ -112,7 +110,7 @@ def init(cfg):
             text.append(f"[{section}]")
             for key, value in settings.items():
                 text.append(f"{key} = {interpolate1(value)}")
-        if sys.platform.startswith('linux'):
+        if sys.platform.startswith("linux"):
             pipconf = "pip.conf"
         else:
             pipconf = "pip.ini"
@@ -123,12 +121,7 @@ def init(cfg):
         for section, settings in cfg.virtualenv.pipconf.items():
             for key, value in settings.items():
                 pip(
-                    "config",
-                    "--site",
-                    "set",
-                    f"{section}.{key}",
-                    value,
-                    silent=True,
+                    "config", "--site", "set", f"{section}.{key}", value, silent=True,
                 )
 
     with memoizer("{virtualenv.memo}") as m:

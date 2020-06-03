@@ -388,9 +388,9 @@ def task(*args, **kwargs):
         hook = kwargs.pop("when", None)
         aliases = kwargs.pop("aliases", [])
         group = kwargs.pop("group", group)
-        task_object = group.command(
-            *args, **kwargs, context_settings=context_settings
-        )(task_object)
+        task_object = group.command(*args, **kwargs, context_settings=context_settings)(
+            task_object
+        )
         if hook:
             cfg = get_tree()
             hook_tree = cfg.get("hooks", config())

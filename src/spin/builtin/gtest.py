@@ -12,27 +12,31 @@ import wheel.pep425tags
 from spin import config, option, sh, task
 
 
-defaults = config(
-    requires=[".virtualenv", ".preflight"],
-)
+defaults = config(requires=[".virtualenv", ".preflight"],)
 
 
 def get_bin_dir():
     warnings.filterwarnings("ignore", message="Config variable 'Py_DEBUG' is unset")
     try:
-        bin_dir = "%s-%s" % (wheel.pep425tags.get_abi_tag(),
-                             wheel.pep425tags.get_platform())
+        bin_dir = "%s-%s" % (
+            wheel.pep425tags.get_abi_tag(),
+            wheel.pep425tags.get_platform(),
+        )
     except TypeError:
-        bin_dir = "%s-%s" % (wheel.pep425tags.get_abi_tag(),
-                             wheel.pep425tags.get_platform(wheel.__path__))
+        bin_dir = "%s-%s" % (
+            wheel.pep425tags.get_abi_tag(),
+            wheel.pep425tags.get_platform(wheel.__path__),
+        )
     return bin_dir
 
 
 @task(when="test", aliases=["gtests"])
-def gtest(cfg,
-          instance: option("--instance", "instance"),
-          coverage: option("--coverage", "coverage", is_flag=True),
-          args):
+def gtest(
+    cfg,
+    instance: option("--instance", "instance"),
+    coverage: option("--coverage", "coverage", is_flag=True),
+    args,
+):
     """Run the 'gtest' command."""
     if not args:
         args = [""]

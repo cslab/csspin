@@ -48,15 +48,11 @@ CRUISE_EXECUTOR_MAPPINGS = {
 # tree. Sections and values will be added by loading plugins and
 # reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
-    spin=config(
-        spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin"),
-    ),
+    spin=config(spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin"),),
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
-    platform=config(
-        exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
-    ),
+    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",),
 )
 
 
@@ -99,9 +95,7 @@ def load_plugin(cfg, import_spec, package=None):
             tree.tree_set_keyinfo(
                 cfg,
                 settings_name,
-                tree.tree_keyinfo(
-                    plugin_defaults, list(plugin_defaults.keys())[0]
-                ),
+                tree.tree_keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),
             )
         tree.tree_merge(plugin_config_tree, plugin_defaults)
         dependencies = [
@@ -183,11 +177,7 @@ def base_options(fn):
             "the 'spin.plugin_dir' setting.",
         ),
         click.option(
-            "--quiet",
-            "-q",
-            is_flag=True,
-            default=DEFAULTS.quiet,
-            help="Be more quiet",
+            "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet",
         ),
         click.option(
             "--verbose",
@@ -217,10 +207,7 @@ def base_options(fn):
             help="Run docker commands using -it.",
         ),
         click.option(
-            "-p",
-            "properties",
-            multiple=True,
-            help="Set configuration property",
+            "-p", "properties", multiple=True, help="Set configuration property",
         ),
     ]
     for d in decorators:
@@ -331,9 +318,7 @@ def yield_plugin_import_specs(cfg):
             yield f"spin.builtin.{item}"
 
 
-def load_spinfile(
-    spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()
-):
+def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()):
     spinschema = schema.schema_load(
         os.path.join(os.path.dirname(__file__), "schema.yaml")
     )
@@ -398,9 +383,7 @@ def load_spinfile(
         load_plugin(cfg, import_spec)
 
     # Also load global plugins
-    sys.path.insert(
-        0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins))
-    )
+    sys.path.insert(0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins)))
     for ep in entrypoints.get_group_all("spin.plugin"):
         load_plugin(cfg, ep.module_name)
 
@@ -411,10 +394,7 @@ def load_spinfile(
     # is provided by the 'virtualenv' plugin, which in turn requires
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
-    graph = {
-        n: getattr(mod.defaults, "requires", [])
-        for n, mod in cfg.loaded.items()
-    }
+    graph = {n: getattr(mod.defaults, "requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Add command line settings.

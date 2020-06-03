@@ -25,10 +25,12 @@ defaults = config(
 
 
 @task(when="lint")
-def flake8(cfg,
-           allsource: option("--all", "allsource", is_flag=True),
-           coverage: option("--coverage", "coverage", is_flag=True),
-           args):
+def flake8(
+    cfg,
+    allsource: option("--all", "allsource", is_flag=True),
+    coverage: option("--coverage", "coverage", is_flag=True),
+    args,
+):
     """Run flake8 to lint Python code."""
     files = args
     if not files:

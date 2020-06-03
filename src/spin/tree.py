@@ -49,7 +49,7 @@ class ConfigTree(OrderedDict):
         self.__keyinfo = {}
         self.__parentinfo = None
         for key, value in self.items():
-            self.__keyinfo[key] = _call_location(2+ofsframes)
+            self.__keyinfo[key] = _call_location(2 + ofsframes)
             if isinstance(value, ConfigTree):
                 value.__parentinfo = ParentInfo(self, key)
 
@@ -162,9 +162,7 @@ def tree_walk(config, indent=""):
     indentation string that increases by ``" "`` for each level.
     """
     for key, value in config.items():
-        yield key, value, tree_keyname(config, key), tree_keyinfo(
-            config, key
-        ), indent
+        yield key, value, tree_keyname(config, key), tree_keyinfo(config, key), indent
         if isinstance(value, ConfigTree):
             for key, value, fullname, info, subindent in tree_walk(
                 value, indent + "  "
@@ -183,15 +181,18 @@ def tree_dump(tree):
 
     def shorten_filename(fn):
         if fn.startswith(cwd):
-            return fn[len(cwd) + 1:]
+            return fn[len(cwd) + 1 :]
         if fn.startswith(home):
             return f"~{fn[len(home):]}"
         return fn
 
     tagcolumn = max(
-        (len(f"{shorten_filename(info.file)}:{info.line}:")
-        for _, _, _, info, _ in tree_walk(tree))
-    ,default=0)
+        (
+            len(f"{shorten_filename(info.file)}:{info.line}:")
+            for _, _, _, info, _ in tree_walk(tree)
+        ),
+        default=0,
+    )
     separator = "|"
     for key, value, _fullname, info, indent in tree_walk(tree):
         tag = f"{shorten_filename(info.file)}:{info.line}:"
@@ -201,9 +202,7 @@ def tree_dump(tree):
                 write(f"{tag}{space}{separator}{indent}{key}:")
                 blank_location = len(f"{tag}{space}") * " "
                 for item in value:
-                    write(
-                        f"{blank_location}{separator}{indent}  - {repr(item)}"
-                    )
+                    write(f"{blank_location}{separator}{indent}  - {repr(item)}")
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: []")
         elif isinstance(value, dict):
@@ -301,10 +300,7 @@ def tree_update(target, source):
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
         except schema.SchemaError as se:
-            die(
-                f"{ki.file}:{ki.line}: cannot assign "
-                f"'{value}' to '{key}': {se}"
-            )
+            die(f"{ki.file}:{ki.line}: cannot assign " f"'{value}' to '{key}': {se}")
 
 
 # Variable references are names prefixed by '$' (like $port, $version,
@@ -313,14 +309,13 @@ RE_VAR = re.compile(r"\$(\w+)")
 
 
 class YamlParser(object):
-
     def __init__(self, fn, facts, variables):
         self._facts = {
-                "win32": sys.platform == "win32",
-                "darwin": sys.platform == "darwin",
-                "linux": sys.platform.startswith("linux"),
-                "posix": os.name == "posix",
-                "nt": os.name == "nt",
+            "win32": sys.platform == "win32",
+            "darwin": sys.platform == "darwin",
+            "linux": sys.platform.startswith("linux"),
+            "posix": os.name == "posix",
+            "nt": os.name == "nt",
         }
         self._var = {}
 
@@ -356,8 +351,7 @@ class YamlParser(object):
                 # This is a directive -- lookup the appropriate
                 # handler to process it
                 directive, expression = key.split(" ", 1)
-                method = getattr(self, "directive_" + directive,
-                                 self.parse_key)
+                method = getattr(self, "directive_" + directive, self.parse_key)
                 method(key, expression, value, config)
             else:
                 self.parse_key(key, key, value, config)

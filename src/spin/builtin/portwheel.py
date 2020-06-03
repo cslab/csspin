@@ -27,6 +27,7 @@ def portwheel(cfg, args):
     files = args
     if not files:
         import glob
+
         files = glob.glob("*.yaml")
         print(files)
     if not exists(cfg.portwheel.sdksrc):

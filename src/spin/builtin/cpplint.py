@@ -13,15 +13,16 @@ defaults = config(
     opts=["--extensions=h,hh,hpp,c,cc,cpp,i"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
     requires=[".virtualenv", ".preflight"],
-    packages=["cpplint"]
+    packages=["cpplint"],
 )
 
 
 @task(when="check")
 def cpplint(cfg, args):
     """Run the 'cpplint' command."""
-    c_files = [f for f in cfg.vcs.modified
-               if os.path.splitext(f)[1] in cfg.cppcheck.extensions]
+    c_files = [
+        f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cppcheck.extensions
+    ]
     print(c_files)
     if c_files:
         cmd = "{cpplint.cmd}"
@@ -30,4 +31,3 @@ def cpplint(cfg, args):
         sh(cmd)
     else:
         print("cpplint: no modified C/C++ files")
-

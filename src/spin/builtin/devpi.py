@@ -27,9 +27,7 @@ defaults = config(
 
 
 def prepare_environment():
-    setenv(
-        DEVPI_VENV="{virtualenv.venv}", DEVPI_CLIENTDIR="{spin.spin_dir}/devpi"
-    )
+    setenv(DEVPI_VENV="{virtualenv.venv}", DEVPI_CLIENTDIR="{spin.spin_dir}/devpi")
 
 
 @task()
@@ -45,11 +43,7 @@ def stage():
     devpi("login", "{devpi.user}")
     python = os.path.abspath(get_tree().virtualenv.python)
     devpi(
-        "upload",
-        "-p",
-        python,
-        "--no-vcs",
-        "--formats={','.join(devpi.formats)}",
+        "upload", "-p", python, "--no-vcs", "--formats={','.join(devpi.formats)}",
     )
 
 
