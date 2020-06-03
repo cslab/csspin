@@ -77,11 +77,11 @@ Here are examples from spin itself.
      .........
      ------------------------------------------------------------------------------
      Ran 9 tests in 1.10s
-     
+
      ---------- coverage: platform darwin, python 3.8.1-final-0 -----------
      Coverage HTML written to dir htmlcov
-     
-     
+
+
      OK
 
 * Run preflight checks. This includes the tests, and also runs
@@ -269,7 +269,7 @@ line option ``-p python.use=python`` for all Docker containers. This
 is useful as spin otherwise would provision a Python installation
 inside the container, which is unnecessary because the images used are
 already prepared to have the required Python release.
-		
+
 This set includes docker images for Windows as well as Linux, which
 means we need to have one docker daemon available for each
 platform. These are defined as user-specific settings in
@@ -364,9 +364,9 @@ used.
 
 If the project has a ``setup.py`` it is installed into the virtual
 environment in development mode:
-   
+
 .. code-block:: console
-   
+
    spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install -e .
 
 
@@ -495,10 +495,10 @@ subcommands to ``spin`` by using the decorators ``@task`` and
 Here is an example for a simple plugin:
 
 .. code-block:: python
- 
+
    # We assume that this plugin module is called `example`, providing
    # a subcommand of the same name.
-   
+
    from spin import config, echo, task
 
    defaults = config(msg="This projects lives in {spin.project_root}")
@@ -529,8 +529,8 @@ to print our message:
    ...
    $ spin example
    spin: This project lives in .
-     
-   
+
+
 
 Plugin API
 ----------
@@ -554,7 +554,7 @@ the configuration tree.
 
 
 .. py:function:: config(**kwargs)
-		 
+
    `config` creates a configuration subtree::
 
      >>> config(a="alpha", b="beta)
@@ -731,14 +731,14 @@ the configuration tree.
      def lint(allsource: option("--all", "allsource", is_flag=True)):
          """Run all linters defined in this project."""
 	 invoke("lint", allsource=allsource)
-		  
+
    Note that in this case, all linters are required to support the
    ``allsource`` argument, i.e. the way a task that uses `invoke` is
    invoking other tasks is part of the call interface contract for
    linters: *all* linter tasks *must* support the ``allsource``
    argument as part of their Python function signature (albeit not
    necessarily the same command line flag ``--all``).
-   
+
 
 Others (not yet really documented):
 
@@ -813,7 +813,7 @@ specific settings like in the example below.
        volprefix: "c:"
      "@linux":
        context: default
-       
+
    # I use a local devpi mirror. Set its properties here.
    devpi:
      user: frank

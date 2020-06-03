@@ -181,7 +181,7 @@ def tree_dump(tree):
 
     def shorten_filename(fn):
         if fn.startswith(cwd):
-            return fn[len(cwd) + 1 :]
+            return fn[len(cwd) + 1 :]  # noqa: E203
         if fn.startswith(home):
             return f"~{fn[len(home):]}"
         return fn
@@ -402,6 +402,8 @@ class YamlParser(object):
         out[key] = value
 
 
-def parse_yaml(yaml_file, fn, facts={}, variables={}):
+def parse_yaml(yaml_file, fn, facts=None, variables=None):
+    facts = facts if facts else {}
+    variables = variables if variables else {}
     yamlparser = YamlParser(fn, facts, variables)
     return yamlparser.parse_yaml(yaml_file)
