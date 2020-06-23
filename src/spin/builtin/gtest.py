@@ -18,6 +18,9 @@ defaults = config(requires=[".virtualenv", ".preflight"])
 
 def get_bin_dir():
     warnings.filterwarnings("ignore", message="Config variable 'Py_DEBUG' is unset")
+    bin_name = "bin"
+    if sys.platform.startswith("win32"):
+        bin_name = "Scripts"
     try:
         bin_dir = "%s-%s" % (
             wheel.pep425tags.get_abi_tag(),
@@ -28,6 +31,7 @@ def get_bin_dir():
             wheel.pep425tags.get_abi_tag(),
             wheel.pep425tags.get_platform(wheel.__path__),
         )
+    bin_dir = os.path.sep.join([bin_dir, bin_name, "tests"])
     return bin_dir
 
 
