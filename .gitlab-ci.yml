@@ -1,6 +1,5 @@
-image: registry.contact.de/phix
-
 pages:
+  image: registry.contact.de/phix
   tags:
     - Docker
   script:
@@ -10,3 +9,26 @@ pages:
       - public
   only:
     - master
+
+.test:
+  image: python:3
+  before_script:
+    - python -m pip install --user pipx
+    - export PATH=~/.local/bin:$PATH
+    - pipx install --editable .
+  tags:
+    - Docker
+
+test_py3:
+  extends: .test
+  script:
+    - python -m pip install virtualenv
+    - spin -p python.use=/usr/local/bin/python test
+
+test_py2:
+  extends: .test
+  script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends python-setuptools python-pip
+    - python2 -m pip install virtualenv
+    - spin -p python.use=/usr/bin/python2 test

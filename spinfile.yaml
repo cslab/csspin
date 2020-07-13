@@ -6,10 +6,10 @@ plugins:
   - devpi
   - git
   - radon
-  - cedm:
-      - cedm
-  - demo-plugin:
-      - demo_plugin
+  # - demo-plugin:
+  #     - demo_plugin
+  # - cedm:
+  #     - cedm
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
