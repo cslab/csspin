@@ -31,4 +31,5 @@ test_py2:
     - apt-get update
     - apt-get install -y --no-install-recommends python-setuptools python-pip
     - python2 -m pip install virtualenv
+    - cd tests/data/trivial
     - spin -p python.use=/usr/bin/python2 test

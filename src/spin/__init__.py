@@ -163,7 +163,9 @@ def sh(*cmd, **kwargs):
     except FileNotFoundError as ex:
         die(str(ex))
     except subprocess.CalledProcessError as ex:
-        die(f"Command {cmd} failed with return code {ex.returncode}")
+        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
+        die(f"Command '{cmd}' failed with return code {ex.returncode}"
+        )
     return cpi
 
 
