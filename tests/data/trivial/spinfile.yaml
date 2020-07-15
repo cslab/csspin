@@ -1,0 +1,5 @@
+# This is the spinfile.yaml of spin.
+plugins:
+   - pytest
+   - devpi
+   - radon

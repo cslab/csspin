@@ -55,21 +55,26 @@ def rm(cfg):
     cleanup(cfg)
 
 
-def init(cfg):
+def get_abi_tag():
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
-    cfg.virtualenv.abitag = (
-        sh(
-            "{python.interpreter}",
-            "-c",
-            "from wheel.pep425tags import get_abi_tag; print(get_abi_tag())",
-            capture_output=True,
-            silent=True,
-        )
+    code = """
+try:
+    from wheel.pep425tags import get_abi_tag
+except ImportError:
+    from pip._internal.pep425tags import get_abi_tag
+print(get_abi_tag())
+"""
+    return (
+        sh("{python.interpreter}", "-c", code, capture_output=True, silent=True)
         .stdout.decode()
         .strip()
     )
+
+
+def init(cfg):
+    cfg.virtualenv.abitag = get_abi_tag()
 
     if not cfg.python.use and not exists(
         "{python.script_dir}/virtualenv{platform.exe}"
