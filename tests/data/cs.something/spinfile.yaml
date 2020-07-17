@@ -2,3 +2,8 @@
 plugins:
    - pytest
    - ce15
+   - eggs
+
+eggs:
+  requirements: ["cs.web"]
+  extra_index_url: "https://packages.contact.de/apps/15.4/+simple"

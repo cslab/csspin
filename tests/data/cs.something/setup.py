@@ -10,7 +10,7 @@ from cdb.comparch.pkgtools import setup
 setup(
     name="cs.something",
     version="15.1.0",
-    install_requires=["cs.platform"],
+    install_requires=["cs.platform", "cs.web"],
     docsets=[],
     cdb_modules=[],
     cdb_services=[],
