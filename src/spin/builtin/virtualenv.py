@@ -142,6 +142,9 @@ def init(cfg):
             plugin_module = cfg.loaded[plugin]
             for req in plugin_module.defaults.get("packages", []):
                 pipit(req)
+            provision_hook = getattr(plugin_module, "provision", None)
+            if provision_hook is not None:
+                provision_hook(cfg)
 
         # If there is a setup.py, make an editable install (which
         # transitively also installs runtime dependencies of the
