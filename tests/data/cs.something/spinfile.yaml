@@ -1,8 +1,8 @@
 # This is the spinfile.yaml of spin.
 plugins:
-   - pytest
    - ce15
    - eggs
+   - pytest
 
 eggs:
   requirements: ["cs.web"]

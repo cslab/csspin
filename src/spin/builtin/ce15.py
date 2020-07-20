@@ -104,7 +104,13 @@ def provision(cfg):
     ce_pth_content.append(
         "import os; os.environ['PATH'] += os.pathsep + '%s'\n" % ce_libpath
     )
+    venv_base_path = interpolate1(cfg.virtualenv.venv)
     ce_pth_path = os.path.join(
-        cfg.virtualenv.venv, venv_sppath(cfg.virtualenv.abitag), "ce.pth"
+        venv_base_path, venv_sppath(cfg.virtualenv.abitag), "ce.pth"
     )
     writetext(ce_pth_path, "\n".join(ce_pth_content))
+
+    # This prevents an ugly warning to be printed by CE's sitecustomize.py
+    fake_cdb_package = os.path.join(venv_base_path, "cdb")
+    if not os.path.isdir(fake_cdb_package):
+        os.mkdir(fake_cdb_package)
