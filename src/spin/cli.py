@@ -48,7 +48,11 @@ CRUISE_EXECUTOR_MAPPINGS = {
 # tree. Sections and values will be added by loading plugins and
 # reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
-    spin=config(spinfile="spinfile.yaml", userprofile=os.path.expanduser("~/.spin")),
+    spin=config(
+        spinfile="spinfile.yaml",
+        userprofile=os.path.expanduser("~/.spin"),
+        extra_index="https://packages.contact.de/apps/x.x"
+    ),
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
@@ -353,6 +357,20 @@ def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=
             mkdir(cfg.spin.plugin_dir)
         sys.path.insert(0, interpolate1(cfg.spin.plugin_dir))
 
+        cmd = [
+            f"{sys.executable}",
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "-t",
+            "{spin.plugin_dir}",
+        ]
+
+        extra_index = cfg.spin.extra_index
+        if extra_index:
+            cmd.extend(["--extra-index-url", extra_index])
+
         # Install plugin packages that are not yet installed, using pip
         # with the "-t" (target) option pointing to the plugin directory.
         with memoizer("{spin.plugin_dir}/packages.memo") as m:
@@ -360,16 +378,7 @@ def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=
             for pkg in find_plugin_packages(cfg):
                 pkg = replacements.get(pkg, pkg)
                 if not m.check(pkg):
-                    sh(
-                        f"{sys.executable}",
-                        "-m",
-                        "pip",
-                        "install",
-                        "-q",
-                        "-t",
-                        "{spin.plugin_dir}",
-                        f"{pkg}",
-                    )
+                    sh(*cmd, pkg)
                     m.add(pkg)
 
     # Load plugins. "Plugins" are not plugin packages, but modules
