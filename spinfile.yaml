@@ -4,7 +4,6 @@ plugins:
   - flake8
   - pytest
   - devpi
-  - git
   - radon
   # - demo-plugin:
   #     - demo_plugin
