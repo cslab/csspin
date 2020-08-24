@@ -10,8 +10,10 @@ import warnings
 
 from spin import config, option, sh, task
 
-import wheel.pep425tags
+from packaging import tags
 
+# tag for the running interpreter (most important priority)
+tag = next(tags.sys_tags())
 
 defaults = config(requires=[".virtualenv", ".preflight"])
 
@@ -21,16 +23,10 @@ def get_bin_dir():
     bin_name = "bin"
     if sys.platform.startswith("win32"):
         bin_name = "Scripts"
-    try:
-        bin_dir = "%s-%s" % (
-            wheel.pep425tags.get_abi_tag(),
-            wheel.pep425tags.get_platform(),
-        )
-    except TypeError:
-        bin_dir = "%s-%s" % (
-            wheel.pep425tags.get_abi_tag(),
-            wheel.pep425tags.get_platform(wheel.__path__),
-        )
+    bin_dir = "%s-%s" % (
+        tag.abi,
+        tag.platform,
+    )
     bin_dir = os.path.sep.join([bin_dir, bin_name, "tests"])
     return bin_dir
 

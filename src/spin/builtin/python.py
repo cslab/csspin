@@ -22,15 +22,10 @@ from spin import (
     task,
 )
 
-from wheel import pep425tags
+from packaging import tags
 
-
-# Thank you PyPA, you just broke an API
-# https://github.com/pypa/wheel/commit/b5733b86155c696274564e86c2a5f966f9abbebf
-try:
-    pep425_platform = pep425tags.get_platform()
-except TypeError:
-    pep425_platform = pep425tags.get_platform(None)
+# tag for the running interpreter (most important priority)
+tag = next(tags.sys_tags())
 
 
 defaults = config(
@@ -44,8 +39,8 @@ defaults = config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
         exe="{spin.userprofile}/nuget.exe",
     ),
-    version="3.8.3",
-    platform=pep425_platform,
+    version="3.8.5",
+    platform=tag.platform,
     plat_dir="{spin.userprofile}/{python.platform}",
     inst_dir=(
         "{python.plat_dir}/python/{python.version}"
