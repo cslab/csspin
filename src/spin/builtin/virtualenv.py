@@ -66,6 +66,7 @@ from packaging import tags
 tag = next(tags.sys_tags())
 print(tag.abi)
 """
+    sh("{python.interpreter} -m pip install -q --upgrade packaging")
     return (
         sh("{python.interpreter}", "-c", code, capture_output=True, silent=True)
         .stdout.decode()
