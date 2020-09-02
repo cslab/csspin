@@ -83,6 +83,7 @@ def pyenv_install(cfg):
                 sh("git pull")
         # we should set
         setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
+        setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
         sh("{pyenv.python_build} {version} {inst_dir}")
         sh("{interpreter} -m pip install -q --upgrade pip wheel")
 
