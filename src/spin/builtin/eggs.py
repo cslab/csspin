@@ -11,11 +11,15 @@ This plugin provisions Python Egg requirements of a project.
 from spin import memoizer, config, Command
 
 defaults = config(
-    cmd="easy_install", opts=["-q", "--no-deps"], requirements=[], extra_index_url=None
+    cmd="easy_install",
+    opts=["-q", "--no-deps"],
+    requires=[".ce15"],
+    requirements=[],
+    extra_index_url=None
 )
 
 
-def init(cfg):
+def provision(cfg):
     opts = cfg.eggs.opts
     if cfg.eggs.extra_index_url:
         opts.extend(["-i", cfg.eggs.extra_index_url])
