@@ -17,7 +17,7 @@ additional path configuration file which contains all necessary paths.
 
 import os
 
-from spin import writetext, interpolate1, die
+from spin import writetext, interpolate1, die, setenv
 
 
 def provision(cfg):
@@ -100,10 +100,19 @@ def provision(cfg):
 
     ce_pth_content = ce_pythonpath(ce_sppath)
 
-    # Eggs in CE plaform often depend from shared libs in the lib folder
+    # Eggs in CE platform often depend from shared libs in the lib folder
+    libpath_var = "PATH" if os.name == "nt" else "LD_LIBRARY_PATH"
     ce_pth_content.append(
-        "import os; os.environ['PATH'] += os.pathsep + '%s'\n" % ce_libpath
+        "import os; os.environ['%s'] = r'%s' + os.pathsep + os.environ.get('%s', '')"
+        % (libpath_var, ce_libpath, libpath_var)
     )
+
+    if os.name != "nt":
+        setenv(
+            f"export LD_LIBRARY_PATH=%s{os.pathsep}$LD_LIBRARY_PATH" % ce_libpath,
+            LD_LIBRARY_PATH=os.pathsep.join((ce_libpath, os.environ.get("LD_LIBRARY_PATH", ""))),
+        )
+
     venv_base_path = interpolate1(cfg.virtualenv.venv)
     ce_pth_path = os.path.join(
         venv_base_path, venv_sppath(cfg.virtualenv.abitag), "ce.pth"
