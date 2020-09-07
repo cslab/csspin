@@ -15,7 +15,7 @@ defaults = config(
 )
 
 
-def provision(cfg):
+def init(cfg):
     opts = cfg.eggs.opts
     if cfg.eggs.extra_index_url:
         opts.extend(["-i", cfg.eggs.extra_index_url])
