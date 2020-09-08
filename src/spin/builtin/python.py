@@ -85,7 +85,7 @@ def pyenv_install(cfg):
         setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
         setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
         sh("{pyenv.python_build} {version} {inst_dir}")
-        sh("{interpreter} -m pip install -q --upgrade pip wheel")
+        sh("{interpreter} -m pip install -q --upgrade pip wheel packaging")
 
 
 def nuget_install(cfg):
@@ -109,7 +109,7 @@ def nuget_install(cfg):
         PATH=os.pathsep.join((f"{paths}", os.environ["PATH"])),
     )
     sh("{python.interpreter} -m ensurepip")
-    sh("{python.interpreter} -m pip install -q --upgrade pip wheel")
+    sh("{python.interpreter} -m pip install -q --upgrade pip wheel packaging")
 
 
 def init(cfg):
