@@ -60,13 +60,15 @@ def get_abi_tag():
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
     code = """
-
-from packaging import tags
-# tag for running interpreter (most important priority)
-tag = next(tags.sys_tags())
-print(tag.abi)
+try:
+    from packaging import tags
+    # tag for running interpreter (most important priority)
+    tag = next(tags.sys_tags())
+    print(tag.abi)
+except ImportError:
+    from pip._internal.pep425tags import get_abi_tag
+    print(get_abi_tag())
 """
-    sh("{python.interpreter} -m pip install -q --upgrade packaging")
     return (
         sh("{python.interpreter}", "-c", code, capture_output=True, silent=True)
         .stdout.decode()
