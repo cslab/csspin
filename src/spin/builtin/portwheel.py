@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, exists, sh, task
+from spin import config, exists, option, sh, task
 
 
 defaults = config(
@@ -16,13 +16,19 @@ defaults = config(
 
 
 @task()
-def portwheel(cfg, args):
+def portwheel(
+    cfg,
+    sdksrc: option("--sdksrc", "sdksrc"),
+    args
+):
     files = args
     if not files:
         import glob
 
         files = glob.glob("*.yaml")
         print(files)
-    if not exists(cfg.portwheel.sdksrc):
-        sh("svn", "co", "https://svn.contact.de/svn/sdk/trunk", cfg.portwheel.sdksrc)
-    sh("portwheel", "--sdksrc={portwheel.sdksrc}", *files, *cfg.portwheel.opts)
+    if not sdksrc:
+        sdksrc = cfg.portwheel.sdksrc
+    if not exists(sdksrc):
+        sh("svn", "co", "https://svn.contact.de/svn/sdk/trunk", sdksrc)
+    sh("portwheel", "--sdksrc={portwheel.sdksrc}", *cfg.portwheel.opts, *files)
