@@ -4,6 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
+from distutils import util
 import os
 import sys
 
@@ -22,10 +23,12 @@ from spin import (
     task,
 )
 
-from packaging import tags
 
-# tag for the running interpreter (most important priority)
-tag = next(tags.sys_tags())
+def get_platform():
+    # replace  hypthens and periods with underscore () https://www.python.org/dev/peps/pep-0425/#id13
+    plat = util.get_platform().replace('-', '_').replace(".", "_")
+    # check if running in a manylinux container
+    return os.environ.get("AUDITWHEEL_PLAT", plat)
 
 
 defaults = config(
@@ -40,7 +43,7 @@ defaults = config(
         exe="{spin.userprofile}/nuget.exe",
     ),
     version="3.8.5",
-    platform=tag.platform,
+    platform=get_platform(),
     plat_dir="{spin.userprofile}/{python.platform}",
     inst_dir=(
         "{python.plat_dir}/python/{python.version}"
