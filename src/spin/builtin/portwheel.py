@@ -31,4 +31,4 @@ def portwheel(
         sdksrc = cfg.portwheel.sdksrc
     if not exists(sdksrc):
         sh("svn", "co", "https://svn.contact.de/svn/sdk/trunk", sdksrc)
-    sh("portwheel", "--sdksrc={portwheel.sdksrc}", *cfg.portwheel.opts, *files)
+    sh("portwheel", "--sdksrc={}".format(sdksrc), *cfg.portwheel.opts, *files)
