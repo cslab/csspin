@@ -8,26 +8,14 @@ import os
 import sys
 import warnings
 
-from spin import config, option, sh, task
-
-from packaging import tags
-
-# tag for the running interpreter (most important priority)
-tag = next(tags.sys_tags())
+from spin import config, interpolate1, option, sh, task
 
 defaults = config(requires=[".virtualenv", ".preflight"])
 
 
 def get_bin_dir():
     warnings.filterwarnings("ignore", message="Config variable 'Py_DEBUG' is unset")
-    bin_name = "bin"
-    if sys.platform.startswith("win32"):
-        bin_name = "Scripts"
-    bin_dir = "%s-%s" % (
-        tag.abi,
-        tag.platform,
-    )
-    bin_dir = os.path.sep.join([bin_dir, bin_name, "tests"])
+    bin_dir = os.path.join(interpolate1("{virtualenv.scriptdir}"), "tests")
     return bin_dir
 
 
