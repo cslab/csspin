@@ -84,7 +84,7 @@ def init(cfg):
     ):
         # If we use Python provisioned by spin, add virtualenv if
         # necessary.
-        sh("{python.interpreter} -m pip install virtualenv")
+        sh("{python.interpreter} -m pip install virtualenv==20.0.23")
 
     virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
 
