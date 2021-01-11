@@ -4,9 +4,10 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from distutils import util
 import os
 import sys
+
+from packaging import tags
 
 from spin import (
     cd,
@@ -25,10 +26,8 @@ from spin import (
 
 
 def get_platform():
-    # replace  hypthens and periods with underscore () https://www.python.org/dev/peps/pep-0425/#id13
-    plat = util.get_platform().replace('-', '_').replace(".", "_")
-    # check if running in a manylinux container
-    return os.environ.get("AUDITWHEEL_PLAT", plat)
+    # tag for the running interpreter (best-matching)
+    return next(tags.sys_tags()).platform
 
 
 defaults = config(
