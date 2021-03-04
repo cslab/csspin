@@ -17,7 +17,7 @@ defaults = config(
 )
 
 
-@task()
+@task(when="build")
 def scons(cfg, args):
     """Run scons command"""
     cmd = "{scons.cmd}"
