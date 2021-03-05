@@ -343,7 +343,7 @@ def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=
     # and proceed.
     if spinfile:
         spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
-        cfg.spin.project_root = spinfile_dir
+        cfg.spin.spinfile_dir = spinfile_dir
         if not cwd:
             cd(spinfile_dir)
 
