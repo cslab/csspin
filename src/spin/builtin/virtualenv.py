@@ -86,7 +86,10 @@ def init(cfg):
         # necessary.
         sh("{python.interpreter} -m pip install virtualenv==20.0.23")
 
-    virtualenv = Command("{python.interpreter}", "-m", "virtualenv", "-q")
+    cmd = ["{python.interpreter}", "-m", "virtualenv"]
+    if not cfg.verbose:
+        cmd.append("-q")
+    virtualenv = Command(*cmd)
 
     if not exists("{virtualenv.venv}"):
         virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
@@ -107,8 +110,10 @@ def init(cfg):
         f"set PATH={venvabs}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
     )
-
-    pip = Command("pip", "-q")
+    cmd = ["pip"]
+    if not cfg.verbose:
+        cmd.append("-q")
+    pip = Command(*cmd)
 
     # This is a much faster alternative to calling pip config
     # below; we leave it active here for now, enjoying a faster
