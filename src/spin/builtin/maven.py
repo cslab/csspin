@@ -48,4 +48,4 @@ def maven(cfg,
     # do not use goals when some extra args are used
     if not args:
         opts.extend(cfg.maven.goals)
-    sh(cmd, *opts, *args)
+    sh(cmd, *opts, *args, env=os.environ)
