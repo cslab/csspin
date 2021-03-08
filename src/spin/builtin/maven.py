@@ -29,6 +29,8 @@ def maven(cfg,
           args):
     """Run maven command"""
     cmd = "{maven.cmd}"
+    if sys.platform.startswith("win32"):
+        cmd += ".cmd"
     opts = cfg.maven.opts
     # add pom file
     opts.append("-f")
