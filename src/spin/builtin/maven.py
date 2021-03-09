@@ -11,6 +11,7 @@ from spin import config, option, sh, task
 
 defaults = config(
     cmd="mvn",
+    goals=[],
     opts=[],
     defines={},
     pom_file="pom.xml",
