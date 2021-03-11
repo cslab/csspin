@@ -18,14 +18,14 @@ defaults = config(
         "flake8-import-order",
         "flake8-comprehensions",
         "flake8-copyright",
-
+        "flake8-polyfill",
         # These are not Py2-compatible; dont use them by default, as
         # they would break the flake8 task on Py2. Users which are
         # Py3-only may get them via overwriting the
         # "packages"-property in thier spinfile
         #
-        #"flake8-fixme",
-        #"flake8-bugbear",
+        # "flake8-fixme",
+        # "flake8-bugbear",
     ],
 )
 
