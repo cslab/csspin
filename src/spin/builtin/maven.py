@@ -11,6 +11,7 @@ from spin import config, option, sh, task
 
 defaults = config(
     cmd="mvn",
+    goals=[],
     opts=[],
     defines={},
     pom_file="pom.xml",
@@ -29,6 +30,8 @@ def maven(cfg,
           args):
     """Run maven command"""
     cmd = "{maven.cmd}"
+    if sys.platform.startswith("win32"):
+        cmd += ".cmd"
     opts = cfg.maven.opts
     # add pom file
     opts.append("-f")
