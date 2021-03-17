@@ -92,7 +92,8 @@ def init(cfg):
     virtualenv = Command(*cmd)
 
     if not exists("{virtualenv.venv}"):
-        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
+        # download seeds since pip is too old in manylinux
+        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
 
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
