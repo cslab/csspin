@@ -155,8 +155,11 @@ def sh(*cmd, **kwargs):
     if not kwargs.pop("silent", False):
         echo(click.style(" ".join(cmd), bold=True))
     shell = kwargs.pop("shell", len(cmd) == 1)
-    if sys.platform == "win32" and len(cmd) == 1:
-        cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
+
+    if sys.platform == "win32":
+        shell = True
+        if len(cmd) == 1:
+            cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
     try:
         cpi = subprocess.run(cmd, shell=shell, check=True, **kwargs)
