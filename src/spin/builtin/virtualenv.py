@@ -59,18 +59,10 @@ def get_abi_tag():
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
-    code = """
-try:
-    from packaging import tags
-    # tag for running interpreter (most important priority)
-    tag = next(tags.sys_tags())
-    print(tag.abi)
-except ImportError:
-    from pip._internal.pep425tags import get_abi_tag
-    print(get_abi_tag())
-"""
+    # ABI detection has been moved to file which is then called by the interpreter.
+    from spin import get_abi_tag
     return (
-        sh("{python.interpreter}", "-c", code, capture_output=True, silent=True)
+        sh("{python.interpreter}", get_abi_tag.__file__, capture_output=True, silent=False)
         .stdout.decode()
         .strip()
     )
