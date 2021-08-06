@@ -24,8 +24,8 @@ def cpplint(cfg, args):
     c_files = [
         f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cppcheck.extensions
     ]
-    print(c_files)
     if c_files:
+        print("cpplint: Modified files: ", c_files)
         cmd = "{cpplint.cmd}"
         c_files_str = " ".join(c_files)
         cmd = " ".join([cmd, " ".join(cfg.cpplint.opts), c_files_str])
