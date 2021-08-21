@@ -32,5 +32,5 @@ def gtest(
     for test in cfg.gtest.tests:
         if sys.platform.startswith("win32"):
             test += ".exe"
-        test = os.path.join(get_bin_dir(), test)
+        test = os.path.normpath(os.path.join(get_bin_dir(), test))
         sh(test, *args)

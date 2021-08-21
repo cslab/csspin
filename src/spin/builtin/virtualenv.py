@@ -61,8 +61,14 @@ def get_abi_tag():
     # firing up the interpreter just for that is slow.
     # ABI detection has been moved to file which is then called by the interpreter.
     from spin import get_abi_tag
+
     return (
-        sh("{python.interpreter}", get_abi_tag.__file__, capture_output=True, silent=False)
+        sh(
+            "{python.interpreter}",
+            get_abi_tag.__file__,
+            capture_output=True,
+            silent=False,
+        )
         .stdout.decode()
         .strip()
     )
@@ -116,10 +122,10 @@ def init(cfg):
         text.append(f"[{section}]")
         for key, value in settings.items():
             text.append(f"{key} = {interpolate1(value)}")
-    if sys.platform.startswith("linux"):
-        pipconf = "pip.conf"
-    else:
+    if sys.platform == "win32":
         pipconf = "pip.ini"
+    else:
+        pipconf = "pip.conf"
 
     writetext("{virtualenv.venv}/" + pipconf, "\n".join(text))
 
