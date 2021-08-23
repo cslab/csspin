@@ -15,7 +15,7 @@ defaults = config(
     opts=[],
     defines={},
     pom_file="pom.xml",
-    requires=[".virtualenv", ".build"],
+    requires=[".virtualenv", ".java"],
     packages=[],
 )
 
