@@ -422,6 +422,7 @@ def group(*args, **kwargs):
 
             return task_decorator
 
+        kwargs["cls"] = cli.GroupWithAliases
         grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))
         grp.task = subtask
         return grp
