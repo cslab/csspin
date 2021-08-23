@@ -46,7 +46,7 @@ def rm(cfg):
     cleanup(cfg)
 
 
-def get_abi_tag():
+def get_abi_tag(cfg):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
@@ -58,7 +58,7 @@ def get_abi_tag():
             "{python.interpreter}",
             get_abi_tag.__file__,
             capture_output=True,
-            silent=False,
+            silent=not cfg.verbose,
         )
         .stdout.decode()
         .strip()
@@ -66,24 +66,7 @@ def get_abi_tag():
 
 
 def init(cfg):
-    cfg.virtualenv.abitag = get_abi_tag()
-
-    if not cfg.python.use and not exists(
-        "{python.script_dir}/virtualenv{platform.exe}"
-    ):
-        # If we use Python provisioned by spin, add virtualenv if
-        # necessary.
-        sh("{python.interpreter} -m pip install virtualenv==20.0.23")
-
-    cmd = ["{python.interpreter}", "-m", "virtualenv"]
-    if not cfg.verbose:
-        cmd.append("-q")
-    virtualenv = Command(*cmd)
-
-    if not exists("{virtualenv.venv}"):
-        # download seeds since pip is too old in manylinux
-        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
-
+    cfg.virtualenv.abitag = get_abi_tag(cfg)
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
     # not pick up the venv bin.
@@ -100,6 +83,28 @@ def init(cfg):
         f"set PATH={venvabs}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
     )
+
+
+@venv.task()
+def create(cfg):
+    if not cfg.python.use and not exists(
+        "{python.script_dir}/virtualenv{platform.exe}"
+    ):
+        # If we use Python provisioned by spin, add virtualenv if
+        # necessary.
+        sh("{python.interpreter} -m pip install virtualenv==20.0.23")
+
+    cmd = ["{python.interpreter}", "-m", "virtualenv"]
+    if not cfg.verbose:
+        cmd.append("-q")
+    virtualenv = Command(*cmd)
+
+    if not exists("{virtualenv.venv}"):
+        # download seeds since pip is too old in manylinux
+        virtualenv(
+            "-p", "{python.interpreter}", "{virtualenv.venv}", "--download"
+        )
+
     cmd = ["pip"]
     if not cfg.verbose:
         cmd.append("-q")
