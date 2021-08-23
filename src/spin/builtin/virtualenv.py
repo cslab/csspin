@@ -114,11 +114,12 @@ def init(cfg):
         for key, value in settings.items():
             text.append(f"{key} = {interpolate1(value)}")
     if sys.platform == "win32":
-        pipconf = "pip.ini"
+        pipconf = "{virtualenv.venv}/pip.ini"
     else:
-        pipconf = "pip.conf"
+        pipconf = "{virtualenv.venv}/pip.conf"
 
-    writetext("{virtualenv.venv}/" + pipconf, "\n".join(text))
+    if not exists(pipconf):
+        writetext(pipconf, "\n".join(text))
 
     with memoizer("{virtualenv.memo}") as m:
 
