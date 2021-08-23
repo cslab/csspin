@@ -16,3 +16,4 @@ __pycache__/
 *.org_rst
 /pip/
 /_minted-*/
+*.py,cover

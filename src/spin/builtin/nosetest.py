@@ -9,7 +9,6 @@ import sys
 
 from spin import config, option, sh, task
 
-
 defaults = config(
     cmd="nosetests",
     opts=["--logging-filter=-morepath"],

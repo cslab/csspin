@@ -16,27 +16,10 @@ import os
 import sys
 
 import click
-
 import entrypoints
 
-from . import (
-    cd,
-    config,
-    cruise,
-    die,
-    exists,
-    get_tree,
-    interpolate1,
-    memoizer,
-    mkdir,
-    readyaml,
-    schema,
-    set_tree,
-    sh,
-    toporun,
-    tree,
-)
-
+from . import (cd, config, cruise, die, exists, get_tree, interpolate1,
+               memoizer, mkdir, readyaml, schema, set_tree, sh, toporun, tree)
 
 CRUISE_EXECUTOR_MAPPINGS = {
     "@docker": config(executor=cruise.DockerExecutor),
@@ -183,6 +166,11 @@ def base_options(fn):
             "searches plugin packages. The default is "
             "{project_root}/.spin/plugins. This option overrides "
             "the 'spin.plugin_dir' setting.",
+        ),
+        click.option(
+            "--log-level",
+            "log_level",
+            type=str,
         ),
         click.option(
             "--quiet",

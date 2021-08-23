@@ -9,7 +9,6 @@ import shutil
 
 from spin import config, option, sh, task
 
-
 defaults = config(opts=["-q", "-N"], requires=[".virtualenv"], packages=["zc.buildout"])
 
 

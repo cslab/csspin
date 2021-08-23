@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import invoke, option, task
+from spin import invoke, task
 
 
 @task()

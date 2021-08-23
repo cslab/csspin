@@ -6,8 +6,8 @@
 
 import os
 
-from git import Repo
 import svn.local
+from git import Repo
 
 from spin import config, sh
 

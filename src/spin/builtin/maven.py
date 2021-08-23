@@ -21,13 +21,25 @@ defaults = config(
 
 
 @task(when="build")
-def maven(cfg,
-          file: option("-f", "--file",
-                       show_default="Force the use of an alternate POM file "
-                                    "(or directory with pom.xml)"),
-          defines: option("-D", "--define", "defines", multiple=True,
-                          show_default="Define a system property"),
-          args):
+def maven(
+    cfg,
+    pom_file: option(
+        "-f",
+        "--file",
+        show_default=(
+            "Force the use of an alternate POM file " # noqa
+            "(or directory with pom.xml)"
+        ),
+    ),
+    defines: option(
+        "-D",
+        "--define",
+        "defines",
+        multiple=True,
+        show_default="Define a system property", # noqa
+    ),
+    args,
+):
     """Run maven command"""
     cmd = "{maven.cmd}"
     if sys.platform.startswith("win32"):
@@ -35,7 +47,7 @@ def maven(cfg,
     opts = cfg.maven.opts
     # add pom file
     opts.append("-f")
-    opts.append(file or cfg.maven.pom_file)
+    opts.append(pom_file or cfg.maven.pom_file)
 
     # add defines
     cfg_defines = cfg.maven.defines

@@ -6,7 +6,6 @@
 
 from spin import config, exists, option, sh, task
 
-
 defaults = config(
     opts=["--wheel"],
     sdksrc="sdk",

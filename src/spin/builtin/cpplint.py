@@ -8,7 +8,6 @@ import os
 
 from spin import config, sh, task
 
-
 defaults = config(
     cmd="cpplint",
     opts=["--extensions=h,hh,hpp,c,cc,cpp,i"],

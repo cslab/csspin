@@ -14,7 +14,6 @@ import ruamel.yaml
 
 from . import die, interpolate1
 
-
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
 

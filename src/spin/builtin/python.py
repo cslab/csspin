@@ -9,20 +9,8 @@ import sys
 
 from packaging import tags
 
-from spin import (
-    cd,
-    config,
-    download,
-    echo,
-    exists,
-    interpolate1,
-    mkdir,
-    namespaces,
-    rmtree,
-    setenv,
-    sh,
-    task,
-)
+from spin import (cd, config, download, echo, exists, interpolate1, mkdir,
+                  namespaces, rmtree, setenv, sh, task)
 
 
 def get_platform():

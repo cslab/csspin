@@ -8,6 +8,7 @@
 
 import collections
 import inspect
+import logging
 import os
 import pickle
 import shlex
@@ -167,8 +168,7 @@ def sh(*cmd, **kwargs):
         die(str(ex))
     except subprocess.CalledProcessError as ex:
         cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
-        die(f"Command '{cmd}' failed with return code {ex.returncode}"
-        )
+        die(f"Command '{cmd}' failed with return code {ex.returncode}")
     return cpi
 
 
@@ -441,10 +441,12 @@ def toporun(cfg, *fn_names):
 
     """
     for func_name in fn_names:
+        logging.info(f"toporun: {func_name}")
         for pi_name in cfg.topo_plugins:
             pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
+                logging.info(f"  {pi_name}.{func_name}()")
                 initf(cfg)
 
 

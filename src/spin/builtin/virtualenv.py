@@ -4,29 +4,20 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import logging
 import os
 import sys
 
-from spin import (
-    Command,
-    config,
-    echo,
-    exists,
-    group,
-    interpolate1,
-    memoizer,
-    rmtree,
-    setenv,
-    sh,
-    writetext,
-)
-
+from spin import (Command, config, echo, exists, group, interpolate1, memoizer,
+                  rmtree, setenv, sh, writetext)
 
 defaults = config(
     venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
     memo="{virtualenv.venv}/spininfo.memo",
     bindir=(
-        "{virtualenv.venv}/bin" if sys.platform != "win32" else "{virtualenv.venv}"
+        "{virtualenv.venv}/bin"
+        if sys.platform != "win32"
+        else "{virtualenv.venv}"
     ),
     scriptdir=(
         "{virtualenv.venv}/bin"

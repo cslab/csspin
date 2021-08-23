@@ -4,7 +4,6 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-import os
 from cdb.comparch.pkgtools import setup
 
 setup(

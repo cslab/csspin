@@ -6,18 +6,8 @@
 
 import os
 
-from spin import (
-    Command,
-    config,
-    exists,
-    get_tree,
-    interpolate1,
-    readyaml,
-    setenv,
-    sh,
-    task,
-)
-
+from spin import (Command, config, exists, get_tree, interpolate1, readyaml,
+                  setenv, sh, task)
 
 defaults = config(
     formats=["bdist_wheel"],

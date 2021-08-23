@@ -8,7 +8,6 @@ import os
 
 from spin import config, sh, task
 
-
 defaults = config(
     cmd="cppcheck",
     opts=[f"-j{os.cpu_count()}"],
