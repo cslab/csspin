@@ -350,7 +350,7 @@ def load_spinfile(
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        tree.tree_merge(cfg, readyaml(interpolate1("{spin.spin_global}")))
+        tree.tree_update(cfg, readyaml(interpolate1("{spin.spin_global}")))
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
