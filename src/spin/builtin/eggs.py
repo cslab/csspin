@@ -8,7 +8,7 @@
 This plugin provisions Python Egg requirements of a project.
 """
 
-from spin import memoizer, config, Command
+from spin import Command, config, memoizer
 
 defaults = config(
     cmd="easy_install",
@@ -19,7 +19,7 @@ defaults = config(
 )
 
 
-def provision(cfg):
+def venv_hook(cfg):
     opts = cfg.eggs.opts
     if cfg.eggs.extra_index_url:
         opts.extend(["-i", cfg.eggs.extra_index_url])

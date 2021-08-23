@@ -129,15 +129,20 @@ def init(cfg):
             if not m.check(req):
                 pip("install", *req.split())
                 m.add(req)
+            elif cfg.verbose:
+                echo(f"{req} already installed!")
 
-        # The provision-hooks have to run before installing the other
-        # plugins. Otherwise the virtualenv may be only partially
-        # working and the latter may fail.
+        # Plugins can define a 'venv_hook' function, to give them a
+        # chance to do something with the virtual environment that
+        # just been provisioned (e.g. preparing the venv by adding pth
+        # files or by adding packages with other installers like
+        # easy_install).
         for plugin in cfg.topo_plugins:
             plugin_module = cfg.loaded[plugin]
-            provision_hook = getattr(plugin_module, "provision", None)
-            if provision_hook is not None:
-                provision_hook(cfg)
+            hook = getattr(plugin_module, "venv_hook", None)
+            if hook is not None:
+                logging.info(f"{plugin_module.__name__}.venv_hook()")
+                hook(cfg)
 
         # Install packages required by the project ('requirements')
         for req in cfg.requirements:

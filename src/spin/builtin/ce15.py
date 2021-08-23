@@ -17,10 +17,10 @@ additional path configuration file which contains all necessary paths.
 
 import os
 
-from spin import writetext, interpolate1, die, setenv
+from spin import die, interpolate1, setenv, writetext
 
 
-def provision(cfg):
+def venv_hook(cfg):
     # The algo is as follows:
     # 1. Find the easy-install.pth file inside the CE installation tree
     # 2. Use the found file to compose a list of paths
@@ -88,13 +88,15 @@ def provision(cfg):
     ce_libpath, ce_sppath = ce_paths(interpolate1(cfg.python.use))
     if not os.path.exists(ce_libpath):
         die(
-            "cannot provision CE platform since the library folder (%s) doesn't exist"
+            "cannot provision CE platform since the library folder "
+            "(%s) doesn't exist"
             % ce_libpath
         )
 
     if not os.path.exists(ce_sppath):
         die(
-            "cannot provision CE platform since the site-packages folder (%s) doesn't exist"
+            "cannot provision CE platform since the site-packages "
+            "folder (%s) doesn't exist"
             % ce_sppath
         )
 
@@ -109,8 +111,11 @@ def provision(cfg):
 
     if os.name != "nt":
         setenv(
-            f"export LD_LIBRARY_PATH=%s{os.pathsep}$LD_LIBRARY_PATH" % ce_libpath,
-            LD_LIBRARY_PATH=os.pathsep.join((ce_libpath, os.environ.get("LD_LIBRARY_PATH", ""))),
+            f"export LD_LIBRARY_PATH=%s{os.pathsep}$LD_LIBRARY_PATH"
+            % ce_libpath,
+            LD_LIBRARY_PATH=os.pathsep.join(
+                (ce_libpath, os.environ.get("LD_LIBRARY_PATH", ""))
+            ),
         )
 
     venv_base_path = interpolate1(cfg.virtualenv.venv)
