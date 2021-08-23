@@ -251,6 +251,10 @@ class Memoizer:
         """Check whether `item` is a know fact."""
         return item in self._items
 
+    def clear(self):
+        """Remove all items"""
+        self._items = []
+
     def items(self):
         return self._items
 
