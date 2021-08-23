@@ -4,6 +4,8 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import logging
+
 from spin import config, option, sh, task
 
 defaults = config(
@@ -24,7 +26,5 @@ def radon(cfg, allsource: option("--all", "allsource", is_flag=True), args):
     if allsource:
         files = ("{spin.project_root}/src", "{spin.project_root}/tests")
     if files:
-        print("radon: Modified files: ", files)
+        logging.info(f"radon: Modified files: {files}")
         sh("{radon.cmd}", "mi", *cfg.radon.opts, *files)
-    else:
-        print("radon: no modified Python files.")

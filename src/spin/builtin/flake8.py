@@ -4,6 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import logging
 import os
 
 from spin import config, option, sh, task
@@ -47,7 +48,7 @@ def flake8(
     if allsource:
         files = ("{spin.project_root}/src", "{spin.project_root}/tests")
     if files:
-        print("flake8: Modified files: ", files)
+        logging.info(f"flake8: Modified files: {files}")
         sh("{flake8.cmd}", *cfg.flake8.opts, *files)
     else:
-        print("flake8: no modified Python files.")
+        logging.info("flake8: no modified Python files.")

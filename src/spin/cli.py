@@ -12,6 +12,7 @@ that are automatically provisioned.
 """
 
 import importlib
+import logging
 import os
 import sys
 
@@ -60,7 +61,7 @@ def find_spinfile(spinfile):
     return None
 
 
-def load_plugin(cfg, import_spec, package=None):
+def load_plugin(cfg, import_spec, package=None, indent="  "):
     """Recursively load a plugin module.
 
     Load the plugin given by 'import_spec' and its dependencies
@@ -68,6 +69,10 @@ def load_plugin(cfg, import_spec, package=None):
     of absolute or relative import specs).
 
     """
+    if package:
+        logging.info(f"{indent}import {import_spec} from {package}")
+    else:
+        logging.info(f"{indent}import {import_spec}")
     try:
         mod = importlib.import_module(import_spec, package)
     except ModuleNotFoundError:
@@ -90,7 +95,9 @@ def load_plugin(cfg, import_spec, package=None):
             )
         tree.tree_merge(plugin_config_tree, plugin_defaults)
         dependencies = [
-            load_plugin(cfg, requirement, mod.__package__)
+            load_plugin(
+                cfg, requirement, mod.__package__, indent=indent + "  "
+            )
             for requirement in plugin_config_tree.get("requires", [])
         ]
         ki = None
@@ -267,14 +274,20 @@ def cli(
     plugin_dir,
     quiet,
     verbose,
+    log_level,
     debug,
     cruiseopt,
     interactive,
     properties,
 ):
-    # We want to honor the 'quiet' flag even if the configuration tree
-    # has not yet been created.
+    if log_level:
+        logging.basicConfig(level=getattr(logging, log_level.upper()))
+
+    # We want to honor the 'quiet' and 'verbose' flags early, even if
+    # the configuration tree has not yet been created, as subsequent
+    # code uses 'echo' and/or 'log'.
     get_tree().quiet = quiet
+    get_tree().verbose = verbose
 
     # Find a project file and load it.
     if cwd:
@@ -327,6 +340,7 @@ def load_spinfile(
     plugin_dir=None,
     properties=(),
 ):
+    logging.info(f"Loading {spinfile}")
     spinschema = schema.schema_load(
         os.path.join(os.path.dirname(__file__), "schema.yaml")
     )
@@ -338,6 +352,7 @@ def load_spinfile(
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
+        logging.info(f"Merging user settings from {interpolate1('{spin.spin_global}')}")
         tree.tree_update(cfg, readyaml(interpolate1("{spin.spin_global}")))
 
     # Reflect certain command line options in the config tree.
@@ -362,6 +377,7 @@ def load_spinfile(
                 os.path.join(spinfile_dir, cfg.spin.plugin_dir)
             )
         if not exists(cfg.spin.plugin_dir):
+            logging.info(f"mkdir {cfg.spin.plugin_dir}")
             mkdir(cfg.spin.plugin_dir)
         sys.path.insert(0, interpolate1(cfg.spin.plugin_dir))
 
@@ -394,6 +410,7 @@ def load_spinfile(
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
+    logging.info("loading project plugins:")
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec)
 
@@ -401,6 +418,7 @@ def load_spinfile(
     sys.path.insert(
         0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins))
     )
+    logging.info("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):
         load_plugin(cfg, ep.module_name)
 
