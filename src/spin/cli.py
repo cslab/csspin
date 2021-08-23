@@ -294,7 +294,7 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
-    cfg = load_spinfile(spinfile, cwd, quiet, plugin_dir, properties)
+    cfg = load_spinfile(spinfile, cwd, quiet, verbose, plugin_dir, properties)
 
     # Debug aid: dump config tree for --debug
     if debug:
@@ -331,7 +331,14 @@ def yield_plugin_import_specs(cfg):
             yield f"spin.builtin.{item}"
 
 
-def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=()):
+def load_spinfile(
+    spinfile,
+    cwd=False,
+    quiet=False,
+    verbose=False,
+    plugin_dir=None,
+    properties=(),
+):
     spinschema = schema.schema_load(
         os.path.join(os.path.dirname(__file__), "schema.yaml")
     )
@@ -347,6 +354,7 @@ def load_spinfile(spinfile, cwd=False, quiet=False, plugin_dir=None, properties=
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
+    cfg.verbose = verbose
     cfg.spin.spinfile = spinfile
     cfg.spin.project_root = "."
 

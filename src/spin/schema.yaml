@@ -67,7 +67,7 @@ quiet:
 
 verbose:
   type: boolean
-  default: true
+  default: false
 
 hooks:
   type: object
