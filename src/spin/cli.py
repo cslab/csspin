@@ -280,8 +280,11 @@ def cli(
     interactive,
     properties,
 ):
+    # Set up logging
     if log_level:
-        logging.basicConfig(level=getattr(logging, log_level.upper()))
+        log_level = getattr(logging, log_level.upper(), None)
+        if log_level:
+            logging.basicConfig(level=log_level)
 
     # We want to honor the 'quiet' and 'verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
