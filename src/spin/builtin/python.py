@@ -4,13 +4,29 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import logging
 import os
 import sys
 
 from packaging import tags
 
-from spin import (cd, config, download, echo, exists, interpolate1, mkdir,
-                  namespaces, rmtree, setenv, sh, task)
+from spin import (
+    cd,
+    config,
+    die,
+    download,
+    echo,
+    exists,
+    interpolate1,
+    mkdir,
+    namespaces,
+    rmtree,
+    setenv,
+    sh,
+    task,
+)
+
+N = os.path.normcase
 
 
 def get_platform():
@@ -21,31 +37,32 @@ def get_platform():
 defaults = config(
     pyenv=config(
         url="https://github.com/pyenv/pyenv.git",
-        path="{spin.userprofile}/pyenv",
-        cache="{spin.userprofile}/cache",
-        python_build=("{python.pyenv.path}/plugins/python-build/bin/python-build"),
+        path=N("{spin.userprofile}/pyenv"),
+        cache=N("{spin.userprofile}/cache"),
+        python_build=(N("{python.pyenv.path}/plugins/python-build/bin/python-build")),
     ),
     nuget=config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
-        exe="{spin.userprofile}/nuget.exe",
+        exe=N("{spin.userprofile}/nuget.exe"),
     ),
     version="3.8.5",
     platform=get_platform(),
-    plat_dir="{spin.userprofile}/{python.platform}",
+    plat_dir=N("{spin.userprofile}/{python.platform}"),
     inst_dir=(
-        "{python.plat_dir}/python/{python.version}"
+        N("{python.plat_dir}/python/{python.version}")
         if sys.platform != "win32"
-        else "{python.plat_dir}/python.{python.version}/tools"
+        else N("{python.plat_dir}/python.{python.version}/tools")
     ),
     bin_dir=(
-        "{python.inst_dir}/bin" if sys.platform != "win32" else "{python.inst_dir}"
+        N("{python.inst_dir}/bin") if sys.platform != "win32" else "{python.inst_dir}"
     ),
     script_dir=(
-        "{python.inst_dir}/bin"
+        N("{python.inst_dir}/bin")
         if sys.platform != "win32"
-        else "{python.inst_dir}/Scripts"
+        else N("{python.inst_dir}/Scripts")
     ),
-    interpreter="{python.bin_dir}/python{platform.exe}",
+    interpreter=N("{python.bin_dir}/python{platform.exe}"),
+    pip=N("{python.script_dir}/pip{platform.exe}"),
     use=None,
 )
 
@@ -81,36 +98,38 @@ def pyenv_install(cfg):
 def nuget_install(cfg):
     if not exists("{python.nuget.exe}"):
         download("{python.nuget.url}", "{python.nuget.exe}")
-    setenv(NUGET_HTTP_CACHE_PATH="{spin.userprofile}/nugetcache")
+    setenv(NUGET_HTTP_CACHE_PATH=N("{spin.userprofile}/nugetcache"))
     sh(
         "{python.nuget.exe}",
         "install",
         "-verbosity",
         "quiet",
         "-o",
-        "{spin.userprofile}/{python.platform}",
+        N("{spin.userprofile}/{python.platform}"),
         "python",
         "-version",
         "{python.version}",
     )
-    paths = interpolate1("{python.inst_dir};" "{python.inst_dir}/Scripts")
+    paths = interpolate1("{python.inst_dir};" + N("{python.inst_dir}/Scripts"))
     setenv(
         f"set PATH={paths}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{paths}", os.environ["PATH"])),
     )
-    sh("{python.interpreter} -m ensurepip")
+    sh("{python.interpreter} -m ensurepip --upgrade")
     sh("{python.interpreter} -m pip install -q --upgrade pip wheel packaging")
 
 
-def init(cfg):
+def provision(cfg):
     if not cfg.python.use:
-        mkdir("{spin.userprofile}")
         if not exists("{python.interpreter}"):
+            echo("Provisioning Python {python.version} ...")
             if sys.platform == "win32":
                 nuget_install(cfg)
             else:
                 # Everything (Linux and macOS) else uses pyenv
                 pyenv_install(cfg)
+        else:
+            echo("Python {python.version} found at {python.interpreter}")
 
 
 def cleanup(cfg):
@@ -122,3 +141,13 @@ def cleanup(cfg):
 def configure(cfg):
     if cfg.python.use:
         cfg.python.interpreter = cfg.python.use
+
+
+def init(cfg):
+    logging.info("Checking for %s", interpolate1("{python.interpreter}"))
+    if not exists("{python.interpreter}"):
+        die(
+            "No Python interpreter has been provisioned for this project.\n\n"
+            "Spin longer auto-provisions dependencies in this release.\n"
+            "You might want to run 'spin provision', or use the'--provision' flag"
+        )

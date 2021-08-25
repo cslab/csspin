@@ -466,23 +466,27 @@ following three ways:
 The API of plugins consists of the following:
 
 * an optional module-level variable ``defaults`` holding a
-  configuration subtree created by the `config()`; this configuration
+  configuration subtree created by `config()`; this configuration
   tree will be merged with project and global settings and become the
   configuration subtree named like the plugin
 
+* an optional ``configure(cfg)`` callback that is called before
+  ``init``; here, plugins can manipulate the configuration tree so
+  that subsequent callbacks of other plugins behave differently
+
 * an optional ``init(cfg)`` callback that is called before any
-  subcommand is executed; ``init`` can be used to provision
-  dependencies, e.g. the **python** plugin provisions a Python
-  interpreter in its ``init``
+  subcommand is executed, but after ``configure``; ``init`` can be
+  used to setup state after all plugins have been configured.
+
+* an optional ``provision(cfg)`` callback that is called by the ``spin
+  provision``, or implicitly when the ``--provision`` command line
+  option is used. E.g. the **python** plugin provisions a Python
+  interpreter in its ``init``.
 
 * an optional ``cleanup(cfg)`` callback that is called when running
   ``spin cleanup``; this is used to unprovision dependencies, e.g. the
   **python** plugin removes the installation tree of the Python
   interpreter it provided it ``init`` callback
-
-* an optional ``configure(cfg)`` callback that is called before
-  ``init``; here, plugins can manipulate the configuration tree so
-  that subsequent callbacks of other plugins behave differently
 
 Callbacks are called in "dependency" order, i.e. the plugin dependency
 graph (as given by ``requires``) is topologically sorted.

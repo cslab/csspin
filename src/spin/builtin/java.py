@@ -6,20 +6,47 @@
 
 import os
 
-from spin import config, echo, group, memoizer, rmtree, setenv
+from spin import (
+    config,
+    die,
+    echo,
+    interpolate1,
+    memoizer,
+    setenv,
+)
 
 defaults = config(
     version="16",
+    installdir="{spin.userprofile}",
+    java_home=None,
 )
 
-
-@group()
-def java(cfg):
-    """Manage JDK installation"""
-    pass
+N = os.path.normcase
 
 
-def init(cfg):
+def set_java_home(cfg):
+    setenv(JAVA_HOME=cfg.java.java_home)
+    setenv(
+        N(f"set PATH=$JAVA_HOME/bin{os.pathsep}$PATH"),
+        PATH=os.pathsep.join((N("{JAVA_HOME}/bin"), "{PATH}")),
+    )
+
+
+def check_java(cfg):
+    with memoizer("{java.installdir}/java.pickle") as m:
+        version = None
+        for version, java_home in m.items():
+            if version == cfg.java.version:
+                cfg.java.java_home = java_home
+                set_java_home(cfg)
+                return True
+    return False
+
+
+def provision(cfg):
+    if check_java(cfg):
+        return
+
     import jdk
 
     real_get_downoad_url = jdk.get_download_url
@@ -31,27 +58,19 @@ def init(cfg):
 
     jdk.get_download_url = monkey_get_download_url
 
-    java_home = None
-    with memoizer(f"{jdk._JDK_DIR}/versions.pickle") as m:
-        version = None
-        for version, java_home in m.items():
-            if version == cfg.java.version:
-                break
-        if version != cfg.java.version:
-            java_home = jdk.install(cfg.java.version)
-            m.add((cfg.java.version, java_home))
-        setenv(JAVA_HOME=java_home)
-        setenv(
-            f"set PATH=$JAVA_HOME/bin{os.pathsep}$PATH",
-            PATH="{JAVA_HOME}/bin:{PATH}",
+    with memoizer("{java.installdir}/java.pickle") as m:
+        java_home = jdk.install(
+            cfg.java.version, path=interpolate1(cfg.java.installdir)
         )
+        m.add((cfg.java.version, java_home))
+        cfg.java.java_home = java_home
+
+    set_java_home(cfg)
 
 
-@java.task(aliases=["remove"])
-def rm(cfg):
-    import jdk
-
-    with memoizer(f"{jdk._JDK_DIR}/versions.pickle") as m:
-        for version, java_home in m.items():
-            rmtree(java_home)
-        m.clear()
+def init(cfg):
+    if not check_java(cfg):
+        die(
+            "JDK {java.version} is not yet provisioned.\n"
+            "You might want to run spin with the --provision flag."
+        )

@@ -19,8 +19,25 @@ import sys
 import click
 import entrypoints
 
-from . import (cd, config, cruise, die, exists, get_tree, interpolate1,
-               memoizer, mkdir, readyaml, schema, set_tree, sh, toporun, tree)
+from . import (
+    cd,
+    config,
+    cruise,
+    die,
+    exists,
+    get_tree,
+    interpolate1,
+    memoizer,
+    mkdir,
+    readyaml,
+    schema,
+    set_tree,
+    sh,
+    toporun,
+    tree,
+)
+
+N = os.path.normcase
 
 CRUISE_EXECUTOR_MAPPINGS = {
     "@docker": config(executor=cruise.DockerExecutor),
@@ -34,15 +51,13 @@ CRUISE_EXECUTOR_MAPPINGS = {
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
-        userprofile=os.path.expanduser("~/.spin"),
+        userprofile=N(os.path.expanduser("~/.spin")),
         extra_index="https://packages.contact.de/apps/x.x",
     ),
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
-    platform=config(
-        exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}"
-    ),
+    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}"),
 )
 
 
@@ -75,7 +90,9 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
         logging.info(f"{indent}import {import_spec}")
     try:
         mod = importlib.import_module(import_spec, package)
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as ex:
+        if ex.name != import_spec:
+            raise
         die(f"failed to load plugin '{import_spec}'")
     full_name = mod.__name__
     if full_name not in cfg.loaded:
@@ -89,15 +106,11 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
             tree.tree_set_keyinfo(
                 cfg,
                 settings_name,
-                tree.tree_keyinfo(
-                    plugin_defaults, list(plugin_defaults.keys())[0]
-                ),
+                tree.tree_keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),
             )
         tree.tree_merge(plugin_config_tree, plugin_defaults)
         dependencies = [
-            load_plugin(
-                cfg, requirement, mod.__package__, indent=indent + "  "
-            )
+            load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")
             for requirement in plugin_config_tree.get("requires", [])
         ]
         ki = None
@@ -219,6 +232,18 @@ def base_options(fn):
             multiple=True,
             help="Set configuration property",
         ),
+        click.option(
+            "--provision",
+            is_flag=True,
+            default=False,
+            help="Provision plugins",
+        ),
+        click.option(
+            "--cleanup",
+            is_flag=True,
+            default=False,
+            help="Cleaning up plugins",
+        ),
     ]
     for d in decorators:
         fn = d(fn)
@@ -247,9 +272,6 @@ class GroupWithAliases(click.Group):
 @click.pass_context
 def commands(ctx, **kwargs):
     ctx.obj = get_tree()
-    # For commands like "cleanup" or "venv ..." it is idiotic to run
-    # all initializations first. This should be supressable, possibly
-    # by augmenting 'spin.plugin.task' or something ...
     toporun(ctx.obj, "init")
 
 
@@ -279,6 +301,8 @@ def cli(
     cruiseopt,
     interactive,
     properties,
+    provision,
+    cleanup,
 ):
     # Set up logging
     if log_level:
@@ -300,11 +324,28 @@ def cli(
 
     cfg = load_spinfile(spinfile, cwd, quiet, verbose, plugin_dir, properties)
 
+    mkdir("{spin.userprofile}")
+
     # Debug aid: dump config tree for --debug
     if debug:
         print(tree.tree_dump(cfg))
 
     if not cruiseopt:
+        # When not cruising, and we have the 'provision' flag, do
+        # provisioning now.
+        if cleanup:
+            toporun(cfg, "cleanup", reverse=True)
+            if not provision:
+                # There is nothing we can meaningfully do after 'cleanup',
+                # unless 'provision' is also given => so do not run any
+                # tasks.
+                return
+        if provision:
+            toporun(cfg, "provision")
+            if not ctx.args:
+                # When provisioning without a subcommand, don't run
+                # into the usage.
+                return
         # Invoke the main command group, which by now has all the
         # sub-commands from the plugins.
         kwargs = getattr(cli, "click_main_kwargs", {})
@@ -400,7 +441,7 @@ def load_spinfile(
 
         # Install plugin packages that are not yet installed, using pip
         # with the "-t" (target) option pointing to the plugin directory.
-        with memoizer("{spin.plugin_dir}/packages.memo") as m:
+        with memoizer(N("{spin.plugin_dir}/packages.memo")) as m:
             replacements = cfg.get("devpackages", {})
             for pkg in find_plugin_packages(cfg):
                 pkg = replacements.get(pkg, pkg)
@@ -418,9 +459,7 @@ def load_spinfile(
         load_plugin(cfg, import_spec)
 
     # Also load global plugins
-    sys.path.insert(
-        0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins))
-    )
+    sys.path.insert(0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins)))
     logging.info("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):
         load_plugin(cfg, ep.module_name)
@@ -432,10 +471,7 @@ def load_spinfile(
     # is provided by the 'virtualenv' plugin, which in turn requires
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
-    graph = {
-        n: getattr(mod.defaults, "requires", [])
-        for n, mod in cfg.loaded.items()
-    }
+    graph = {n: getattr(mod.defaults, "requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Add command line settings.

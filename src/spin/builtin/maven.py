@@ -5,9 +5,12 @@
 # http://www.contact.de/
 
 import os
+import random
 import sys
+import tarfile
+import urllib
 
-from spin import config, option, sh, task
+from spin import config, echo, exists, interpolate1, option, setenv, sh, task
 
 defaults = config(
     cmd="mvn",
@@ -15,9 +18,38 @@ defaults = config(
     opts=[],
     defines={},
     pom_file="pom.xml",
-    requires=[".virtualenv", ".java"],
+    requires=[".java"],
     packages=[],
+    version="3.8.2",
+    mirrors=[
+        "http://ftp.fau.de/apache/",
+        "http://dlcdn.apache.org/",
+        "http://apache.mirror.digionline.de/",
+    ],
+    url=(
+        "maven/maven-3/{maven.version}/"
+        "binaries/apache-maven-{maven.version}-bin.tar.gz"
+    ),
+    mavendir="{spin.userprofile}/apache-maven-{maven.version}",
 )
+
+
+def provision(cfg):
+    if not exists(cfg.maven.mavendir):
+        mirror = random.choice(cfg.maven.mirrors)
+        url = interpolate1(mirror + cfg.maven.url)
+        echo(f"Downloading {url}")
+        filename, headers = urllib.request.urlretrieve(url)
+        with tarfile.open(filename, "r:gz") as tar:
+            tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))
+
+
+def init(cfg):
+    bindir = os.path.normpath(interpolate1(cfg.maven.mavendir + "/bin"))
+    setenv(
+        f"set PATH={bindir}{os.pathsep}$PATH",
+        PATH=os.pathsep.join((f"{bindir}", "{PATH}")),
+    )
 
 
 @task(when="build")
@@ -26,8 +58,9 @@ def maven(
     pom_file: option(
         "-f",
         "--file",
+        "pom_file",
         show_default=(
-            "Force the use of an alternate POM file " # noqa
+            "Force the use of an alternate POM file "  # noqa
             "(or directory with pom.xml)"
         ),
     ),
@@ -36,7 +69,7 @@ def maven(
         "--define",
         "defines",
         multiple=True,
-        show_default="Define a system property", # noqa
+        show_default="Define a system property",  # noqa
     ),
     args,
 ):

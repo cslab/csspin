@@ -8,25 +8,38 @@ import logging
 import os
 import sys
 
-from spin import (Command, config, echo, exists, group, interpolate1, memoizer,
-                  rmtree, setenv, sh, writetext)
+from spin import (
+    Command,
+    config,
+    echo,
+    exists,
+    group,
+    interpolate1,
+    memoizer,
+    rmtree,
+    setenv,
+    sh,
+    writetext,
+)
+
+N = os.path.normcase
+
 
 defaults = config(
-    venv="{spin.project_root}/{virtualenv.abitag}-{python.platform}",
-    memo="{virtualenv.venv}/spininfo.memo",
+    venv=N("{spin.project_root}/{virtualenv.abitag}-{python.platform}"),
+    memo=N("{virtualenv.venv}/spininfo.memo"),
     bindir=(
-        "{virtualenv.venv}/bin"
-        if sys.platform != "win32"
-        else "{virtualenv.venv}"
+        N("{virtualenv.venv}/bin") if sys.platform != "win32" else "{virtualenv.venv}"
     ),
     scriptdir=(
-        "{virtualenv.venv}/bin"
+        N("{virtualenv.venv}/bin")
         if sys.platform != "win32"
-        else "{virtualenv.venv}/Scripts"
+        else N("{virtualenv.venv}/Scripts")
     ),
-    python="{virtualenv.bindir}/python",
+    python=N("{virtualenv.bindir}/python"),
     requires=[".python"],
     pipconf=config(),
+    abitag="unprovisioned",
 )
 
 
@@ -65,8 +78,14 @@ def get_abi_tag(cfg):
     )
 
 
+def configure(cfg):
+    if exists("{python.interpreter}"):
+        cfg.virtualenv.abitag = get_abi_tag(cfg)
+
+
 def init(cfg):
-    cfg.virtualenv.abitag = get_abi_tag(cfg)
+    if cfg.virtualenv.abitag == "unprovisioned":
+        configure(cfg)
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
     # not pick up the venv bin.
@@ -85,14 +104,13 @@ def init(cfg):
     )
 
 
-@venv.task()
-def create(cfg):
+def provision(cfg):
     if not cfg.python.use and not exists(
         "{python.script_dir}/virtualenv{platform.exe}"
     ):
         # If we use Python provisioned by spin, add virtualenv if
         # necessary.
-        sh("{python.interpreter} -m pip install virtualenv==20.0.23")
+        sh("{python.interpreter} -m pip -q install virtualenv")
 
     cmd = ["{python.interpreter}", "-m", "virtualenv"]
     if not cfg.verbose:
@@ -101,9 +119,13 @@ def create(cfg):
 
     if not exists("{virtualenv.venv}"):
         # download seeds since pip is too old in manylinux
-        virtualenv(
-            "-p", "{python.interpreter}", "{virtualenv.venv}", "--download"
-        )
+        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
+
+    # This sets PATH to the venv
+    init(cfg)
+
+    # Update the pip in the venv
+    sh("python -m pip -q install -U pip")
 
     cmd = ["pip"]
     if not cfg.verbose:
@@ -139,8 +161,8 @@ def create(cfg):
                 echo(f"{req} already installed!")
 
         # Plugins can define a 'venv_hook' function, to give them a
-        # chance to do something with the virtual environment that
-        # just been provisioned (e.g. preparing the venv by adding pth
+        # chance to do something with the virtual environment just
+        # being provisioned (e.g. preparing the venv by adding pth
         # files or by adding packages with other installers like
         # easy_install).
         for plugin in cfg.topo_plugins:
