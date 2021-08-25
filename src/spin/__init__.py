@@ -303,10 +303,7 @@ def interpolate1(literal, *extra_dicts):
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
-        try:
-            literal = eval("rf'''%s'''" % literal, {}, where_to_look)  # noqa
-        except AttributeError as ex:
-            die(str(ex))
+        literal = eval("rf'''%s'''" % literal, {}, where_to_look)  # noqa
         if previous == literal:
             break
     return literal
