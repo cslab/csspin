@@ -89,15 +89,13 @@ def venv_hook(cfg):
     if not os.path.exists(ce_libpath):
         die(
             "cannot provision CE platform since the library folder "
-            "(%s) doesn't exist"
-            % ce_libpath
+            "(%s) doesn't exist" % ce_libpath
         )
 
     if not os.path.exists(ce_sppath):
         die(
             "cannot provision CE platform since the site-packages "
-            "folder (%s) doesn't exist"
-            % ce_sppath
+            "folder (%s) doesn't exist" % ce_sppath
         )
 
     ce_pth_content = ce_pythonpath(ce_sppath)
@@ -111,8 +109,7 @@ def venv_hook(cfg):
 
     if os.name != "nt":
         setenv(
-            f"export LD_LIBRARY_PATH=%s{os.pathsep}$LD_LIBRARY_PATH"
-            % ce_libpath,
+            f"export LD_LIBRARY_PATH=%s{os.pathsep}$LD_LIBRARY_PATH" % ce_libpath,
             LD_LIBRARY_PATH=os.pathsep.join(
                 (ce_libpath, os.environ.get("LD_LIBRARY_PATH", ""))
             ),

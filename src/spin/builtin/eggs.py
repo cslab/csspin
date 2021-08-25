@@ -15,7 +15,7 @@ defaults = config(
     opts=["-q", "--no-deps"],
     requires=[".ce15"],
     requirements=[],
-    extra_index_url=None
+    extra_index_url=None,
 )
 
 

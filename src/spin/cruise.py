@@ -68,7 +68,7 @@ def do_cruise(cfg, cruiseopt, interactive):
         if len(spin_args) == 0:
             # interactivly run a docker container having spin installed
             interactive = True
-            cmd = ['bash', '-c', " ".join(cmd + [';', 'bash'])]
+            cmd = ["bash", "-c", " ".join(cmd + [";", "bash"])]
         executor = definition.executor(name, definition, interactive)
         executor.run(cmd)
 

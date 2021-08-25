@@ -6,8 +6,17 @@
 
 import os
 
-from spin import (Command, config, exists, get_tree, interpolate1, readyaml,
-                  setenv, sh, task)
+from spin import (
+    Command,
+    config,
+    exists,
+    get_tree,
+    interpolate1,
+    readyaml,
+    setenv,
+    sh,
+    task,
+)
 
 defaults = config(
     formats=["bdist_wheel"],
@@ -32,7 +41,13 @@ def stage():
         devpi("use", "-t", "yes", "{devpi.stage}")
     devpi("login", "{devpi.user}")
     python = os.path.abspath(get_tree().virtualenv.python)
-    devpi("upload", "-p", python, "--no-vcs", "--formats={','.join(devpi.formats)}")
+    devpi(
+        "upload",
+        "-p",
+        python,
+        "--no-vcs",
+        "--formats={','.join(devpi.formats)}",
+    )
 
 
 @task()

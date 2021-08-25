@@ -15,11 +15,7 @@ defaults = config(
 
 
 @task()
-def portwheel(
-    cfg,
-    sdksrc: option("--sdksrc", "sdksrc"),
-    args
-):
+def portwheel(cfg, sdksrc: option("--sdksrc", "sdksrc"), args):
     files = args
     if not files:
         import glob

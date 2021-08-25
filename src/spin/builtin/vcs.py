@@ -14,7 +14,7 @@ from spin import config, sh
 
 def init(cfg):
     if os.path.isdir(".svn"):
-        client = svn.local.LocalClient('.')
+        client = svn.local.LocalClient(".")
         changes = client.status()
         modified = [f.name for f in changes if f.type in (1, 9)]
         cfg.vcs = config(modified=modified)
