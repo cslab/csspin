@@ -438,13 +438,14 @@ def invoke(hook, *args, **kwargs):
         ctx.invoke(task_object, *args, **kwargs)
 
 
-def toporun(cfg, *fn_names):
-    """Run plugin functions named in 'fn_names' in topological order.
-
-    """
+def toporun(cfg, *fn_names, reverse=False):
+    """Run plugin functions named in 'fn_names' in topological order."""
+    plugins = cfg.topo_plugins
+    if reverse:
+        plugins = reversed(plugins)
     for func_name in fn_names:
         logging.info(f"toporun: {func_name}")
-        for pi_name in cfg.topo_plugins:
+        for pi_name in plugins:
             pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
