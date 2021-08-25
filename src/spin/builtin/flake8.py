@@ -19,7 +19,7 @@ defaults = config(
     packages=[
         "flake8",
         # "flake8-import-order",
-        "flake8-isort",
+        # "flake8-isort",
         "flake8-comprehensions",
         "flake8-copyright",
         "flake8-polyfill",
