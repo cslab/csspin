@@ -101,23 +101,47 @@ class DockerExecutor(BaseExecutor):
         for key, value in env.items():
             cmd += ["-e", f"{key}={value}"]
 
-        volprefix = getattr(definition, "volprefix", "")
+        tags = getattr(definition, "tags", [])
+
+        # We have to mount HOME into the container, to gain access to
+        # the sandbox etc.
         home = os.path.expanduser("~")
-        cmd += ["-v", f"{volprefix}{home}:{volprefix}{home}"]
+        # If 'drive' is not empty, we are on Windows, otherwise on
+        # some Unix
+        drive, homepath = os.path.splitdrive(home)
+        volprefix = getattr(definition, "volprefix", "")
+
+        def unix_path_to_windows_path(p):
+            return f"{volprefix}{p}"
+
+        def windows_path_to_unix_path(p):
+            _, p = os.path.splitdrive(p)
+            return p.replace("\\", "/")
+
+        make_container_path = lambda x: x
+
+        if drive and "windows" not in tags:
+            make_container_path = windows_path_to_unix_path
+        if not drive and "windows" in tags:
+            make_container_path = unix_path_to_windows_path
+
+        container_home = make_container_path(home)
+        
+        cmd += ["-v", f"{home}:{container_home}"]
         if "windows" in getattr(definition, "tags", []):
-            cmd += ["-e", f"USERPROFILE={volprefix}{home}"]
+            cmd += ["-e", f"USERPROFILE={container_home}"]
         else:
-            cmd += ["-e", f"HOME={volprefix}{home}"]
+            cmd += ["-e", f"HOME={container_home}"]
             # FIXME: docker writes files which are owned by root to the .local dir...
             # This causes some problems.
-            cmd += ["-v", f"{volprefix}{home}/.local"]
+            #cmd += ["-v", f"{volprefix}{home}/.local"]
 
         devspin = spin_is_editable()
         if devspin:
-            cmd += ["-e", f"SPIN_SANDBOX={volprefix}{devspin}"]
+            cmd += ["-e", f"SPIN_SANDBOX={make_container_path(devspin)}"]
 
         workdir = os.getcwd()
-        cmd += ["-w", f"{volprefix}{workdir}"]
+        cmd += ["-w", f"{make_container_path(workdir)}"]
         cmd += [definition.image]
         self._docker = cmd
 
