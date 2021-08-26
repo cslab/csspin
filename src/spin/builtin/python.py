@@ -8,8 +8,6 @@ import logging
 import os
 import sys
 
-from packaging import tags
-
 from spin import (
     cd,
     config,
@@ -29,11 +27,6 @@ from spin import (
 N = os.path.normcase
 
 
-def get_platform():
-    # tag for the running interpreter (best-matching)
-    return next(tags.sys_tags()).platform
-
-
 defaults = config(
     pyenv=config(
         url="https://github.com/pyenv/pyenv.git",
@@ -46,8 +39,7 @@ defaults = config(
         exe=N("{spin.userprofile}/nuget.exe"),
     ),
     version="3.8.5",
-    platform=get_platform(),
-    plat_dir=N("{spin.userprofile}/{python.platform}"),
+    plat_dir=N("{spin.userprofile}/{platform.tag}"),
     inst_dir=(
         N("{python.plat_dir}/python/{python.version}")
         if sys.platform != "win32"
@@ -105,7 +97,7 @@ def nuget_install(cfg):
         "-verbosity",
         "quiet",
         "-o",
-        N("{spin.userprofile}/{python.platform}"),
+        N("{spin.userprofile}/{platform.tag}"),
         "python",
         "-version",
         "{python.version}",
@@ -122,7 +114,6 @@ def nuget_install(cfg):
 def provision(cfg):
     if not cfg.python.use:
         if not exists("{python.interpreter}"):
-            echo("Provisioning Python {python.version} ...")
             if sys.platform == "win32":
                 nuget_install(cfg)
             else:

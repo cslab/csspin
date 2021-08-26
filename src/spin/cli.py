@@ -19,6 +19,8 @@ import sys
 import click
 import entrypoints
 
+from packaging import tags
+
 from . import (
     cd,
     config,
@@ -57,7 +59,8 @@ DEFAULTS = config(
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
-    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}"),
+    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
+                    tag=next(tags.sys_tags()).platform),
 )
 
 

@@ -26,7 +26,7 @@ N = os.path.normcase
 
 
 defaults = config(
-    venv=N("{spin.project_root}/{virtualenv.abitag}-{python.platform}"),
+    venv=N("{spin.project_root}/{virtualenv.abitag}-{platform.tag}"),
     memo=N("{virtualenv.venv}/spininfo.memo"),
     bindir=(
         N("{virtualenv.venv}/bin") if sys.platform != "win32" else "{virtualenv.venv}"
@@ -84,8 +84,7 @@ def configure(cfg):
 
 
 def init(cfg):
-    if cfg.virtualenv.abitag == "unprovisioned":
-        configure(cfg)
+    configure(cfg)
     # It is more useful to abspath virtualenv bindir before pushing it
     # onto the PATH, as anything run from a different directory will
     # not pick up the venv bin.
@@ -105,6 +104,7 @@ def init(cfg):
 
 
 def provision(cfg):
+    configure(cfg)
     if not cfg.python.use and not exists(
         "{python.script_dir}/virtualenv{platform.exe}"
     ):

@@ -17,7 +17,7 @@ from spin import (
 
 defaults = config(
     version="16",
-    installdir="{spin.userprofile}",
+    installdir="{spin.userprofile}/{platform.tag}",
     java_home=None,
 )
 
