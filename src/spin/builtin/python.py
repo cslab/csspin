@@ -144,10 +144,11 @@ def configure(cfg):
 
 
 def init(cfg):
-    logging.info("Checking for %s", interpolate1("{python.interpreter}"))
-    if not exists("{python.interpreter}"):
-        die(
-            "No Python interpreter has been provisioned for this project.\n\n"
-            "Spin longer auto-provisions dependencies in this release.\n"
-            "You might want to run 'spin provision', or use the'--provision' flag"
-        )
+    if not cfg.python.use:
+        logging.info("Checking for %s", interpolate1("{python.interpreter}"))
+        if not exists("{python.interpreter}"):
+            die(
+                "No Python interpreter has been provisioned for this project.\n\n"
+                "Spin longer auto-provisions dependencies in this release.\n"
+                "You might want to run 'spin provision', or use the'--provision' flag"
+            )

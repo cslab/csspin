@@ -79,7 +79,7 @@ def get_abi_tag(cfg):
 
 
 def configure(cfg):
-    if exists("{python.interpreter}"):
+    if cfg.python.use or exists("{python.interpreter}"):
         cfg.virtualenv.abitag = get_abi_tag(cfg)
 
 
