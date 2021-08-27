@@ -21,6 +21,9 @@ defaults = config(
 def scons(cfg, args):
     """Run scons command"""
     cmd = "{scons.cmd}"
+    args = list(args)
+    if cfg.quiet:
+        args.insert(0, "-s")
     if sys.platform.startswith("win32"):
         cmd += ".bat"
     sh(cmd, *cfg.scons.opts, *args)
