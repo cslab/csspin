@@ -123,12 +123,6 @@ def provision(cfg):
             echo("Python {python.version} found at {python.interpreter}")
 
 
-def cleanup(cfg):
-    if not cfg.python.use:
-        if exists("{python.plat_dir}"):
-            rmtree("{python.plat_dir}")
-
-
 def configure(cfg):
     if cfg.python.use:
         cfg.python.interpreter = cfg.python.use
