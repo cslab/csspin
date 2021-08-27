@@ -11,9 +11,11 @@ that are automatically provisioned.
 
 """
 
+import glob
 import importlib
 import logging
 import os
+import site
 import sys
 
 import click
@@ -32,11 +34,15 @@ from . import (
     memoizer,
     mkdir,
     readyaml,
+    rmtree,
     schema,
     set_tree,
     sh,
     toporun,
     tree,
+    appendtext,
+    writetext,
+    readtext,
 )
 
 N = os.path.normcase
@@ -88,12 +94,13 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
 
     """
     if package:
-        logging.info(f"{indent}import {import_spec} from {package}")
+        logging.info(f"{indent}import plugin {import_spec} from {package}")
     else:
-        logging.info(f"{indent}import {import_spec}")
+        logging.info(f"{indent}import plugin {import_spec}")
     try:
         mod = importlib.import_module(import_spec, package)
     except ModuleNotFoundError as ex:
+        raise ex
         if ex.name != import_spec:
             raise
         die(f"failed to load plugin '{import_spec}'")
@@ -325,7 +332,7 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
-    cfg = load_spinfile(spinfile, cwd, quiet, verbose, plugin_dir, properties)
+    cfg = load_spinfile(spinfile, cwd, quiet, verbose, cleanup, plugin_dir, properties)
 
     mkdir("{spin.userprofile}")
 
@@ -370,12 +377,14 @@ def find_plugin_packages(cfg):
 def yield_plugin_import_specs(cfg):
     for item in cfg.get("plugins", []):
         if isinstance(item, dict):
-            for package_value in item.values():
+            for package_name, package_value in item.items():
                 if isinstance(package_value, list):
                     for import_spec in package_value:
-                        yield import_spec
+                        yield f"{package_name}.{import_spec}"
+                elif package_value:
+                    yield f"{package_name}.{package_value}"
                 else:
-                    yield package_value
+                    yield f"{package_name}"
         else:
             yield f"spin.builtin.{item}"
 
@@ -385,6 +394,7 @@ def load_spinfile(
     cwd=False,
     quiet=False,
     verbose=False,
+    cleanup=False,
     plugin_dir=None,
     properties=(),
 ):
@@ -419,14 +429,23 @@ def load_spinfile(
         # Setup plugin_dir, where spin installs plugin packages.
         if plugin_dir:
             cfg.spin.plugin_dir = plugin_dir
+        cfg.spin.plugin_dir = interpolate1(cfg.spin.plugin_dir)
         if not os.path.isabs(cfg.spin.plugin_dir):
             cfg.spin.plugin_dir = os.path.abspath(
                 os.path.join(spinfile_dir, cfg.spin.plugin_dir)
             )
+        if cleanup and exists(cfg.spin.plugin_dir):
+            rmtree(cfg.spin.plugin_dir)
+
         if not exists(cfg.spin.plugin_dir):
-            logging.info(f"mkdir {cfg.spin.plugin_dir}")
             mkdir(cfg.spin.plugin_dir)
-        sys.path.insert(0, interpolate1(cfg.spin.plugin_dir))
+
+        # To be able to do editable installs to plugin dir, we have to
+        # temporarily set PYTHONPATH, to let the pip subprocess
+        # believe plugindir is in sys.path. But we must be careful to
+        # unset it before calling anything else -- see below!
+        old_python_path = os.environ.get("PYTHONPATH", None)
+        os.environ["PYTHONPATH"] = interpolate1(cfg.spin.plugin_dir)
 
         cmd = [
             f"{sys.executable}",
@@ -442,6 +461,8 @@ def load_spinfile(
         if extra_index:
             cmd.extend(["--extra-index-url", extra_index])
 
+        something_was_installed = False
+
         # Install plugin packages that are not yet installed, using pip
         # with the "-t" (target) option pointing to the plugin directory.
         with memoizer(N("{spin.plugin_dir}/packages.memo")) as m:
@@ -449,8 +470,30 @@ def load_spinfile(
             for pkg in find_plugin_packages(cfg):
                 pkg = replacements.get(pkg, pkg)
                 if not m.check(pkg):
-                    sh(*cmd, pkg)
+                    something_was_installed = True
+                    args = list(cmd)
+                    args.extend(pkg.split())
+                    sh(*args)
                     m.add(pkg)
+
+        # Now remove PYTHONPATH and make plugin a pth-enabled part of
+        # sys.path
+        if old_python_path:
+            os.environ["PYTHONPATH"] = old_python_path
+        else:
+            del os.environ["PYTHONPATH"]
+
+        if something_was_installed:
+            # Now it becomes a little dirty: pip did not write
+            # easy-install.pth while installing plugin packages to the
+            # plugin dir: fix it up, in case some plugin packages had been
+            # installed editable.
+            easy_install = []
+            for egg_link in glob.iglob(interpolate1("{spin.plugin_dir}/*.egg-link")):
+                easy_install.append(readtext(egg_link).splitlines()[0])
+            writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
+
+        site.addsitedir(cfg.spin.plugin_dir)
 
     # Load plugins. "Plugins" are not plugin packages, but modules
     # which we expect to live in plugin packages. Afterwards
