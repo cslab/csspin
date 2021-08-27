@@ -172,6 +172,9 @@ def sh(*cmd, **kwargs):
     return cpi
 
 
+EXPORTS={}
+
+
 def setenv(*args, **kwargs):
     """Set or unset one or more environment variables. The values of
     keyword arguments are interpolated against the configuration tree.
@@ -186,6 +189,7 @@ def setenv(*args, **kwargs):
             if not args:
                 echo(click.style(f"unset {key}", bold=True))
             os.environ.pop(key, None)
+            EXPORTS[key] = None
         else:
             value = interpolate1(value)
             if get_tree().verbose:
@@ -194,6 +198,7 @@ def setenv(*args, **kwargs):
                 else:
                     echo(click.style(args[0], bold=True))
             os.environ[key] = value
+            EXPORTS[key] = value
 
 
 def _read_file(fn, mode):
@@ -222,6 +227,10 @@ def readtext(fn):
 
 def writetext(fn, data):
     return _write_file(fn, "w", data)
+
+
+def appendtext(fn, data):
+    return _write_file(fn, "a", data)
 
 
 def persist(fn, data):
