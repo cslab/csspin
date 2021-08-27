@@ -345,6 +345,7 @@ def cli(
                 return
         if provision:
             toporun(cfg, "provision")
+            toporun(cfg, "finalize_provision")
             if not ctx.args:
                 # When provisioning without a subcommand, don't run
                 # into the usage.
