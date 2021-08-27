@@ -79,7 +79,7 @@ def maven(
         cmd += ".cmd"
     opts = cfg.maven.opts
     if cfg.quiet:
-        opts += "-q"
+        opts.append("-q")
     # add pom file
     opts.append("-f")
     opts.append(pom_file or cfg.maven.pom_file)
