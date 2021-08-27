@@ -407,13 +407,12 @@ def load_spinfile(
     cfg.quiet = quiet
     cfg.verbose = verbose
     cfg.spin.spinfile = spinfile
-    cfg.spin.project_root = "."
 
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
     if spinfile:
         spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
-        cfg.spin.spinfile_dir = spinfile_dir
+        cfg.spin.project_root = spinfile_dir
         if not cwd:
             cd(spinfile_dir)
 
