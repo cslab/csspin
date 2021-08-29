@@ -118,23 +118,23 @@ class DockerExecutor(BaseExecutor):
             _, p = os.path.splitdrive(p)
             return p.replace("\\", "/")
 
-        make_container_path = lambda x: x
+        def make_container_path(x):
+            return x
 
         if drive and "windows" not in tags:
-            make_container_path = windows_path_to_unix_path
+            make_container_path = windows_path_to_unix_path  # noqa
         if not drive and "windows" in tags:
             make_container_path = unix_path_to_windows_path
 
         container_home = make_container_path(home)
-        
+
         cmd += ["-v", f"{home}:{container_home}"]
         if "windows" in getattr(definition, "tags", []):
             cmd += ["-e", f"USERPROFILE={container_home}"]
         else:
             cmd += ["-e", f"HOME={container_home}"]
-            # FIXME: docker writes files which are owned by root to the .local dir...
-            # This causes some problems.
-            #cmd += ["-v", f"{volprefix}{home}/.local"]
+            # FIXME: docker writes files which are owned by root to the .local dir... This causes some problems.
+            # cmd += ["-v", f"{volprefix}{home}/.local"]
 
         devspin = spin_is_editable()
         if devspin:
