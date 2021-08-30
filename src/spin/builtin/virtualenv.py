@@ -6,9 +6,11 @@
 
 import logging
 import os
+import shutil
 import sys
 
 from spin import (
+    EXPORTS,
     Command,
     config,
     echo,
@@ -16,8 +18,8 @@ from spin import (
     group,
     interpolate1,
     memoizer,
+    readtext,
     rmtree,
-    setenv,
     sh,
     writetext,
 )
@@ -40,6 +42,7 @@ defaults = config(
     requires=[".python"],
     pipconf=config(),
     abitag="unprovisioned",
+    activated=False,
 )
 
 
@@ -66,7 +69,7 @@ def get_abi_tag(cfg):
     # ABI detection has been moved to file which is then called by the interpreter.
     from spin import get_abi_tag
 
-    return (
+    abitag = (
         sh(
             "{python.interpreter}",
             get_abi_tag.__file__,
@@ -76,31 +79,117 @@ def get_abi_tag(cfg):
         .stdout.decode()
         .strip()
     )
+    return abitag
 
 
 def configure(cfg):
-    if cfg.python.use or exists("{python.interpreter}"):
+    if (
+        cfg.python.use or exists("{python.interpreter}")
+    ) and cfg.virtualenv.abitag == "unprovisioned":
         cfg.virtualenv.abitag = get_abi_tag(cfg)
 
 
 def init(cfg):
     configure(cfg)
-    # It is more useful to abspath virtualenv bindir before pushing it
-    # onto the PATH, as anything run from a different directory will
-    # not pick up the venv bin.
-    if sys.platform == "win32":
-        venvabs = os.pathsep.join(
-            (
-                os.path.abspath(interpolate1("{virtualenv.bindir}")),
-                os.path.abspath(interpolate1("{virtualenv.scriptdir}")),
+    if not cfg.virtualenv.activated:
+        activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
+        echo("Activating {virtualenv.venv}")
+        exec(open(activate_this).read(), {"__file__": activate_this})
+        cfg.virtualenv.activated = True
+
+
+def create_dotenv(schema):
+    if exists(schema.activatescript):
+        setters = []
+        resetters = []
+        for name, value in EXPORTS.items():
+            if value:
+                setters.append(schema.setpattern.format(name=name, value=value))
+                resetters.append(schema.resetpattern.format(name=name, value=value))
+        resetters = "\n".join(resetters)
+        setters = "\n".join(setters)
+        activate = readtext(schema.activatescript)
+        if schema.patchmarker not in activate:
+            echo(f"Patching {schema.activatescript}")
+            shutil.copyfile(
+                interpolate1(f"{schema.activatescript}"),
+                interpolate1(f"{schema.activatescript}.bak"),
             )
+        activate = readtext(f"{schema.activatescript}.bak")
+        newscript = schema.script.format(
+            patchmarker=schema.patchmarker,
+            original=activate.replace("deactivate", "origdeactivate"),
+            resetters=resetters,
+            setters=setters,
         )
-    else:
-        venvabs = os.path.abspath(interpolate1("{virtualenv.bindir}"))
-    setenv(
-        f"set PATH={venvabs}{os.pathsep}$PATH",
-        PATH=os.pathsep.join((f"{venvabs}", os.environ["PATH"])),
-    )
+        writetext(f"{schema.activatescript}", newscript)
+
+
+class EnvBash:
+    patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
+    spinenv = "{virtualenv.venv}/.spinenv"
+    activatescript = "{virtualenv.scriptdir}/activate"
+    setpattern = """
+_OLD_SPIN_{name}="${name}"
+{name}="{value}"
+export {name}
+"""
+    resetpattern = """
+    if ! [ -z "${{_OLD_SPIN_{name}+_}}" ] ; then
+        {name}="$_OLD_SPIN_{name}"
+        export {name}
+        unset _OLD_SPIN_{name}
+    fi
+"""
+    script = """
+{patchmarker}
+{original}
+deactivate () {{
+    {resetters}
+    if [ ! "${{1-}}" = "nondestructive" ] ; then
+        # Self destruct!
+        unset -f deactivate
+        origdeactivate
+    fi
+}}
+
+deactivate nondestructive
+
+{setters}
+
+# The hash command must be called to get it to forget past
+# commands. Without forgetting past commands the $PATH changes
+# we made may not be respected
+hash -r 2>/dev/null
+
+"""
+
+
+def finalize_provision(cfg):
+    create_dotenv(EnvBash)
+    #     ".spinenv",
+    #     'export {name}="{value}"',
+    #     "activate",
+    #     ". $VIRTUAL_ENV/.spinenv",
+    # )
+    # create_dotenv(
+    #     ".spinenv.csh",
+    #     'setenv {name} "{value}"',
+    #     "activate.csh",
+    #     "source $VIRTUAL_ENV/.spinenv.csh",
+    # )
+    # create_dotenv(
+    #     ".spinenv.ps1",
+    #     '$env:{name} = "{value}"',
+    #     "activate.ps1",
+    #     '. "$VIRTUAL_ENV/.spinenv.ps1"',
+    # )
+    # create_dotenv(
+    #     ".spinenv.bat",
+    #     'set {name}="{value}"',
+    #     "activate.bat",
+    #     'call "$VIRTUAL_ENV/.spinenv.bat"',
+    # )
 
 
 def provision(cfg):
