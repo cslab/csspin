@@ -376,7 +376,10 @@ def yield_plugin_import_specs(cfg):
                 else:
                     yield f"{package_name}"
         else:
-            yield f"spin.builtin.{item}"
+            if item.startswith("."):
+                yield f"{item[1:]}"
+            else:
+                yield f"spin.builtin.{item}"
 
 
 def load_spinfile(
@@ -484,6 +487,12 @@ def load_spinfile(
             writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
 
         site.addsitedir(cfg.spin.plugin_dir)
+
+    for localpath in cfg.get("plugin-path", []):
+        localabs = interpolate1("{spin.project_root}/" + localpath)
+        if not exists(localabs):
+            die(f"Plugin path {localabs} doesn't exist")
+        sys.path.insert(0, localabs)
 
     # Load plugins. "Plugins" are not plugin packages, but modules
     # which we expect to live in plugin packages. Afterwards
