@@ -10,7 +10,10 @@ import warnings
 
 from spin import config, interpolate1, option, sh, task
 
-defaults = config(requires=[".virtualenv", ".preflight"])
+defaults = config(
+    requires=[".virtualenv", ".preflight"],
+    opts=["--gtest_brief=1", "--gtest_color=yes"],
+)
 
 
 def get_bin_dir():
@@ -28,7 +31,7 @@ def gtest(
 ):
     """Run the 'gtest' command."""
     if not args:
-        args = [""]
+        args = cfg.gtest.opts
     for test in cfg.gtest.tests:
         if sys.platform.startswith("win32"):
             test += ".exe"
