@@ -6,19 +6,10 @@
 
 import os
 
-from spin import (
-    config,
-    die,
-    echo,
-    interpolate1,
-    memoizer,
-    setenv,
-)
+from spin import config, die, echo, interpolate1, memoizer, setenv
 
 defaults = config(
-    version="16",
-    installdir="{spin.userprofile}/{platform.tag}",
-    java_home=None,
+    version="16", installdir="{spin.userprofile}/{platform.tag}", java_home=None
 )
 
 N = os.path.normcase
