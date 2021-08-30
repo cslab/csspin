@@ -172,7 +172,7 @@ def sh(*cmd, **kwargs):
     return cpi
 
 
-EXPORTS={}
+EXPORTS = {}
 
 
 def setenv(*args, **kwargs):

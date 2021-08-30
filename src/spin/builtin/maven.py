@@ -27,8 +27,7 @@ defaults = config(
         "http://apache.mirror.digionline.de/",
     ],
     url=(
-        "maven/maven-3/{maven.version}/"
-        "binaries/apache-maven-{maven.version}-bin.tar.gz"
+        "maven/maven-3/{maven.version}/binaries/apache-maven-{maven.version}-bin.tar.gz"
     ),
     mavendir="{spin.userprofile}/apache-maven-{maven.version}",
 )

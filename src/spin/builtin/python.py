@@ -18,7 +18,6 @@ from spin import (
     interpolate1,
     mkdir,
     namespaces,
-    rmtree,
     setenv,
     sh,
     task,

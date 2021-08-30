@@ -88,8 +88,8 @@ def venv_hook(cfg):
     ce_libpath, ce_sppath = ce_paths(interpolate1(cfg.python.use))
     if not os.path.exists(ce_libpath):
         die(
-            "cannot provision CE platform since the library folder "
-            "(%s) doesn't exist" % ce_libpath
+            "cannot provision CE platform since the library folder (%s) doesn't exist"
+            % ce_libpath
         )
 
     if not os.path.exists(ce_sppath):

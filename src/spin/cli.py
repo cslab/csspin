@@ -20,7 +20,6 @@ import sys
 
 import click
 import entrypoints
-
 from packaging import tags
 
 from . import (
@@ -33,6 +32,7 @@ from . import (
     interpolate1,
     memoizer,
     mkdir,
+    readtext,
     readyaml,
     rmtree,
     schema,
@@ -40,9 +40,7 @@ from . import (
     sh,
     toporun,
     tree,
-    appendtext,
     writetext,
-    readtext,
 )
 
 N = os.path.normcase
@@ -65,8 +63,11 @@ DEFAULTS = config(
     quiet=False,
     verbose=False,
     cruise=config(CRUISE_EXECUTOR_MAPPINGS),
-    platform=config(exe=".exe" if sys.platform == "win32" else "", shell="{SHELL}",
-                    tag=next(tags.sys_tags()).platform),
+    platform=config(
+        exe=".exe" if sys.platform == "win32" else "",
+        shell="{SHELL}",
+        tag=next(tags.sys_tags()).platform,
+    ),
 )
 
 
@@ -173,41 +174,39 @@ def base_options(fn):
             "-C",
             "cwd",
             type=click.Path(file_okay=False, exists=True),
-            help="Change directory before doing anything else. "
-            "In this case, the configuration file "
-            "(spinfile.yaml) is expected to live in the "
-            "directory changed to.",
+            help=(
+                "Change directory before doing anything else. "
+                "In this case, the configuration file "
+                "(spinfile.yaml) is expected to live in the "
+                "directory changed to."
+            ),
         ),
         click.option(
             "-f",
             "spinfile",
             default=DEFAULTS.spin.spinfile,
             type=click.Path(dir_okay=False, exists=False),
-            help="An alternative name for the configuration file. "
-            "This can include a relative or absolute path when "
-            "used without -C.",
+            help=(
+                "An alternative name for the configuration file. "
+                "This can include a relative or absolute path when "
+                "used without -C."
+            ),
         ),
         click.option(
             "--plugin-directory",
             "-P",
             "plugin_dir",
             type=click.Path(file_okay=False, exists=False),
-            help="Alternative directory where spin installs and "
-            "searches plugin packages. The default is "
-            "{project_root}/.spin/plugins. This option overrides "
-            "the 'spin.plugin_dir' setting.",
+            help=(
+                "Alternative directory where spin installs and "
+                "searches plugin packages. The default is "
+                "{project_root}/.spin/plugins. This option overrides "
+                "the 'spin.plugin_dir' setting."
+            ),
         ),
+        click.option("--log-level", "log_level", type=str),
         click.option(
-            "--log-level",
-            "log_level",
-            type=str,
-        ),
-        click.option(
-            "--quiet",
-            "-q",
-            is_flag=True,
-            default=DEFAULTS.quiet,
-            help="Be more quiet",
+            "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet"
         ),
         click.option(
             "--verbose",
@@ -237,22 +236,13 @@ def base_options(fn):
             help="Run docker commands using -it.",
         ),
         click.option(
-            "-p",
-            "properties",
-            multiple=True,
-            help="Set configuration property",
+            "-p", "properties", multiple=True, help="Set configuration property"
         ),
         click.option(
-            "--provision",
-            is_flag=True,
-            default=False,
-            help="Provision plugins",
+            "--provision", is_flag=True, default=False, help="Provision plugins"
         ),
         click.option(
-            "--cleanup",
-            is_flag=True,
-            default=False,
-            help="Cleaning up plugins",
+            "--cleanup", is_flag=True, default=False, help="Cleaning up plugins"
         ),
     ]
     for d in decorators:
