@@ -31,7 +31,9 @@ defaults = config(
     venv=N("{spin.project_root}/{virtualenv.abitag}-{platform.tag}"),
     memo=N("{virtualenv.venv}/spininfo.memo"),
     bindir=(
-        N("{virtualenv.venv}/bin") if sys.platform != "win32" else "{virtualenv.venv}"
+        N("{virtualenv.venv}/bin")
+        if sys.platform != "win32"
+        else "{virtualenv.venv}"
     ),
     scriptdir=(
         N("{virtualenv.venv}/bin")
@@ -98,37 +100,45 @@ def init(cfg):
         cfg.virtualenv.activated = True
 
 
-def create_dotenv(schema):
+def patch_activate(schema):
     if exists(schema.activatescript):
         setters = []
         resetters = []
         for name, value in EXPORTS.items():
             if value:
-                setters.append(schema.setpattern.format(name=name, value=value))
-                resetters.append(schema.resetpattern.format(name=name, value=value))
+                setters.append(
+                    schema.setpattern.format(name=name, value=value)
+                )
+                resetters.append(
+                    schema.resetpattern.format(name=name, value=value)
+                )
         resetters = "\n".join(resetters)
         setters = "\n".join(setters)
-        activate = readtext(schema.activatescript)
-        if schema.patchmarker not in activate:
-            echo(f"Patching {schema.activatescript}")
+        original = readtext(schema.activatescript)
+        if schema.patchmarker not in original:
             shutil.copyfile(
                 interpolate1(f"{schema.activatescript}"),
                 interpolate1(f"{schema.activatescript}.bak"),
             )
-        activate = readtext(f"{schema.activatescript}.bak")
+        echo(f"Patching {schema.activatescript}")
+        original = readtext(f"{schema.activatescript}.bak")
+        for repl in schema.replacements:
+            original = original.replace(repl[0], repl[1])
         newscript = schema.script.format(
             patchmarker=schema.patchmarker,
-            original=activate.replace("deactivate", "origdeactivate"),
+            original=original,
             resetters=resetters,
             setters=setters,
         )
         writetext(f"{schema.activatescript}", newscript)
 
 
-class EnvBash:
+class BashActivate:
     patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
-    spinenv = "{virtualenv.venv}/.spinenv"
     activatescript = "{virtualenv.scriptdir}/activate"
+    replacements = [
+        ("deactivate", "origdeactivate"),
+    ]
     setpattern = """
 _OLD_SPIN_{name}="${name}"
 {name}="{value}"
@@ -165,31 +175,88 @@ hash -r 2>/dev/null
 """
 
 
+class PowershellActivate:
+    patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
+    activatescript = "{virtualenv.scriptdir}/activate.ps1"
+    replacements = [
+        ("deactivate", "origdeactivate"),
+    ]
+    setpattern = """
+New-Variable -Scope global -Name _OLD_SPIN_{name} -Value $env:{name}
+$env:{name} = "{value}"
+"""
+    resetpattern = """
+    if (Test-Path variable:_OLD_SPIN_{name}) {{
+        $env:{name} = $variable:_OLD_SPIN_{name}
+        Remove-Variable "_OLD_SPIN_{name}" -Scope global
+    }}
+"""
+    script = """
+{patchmarker}
+{original}
+function global:deactivate([switch] $NonDestructive) {{
+    {resetters}
+    if (!$NonDestructive) {{
+        Remove-Item function:deactivate
+        origdeactivate
+    }}
+}}
+
+deactivate -nondestructive
+
+{setters}
+"""
+
+
+class BatchActivate:
+    patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
+    activatescript = "{virtualenv.scriptdir}/activate.bat"
+    replacements = ()
+    setpattern = """
+if not defined _OLD_SPIN_{name} goto ENDIFSPIN{name}1
+    set "{name}=%_OLD_SPIN_{name}%"
+:ENDIFSPIN{name}1
+if defined _OLD_SPIN_{name} goto ENDIFSPIN{name}2
+    set "_OLD_SPIN_{name}=%{name}%"
+:ENDIFSPIN{name}2
+set "{name}={value}"
+"""
+    resetpattern = ""
+    script = """
+@echo off
+{patchmarker}
+{original}
+{setters}
+"""
+
+
+class BatchDeactivate:
+    patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
+    activatescript = "{virtualenv.scriptdir}/deactivate.bat"
+    replacements = ()
+    setpattern = ""
+    resetpattern = """
+if not defined _OLD_SPIN_{name} goto ENDIFVSPIN{name}
+    set "{name}=%_OLD_SPIN_{name}%"
+    set _OLD_SPIN_{name}=
+:ENDIFVSPIN{name}
+"""
+    script = """
+@echo off
+{patchmarker}
+{original}
+{resetters}
+"""
+
+
 def finalize_provision(cfg):
-    create_dotenv(EnvBash)
-    #     ".spinenv",
-    #     'export {name}="{value}"',
-    #     "activate",
-    #     ". $VIRTUAL_ENV/.spinenv",
-    # )
-    # create_dotenv(
-    #     ".spinenv.csh",
-    #     'setenv {name} "{value}"',
-    #     "activate.csh",
-    #     "source $VIRTUAL_ENV/.spinenv.csh",
-    # )
-    # create_dotenv(
-    #     ".spinenv.ps1",
-    #     '$env:{name} = "{value}"',
-    #     "activate.ps1",
-    #     '. "$VIRTUAL_ENV/.spinenv.ps1"',
-    # )
-    # create_dotenv(
-    #     ".spinenv.bat",
-    #     'set {name}="{value}"',
-    #     "activate.bat",
-    #     'call "$VIRTUAL_ENV/.spinenv.bat"',
-    # )
+    for schema in (
+        BashActivate,
+        BatchActivate,
+        BatchDeactivate,
+        PowershellActivate,
+    ):
+        patch_activate(schema)
 
 
 def provision(cfg):
@@ -208,7 +275,9 @@ def provision(cfg):
 
     if not exists("{virtualenv.venv}"):
         # download seeds since pip is too old in manylinux
-        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
+        virtualenv(
+            "-p", "{python.interpreter}", "{virtualenv.venv}", "--download"
+        )
 
     # This sets PATH to the venv
     init(cfg)

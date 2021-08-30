@@ -16,9 +16,9 @@ N = os.path.normcase
 
 
 def set_java_home(cfg):
-    setenv(JAVA_HOME=cfg.java.java_home)
+    setenv(JAVA_HOME=N(cfg.java.java_home))
     setenv(
-        N(f"set PATH=$JAVA_HOME/bin{os.pathsep}$PATH"),
+        "set PATH=$JAVA_HOME" + N(f"fbin" + f"{os.pathsep}$PATH"),
         PATH=os.pathsep.join((N("{JAVA_HOME}/bin"), "{PATH}")),
     )
 

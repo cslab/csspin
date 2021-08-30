@@ -41,6 +41,7 @@ def provision(cfg):
         filename, headers = urllib.request.urlretrieve(url)
         with tarfile.open(filename, "r:gz") as tar:
             tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))
+    init(cfg)
 
 
 def init(cfg):
