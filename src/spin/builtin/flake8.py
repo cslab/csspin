@@ -19,7 +19,7 @@ defaults = config(
     packages=[
         "flake8",
         # "flake8-import-order",
-        # "flake8-isort",
+        "flake8-isort",
         "flake8-comprehensions",
         "flake8-copyright",
         "flake8-polyfill",
@@ -28,9 +28,10 @@ defaults = config(
         # Py3-only may get them via overwriting the
         # "packages"-property in thier spinfile
         #
-        # "flake8-fixme",
-        # "flake8-bugbear",
+        "flake8-fixme",
+        "flake8-bugbear",
     ],
+    allsource=["{spin.project_root}/src", "{spin.project_root}/tests"],
 )
 
 
@@ -46,7 +47,7 @@ def flake8(
     if not files:
         files = [f for f in cfg.vcs.modified if f.endswith(".py")]
     if allsource:
-        files = ("{spin.project_root}/src", "{spin.project_root}/tests")
+        files = cfg.flake8.allsource
     if files:
         logging.info(f"flake8: Modified files: {files}")
         sh("{flake8.cmd}", *cfg.flake8.opts, *files)
