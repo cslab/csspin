@@ -21,8 +21,3 @@ repos:
     entry: isort
     language: system
     types: [python]
-
-#- repo: https://github.com/psf/black
-#  rev: 19.3b0
-#  hooks:
-#  - id: black
