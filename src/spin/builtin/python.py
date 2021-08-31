@@ -78,20 +78,25 @@ def wheel(cfg):
 
 def pyenv_install(cfg):
     with namespaces(cfg.python):
-        echo("Installing Python {version} to {inst_dir}")
-        # For Linux/macOS using the 'python-build' plugin from
-        # pyenv is by far the most robust way to install a
-        # version of Python.
-        if not exists("{pyenv.path}"):
-            sh("git clone {pyenv.url} {pyenv.path}")
+        if "PYENV_ROOT" in os.environ:
+            echo("Using your existing pyenv installation ...")
+            sh("pyenv install --skip-existing {version}")
+            sh("python -m pip install -q --upgrade pip packaging")
         else:
-            with cd("{pyenv.path}"):
-                sh("git pull")
-        # we should set
-        setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
-        setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
-        sh("{pyenv.python_build} {version} {inst_dir}")
-        sh("{interpreter} -m pip install -q --upgrade pip wheel packaging")
+            echo("Installing Python {version} to {inst_dir}")
+            # For Linux/macOS using the 'python-build' plugin from
+            # pyenv is by far the most robust way to install a
+            # version of Python.
+            if not exists("{pyenv.path}"):
+                sh("git clone {pyenv.url} {pyenv.path}")
+            else:
+                with cd("{pyenv.path}"):
+                    sh("git pull")
+            # we should set
+            setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
+            setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
+            sh("{pyenv.python_build} {version} {inst_dir}")
+            sh("{interpreter} -m pip install -q --upgrade pip wheel packaging")
 
 
 def nuget_install(cfg):
