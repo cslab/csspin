@@ -37,7 +37,7 @@ defaults = config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
         exe=N("{spin.userprofile}/nuget.exe"),
     ),
-    version="3.8.5",
+    version=None,
     plat_dir=N("{spin.userprofile}/{platform.tag}"),
     inst_dir=(
         N("{python.plat_dir}/python/{python.version}")
@@ -131,6 +131,16 @@ def provision(cfg):
 
 
 def configure(cfg):
+    if not cfg.python.version:
+        die(
+            (
+                "Spin's Python plugin no longer sets a default version.\n"
+                "Please choose a version in spinfile.yaml by setting python.version"
+            )
+        )
+    if "PYENV_ROOT" in os.environ:
+        setenv(PYENV_VERSION="{python.version}")
+        cfg.python.use = "python"
     if cfg.python.use:
         cfg.python.interpreter = cfg.python.use
 
