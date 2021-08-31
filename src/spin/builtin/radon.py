@@ -26,5 +26,5 @@ def radon(cfg, allsource: option("--all", "allsource", is_flag=True), args):
     if allsource:
         files = ("{spin.project_root}/src", "{spin.project_root}/tests")
     if files:
-        logging.info(f"radon: Modified files: {files}")
+        logging.debug(f"radon: Modified files: {files}")
         sh("{radon.cmd}", "mi", *cfg.radon.opts, *files)

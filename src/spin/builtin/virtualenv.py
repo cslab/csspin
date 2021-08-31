@@ -328,7 +328,7 @@ def provision(cfg):
             plugin_module = cfg.loaded[plugin]
             hook = getattr(plugin_module, "venv_hook", None)
             if hook is not None:
-                logging.info(f"{plugin_module.__name__}.venv_hook()")
+                logging.debug(f"{plugin_module.__name__}.venv_hook()")
                 hook(cfg)
 
         # Install packages required by the project ('requirements')

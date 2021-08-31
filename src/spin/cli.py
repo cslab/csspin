@@ -101,9 +101,9 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
 
     """
     if package:
-        logging.info(f"{indent}import plugin {import_spec} from {package}")
+        logging.debug(f"{indent}import plugin {import_spec} from {package}")
     else:
-        logging.info(f"{indent}import plugin {import_spec}")
+        logging.debug(f"{indent}import plugin {import_spec}")
     try:
         mod = importlib.import_module(import_spec, package)
     except ModuleNotFoundError as ex:
@@ -420,7 +420,9 @@ def load_spinfile(
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        logging.info(f"Merging user settings from {interpolate1('{spin.spin_global}')}")
+        logging.debug(
+            f"Merging user settings from {interpolate1('{spin.spin_global}')}"
+        )
         tree.tree_update(cfg, readyaml(interpolate1("{spin.spin_global}")))
 
     # Reflect certain command line options in the config tree.
@@ -516,13 +518,13 @@ def load_spinfile(
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
-    logging.info("loading project plugins:")
+    logging.debug("loading project plugins:")
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec)
 
     # Also load global plugins
     sys.path.insert(0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins)))
-    logging.info("loading global plugins:")
+    logging.debug("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):
         load_plugin(cfg, ep.module_name)
 

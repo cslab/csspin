@@ -167,6 +167,10 @@ def sh(*cmd, **kwargs):
 
     try:
         t0 = time.monotonic()
+        logging.debug(
+            "subprocess.run(%s, shell=%s, check=%s, kwargs=%s"
+            % (cmd, shell, True, kwargs)
+        )
         cpi = subprocess.run(cmd, shell=shell, check=True, **kwargs)
         t1 = time.monotonic()
         if not silent and get_tree().verbose:
@@ -461,12 +465,12 @@ def toporun(cfg, *fn_names, reverse=False):
     if reverse:
         plugins = reversed(plugins)
     for func_name in fn_names:
-        logging.info(f"toporun: {func_name}")
+        logging.debug(f"toporun: {func_name}")
         for pi_name in plugins:
             pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
-                logging.info(f"  {pi_name}.{func_name}()")
+                logging.debug(f"  {pi_name}.{func_name}()")
                 initf(cfg)
 
 

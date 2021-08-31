@@ -152,7 +152,7 @@ def configure(cfg):
 
 def init(cfg):
     if not cfg.python.use:
-        logging.info("Checking for %s", interpolate1("{python.interpreter}"))
+        logging.debug("Checking for %s", interpolate1("{python.interpreter}"))
         if not exists("{python.interpreter}"):
             die(
                 "No Python interpreter has been provisioned for this project.\n\n"
