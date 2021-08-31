@@ -22,11 +22,17 @@ import click
 import entrypoints
 from packaging import tags
 
+if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
+    import importlib_metadata
+else:  # pragma: no cover (PY38+)
+    import importlib.metadata as importlib_metadata
+
 from . import (
     cd,
     config,
     cruise,
     die,
+    echo,
     exists,
     get_tree,
     interpolate1,
@@ -169,6 +175,7 @@ def reverse_toposort(nodes, graph):
 # generating the help text.
 def base_options(fn):
     decorators = [
+        click.option("--version", "version", is_flag=True),
         click.option(
             "--change-directory",
             "-C",
@@ -204,7 +211,12 @@ def base_options(fn):
                 "the 'spin.plugin_dir' setting."
             ),
         ),
-        click.option("--log-level", "log_level", type=str),
+        click.option(
+            "--log-level",
+            "log_level",
+            type=str,
+            help="Setup lower-level logging. Meaningful values are 'info' and 'debug'.",
+        ),
         click.option(
             "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet"
         ),
@@ -291,6 +303,7 @@ def commands(ctx, **kwargs):
 @click.pass_context
 def cli(
     ctx,
+    version,
     cwd,
     spinfile,
     plugin_dir,
@@ -315,6 +328,10 @@ def cli(
     # code uses 'echo' and/or 'log'.
     get_tree().quiet = quiet
     get_tree().verbose = verbose
+
+    if version:
+        echo(importlib_metadata.version("spin"))
+        return 0
 
     # Find a project file and load it.
     if cwd:
