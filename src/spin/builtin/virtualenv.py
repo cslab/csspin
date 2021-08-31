@@ -342,15 +342,15 @@ def provision(cfg):
             for req in plugin_module.defaults.get("packages", []):
                 pipit(req)
 
-        # If there is a setup.py, make an editable install (which
-        # transitively also installs runtime dependencies of the
-        # project).  FIXME: filename/location of setup.py should
-        # probably be configurable
-        if exists("setup.py"):
-            pipit("-e .")
-
         if requirements:
             pip("install", *requirements)
+
+    # If there is a setup.py, make an editable install (which
+    # transitively also installs runtime dependencies of the
+    # project).  FIXME: filename/location of setup.py should
+    # probably be configurable
+    if exists("setup.py"):
+        pip("install", "-e", ".")
 
 
 def cleanup(cfg):
