@@ -44,7 +44,6 @@ defaults = config(
     requires=[".python"],
     pipconf=config(),
     abitag="unprovisioned",
-    activated=False,
 )
 
 
@@ -93,11 +92,10 @@ def configure(cfg):
 
 def init(cfg):
     configure(cfg)
-    if not cfg.virtualenv.activated:
+    if os.environ.get("VIRTUAL_ENV", "") != cfg.virtualenv.venv:
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
         echo("Activating {virtualenv.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
-        cfg.virtualenv.activated = True
 
 
 def patch_activate(schema):
