@@ -310,13 +310,13 @@ def provision(cfg):
 
         replacements = cfg.get("devpackages", {})
 
+        requirements = []
+
         def pipit(req):
             req = replacements.get(req, req)
             if not m.check(req):
-                pip("install", *req.split())
+                requirements.extend(req.split())
                 m.add(req)
-            elif cfg.verbose:
-                echo(f"{req} already installed!")
 
         # Plugins can define a 'venv_hook' function, to give them a
         # chance to do something with the virtual environment just
@@ -347,6 +347,9 @@ def provision(cfg):
         # probably be configurable
         if exists("setup.py"):
             pipit("-e .")
+
+        if requirements:
+            pip("install", *requirements)
 
 
 def cleanup(cfg):
