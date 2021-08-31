@@ -5,17 +5,25 @@ plugins:
   - pytest
   - devpi
   - radon
-  # - demo-plugin:
-  #     - demo_plugin
-  # - cedm:
-  #     - cedm
+  - build
+  - .demo_plugin
+  - pre_commit
+
+requirements:
+  - black
+
+python:
+  version: 3.8.11
+
+plugin-path:
+  - plugins
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
   # it is under development.
   pipx-install:
     script:
-      - pipx install --force --spec . --editable spin
+      - pipx install --editable .
 
 cruise:
   "@docker":
