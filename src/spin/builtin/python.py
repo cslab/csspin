@@ -124,7 +124,7 @@ def provision(cfg):
             if sys.platform == "win32":
                 nuget_install(cfg)
             else:
-                # Everything (Linux and macOS) else uses pyenv
+                # Everything else (Linux and macOS) uses pyenv
                 pyenv_install(cfg)
         else:
             echo("Python {python.version} found at {python.interpreter}")
@@ -141,6 +141,6 @@ def init(cfg):
         if not exists("{python.interpreter}"):
             die(
                 "No Python interpreter has been provisioned for this project.\n\n"
-                "Spin longer auto-provisions dependencies in this release.\n"
+                "Spin no longer auto-provisions dependencies in this release.\n"
                 "You might want to run 'spin provision', or use the'--provision' flag"
             )
