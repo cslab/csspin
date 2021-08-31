@@ -68,6 +68,14 @@ def python(args):
     sh("{python.interpreter}", *args)
 
 
+@task(when="package")
+def wheel(cfg):
+    args = []
+    if cfg.quiet:
+        args = ["-q"]
+    sh("python", "setup.py", *args, "bdist_wheel")
+
+
 def pyenv_install(cfg):
     with namespaces(cfg.python):
         echo("Installing Python {version} to {inst_dir}")
