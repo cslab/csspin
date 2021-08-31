@@ -44,6 +44,7 @@ defaults = config(
     requires=[".python"],
     pipconf=config(),
     abitag="unprovisioned",
+    update_pip=False,
 )
 
 
@@ -281,7 +282,8 @@ def provision(cfg):
     init(cfg)
 
     # Update the pip in the venv
-    sh("python -m pip -q install -U pip")
+    if cfg.virtualenv.update_pip:
+        sh("python -m pip -q install -U pip")
 
     cmd = ["pip"]
     if not cfg.verbose:
