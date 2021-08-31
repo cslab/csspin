@@ -44,7 +44,6 @@ defaults = config(
     requires=[".python"],
     pipconf=config(),
     abitag="unprovisioned",
-    update_pip=False,
 )
 
 
@@ -272,17 +271,19 @@ def provision(cfg):
         cmd.append("-q")
     virtualenv = Command(*cmd)
 
+    fresh_virtualenv = False
     if not exists("{virtualenv.venv}"):
         # download seeds since pip is too old in manylinux
         virtualenv(
             "-p", "{python.interpreter}", "{virtualenv.venv}", "--download"
         )
+        fresh_virtualenv = True
 
     # This sets PATH to the venv
     init(cfg)
 
     # Update the pip in the venv
-    if cfg.virtualenv.update_pip:
+    if fresh_virtualenv:
         sh("python -m pip -q install -U pip")
 
     cmd = ["pip"]
