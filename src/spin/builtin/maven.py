@@ -78,7 +78,7 @@ def maven(
     if sys.platform.startswith("win32"):
         cmd += ".cmd"
     opts = cfg.maven.opts
-    if cfg.quiet:
+    if not cfg.verbose:
         opts.append("-q")
     # add pom file
     opts.append("-f")
