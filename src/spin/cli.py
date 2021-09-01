@@ -438,6 +438,12 @@ def load_spinfile(
         if not cwd:
             cd(spinfile_dir)
 
+        if not exists("{spin.spin_dir}"):
+            mkdir("{spin.spin_dir}")
+            writetext(
+                "{spin.spin_dir}/.gitignore", "# Created by spin automatically\n*\n"
+            )
+
         # Setup plugin_dir, where spin installs plugin packages.
         if plugin_dir:
             cfg.spin.plugin_dir = plugin_dir
