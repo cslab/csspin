@@ -1,17 +1,13 @@
-/cp38-macosx_10_15_x86_64/
 *~
 __pycache__/
 *.egg-info/
 *.memo
 .coverage
 /htmlcov/
-/cp38-linux_x86_64/
 /dist/
 /build/
 /doc/_build/
 .DS_Store
-/cp38-win_amd64/
-/.spin/
 /_phix/
 *.org_rst
 /pip/
