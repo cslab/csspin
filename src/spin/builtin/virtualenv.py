@@ -250,6 +250,27 @@ def finalize_provision(cfg):
     ):
         patch_activate(schema)
 
+    site_packages = (
+        sh(
+            "{virtualenv.python}",
+            "-c",
+            "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+            capture_output=True,
+            silent=not cfg.verbose,
+        )
+        .stdout.decode()
+        .strip()
+    )
+    echo(f"Create {site_packages}/_set_env.pth")
+    pthline = interpolate1(
+        "import os; "
+        "bindir='{virtualenv.bindir}'; "
+        "os.environ['PATH'] = "
+        "os.environ['PATH'] if bindir in os.environ['PATH'] "
+        "else os.pathsep.join((bindir, os.environ['PATH']))\n"
+    )
+    writetext(f"{site_packages}/_set_env.pth", pthline)
+
 
 def provision(cfg):
     configure(cfg)
