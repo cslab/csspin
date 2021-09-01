@@ -31,9 +31,7 @@ defaults = config(
     venv=N("{spin.project_root}/{virtualenv.abitag}-{platform.tag}"),
     memo=N("{virtualenv.venv}/spininfo.memo"),
     bindir=(
-        N("{virtualenv.venv}/bin")
-        if sys.platform != "win32"
-        else "{virtualenv.venv}"
+        N("{virtualenv.venv}/bin") if sys.platform != "win32" else "{virtualenv.venv}"
     ),
     scriptdir=(
         N("{virtualenv.venv}/bin")
@@ -104,12 +102,8 @@ def patch_activate(schema):
         resetters = []
         for name, value in EXPORTS.items():
             if value:
-                setters.append(
-                    schema.setpattern.format(name=name, value=value)
-                )
-                resetters.append(
-                    schema.resetpattern.format(name=name, value=value)
-                )
+                setters.append(schema.setpattern.format(name=name, value=value))
+                resetters.append(schema.resetpattern.format(name=name, value=value))
         resetters = "\n".join(resetters)
         setters = "\n".join(setters)
         original = readtext(schema.activatescript)
@@ -274,9 +268,7 @@ def provision(cfg):
     fresh_virtualenv = False
     if not exists("{virtualenv.venv}"):
         # download seeds since pip is too old in manylinux
-        virtualenv(
-            "-p", "{python.interpreter}", "{virtualenv.venv}", "--download"
-        )
+        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
         fresh_virtualenv = True
 
     # This sets PATH to the venv
@@ -306,6 +298,13 @@ def provision(cfg):
 
     if not exists(pipconf):
         writetext(pipconf, "\n".join(text))
+
+    # If there is a setup.py, make an editable install (which
+    # transitively also installs runtime dependencies of the
+    # project).  FIXME: filename/location of setup.py should
+    # probably be configurable
+    if exists("setup.py"):
+        pip("install", "-e", ".")
 
     with memoizer("{virtualenv.memo}") as m:
 
@@ -344,13 +343,6 @@ def provision(cfg):
 
         if requirements:
             pip("install", *requirements)
-
-    # If there is a setup.py, make an editable install (which
-    # transitively also installs runtime dependencies of the
-    # project).  FIXME: filename/location of setup.py should
-    # probably be configurable
-    if exists("setup.py"):
-        pip("install", "-e", ".")
 
 
 def cleanup(cfg):
