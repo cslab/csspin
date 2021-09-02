@@ -78,7 +78,7 @@ def wheel(cfg):
 
 def pyenv_install(cfg):
     with namespaces(cfg.python):
-        if "PYENV_ROOT" in os.environ:
+        if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
             echo("Using your existing pyenv installation ...")
             sh("pyenv install --skip-existing {version}")
             sh("python -m pip install -q --upgrade pip packaging")
@@ -123,16 +123,19 @@ def nuget_install(cfg):
     sh("{python.interpreter} -m pip install -q --upgrade pip wheel packaging")
 
 
+def check_python_interpreter(cfg):
+    pi = sh("{python.interpreter}", "--version", check=False)
+    return pi.returncode == 0
+
+
 def provision(cfg):
-    if not cfg.python.use:
-        if not exists("{python.interpreter}"):
-            if sys.platform == "win32":
-                nuget_install(cfg)
-            else:
-                # Everything else (Linux and macOS) uses pyenv
-                pyenv_install(cfg)
+    echo("Checking for {python.interpreter}")
+    if not check_python_interpreter(cfg):
+        if sys.platform == "win32":
+            nuget_install(cfg)
         else:
-            echo("Python {python.version} found at {python.interpreter}")
+            # Everything else (Linux and macOS) uses pyenv
+            pyenv_install(cfg)
 
 
 def configure(cfg):
@@ -143,7 +146,8 @@ def configure(cfg):
                 "Please choose a version in spinfile.yaml by setting python.version"
             )
         )
-    if "PYENV_ROOT" in os.environ:
+    # FIXME: refactor the pyenv check, as it also used elsewhere
+    if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
         setenv(PYENV_VERSION="{python.version}")
         cfg.python.use = "python"
     if cfg.python.use:
