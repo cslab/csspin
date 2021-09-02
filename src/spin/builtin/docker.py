@@ -4,7 +4,9 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, interpolate1, sh
+import os
+
+from spin import config, group, interpolate1, sh
 
 defaults = config(
     executable="docker",
@@ -18,18 +20,33 @@ defaults = config(
 
 
 @group()
-def docker():
+def docker(cfg):
     pass
 
 
 @docker.task()
 def build(cfg):
+    options = []
+    if not cfg.verbose:
+        options.append("-q")
+    elif "INSIDE_EMACS" in os.environ:
+        options.append("--progress=plain")
     if cfg.docker.name:
-        imagename = "/".join(cfg.docker.hub, cfg.docker.name)
-        tag_options = []
+        imagename = "/".join((cfg.docker.hub, cfg.docker.name))
         for tag in cfg.docker.tags:
-            tag_options.extend(["-t", f"{imagename}:{tag}"])
-    build_options = [cfg.docker.dockerdir]
+            options.extend(["-t", f"{imagename}:{tag}"])
+    options.append(cfg.docker.dockerdir)
     if cfg.docker.dockerfile:
-        build_options.extend(["-f", cfg.docker.dockerfile])
-    sh("{docker.executable}", "build", *tag_options, *build_options)
+        options.extend(["-f", cfg.docker.dockerfile])
+    sh("{docker.executable}", "build", *options)
+
+
+@docker.task()
+def push(cfg):
+    options = []
+    if not cfg.verbose:
+        options.append("-q")
+    if cfg.docker.name:
+        imagename = "/".join((cfg.docker.hub, cfg.docker.name))
+        for tag in cfg.docker.tags:
+            sh("{docker.executable}", "push", *options, f"{imagename}:{tag}")
