@@ -155,6 +155,7 @@ def sh(*cmd, **kwargs):
     """
     cmd = interpolate(cmd)
     shell = kwargs.pop("shell", len(cmd) == 1)
+    check = kwargs.pop("check", True)
     silent = kwargs.get("silent", False)
 
     if sys.platform == "win32":
@@ -169,9 +170,9 @@ def sh(*cmd, **kwargs):
         t0 = time.monotonic()
         logging.debug(
             "subprocess.run(%s, shell=%s, check=%s, kwargs=%s"
-            % (cmd, shell, True, kwargs)
+            % (cmd, shell, check, kwargs)
         )
-        cpi = subprocess.run(cmd, shell=shell, check=True, **kwargs)
+        cpi = subprocess.run(cmd, shell=shell, check=check, **kwargs)
         t1 = time.monotonic()
         if not silent and get_tree().verbose:
             echo(click.style("[%g seconds]" % (t1 - t0), fg="green"))
