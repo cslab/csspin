@@ -15,8 +15,9 @@ class TaskDefinition:
         self._definition = definition
 
     def __call__(self):
+        env = self._definition.get("env", None)
         for cmd in self._definition.get("script", []):
-            sh(cmd)
+            sh(cmd, env=env)
 
 
 def configure(cfg):
