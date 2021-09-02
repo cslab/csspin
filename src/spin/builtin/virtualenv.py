@@ -41,7 +41,7 @@ defaults = config(
     python=N("{virtualenv.bindir}/python"),
     requires=[".python"],
     pipconf=config(),
-    abitag="unprovisioned",
+    abitag=None,
 )
 
 
@@ -66,30 +66,24 @@ def get_abi_tag(cfg):
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.
     # ABI detection has been moved to file which is then called by the interpreter.
-    from spin import get_abi_tag
+    if not cfg.virtualenv.abitag:
+        from spin import get_abi_tag
 
-    abitag = (
-        sh(
-            "{python.interpreter}",
-            get_abi_tag.__file__,
-            capture_output=True,
-            silent=not cfg.verbose,
+        abitag = (
+            sh(
+                "{python.interpreter}",
+                get_abi_tag.__file__,
+                capture_output=True,
+                silent=not cfg.verbose,
+            )
+            .stdout.decode()
+            .strip()
         )
-        .stdout.decode()
-        .strip()
-    )
-    return abitag
-
-
-def configure(cfg):
-    if (
-        cfg.python.use or exists("{python.interpreter}")
-    ) and cfg.virtualenv.abitag == "unprovisioned":
-        cfg.virtualenv.abitag = get_abi_tag(cfg)
+        cfg.virtualenv.abitag = abitag
 
 
 def init(cfg):
-    configure(cfg)
+    get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.virtualenv.venv:
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
         echo("Activating {virtualenv.venv}")
@@ -273,13 +267,8 @@ def finalize_provision(cfg):
 
 
 def provision(cfg):
-    configure(cfg)
-    if not cfg.python.use and not exists(
-        "{python.script_dir}/virtualenv{platform.exe}"
-    ):
-        # If we use Python provisioned by spin, add virtualenv if
-        # necessary.
-        sh("{python.interpreter} -m pip -q install virtualenv")
+    get_abi_tag(cfg)
+    sh("{python.interpreter} -m pip -q install -U virtualenv")
 
     cmd = ["{python.interpreter}", "-m", "virtualenv"]
     if not cfg.verbose:
@@ -367,5 +356,6 @@ def provision(cfg):
 
 
 def cleanup(cfg):
+    get_abi_tag(cfg)
     if exists("{virtualenv.venv}"):
         rmtree("{virtualenv.venv}")
