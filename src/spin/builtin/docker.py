@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, group, interpolate1, sh
+from spin import config, group, sh
 
 defaults = config(
     executable="docker",
