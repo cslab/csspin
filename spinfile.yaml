@@ -13,7 +13,7 @@ requirements:
   - black
 
 python:
-  version: 3.8.11
+  version: 3.8.12
 
 plugin-path:
   - plugins
