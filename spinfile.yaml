@@ -22,8 +22,10 @@ extra-tasks:
   # This is the recommended way of installing spin locally as long as
   # it is under development.
   pipx-install:
+    env:
+      USE_EMOJI: no
     script:
-      - pipx install --editable .
+      - pipx install --force --editable .
 
 cruise:
   "@docker":
