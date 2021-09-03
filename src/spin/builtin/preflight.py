@@ -4,6 +4,22 @@
 # All rights reserved.
 # http://www.contact.de/
 
+"""
+
+``preflight``
+=============
+
+.. click:: spin.builtin.preflight:test
+   :prog: spin [test|tests]
+
+.. click:: spin.builtin.preflight:lint
+   :prog: spin [lint|check]
+
+.. click:: spin.builtin.preflight:preflight
+   :prog: spin preflight
+
+"""
+
 from spin import invoke, option, task
 
 

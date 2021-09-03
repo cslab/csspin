@@ -4,6 +4,65 @@
 # All rights reserved.
 # http://www.contact.de/
 
+"""
+
+``python``
+==========
+
+This plugin provisions the requested version of the Python
+programming languages.
+
+.. code-block:: yaml
+
+   # Add 'python' to the plugin list
+   plugins:
+     - python
+
+   # Request a specific version of Python
+   python:
+     version: 3.8.12
+
+On Linux and macOS, Python is installed by compiling from source
+(implying, that Python's build requirements must be installed). On
+Windows, pre-built binaries are downloaded using `nuget`.
+
+If `pyenv <https://github.com/pyenv/pyenv>`_ is installed and active,
+Python versions are automatically shared with `pyenv`.
+
+To skip provisioning of Python and use an already installed version,
+:py:data:`python.use` can be set to the name or the full path of an
+interpreter:
+
+.. code-block:: sh
+
+   $ spin -p python.use=/usr/local/bin/python ...
+
+Note: `spin` will install or update certain packages of that
+interpreter, thus write access is required.
+
+Tasks
+-----
+
+.. click:: spin.builtin.python:python
+   :prog: spin python
+
+.. click:: spin.builtin.python:wheel
+   :prog: spin wheel
+
+
+Properties
+----------
+
+* :py:data:`python.version` -- must be set to choose the
+  required Python version
+* :py:data:`python.interpreter` -- path to the Python interpreter
+* :py:data:`python.pip` -- path to `pip`
+
+Note: don't use these properties when using `virtualenv`, they will
+point to the base installation.
+
+"""
+
 import logging
 import os
 import sys
@@ -13,7 +72,6 @@ from spin import (
     config,
     die,
     download,
-    echo,
     exists,
     info,
     interpolate1,
@@ -81,11 +139,11 @@ def wheel(cfg):
 def pyenv_install(cfg):
     with namespaces(cfg.python):
         if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
-            echo("Using your existing pyenv installation ...")
+            info("Using your existing pyenv installation ...")
             sh("pyenv install --skip-existing {version}")
             sh("python -m pip install -q --upgrade pip packaging")
         else:
-            echo("Installing Python {version} to {inst_dir}")
+            info("Installing Python {version} to {inst_dir}")
             # For Linux/macOS using the 'python-build' plugin from
             # pyenv is by far the most robust way to install a
             # version of Python.

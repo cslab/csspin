@@ -4,6 +4,15 @@
 # All rights reserved.
 # http://www.contact.de/
 
+"""
+
+``virtualenv``
+==============
+
+TBD
+
+"""
+
 import logging
 import os
 import shutil
@@ -16,7 +25,6 @@ from spin import (
     config,
     echo,
     exists,
-    group,
     info,
     interpolate1,
     memoizer,
@@ -47,22 +55,6 @@ defaults = config(
 )
 
 
-@group()
-def venv(ctx):
-    """Manage the project's virtual environment."""
-    pass
-
-
-@venv.task()
-def vinfo(ctx):
-    echo("{virtualenv.venv}")
-
-
-@venv.task()
-def rm(cfg):
-    cleanup(cfg)
-
-
 def get_abi_tag(cfg):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
@@ -83,7 +75,7 @@ def init(cfg):
     get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.virtualenv.venv:
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
-        info("Activating {virtualenv.venv}")
+        echo("activate {virtualenv.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
 
 

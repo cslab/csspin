@@ -8,9 +8,12 @@ plugins:
   - build
   - .demo_plugin
   - pre_commit
+  - sphinx
 
 requirements:
   - black
+  - sphinx-click
+  - sphinx-rtd-theme
 
 python:
   version: 3.8.12

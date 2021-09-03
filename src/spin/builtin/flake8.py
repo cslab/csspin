@@ -4,6 +4,31 @@
 # All rights reserved.
 # http://www.contact.de/
 
+"""``flake8``
+==========
+
+Adds `flake8 <https://flake8.pycqa.org/en/latest/>`_ to a
+project. `flake8` plugins included by default are:
+
+* flake8-isort
+* flake8-comprehensions
+* flake8-copyright
+* flake8-polyfill
+* flake8-fixme
+* flake8-bugbear
+
+.. click:: spin.builtin.flake8:flake8
+   :prog: spin flake8
+
+Properties
+----------
+
+* :py:data:`flake8.allsource` -- list of pathes to check, when
+  :option:`--all` is used. By default these are ``src`` and ``tests``
+  in :py:data:`spin.project_root`.
+
+"""
+
 import logging
 import os
 
@@ -38,8 +63,12 @@ defaults = config(
 @task(when="lint")
 def flake8(
     cfg,
-    allsource: option("--all", "allsource", is_flag=True),
-    coverage: option("--coverage", "coverage", is_flag=True),
+    allsource: option(
+        "--all",
+        "allsource",
+        help="Run flake8 on all Python files in the project",
+        is_flag=True,
+    ),
     args,
 ):
     """Run flake8 to lint Python code."""

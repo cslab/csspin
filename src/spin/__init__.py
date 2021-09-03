@@ -465,6 +465,7 @@ def task(*args, **kwargs):
             group.register_alias(alias, task_object)
         if pass_config:
             task_object.callback = alternate_callback
+        task_object.__doc__ = fn.__doc__
         return task_object
 
     return task_wrapper
