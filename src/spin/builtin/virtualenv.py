@@ -12,10 +12,12 @@ import sys
 from spin import (
     EXPORTS,
     Command,
+    backtick,
     config,
     echo,
     exists,
     group,
+    info,
     interpolate1,
     memoizer,
     readtext,
@@ -52,7 +54,7 @@ def venv(ctx):
 
 
 @venv.task()
-def info(ctx):
+def vinfo(ctx):
     echo("{virtualenv.venv}")
 
 
@@ -69,24 +71,19 @@ def get_abi_tag(cfg):
     if not cfg.virtualenv.abitag:
         from spin import get_abi_tag
 
-        abitag = (
-            sh(
-                "{python.interpreter}",
-                get_abi_tag.__file__,
-                capture_output=True,
-                silent=not cfg.verbose,
-            )
-            .stdout.decode()
-            .strip()
+        abitag = backtick(
+            "{python.interpreter}",
+            get_abi_tag.__file__,
+            silent=not cfg.verbose,
         )
-        cfg.virtualenv.abitag = abitag
+        cfg.virtualenv.abitag = abitag.strip()
 
 
 def init(cfg):
     get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.virtualenv.venv:
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
-        echo("Activating {virtualenv.venv}")
+        info("Activating {virtualenv.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
 
 
@@ -106,7 +103,7 @@ def patch_activate(schema):
                 interpolate1(f"{schema.activatescript}"),
                 interpolate1(f"{schema.activatescript}.bak"),
             )
-        echo(f"Patching {schema.activatescript}")
+        info(f"Patching {schema.activatescript}")
         original = readtext(f"{schema.activatescript}.bak")
         for repl in schema.replacements:
             original = original.replace(repl[0], repl[1])
@@ -255,7 +252,7 @@ def finalize_provision(cfg):
         .stdout.decode()
         .strip()
     )
-    echo(f"Create {site_packages}/_set_env.pth")
+    info(f"Create {site_packages}/_set_env.pth")
     pthline = interpolate1(
         "import os; "
         "bindir='{virtualenv.bindir}'; "
@@ -268,7 +265,7 @@ def finalize_provision(cfg):
 
 def provision(cfg):
     get_abi_tag(cfg)
-    sh("{python.interpreter} -m pip -q install -U virtualenv")
+    sh("{python.interpreter} -m pip -q install -U virtualenv packaging")
 
     cmd = ["{python.interpreter}", "-m", "virtualenv"]
     if not cfg.verbose:
