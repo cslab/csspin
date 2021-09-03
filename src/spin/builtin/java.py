@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, die, echo, interpolate1, memoizer, setenv
+from spin import config, die, echo, interpolate1, memoizer, mkdir, setenv
 
 defaults = config(
     version="16", installdir="{spin.userprofile}/{platform.tag}", java_home=None
@@ -18,12 +18,13 @@ N = os.path.normcase
 def set_java_home(cfg):
     setenv(JAVA_HOME=N(cfg.java.java_home))
     setenv(
-        N(f"set PATH=$JAVA_HOME/bin{os.pathsetp}$PATH"),
+        N(f"set PATH=$JAVA_HOME/bin{os.pathsep}$PATH"),
         PATH=os.pathsep.join((N("{JAVA_HOME}/bin"), "{PATH}")),
     )
 
 
 def check_java(cfg):
+    mkdir("{java.installdir}")
     with memoizer("{java.installdir}/java.pickle") as m:
         version = None
         for version, java_home in m.items():
