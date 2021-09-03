@@ -10,7 +10,7 @@ import sys
 import tarfile
 import urllib
 
-from spin import config, echo, exists, interpolate1, option, setenv, sh, task
+from spin import config, exists, info, interpolate1, option, setenv, sh, task
 
 defaults = config(
     cmd="mvn",
@@ -37,7 +37,7 @@ def provision(cfg):
     if not exists(cfg.maven.mavendir):
         mirror = random.choice(cfg.maven.mirrors)
         url = interpolate1(mirror + cfg.maven.url)
-        echo(f"Downloading {url}")
+        info(f"Downloading {url}")
         filename, headers = urllib.request.urlretrieve(url)
         with tarfile.open(filename, "r:gz") as tar:
             tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))

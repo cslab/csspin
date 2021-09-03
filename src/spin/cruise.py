@@ -9,7 +9,7 @@
 import os
 import sys
 
-from . import echo, sh, tree
+from . import info, sh, tree
 
 
 def spin_is_editable():
@@ -79,7 +79,7 @@ class BaseExecutor:
     def run(self, cmd):
         """Run 'cmd' using the executor."""
         if self.banner:
-            echo(self.banner)
+            info(self.banner)
 
 
 # Docker is straightforward: run the command in the container.

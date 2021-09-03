@@ -32,7 +32,6 @@ from . import (
     config,
     cruise,
     die,
-    echo,
     exists,
     get_tree,
     interpolate1,
@@ -330,7 +329,7 @@ def cli(
     get_tree().verbose = verbose
 
     if version:
-        echo(importlib_metadata.version("spin"))
+        print(importlib_metadata.version("spin"))
         return 0
 
     # Find a project file and load it.

@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, die, echo, interpolate1, memoizer, mkdir, setenv
+from spin import config, die, info, interpolate1, memoizer, mkdir, setenv
 
 defaults = config(
     version="16", installdir="{spin.userprofile}/{platform.tag}", java_home=None
@@ -45,7 +45,7 @@ def provision(cfg):
 
     def monkey_get_download_url(*args):
         url = real_get_downoad_url(*args)
-        echo(f"Downloading JDK from {url}")
+        info(f"Downloading JDK from {url}")
         return url
 
     jdk.get_download_url = monkey_get_download_url
