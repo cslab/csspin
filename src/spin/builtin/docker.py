@@ -29,7 +29,7 @@ def build(cfg):
     options = []
     if not cfg.verbose:
         options.append("-q")
-    elif "INSIDE_EMACS" in os.environ:
+    if "INSIDE_EMACS" in os.environ:
         options.append("--progress=plain")
     if cfg.docker.name:
         imagename = "/".join((cfg.docker.hub, cfg.docker.name))
