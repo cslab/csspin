@@ -27,7 +27,28 @@ def echo(*msg, **kwargs):
     if not CONFIG.quiet:
         msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False)
+        click.echo(click.style(" ".join(msg), bold=True), **kwargs)
+
+
+def info(*msg, **kwargs):
+    if CONFIG.verbose:
+        msg = interpolate(msg)
+        click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(" ".join(msg), **kwargs)
+
+
+def warn(*msg, **kwargs):
+    """Say something."""
+    msg = interpolate(msg)
+    click.echo(click.style("spin: warning: ", fg="yellow"), nl=False)
+    click.echo(" ".join(msg), **kwargs)
+
+
+def error(*msg, **kwargs):
+    """Say something."""
+    msg = interpolate(msg)
+    click.echo(click.style("spin: error: ", fg="red"), nl=False)
+    click.echo(" ".join(msg), **kwargs)
 
 
 class DirectoryChanger:
@@ -117,7 +138,9 @@ class SpinError(click.ClickException):
 def die(*msg):
     """Print error message to stderr and terminate ``spin`` with an error
     return code."""
-    raise SpinError(" ".join(msg))
+    msg = interpolate(msg)
+    error(*msg)
+    raise click.Abort()
 
 
 class Command:
@@ -156,7 +179,7 @@ def sh(*cmd, **kwargs):
     cmd = interpolate(cmd)
     shell = kwargs.pop("shell", len(cmd) == 1)
     check = kwargs.pop("check", True)
-    silent = kwargs.get("silent", False)
+    may_fail = kwargs.pop("may_fail", False)
     env = argenv = kwargs.pop("env", None)
     if env:
         process_env = dict(os.environ)
@@ -169,7 +192,7 @@ def sh(*cmd, **kwargs):
             cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
     if not kwargs.pop("silent", False):
-        echo(click.style(" ".join(cmd), bold=True))
+        echo(" ".join(cmd))
 
     try:
         t0 = time.monotonic()
@@ -179,15 +202,24 @@ def sh(*cmd, **kwargs):
         )
         cpi = subprocess.run(cmd, shell=shell, check=check, env=env, **kwargs)
         t1 = time.monotonic()
-        if not silent and get_tree().verbose:
-            echo(click.style("[%g seconds]" % (t1 - t0), fg="green"))
+        info(click.style("[%g seconds]" % (t1 - t0), fg="cyan"))
     except FileNotFoundError as ex:
-        die(str(ex))
+        if not may_fail:
+            die(str(ex))
+        raise
     except subprocess.CalledProcessError as ex:
-        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
-        die(f"Command '{cmd}' failed with return code {ex.returncode}")
+        if not may_fail:
+            cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
+            die(f"Command '{cmd}' failed with return code {ex.returncode}")
+        raise
 
     return cpi
+
+
+def backtick(*cmd, **kwargs):
+    kwargs["capture_output"] = True
+    cpi = sh(*cmd, **kwargs)
+    return cpi.stdout.decode()
 
 
 EXPORTS = {}
@@ -205,16 +237,15 @@ def setenv(*args, **kwargs):
     for key, value in kwargs.items():
         if value is None:
             if not args:
-                echo(click.style(f"unset {key}", bold=True))
+                echo(f"unset {key}")
             os.environ.pop(key, None)
             EXPORTS[key] = None
         else:
             value = interpolate1(value)
-            if get_tree().verbose:
-                if not args:
-                    echo(click.style(f"set {key}={value}", bold=True))
-                else:
-                    echo(click.style(args[0], bold=True))
+            if not args:
+                echo(f"set {key}={value}")
+            else:
+                echo(args[0])
             os.environ[key] = value
             EXPORTS[key] = value
 
