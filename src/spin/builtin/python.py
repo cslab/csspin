@@ -15,12 +15,14 @@ from spin import (
     download,
     echo,
     exists,
+    info,
     interpolate1,
     mkdir,
     namespaces,
     setenv,
     sh,
     task,
+    warn,
 )
 
 N = os.path.normcase
@@ -124,12 +126,15 @@ def nuget_install(cfg):
 
 
 def check_python_interpreter(cfg):
-    pi = sh("{python.interpreter}", "--version", check=False)
-    return pi.returncode == 0
+    try:
+        pi = sh("{python.interpreter}", "--version", check=False, may_fail=True)
+        return pi.returncode == 0
+    except Exception:
+        return False
 
 
 def provision(cfg):
-    echo("Checking for {python.interpreter}")
+    info("Checking {python.interpreter}")
     if not check_python_interpreter(cfg):
         if sys.platform == "win32":
             nuget_install(cfg)
@@ -147,10 +152,12 @@ def configure(cfg):
             )
         )
     # FIXME: refactor the pyenv check, as it also used elsewhere
-    if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
+    if cfg.python.use:
+        warn("python.version will be ignored, using '{python.use}' instead")
+        cfg.python.interpreter = cfg.python.use
+    elif "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
         setenv(PYENV_VERSION="{python.version}")
         cfg.python.use = "python"
-    if cfg.python.use:
         cfg.python.interpreter = cfg.python.use
 
 
