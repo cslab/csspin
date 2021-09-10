@@ -4,9 +4,9 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import click
 from pytest import raises
 
-from spin import SpinError
 from spin.cli import reverse_toposort
 
 
@@ -19,5 +19,5 @@ def test_valid():
 def test_loop():
     nodes = [1, 2, 3]
     graph = {1: [2], 2: [3], 3: [1]}
-    with raises(SpinError, match=".*cycle"):
+    with raises(click.Abort):
         assert reverse_toposort(nodes, graph) == []

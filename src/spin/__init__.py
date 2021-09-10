@@ -131,10 +131,6 @@ def rmtree(path):
     shutil.rmtree(path)
 
 
-class SpinError(click.ClickException):
-    pass
-
-
 def die(*msg):
     """Print error message to stderr and terminate ``spin`` with an error
     return code."""
