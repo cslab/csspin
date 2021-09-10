@@ -299,7 +299,7 @@ def tree_update(target, source):
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
         except schema.SchemaError as se:
-            die(f"{ki.file}:{ki.line}: cannot assign " f"'{value}' to '{key}': {se}")
+            die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {se}")
 
 
 # Variable references are names prefixed by '$' (like $port, $version,
