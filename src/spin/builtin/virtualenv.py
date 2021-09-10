@@ -257,7 +257,15 @@ def finalize_provision(cfg):
 
 def provision(cfg):
     get_abi_tag(cfg)
-    sh("{python.interpreter} -m pip -q install -U virtualenv packaging")
+    sh(
+        "{python.interpreter}",
+        "-mpip",
+        "-q" if not cfg.verbose else None,
+        "install",
+        "-U",
+        "virtualenv",
+        "packaging",
+    )
 
     cmd = ["{python.interpreter}", "-m", "virtualenv"]
     if not cfg.verbose:
@@ -275,7 +283,7 @@ def provision(cfg):
 
     # Update the pip in the venv
     if fresh_virtualenv:
-        sh("python -m pip -q install -U pip")
+        sh("python", "-mpip", "-q" if not cfg.verbose else None, "install", "-U", "pip")
 
     cmd = ["pip"]
     if not cfg.verbose:

@@ -23,6 +23,7 @@ import sys
 
 import click
 import entrypoints
+import packaging.version
 from packaging import tags
 
 if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
@@ -48,15 +49,11 @@ from . import (
     sh,
     toporun,
     tree,
+    warn,
     writetext,
 )
 
 N = os.path.normcase
-
-CRUISE_EXECUTOR_MAPPINGS = {
-    "@docker": config(executor=cruise.DockerExecutor),
-    "@host": config(executor=cruise.HostExecutor),
-}
 
 
 # These are the basic defaults for the top-level configuration
@@ -66,11 +63,18 @@ DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
         userprofile=N(os.path.expanduser("~/.spin")),
-        extra_index="https://packages.contact.de/apps/x.x",
+        extra_index=None,
     ),
     quiet=False,
     verbose=False,
-    cruise=config(CRUISE_EXECUTOR_MAPPINGS),
+    cruise=config(
+        # We'll have to use a dict literal here, since the keys are
+        # not valid Python identifiers.
+        {
+            "@docker": config(executor=cruise.DockerExecutor),
+            "@host": config(executor=cruise.HostExecutor),
+        }
+    ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
         shell="{SHELL}",
@@ -106,20 +110,25 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
         logging.debug(f"{indent}import plugin {import_spec} from {package}")
     else:
         logging.debug(f"{indent}import plugin {import_spec}")
+
     try:
         mod = importlib.import_module(import_spec, package)
     except ModuleNotFoundError as ex:
-        raise ex
-        if ex.name != import_spec:
-            raise
-        die(f"failed to load plugin '{import_spec}'")
+        warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
+        # We tolerate this only when --cleanup and not --provision
+        if not cfg.cleanup or cfg.provision:
+            raise ex
+
     full_name = mod.__name__
     if full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
         # initialize it and recursively load dependencies
         cfg.loaded[full_name] = mod
-        settings_name = full_name.split(".")[-1]
         plugin_defaults = getattr(mod, "defaults", config())
+        # The subtree is either the module name for the plugin
+        # (excluding the package prefix), or __name__, if that is set.
+        settings_name = plugin_defaults.get("__name__", full_name.split(".")[-1])
+        logging.debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
         if plugin_defaults:
             tree.tree_set_keyinfo(
@@ -177,7 +186,12 @@ def reverse_toposort(nodes, graph):
 # generating the help text.
 def base_options(fn):
     decorators = [
-        click.option("--version", "version", is_flag=True),
+        click.option(
+            "--version",
+            "version",
+            is_flag=True,
+            help="Display spin's version and exit.",
+        ),
         click.option(
             "--change-directory",
             "-C",
@@ -197,7 +211,7 @@ def base_options(fn):
             type=click.Path(dir_okay=False, exists=False),
             help=(
                 "An alternative name for the configuration file. "
-                "This can include a relative or absolute path when "
+                "This can ne a relative or absolute path when "
                 "used without -C."
             ),
         ),
@@ -220,43 +234,89 @@ def base_options(fn):
             help="Setup lower-level logging. Meaningful values are 'info' and 'debug'.",
         ),
         click.option(
-            "--quiet", "-q", is_flag=True, default=DEFAULTS.quiet, help="Be more quiet"
+            "--quiet",
+            "-q",
+            is_flag=True,
+            default=DEFAULTS.quiet,
+            help=(
+                "Be more quiet. By default, spin will echo commands as they are"
+                " executed. With -q, no commands will be shown. The quiet option is"
+                " also available to plugins via {quiet}. Some plugins will pass on the"
+                " (equivalent of a) quiet option to the commands they call."
+            ),
         ),
         click.option(
             "--verbose",
             "-v",
             is_flag=True,
             default=DEFAULTS.verbose,
-            help="Be more verbose",
+            help=(
+                "Be more verbose. By default, spin will generate no output, except the"
+                " commands it executes. Using -v, the verbosity is increased."
+            ),
         ),
         click.option(
             "--debug",
             is_flag=True,
             default=False,
-            help="Dump the configuration tree before processing.",
+            help=(
+                "Dump the configuration tree before processing starts. This is useful"
+                " to analyze problems with spinfile.yaml and for plugin developers."
+            ),
         ),
         click.option(
             "--cruise",
             "-c",
             "cruiseopt",
             multiple=True,
-            help="Run spin in the given environment.",
+            help=(
+                "Run spin in the given 'cruise' environment(s). Spin's cruise feature"
+                " enables launching spin commands in other environments, e.g. a Docker"
+                " container. Refer to spin's user manual for more information about"
+                " 'cruise'."
+            ),
         ),
         click.option(
             "--interactive",
             "-i",
             is_flag=True,
             default=False,
-            help="Run docker commands using -it.",
+            help=(
+                "Run Docker-based cruises interactively by passing '-it' to the Docker"
+                " command. This option is only relevant together with the -c/--cruise"
+                " option."
+            ),
         ),
         click.option(
-            "-p", "properties", multiple=True, help="Set configuration property"
+            "-p",
+            "properties",
+            multiple=True,
+            help=(
+                "Override a setting in spin's configuration tree, using"
+                " 'property=value'. This only works for string properties. Example:"
+                " spin -p python.version=3.9.6 ..."
+            ),
         ),
         click.option(
-            "--provision", is_flag=True, default=False, help="Provision plugins"
+            "--provision",
+            is_flag=True,
+            default=False,
+            help=(
+                "Provision the development environment. '--provision' can be used with"
+                " or without a subcommand."
+            ),
         ),
         click.option(
-            "--cleanup", is_flag=True, default=False, help="Cleaning up plugins"
+            "--cleanup",
+            is_flag=True,
+            default=False,
+            help=(
+                "Clean up project-local stuff that has been provisioned by spin, e.g."
+                " virtual environments and {project_root}/.spin. This will not clean"
+                " global caches. '--cleanup' can be combined with '--provision',"
+                " tearing down and re-provisioning the development environment in one"
+                " step."
+            ),
         ),
     ]
     for d in decorators:
@@ -341,7 +401,9 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
-    cfg = load_spinfile(spinfile, cwd, quiet, verbose, cleanup, plugin_dir, properties)
+    cfg = load_spinfile(
+        spinfile, cwd, quiet, verbose, cleanup, provision, plugin_dir, properties
+    )
 
     mkdir("{spin.userprofile}")
 
@@ -377,28 +439,13 @@ def cli(
 def find_plugin_packages(cfg):
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
-    for item in cfg.get("plugins", []):
-        if isinstance(item, dict):
-            for key in item.keys():
-                yield key
+    for item in cfg.get("plugin-packages", []):
+        yield item
 
 
 def yield_plugin_import_specs(cfg):
     for item in cfg.get("plugins", []):
-        if isinstance(item, dict):
-            for package_name, package_value in item.items():
-                if isinstance(package_value, list):
-                    for import_spec in package_value:
-                        yield f"{package_name}.{import_spec}"
-                elif package_value:
-                    yield f"{package_name}.{package_value}"
-                else:
-                    yield f"{package_name}"
-        else:
-            if item.startswith("."):
-                yield f"{item[1:]}"
-            else:
-                yield f"spin.builtin.{item}"
+        yield item
 
 
 def load_spinfile(
@@ -407,6 +454,7 @@ def load_spinfile(
     quiet=False,
     verbose=False,
     cleanup=False,
+    provision=False,
     plugin_dir=None,
     properties=(),
 ):
@@ -431,14 +479,23 @@ def load_spinfile(
     cfg.quiet = quiet
     cfg.verbose = verbose
     cfg.spin.spinfile = spinfile
+    cfg.cleanup = cleanup
+    cfg.provision = provision
+
+    minspin = getattr(cfg, "minimum-spin", None)
+    if not minspin:
+        die("spin requires 'minimum-spin' to be set")
+    minspin = packaging.version.parse(minspin)
+    spinversion = packaging.version.parse(importlib_metadata.version("spin"))
+    if minspin > spinversion:
+        die(f"this projects requires spin>={minspin}")
 
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
     if spinfile:
-        spinfile_dir = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
-        cfg.spin.project_root = spinfile_dir
+        cfg.spin.project_root = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
         if not cwd:
-            cd(spinfile_dir)
+            cd(cfg.spin.project_root)
 
         if not exists("{spin.spin_dir}"):
             mkdir("{spin.spin_dir}")
@@ -452,68 +509,14 @@ def load_spinfile(
         cfg.spin.plugin_dir = interpolate1(cfg.spin.plugin_dir)
         if not os.path.isabs(cfg.spin.plugin_dir):
             cfg.spin.plugin_dir = os.path.abspath(
-                os.path.join(spinfile_dir, cfg.spin.plugin_dir)
+                os.path.join(cfg.spin.project_root, cfg.spin.plugin_dir)
             )
+            sys.path.insert(0, cfg.spin.plugin_dir)
         if cleanup and exists(cfg.spin.plugin_dir):
             rmtree(cfg.spin.plugin_dir)
 
-        if not exists(cfg.spin.plugin_dir):
-            mkdir(cfg.spin.plugin_dir)
-
-        # To be able to do editable installs to plugin dir, we have to
-        # temporarily set PYTHONPATH, to let the pip subprocess
-        # believe plugindir is in sys.path. But we must be careful to
-        # unset it before calling anything else -- see below!
-        old_python_path = os.environ.get("PYTHONPATH", None)
-        os.environ["PYTHONPATH"] = interpolate1(cfg.spin.plugin_dir)
-
-        cmd = [
-            f"{sys.executable}",
-            "-m",
-            "pip",
-            "install",
-            "-q",
-            "-t",
-            "{spin.plugin_dir}",
-        ]
-
-        extra_index = cfg.spin.extra_index
-        if extra_index:
-            cmd.extend(["--extra-index-url", extra_index])
-
-        something_was_installed = False
-
-        # Install plugin packages that are not yet installed, using pip
-        # with the "-t" (target) option pointing to the plugin directory.
-        with memoizer(N("{spin.plugin_dir}/packages.memo")) as m:
-            replacements = cfg.get("devpackages", {})
-            for pkg in find_plugin_packages(cfg):
-                pkg = replacements.get(pkg, pkg)
-                if not m.check(pkg):
-                    something_was_installed = True
-                    args = list(cmd)
-                    args.extend(pkg.split())
-                    sh(*args)
-                    m.add(pkg)
-
-        # Now remove PYTHONPATH and make plugin a pth-enabled part of
-        # sys.path
-        if old_python_path:
-            os.environ["PYTHONPATH"] = old_python_path
-        else:
-            del os.environ["PYTHONPATH"]
-
-        if something_was_installed:
-            # Now it becomes a little dirty: pip did not write
-            # easy-install.pth while installing plugin packages to the
-            # plugin dir: fix it up, in case some plugin packages had been
-            # installed editable.
-            easy_install = []
-            for egg_link in glob.iglob(interpolate1("{spin.plugin_dir}/*.egg-link")):
-                easy_install.append(readtext(egg_link).splitlines()[0])
-            writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
-
-        site.addsitedir(cfg.spin.plugin_dir)
+        if provision:
+            install_plugin_packages(cfg)
 
     for localpath in cfg.get("plugin-path", []):
         localabs = interpolate1("{spin.project_root}/" + localpath)
@@ -561,3 +564,61 @@ def load_spinfile(
     # We do this before 'debug' so people see the cruise config
     cruise.build_cruises(cfg)
     return cfg
+
+
+def install_plugin_packages(cfg):
+    if not exists(cfg.spin.plugin_dir):
+        mkdir(cfg.spin.plugin_dir)
+
+    # To be able to do editable installs to plugin dir, we have to
+    # temporarily set PYTHONPATH, to let the pip subprocess
+    # believe plugindir is in sys.path. But we must be careful to
+    # unset it before calling anything else -- see below!
+    old_python_path = os.environ.get("PYTHONPATH", None)
+    os.environ["PYTHONPATH"] = interpolate1(cfg.spin.plugin_dir)
+
+    cmd = [
+        f"{sys.executable}",
+        "-mpip",
+        "install",
+        "-q" if not cfg.verbose else None,
+        "-t",
+        "{spin.plugin_dir}",
+    ]
+
+    if cfg.spin.extra_index:
+        cmd.extend(["--extra-index-url", cfg.spin.extra_index])
+
+    something_was_installed = False
+
+    # Install plugin packages that are not yet installed, using pip
+    # with the "-t" (target) option pointing to the plugin directory.
+    with memoizer(N("{spin.plugin_dir}/packages.memo")) as m:
+        replacements = cfg.get("devpackages", {})
+        for pkg in find_plugin_packages(cfg):
+            pkg = replacements.get(pkg, pkg)
+            if not m.check(pkg):
+                something_was_installed = True
+                args = list(cmd)
+                args.extend(pkg.split())
+                sh(*args)
+                m.add(pkg)
+
+    # Now remove PYTHONPATH and make plugin a pth-enabled part of
+    # sys.path
+    if old_python_path:
+        os.environ["PYTHONPATH"] = old_python_path
+    else:
+        del os.environ["PYTHONPATH"]
+
+    if something_was_installed:
+        # Now it becomes a little dirty: pip did not write
+        # easy-install.pth while installing plugin packages to the
+        # plugin dir: fix it up, in case some plugin packages had been
+        # installed editable.
+        easy_install = []
+        for egg_link in glob.iglob(interpolate1("{spin.plugin_dir}/*.egg-link")):
+            easy_install.append(readtext(egg_link).splitlines()[0])
+        writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
+
+    site.addsitedir(cfg.spin.plugin_dir)

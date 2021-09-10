@@ -1,14 +1,21 @@
 # This is the spinfile.yaml of spin.
 
+# Each spinfile must have this
+minimum-spin: "0.2"
+
+plugin-path:
+  - plugins
+
 plugins:
-  - flake8
-  - pytest
-  - devpi
-  - radon
-  - build
-  - .demo_plugin
-  - pre_commit
-  - sphinx
+  - spin.builtin.flake8
+  - spin.builtin.pytest
+  - spin.builtin.devpi
+  - spin.builtin.radon
+  - spin.builtin.build
+  - demo_plugin
+  - spin.builtin.pre_commit
+  - spin.builtin.sphinx
+  - spin.builtin.apt
 
 requirements:
   - black
@@ -16,10 +23,7 @@ requirements:
   - sphinx-rtd-theme
 
 python:
-  version: 3.8.12
-
-plugin-path:
-  - plugins
+  version: 3.8.9
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as

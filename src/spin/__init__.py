@@ -21,6 +21,42 @@ from contextlib import contextmanager
 
 import click
 
+__all__ = [
+    "echo",
+    "info",
+    "warn",
+    "error",
+    "cd",
+    "exists",
+    "mkdir",
+    "rmtree",
+    "die",
+    "Command",
+    "sh",
+    "backtick",
+    "setenv",
+    "readbytes",
+    "writebytes",
+    "readtext",
+    "writetext",
+    "appendtext",
+    "persist",
+    "unpersist",
+    "memoizer",
+    "namespaces",
+    "interpolate1",
+    "interpolate",
+    "config",
+    "readyaml",
+    "download",
+    "argument",
+    "option",
+    "task",
+    "group",
+    "invoke",
+    "toporun",
+]
+
 
 def echo(*msg, **kwargs):
     """Say something."""
@@ -40,15 +76,15 @@ def info(*msg, **kwargs):
 def warn(*msg, **kwargs):
     """Say something."""
     msg = interpolate(msg)
-    click.echo(click.style("spin: warning: ", fg="yellow"), nl=False)
-    click.echo(" ".join(msg), **kwargs)
+    click.echo(click.style("spin: warning: ", fg="yellow"), nl=False, err=True)
+    click.echo(" ".join(msg), err=True, **kwargs)
 
 
 def error(*msg, **kwargs):
     """Say something."""
     msg = interpolate(msg)
-    click.echo(click.style("spin: error: ", fg="red"), nl=False)
-    click.echo(" ".join(msg), **kwargs)
+    click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
+    click.echo(" ".join(msg), err=True, **kwargs)
 
 
 class DirectoryChanger:
@@ -366,7 +402,11 @@ def interpolate1(literal, *extra_dicts):
 def interpolate(literals, *extra_dicts):
     out = []
     for literal in literals:
-        out.append(interpolate1(literal, *extra_dicts))
+        # We allow None, which gets filtered out here, to enable
+        # simple argument configuration, e.g. something like:
+        # sh("...", "-q" if cfg.quiet else None, ...)
+        if literal is not None:
+            out.append(interpolate1(literal, *extra_dicts))
     return out
 
 

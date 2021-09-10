@@ -141,7 +141,15 @@ def pyenv_install(cfg):
         if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
             info("Using your existing pyenv installation ...")
             sh("pyenv install --skip-existing {version}")
-            sh("python -m pip install -q --upgrade pip packaging")
+            sh(
+                "python",
+                "-mpip",
+                "install",
+                "-q" if not cfg.verbose else None,
+                "-U",
+                "pip",
+                "packaging",
+            )
         else:
             info("Installing Python {version} to {inst_dir}")
             # For Linux/macOS using the 'python-build' plugin from
@@ -156,7 +164,16 @@ def pyenv_install(cfg):
             setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
             setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
             sh("{pyenv.python_build} {version} {inst_dir}")
-            sh("{interpreter} -m pip install -q --upgrade pip wheel packaging")
+            sh(
+                "{interpreter}",
+                "-mpip",
+                "install",
+                "-q" if not cfg.verbose else None,
+                "-U",
+                "pip",
+                "wheel",
+                "packaging",
+            )
 
 
 def nuget_install(cfg):
@@ -180,7 +197,16 @@ def nuget_install(cfg):
         PATH=os.pathsep.join((f"{paths}", os.environ["PATH"])),
     )
     sh("{python.interpreter} -m ensurepip --upgrade")
-    sh("{python.interpreter} -m pip install -q --upgrade pip wheel packaging")
+    sh(
+        "{python.interpreter}",
+        "-mpip",
+        "install",
+        "-q" if not cfg.verbose else None,
+        "-U",
+        "pip",
+        "wheel",
+        "packaging",
+    )
 
 
 def check_python_interpreter(cfg):
@@ -204,10 +230,8 @@ def provision(cfg):
 def configure(cfg):
     if not cfg.python.version:
         die(
-            (
-                "Spin's Python plugin no longer sets a default version.\n"
-                "Please choose a version in spinfile.yaml by setting python.version"
-            )
+            "Spin's Python plugin no longer sets a default version.\n"
+            "Please choose a version in spinfile.yaml by setting python.version"
         )
     # FIXME: refactor the pyenv check, as it also used elsewhere
     if cfg.python.use:

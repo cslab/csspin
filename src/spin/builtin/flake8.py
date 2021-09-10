@@ -4,8 +4,10 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""``flake8``
-==========
+"""
+
+Plugin flake8
+=============
 
 Adds `flake8 <https://flake8.pycqa.org/en/latest/>`_ to a
 project. `flake8` plugins included by default are:
@@ -26,6 +28,8 @@ Properties
 * :py:data:`flake8.allsource` -- list of pathes to check, when
   :option:`--all` is used. By default these are ``src`` and ``tests``
   in :py:data:`spin.project_root`.
+
+.. todo:: flake8 argument handling
 
 """
 
