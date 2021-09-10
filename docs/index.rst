@@ -10,8 +10,12 @@ Welcome to spin's documentation!
    :maxdepth: 4
    :caption: Contents:
 
+   overview
+   howtoplugins
+   provision
    plugins
    spin
+   todo
 
 
 Indices and tables
