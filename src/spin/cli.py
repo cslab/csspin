@@ -4,10 +4,13 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""spin is a task runner with a twist.
+"""Spin automates the provisioning of tools and other development
+requirements and provides shrink-wrapped project workflows.
 
-It supports reusable task definitions in the form of Python modules,
-that are automatically provisioned.
+Spin requires a 'spinfile.yaml' in the project's top-level
+directory. It can be started from anywhere in the project tree, and
+search the path up for 'spinfile.yaml'. Subcommands are provided by
+"plugins" declared in spinfile.yaml.
 
 """
 
