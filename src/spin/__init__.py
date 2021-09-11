@@ -20,6 +20,7 @@ import urllib.request
 from contextlib import contextmanager
 
 import click
+import packaging
 
 __all__ = [
     "echo",
@@ -59,7 +60,18 @@ __all__ = [
 
 
 def echo(*msg, **kwargs):
-    """Say something."""
+    """Print a message to the console by joining the positional arguments
+    `msg` with spaces.
+
+    Arguments are interpolated against the configuration tree. `echo`
+    will remain silent when ``spin`` is run with the ``--quiet``
+    flag. `echo` is meant for messages, that explain to the user what
+    spin is doing (e.g. echoing commands launched).
+
+    `echo` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
+
+    """
     if not CONFIG.quiet:
         msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False)
@@ -168,8 +180,12 @@ def rmtree(path):
 
 
 def die(*msg):
-    """Print error message to stderr and terminate ``spin`` with an error
-    return code."""
+    """Terminates ``spin`` with a non-zero return code and print the error
+    message `msg`.
+
+    Arguments are interpolated against the configuration tree.
+
+    """
     msg = interpolate(msg)
     error(*msg)
     raise click.Abort()
@@ -202,8 +218,20 @@ class Command:
 
 
 def sh(*cmd, **kwargs):
-    """Run a command. All positional arguments are interpolated against
-    the configuration tree.
+    """Run a program by building a command line from `cmd`.
+
+    When multiple positional arguments are given, each is treated as
+    one element of the command. When just one positional argument is
+    used, `sh` assumes it to be a single command and splits it into
+    multiple arguments using :py:func:`shlex.split`. The `cmd`
+    arguments are interpolated against the configuration tree. When
+    `silent` is ``False``, the resulting command line will be
+    echoed. When `shell` is ``True``, the command line is passed to
+    the system's shell. Other keyword arguments are passed into
+    `subprocess.run`.
+
+    All positional arguments are interpolated against the
+    configuration tree.
 
     >>> sh("ls", "{HOME}")
 
@@ -249,7 +277,7 @@ def sh(*cmd, **kwargs):
 
 
 def backtick(*cmd, **kwargs):
-    kwargs["capture_output"] = True
+    kwargs["stdout"] = subprocess.PIPE
     cpi = sh(*cmd, **kwargs)
     return cpi.stdout.decode()
 
@@ -411,6 +439,15 @@ def interpolate(literals, *extra_dicts):
 
 
 def config(*args, **kwargs):
+    """`config` creates a configuration subtree:
+
+    >>> config(a="alpha", b="beta)
+    {"a": "alpha", "b": "beta")
+
+    Plugins use `config` to declare their ``defaults`` tree.
+
+    """
+
     from .tree import ConfigTree
 
     return ConfigTree(*args, **kwargs, __ofs_frames__=1)
@@ -561,3 +598,7 @@ def main(*args, **kwargs):
 
 def _main(*args, **kwargs):
     return main(*args, standalone_mode=True, **kwargs)
+
+
+def parse_version(verstr):
+    return packaging.version.parse(verstr)
