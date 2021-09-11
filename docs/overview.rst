@@ -783,42 +783,6 @@ programs.
 Arguments to spin APIs are automatically interpolated against
 the configuration tree.
 
-.. py:function:: cd(path)
-
-   Change the current working directory to `path`, which is
-   interpolated against the configuration tree. `cd` can be used as a
-   context manager using ``with``, in that case it changes the working
-   directory back to the original one when the ``with`` clause ends.
-
-
-.. py:function:: config(**kwargs)
-
-   `config` creates a configuration subtree::
-
-     >>> config(a="alpha", b="beta)
-     {"a": "alpha", "b": "beta")
-
-   Plugins use `config` to declare their ``defaults`` tree.
-
-
-.. py:function:: die(*msg)
-
-   Terminates ``spin`` with a non-zero return code and print the error
-   message `msg`. Arguments are interpolated against the configuration
-   tree.
-
-
-.. py:function:: echo(*msg, **kwargs)
-
-   Print a message to the console by joining the positional arguments
-   `msg` with spaces. Arguments are interpolated against the
-   configuration tree. `echo` will remain silent when ``spin`` is run
-   with the ``--quiet`` flag.
-
-   `echo` supports the same keyword arguments as Click's
-   :py:func:`click.echo`.
-
-
 .. py:function:: exists(path)
 
    Checks whether `path` exists. `path` is interpolated against the
@@ -836,19 +800,6 @@ the configuration tree.
 
    Recursively removes the directory `path`. The argument is
    interpolated against the configuration tree.
-
-
-.. py:function:: sh(*cmd, silent=False, shell=False, **kwargs)
-
-   Run a program by building a command line from `cmd`. When multiple
-   positional arguments are given, each is treated as one element of
-   the command. When just one positional argument is used, `sh`
-   assumes it to be a single command and splits it into multiple
-   arguments using `shlex.split`. The `cmd` arguments are interpolated
-   against the configuration tree. When `silent` is ``False``, the
-   resulting command line will be echoed. When `shell` is ``True``,
-   the command line is passed to the system's shell. Other keyword
-   arguments are passed into `subprocess.run`.
 
 
 .. py:class:: Command(*cmd)
