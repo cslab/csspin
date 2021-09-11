@@ -55,3 +55,11 @@ cruise:
   host:
     banner: "\n\n*** Host\n"
     tags: host
+
+
+# Host system requirements
+system-requirements:
+  distro=="debian":
+    apt-get: libaio1
+  distro=="fedora" and version>=parse_version("22"):
+    dnf: libaio-fedora
