@@ -26,11 +26,13 @@ from spin import (
     echo,
     exists,
     info,
+    interpolate,
     interpolate1,
     memoizer,
     readtext,
     rmtree,
     sh,
+    task,
     writetext,
 )
 
@@ -58,8 +60,8 @@ defaults = config(
 def get_abi_tag(cfg):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
-    # firing up the interpreter just for that is slow.
-    # ABI detection has been moved to file which is then called by the interpreter.
+    # firing up the interpreter just for that is slow.  ABI detection
+    # has been moved to file which is then called by the interpreter.
     if not cfg.virtualenv.abitag:
         from spin import get_abi_tag
 
@@ -77,6 +79,14 @@ def init(cfg):
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
         echo("activate {virtualenv.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
+
+
+@task()
+def activate(cfg):
+    part1 = os.path.basename(interpolate1("{spin.project_root}"))
+    part2 = interpolate1("{virtualenv.abitag}")
+    os.environ["PS1"] = f"({part1}:{part2}) " + os.environ["PS1"]
+    os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "--norc", "-i"])
 
 
 def patch_activate(schema):
@@ -255,44 +265,52 @@ def finalize_provision(cfg):
     writetext(f"{site_packages}/_set_env.pth", pthline)
 
 
+@task("pipenv", add_help_option=False)
+def pipenv(cfg, args):
+    os.environ["PIPENV_VERBOSITY"] = "-1"
+    if "INSIDE_EMACS" in os.environ:
+        os.environ["PIPENV_COLORBLIND"] = "1"
+        os.environ["PIPENV_HIDE_EMOJIS"] = "1"
+        os.environ["PIPENV_NOSPIN"] = "1"
+    pipenv = os.path.join(os.path.dirname(sys.executable), "pipenv")
+    sh(pipenv, *args)
+
+
+def install_to_venv(cfg, *args):
+    args = interpolate(args)
+    sh("pip", "install", cfg.quietflag, *args)
+
+
 def provision(cfg):
     get_abi_tag(cfg)
-    sh(
-        "{python.interpreter}",
-        "-mpip",
-        "-q" if not cfg.verbose else None,
-        "install",
-        "-U",
-        "virtualenv",
-        "packaging",
-    )
-
-    cmd = ["{python.interpreter}", "-m", "virtualenv"]
-    if not cfg.verbose:
-        cmd.append("-q")
-    virtualenv = Command(*cmd)
-
     fresh_virtualenv = False
     if not exists("{virtualenv.venv}"):
-        # download seeds since pip is too old in manylinux
-        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}", "--download")
+        # Make sure the Python interpreter we'll use to create the
+        # virtual environment has the virtualenv package installed.
+        sh(
+            "{python.interpreter}",
+            "-mpip",
+            cfg.quietflag,
+            "install",
+            "virtualenv",
+            "packaging",
+        )
+        cmd = ["{python.interpreter}", "-mvirtualenv", cfg.quietflag]
+        virtualenv = Command(*cmd)
+        # do not download seeds, since we update pip later anyway
+        virtualenv("-p", "{python.interpreter}", "{virtualenv.venv}")
         fresh_virtualenv = True
 
     # This sets PATH to the venv
     init(cfg)
 
-    # Update the pip in the venv
+    # Update pip in the venv
     if fresh_virtualenv:
-        sh("python", "-mpip", "-q" if not cfg.verbose else None, "install", "-U", "pip")
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
 
-    cmd = ["pip"]
-    if not cfg.verbose:
-        cmd.append("-q")
-    pip = Command(*cmd)
-
-    # This is a much faster alternative to calling pip config
-    # below; we leave it active here for now, enjoying a faster
-    # spin until we better understand the drawbacks.
+    # This is a much faster alternative to calling pip config; we
+    # leave it active here for now, enjoying a faster spin until we
+    # better understand the drawbacks.
     text = []
     for section, settings in cfg.virtualenv.pipconf.items():
         text.append(f"[{section}]")
@@ -311,7 +329,7 @@ def provision(cfg):
     # project).  FIXME: filename/location of setup.py should
     # probably be configurable
     if exists("setup.py"):
-        pip("install", "-e", ".")
+        install_to_venv(cfg, "-e", ".")
 
     with memoizer("{virtualenv.memo}") as m:
 
@@ -349,7 +367,7 @@ def provision(cfg):
                 pipit(req)
 
         if requirements:
-            pip("install", *requirements)
+            install_to_venv(cfg, *requirements)
 
 
 def cleanup(cfg):
