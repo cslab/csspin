@@ -65,6 +65,7 @@ point to the base installation.
 
 import logging
 import os
+import re
 import sys
 
 from spin import (
@@ -77,6 +78,7 @@ from spin import (
     interpolate1,
     mkdir,
     namespaces,
+    parse_version,
     setenv,
     sh,
     task,
@@ -118,6 +120,76 @@ defaults = config(
 )
 
 
+def system_requirements(cfg):
+    # This is our little database of system requirements for
+    # provisioning Python; spin identifies platforms by a tuple
+    # composed of the distro id and version e.g. ("debian", 10).
+    return [
+        # We intentionally leave out Tk, as it pulls in a lot of
+        # graphics and X packages
+        (
+            lambda distro, version: distro in ("debian", "mint", "ubuntu"),
+            {
+                "apt-get": (
+                    "git make build-essential libssl-dev zlib1g-dev libbz2-dev"
+                    " libreadline-dev libsqlite3-dev curl libncursesw5-dev"
+                    " xz-utils libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev"
+                ),
+            },
+        ),
+        (
+            lambda distro, version: (
+                distro in ("centos", "fedora")
+                and not (distro == "fedora" and version >= parse_version("22"))
+            ),
+            {
+                "yum": (
+                    "git gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite"
+                    " sqlite-devel openssl-devel libffi-devel xz-devel"
+                ),
+            },
+        ),
+        (
+            lambda distro, version: (
+                distro == "fedora" and version >= parse_version("22")
+            ),
+            {
+                "dnf": (
+                    "git make gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite"
+                    " sqlite-devel openssl-devel libffi-devel xz-devel"
+                ),
+            },
+        ),
+        (
+            lambda distro, version: distro == "darwin",
+            {
+                "brew": "git openssl readline sqlite3 xz zlib",
+            },
+        ),
+        (
+            # FIXME: no idea, whether this makes any sense
+            lambda distro, version: distro == re.match("opensuse", distro),
+            {
+                "zypper": (
+                    "git gcc automake bzip2 libbz2-devel xz xz-devel openssl-devel"
+                    " ncurses-devel readline-devel zlib-devel libffi-devel"
+                    " sqlite3-devel"
+                ),
+            },
+        ),
+        (
+            # FIXME: no idea, whether this makes any sense
+            lambda distro, version: distro == "rhel",
+            {
+                "yum": (
+                    "gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite"
+                    " sqlite-devel openssl-devel libffi-devel xz-devel"
+                )
+            },
+        ),
+    ]
+
+
 @task()
 def python(args):
     """Run the Python interpreter used for this projects.
@@ -145,7 +217,7 @@ def pyenv_install(cfg):
                 "python",
                 "-mpip",
                 "install",
-                "-q" if not cfg.verbose else None,
+                cfg.quietflag,
                 "-U",
                 "pip",
                 "packaging",
@@ -168,7 +240,7 @@ def pyenv_install(cfg):
                 "{interpreter}",
                 "-mpip",
                 "install",
-                "-q" if not cfg.verbose else None,
+                cfg.quietflag,
                 "-U",
                 "pip",
                 "wheel",
@@ -201,7 +273,7 @@ def nuget_install(cfg):
         "{python.interpreter}",
         "-mpip",
         "install",
-        "-q" if not cfg.verbose else None,
+        cfg.quietflag,
         "-U",
         "pip",
         "wheel",
