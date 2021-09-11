@@ -4,12 +4,12 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from git import Repo
-
 from spin import config, sh
 
 
 def init(cfg):
+    from git import Repo
+
     repo = Repo(".")
     modified = [item.a_path for item in repo.index.diff(None)]
     cfg.vcs = config(modified=modified)
