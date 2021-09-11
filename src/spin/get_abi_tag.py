@@ -5,7 +5,10 @@ Helper file to find the abi tag of the target interpreter of the venv.
 
 def get_abi_tag():
     try:
-        from packaging import tags
+        try:
+            from packaging import tags
+        except ImportError:
+            from pip._vendor.packaging import tags
 
         # tag for running interpreter (most important priority)
         tag = next(tags.sys_tags())
