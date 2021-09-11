@@ -133,9 +133,11 @@ class DockerExecutor(BaseExecutor):
             cmd += ["-e", f"USERPROFILE={container_home}"]
         else:
             cmd += ["-e", f"HOME={container_home}"]
-            # FIXME: docker writes files which are owned by root to
-            # the .local dir... This causes some problems.
-            cmd += ["-v", f"{volprefix}{home}/.local"]
+
+        if sys.platform == "linux":
+            # On a Linux system, we assume to run on the same kernel,
+            # and set uid:gid
+            cmd += ["-u", f"{os.getuid()}:{os.getgid()}"]
 
         devspin = spin_is_editable()
         if devspin:
