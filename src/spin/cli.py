@@ -22,6 +22,7 @@ import site
 import sys
 
 import click
+import distro
 import entrypoints
 import packaging.version
 from packaging import tags
@@ -41,6 +42,7 @@ from . import (
     interpolate1,
     memoizer,
     mkdir,
+    parse_version,
     readtext,
     readyaml,
     rmtree,
@@ -307,6 +309,19 @@ def base_options(fn):
             ),
         ),
         click.option(
+            "--system-provision",
+            is_flag=True,
+            default=False,
+            help=(
+                "Provision system dependencies for the host. This will output a script"
+                " on stdout, that uses OS package managers like apt, yum etc. to"
+                " install system-level dependencies for the project. The output can for"
+                " example be piped into a sudo shell, like so: spin --system-provision"
+                " | sudo sh. This flag can not be combined with --cleanup, --provision"
+                " or any subcommands."
+            ),
+        ),
+        click.option(
             "--cleanup",
             is_flag=True,
             default=False,
@@ -378,6 +393,7 @@ def cli(
     properties,
     provision,
     cleanup,
+    system_provision,
 ):
     # Set up logging
     if log_level:
@@ -388,6 +404,10 @@ def cli(
     # We want to honor the 'quiet' and 'verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
     # code uses 'echo' and/or 'log'.
+    if system_provision:
+        # --system-provision implies -q, otherwise the generated
+        # --script would be spoiled.
+        quiet = True
     get_tree().quiet = quiet
     get_tree().verbose = verbose
 
@@ -412,8 +432,11 @@ def cli(
         print(tree.tree_dump(cfg))
 
     if not cruiseopt:
-        # When not cruising, and we have the 'provision' flag, do
-        # provisioning now.
+        # When not cruising, and we have any of the provisioning
+        # flags, do provisioning now.
+        if system_provision:
+            do_system_provisioning(cfg)
+            return
         if cleanup:
             toporun(cfg, "cleanup", reverse=True)
             if not provision:
@@ -478,21 +501,29 @@ def load_spinfile(
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
     cfg.verbose = verbose
+    # This is meant for tools that support -q; instead of
+    # conditionally passing -q on the command line, plugins can simply
+    # build the command using cfg.quietflag (the None will be filtered
+    # out by spin.interpolate)
+    cfg.quietflag = None if cfg.verbose else "-q"
+
     cfg.spin.spinfile = spinfile
     cfg.cleanup = cleanup
     cfg.provision = provision
 
-    minspin = getattr(cfg, "minimum-spin", None)
-    if not minspin:
-        die("spin requires 'minimum-spin' to be set")
-    minspin = packaging.version.parse(minspin)
-    spinversion = packaging.version.parse(importlib_metadata.version("spin"))
-    if minspin > spinversion:
-        die(f"this projects requires spin>={minspin}")
-
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
     if spinfile:
+
+        # Check spin version requested by this spinfile
+        minspin = getattr(cfg, "minimum-spin", None)
+        if not minspin:
+            die("spin requires 'minimum-spin' to be set")
+        minspin = packaging.version.parse(minspin)
+        spinversion = packaging.version.parse(importlib_metadata.version("spin"))
+        if minspin > spinversion:
+            die(f"this projects requires spin>={minspin}")
+
         cfg.spin.project_root = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
         if not cwd:
             cd(cfg.spin.project_root)
@@ -622,3 +653,36 @@ def install_plugin_packages(cfg):
         writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
 
     site.addsitedir(cfg.spin.plugin_dir)
+
+
+def merge_dicts(a, b):
+    for k, v in b.items():
+        if k in a:
+            a[k] = " ".join((a[k], v))
+        else:
+            a[k] = v
+
+
+def do_system_provisioning(cfg):
+    dinfo = distro.info()
+    distroname = dinfo["id"]
+    distroversion = parse_version(dinfo["version"])
+    out = {}
+    for pi in cfg.topo_plugins:
+        fn = getattr(cfg.loaded[pi], "system_requirements", lambda cfg: [])
+        reqs = fn(cfg)
+        for check, items in reqs:
+            if check(distroname, distroversion):
+                merge_dicts(out, items)
+
+    for check, items in cfg.get("system-requirements", {}).items():
+        check = eval(f"lambda distro, version: {check}")
+        if check(distroname, distroversion):
+            merge_dicts(out, items)
+
+    for syscmd in ("apt-get", "yum", "dnf"):
+        package_list = out.get(syscmd, "")
+        if package_list:
+            if syscmd == "apt-get":
+                print("apt-get update")
+            print(f"{syscmd} install -y {package_list}")
