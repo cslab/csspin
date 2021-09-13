@@ -4,6 +4,8 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import shutil
+
 from spin import config, sh, task
 
 defaults = config(requires=[".virtualenv"], packages=["pre-commit"])
@@ -16,3 +18,8 @@ def pre_commit(cfg, args):
 
 def provision(cfg):
     sh("pre-commit install")
+
+
+def cleanup(cfg):
+    if shutil.which("pre-commit"):
+        sh("pre-commit uninstall")
