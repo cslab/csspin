@@ -468,7 +468,12 @@ def find_plugin_packages(cfg):
 
 def yield_plugin_import_specs(cfg):
     for item in cfg.get("plugins", []):
-        yield item
+        if isinstance(item, dict):
+            for package, modules in item.items():
+                for module in modules:
+                    yield f"{package}.{module}"
+        else:
+            yield item
 
 
 def load_spinfile(

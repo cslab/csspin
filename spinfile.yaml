@@ -7,15 +7,16 @@ plugin-path:
   - plugins
 
 plugins:
-  - spin.builtin.flake8
-  - spin.builtin.pytest
-  - spin.builtin.devpi
-  - spin.builtin.radon
-  - spin.builtin.build
+  - spin.builtin:
+      - flake8
+      - pytest
+      - devpi
+      - radon
+      - build
+      - pre_commit
+      - sphinx
+      - apt
   - demo_plugin
-  - spin.builtin.pre_commit
-  - spin.builtin.sphinx
-  - spin.builtin.apt
 
 requirements:
   - black
