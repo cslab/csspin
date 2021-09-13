@@ -23,7 +23,7 @@ requirements:
   - sphinx-rtd-theme
 
 python:
-  version: 3.8.9
+  version: 3.8.11
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
