@@ -7,10 +7,12 @@ Welcome to spin's documentation!
 ================================
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
+   :maxdepth: 2
+   :caption: Contents
 
    overview
+   installation
+   cliref
    howtoplugins
    provision
    plugins
