@@ -34,7 +34,6 @@ def propinfo(cfg, args):
     arg = "The Spinfile Schema"
     for arg in args:
         schema = schema.properties.get(arg)
-    helptext = getattr(schema, "help", "--")
     pretty_descriptor("", arg, schema)
     properties = getattr(schema, "properties", {})
     for prop, desc in properties.items():
