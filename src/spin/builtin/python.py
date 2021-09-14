@@ -205,7 +205,17 @@ def wheel(cfg):
     args = []
     if cfg.quiet:
         args = ["-q"]
-    sh("python", "setup.py", *args, "bdist_wheel")
+    sh(
+        "python",
+        "setup.py",
+        *args,
+        "build",
+        "-b",
+        "{spin.env_base}/build",
+        "bdist_wheel",
+        "-d",
+        "{spin.env_base}/dist",
+    )
 
 
 def pyenv_install(cfg):

@@ -12,11 +12,19 @@ defaults = config(
         "sphinx",
     ],
     opts="-qaE",
+    build_dir="{spin.env_base}/docs",
 )
 
 
 @task()
 def docs(cfg, html: option("--html", "html", is_flag=True)):
+    cmd = [
+        "make",
+        "-C",
+        "{sphinx.docs}",
+        "SPHINXOPTS={sphinx.opts}",
+        "BUILDDIR={sphinx.build_dir}",
+    ]
     if html:
-        sh("make -C {sphinx.docs} html 'SPHINXOPTS={sphinx.opts}' ")
-    sh("make -C {sphinx.docs} latexpdf 'SPHINXOPTS={sphinx.opts}' ")
+        sh(*cmd, "html")
+    sh(*cmd, "latexpdf")
