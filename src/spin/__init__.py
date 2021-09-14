@@ -65,8 +65,8 @@ def echo(*msg, **kwargs):
 
     Arguments are interpolated against the configuration tree. `echo`
     will remain silent when ``spin`` is run with the ``--quiet``
-    flag. `echo` is meant for messages, that explain to the user what
-    spin is doing (e.g. echoing commands launched).
+    flag. `echo` is meant for messages that explain to the user what
+    spin is doing (e.g. *echoing* commands launched).
 
     `echo` supports the same keyword arguments as Click's
     :py:func:`click.echo`.
@@ -79,6 +79,17 @@ def echo(*msg, **kwargs):
 
 
 def info(*msg, **kwargs):
+    """Print a message to the console by joining the positional arguments
+    `msg` with spaces.
+
+    Arguments are interpolated against the configuration tree. `info`
+    will remain silent unless ``spin`` is run with the ``--verbose``
+    flag. `info` is meant for messages that provide additional details.
+
+    `info` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
+
+    """
     if CONFIG.verbose:
         msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False)
@@ -86,14 +97,32 @@ def info(*msg, **kwargs):
 
 
 def warn(*msg, **kwargs):
-    """Say something."""
+    """Print a warning message to the console by joining the positional
+    arguments `msg` with spaces.
+
+    Arguments are interpolated against the configuration tree. The
+    output is written to standard error.
+
+    `warn` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
+
+    """
     msg = interpolate(msg)
     click.echo(click.style("spin: warning: ", fg="yellow"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
 
 def error(*msg, **kwargs):
-    """Say something."""
+    """Print an error message to the console by joining the positional
+    arguments `msg` with spaces.
+
+    Arguments are interpolated against the configuration tree. The
+    output is written to standard error.
+
+    `error` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
+
+    """
     msg = interpolate(msg)
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
@@ -228,7 +257,7 @@ def sh(*cmd, **kwargs):
     `silent` is ``False``, the resulting command line will be
     echoed. When `shell` is ``True``, the command line is passed to
     the system's shell. Other keyword arguments are passed into
-    `subprocess.run`.
+    :py:func:`subprocess.run`.
 
     All positional arguments are interpolated against the
     configuration tree.
@@ -323,22 +352,50 @@ def _write_file(fn, mode, data):
 
 
 def readbytes(fn):
+    """`readbytes` reads binary data. The file name argument is
+    interpolated against the configuration tree.
+
+    """
     return _read_file(fn, "rb")
 
 
 def writebytes(fn, data):
+    """Write `data`` to the file named `fn`.
+
+    Data is binary data (`bytes`).  The file name argument is
+    interpolated against the configuration tree.
+
+    """
     return _write_file(fn, "wb", data)
 
 
 def readtext(fn):
+    """Read an UTF8 encoded text from the file 'fn'.
+
+    The file name argument is interpolated against the configuration
+    tree.
+
+    """
     return _read_file(fn, "r")
 
 
 def writetext(fn, data):
+    """Write `data`, which is text (Unicode object of type `str`) to the
+    file named `fn`.
+
+    The file name argument is interpolated against the configuration tree.
+
+    """
     return _write_file(fn, "w", data)
 
 
 def appendtext(fn, data):
+    """Append `data`, which is text (Unicode object of type `str`) to the
+    file named `fn`.
+
+    The file name argument is interpolated against the configuration tree.
+
+    """
     return _write_file(fn, "a", data)
 
 
@@ -359,6 +416,24 @@ class Memoizer:
     Facts are loaded from file `fn`. The argument is interpolated
     against the configuration tree. If `fn` does not exist, there are
     no facts.
+
+    The `Memoizer` class stores and retrieves Python objects from the
+    binary file named `fn`. The argument is interpolated against the
+    configuration tree. `Memoizer` can be used to keep a simple
+    "database". Spin internally uses Memoizers for e.g. keeping track
+    of packages installed in a virtual environment.
+
+    To ease the handling in `spin` scripts, there also is context
+    manager called `memoizer` (note the lower case "m"). The context
+    manager retrieves the database from the file and saves it back
+    when the context is closed::
+
+      >>> with memoizer(fn) as m:
+      ...    if m.check("test"): ...
+
+    There are *no* precautions for simultaneous access from multiple
+    processes, writes will likely silently become lost.
+
     """
 
     def __init__(self, fn):
@@ -366,7 +441,7 @@ class Memoizer:
         self._items = unpersist(fn, [])
 
     def check(self, item):
-        """Check whether `item` is a know fact."""
+        """Checks whether `item` is stored in the memoizer."""
         return item in self._items
 
     def clear(self):
@@ -377,12 +452,17 @@ class Memoizer:
         return self._items
 
     def add(self, item):
-        """Add `item` to the fact base."""
+        """Add `item` to the memoizer."""
         self._items.append(item)
         self.save()
 
     def save(self):
-        """Save the updated fact base."""
+        """Persist the current state of the memoizer.
+
+        This is done automatically when using `memoizer` as a context
+        manager.
+
+        """
         persist(self._fn, self._items)
 
 
@@ -498,9 +578,9 @@ def option(*args, **kwargs):
 
 def task(*args, **kwargs):
     """Decorator that creates a task. This is a wrapper around Click's
-    `click.command` decorator, with some extras:
+    :py:func:`click.command` decorator, with some extras:
 
-    * a string keyword argument `when` adds the task to the list of
+    * A string keyword argument `when` adds the task to the list of
       commands to run using `invoke`
 
     * `aliases` is a list of aliases for the command (e.g. "check" is
