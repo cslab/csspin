@@ -14,8 +14,6 @@ defaults = config(
     name="",
     tags=["latest"],
     build_args=[],
-    dockerfile=None,
-    dockerdir=".",
 )
 
 
@@ -27,18 +25,31 @@ def docker(cfg):
 @docker.task()
 def build(cfg):
     options = []
-    if not cfg.verbose:
-        options.append("-q")
+    # if not cfg.verbose:
+    # options.append("-q")
     if "INSIDE_EMACS" in os.environ:
         options.append("--progress=plain")
-    if cfg.docker.name:
-        imagename = "/".join((cfg.docker.hub, cfg.docker.name))
-        for tag in cfg.docker.tags:
-            options.extend(["-t", f"{imagename}:{tag}"])
-    options.append(cfg.docker.dockerdir)
-    if cfg.docker.dockerfile:
-        options.extend(["-f", cfg.docker.dockerfile])
-    sh("{docker.executable}", "build", *options)
+    for definition in cfg.docker.images:
+        sh(
+            "{docker.executable}",
+            "build",
+            *cfg.docker.build_args,
+            *options,
+            "-f",
+            definition.dockerfile,
+            "-t",
+            definition.tag,
+            ".",
+        )
+
+    # if cfg.docker.name:
+    #     imagename = "/".join((cfg.docker.hub, cfg.docker.name))
+    #     for tag in cfg.docker.tags:
+    #         options.extend(["-t", f"{imagename}:{tag}"])
+    # options.append(cfg.docker.dockerdir)
+    # if cfg.docker.dockerfile:
+    #     options.extend(["-f", cfg.docker.dockerfile])
+    # sh("{docker.executable}", "build", *options)
 
 
 @docker.task()
