@@ -9,7 +9,7 @@ requirements and provides shrink-wrapped project workflows.
 
 Spin requires a 'spinfile.yaml' in the project's top-level
 directory. It can be started from anywhere in the project tree, and
-search the path up for 'spinfile.yaml'. Subcommands are provided by
+searches the path up for 'spinfile.yaml'. Subcommands are provided by
 "plugins" declared in spinfile.yaml.
 
 """
@@ -215,7 +215,7 @@ def base_options(fn):
             type=click.Path(dir_okay=False, exists=False),
             help=(
                 "An alternative name for the configuration file. "
-                "This can ne a relative or absolute path when "
+                "This can be a relative or absolute path when "
                 "used without -C."
             ),
         ),
@@ -306,8 +306,10 @@ def base_options(fn):
             is_flag=True,
             default=False,
             help=(
-                "Provision the development environment. '--provision' can be used with"
-                " or without a subcommand."
+                "Create or update a development environment. This option can be used"
+                " without a command, to only provision an environment. When used with a"
+                " command, the environment will be created or updated, and the command"
+                " will run afterwards."
             ),
         ),
         click.option(
@@ -318,9 +320,8 @@ def base_options(fn):
                 "Provision system dependencies for the host. This will output a script"
                 " on stdout, that uses OS package managers like apt, yum etc. to"
                 " install system-level dependencies for the project. The output can for"
-                " example be piped into a sudo shell, like so: spin --system-provision"
-                " | sudo sh. This flag can not be combined with --cleanup, --provision"
-                " or any subcommands."
+                " example be piped into a sudo shell. This flag can not be combined"
+                " with --cleanup, --provision or any subcommands."
             ),
         ),
         click.option(
