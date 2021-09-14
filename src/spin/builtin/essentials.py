@@ -7,7 +7,7 @@
 from spin import sh, task
 
 
-@task("exec", add_help_option=False)
+@task("run", add_help_option=False)
 def exec_shell(args):
     """Run a shell command in the project context."""
     if not args:
