@@ -2,13 +2,13 @@
 Installation
 ============
 
-* Spin requires Python 3.8 or later
-* You can install using :program:`pip` in any you way like
-* It's most convenient to have the ``spin`` command locally installed
-  and always available on your ``PATH``, just like a system command
+Spin requires Python 3.8 or later, and you can install it using any
+way you like using :program:`pip`. It is most convenient to have the
+``spin`` command locally installed and always available on your
+``PATH``, just like a system command
 
-One way of installing `spin` privately by using :program:`pipx` is
-described in the next section.
+One easy way of installing `spin` privately in your home directory is
+by using :program:`pipx`, as described in the next section.
 
 
 Installing with Git and Pipx
@@ -25,8 +25,8 @@ Install ``pipx``:
 
 .. code-block:: console
 
-   $ python38 -m pip install --user pipx
-   $ python38 -m pipx ensurepath
+   $ python -m pip install --user pipx
+   $ python -m pipx ensurepath
 
 ``ensurepath`` adds ``$HOME/.local/bin`` to your shell's
 configuration, so commands from packages installed by ``pipx`` are

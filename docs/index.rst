@@ -12,11 +12,13 @@ Welcome to spin's documentation!
 
    overview
    installation
-   cliref
+   userman
    howtoplugins
    provision
    plugins
-   spin
+   cliref
+   apiref
+   schemaref
    todo
 
 
