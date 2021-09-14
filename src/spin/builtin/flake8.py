@@ -70,7 +70,7 @@ def flake8(
     allsource: option(
         "--all",
         "allsource",
-        help="Run flake8 on all Python files in the project",
+        help="Run flake8 on all Python files in the project",  # noqa
         is_flag=True,
     ),
     args,
