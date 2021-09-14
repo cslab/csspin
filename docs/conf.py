@@ -28,7 +28,7 @@ release = "0.2"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "click": ("https://click.palletsprojects.com/en/7.x/", None),
+    "click": ("https://click.palletsprojects.com/en/8.0.x/", None),
 }
 
 # Add any Sphinx extension module names here, as strings. They can be
