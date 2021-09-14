@@ -538,6 +538,7 @@ def load_spinfile(
         cfg.spin.project_root = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
         if not cwd:
             cd(cfg.spin.project_root)
+        cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
 
         if not exists("{spin.spin_dir}"):
             mkdir("{spin.spin_dir}")

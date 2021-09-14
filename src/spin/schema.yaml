@@ -22,6 +22,11 @@ spin:
         The name of the configuration file for the project. This can
         be overriden via 'spin -f <filename>'.
       default: spinfile.yaml
+    env_base:
+      type: path internal
+      help: |
+        Where environments are provisioned.
+      default: "{spin.userprofile}/{spin.project_name}/env"
     spin_dir:
       type: path internal
       help: |

@@ -23,6 +23,7 @@ from spin import (
     Command,
     backtick,
     config,
+    die,
     echo,
     exists,
     info,
@@ -40,7 +41,7 @@ N = os.path.normcase
 
 
 defaults = config(
-    venv=N("{spin.project_root}/{virtualenv.abitag}-{platform.tag}"),
+    venv=N("{spin.env_base}/{virtualenv.abitag}-{platform.tag}"),
     memo=N("{virtualenv.venv}/spininfo.memo"),
     bindir=(
         N("{virtualenv.venv}/bin") if sys.platform != "win32" else "{virtualenv.venv}"
@@ -76,6 +77,11 @@ def init(cfg):
     get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.virtualenv.venv:
         activate_this = interpolate1("{virtualenv.scriptdir}/activate_this.py")
+        if not exists(activate_this):
+            die(
+                "{virtualenv.venv} does not exist. You may want to provision it using"
+                " spin --provision"
+            )
         echo("activate {virtualenv.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
 
