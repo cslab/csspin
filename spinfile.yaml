@@ -1,11 +1,9 @@
-# This is the spinfile.yaml of spin.
-
 # Each spinfile must have this. Spin will refuse to run if
 # 'minimum-spin' is absent or larger than the release of spin used.
 minimum-spin: "0.2d"
 
-# Path to local plugins. It is just here for demonstration purposes --
-# the spin project does not use local plugins.
+# Path to local plugins. This is just here for demonstration purposes
+# (see "demo_plugin") -- the spin project does not use local plugins.
 plugin-path:
   - plugins
 
