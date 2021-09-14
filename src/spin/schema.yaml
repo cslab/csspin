@@ -10,6 +10,9 @@
 
 # 'list' --> a literal list *or* simply a string that is space-split
 
+minimum-spin:
+  type: str internal
+
 spin:
   type: object
   help: |
@@ -26,7 +29,13 @@ spin:
       type: path internal
       help: |
         Where environments are provisioned.
-      default: "{spin.userprofile}/{spin.project_name}/env"
+      default: "{spin.userprofile}/{spin.project_hash}"
+    project_root:
+      type: path internal
+      help: |
+        The relative path from <project_root> to spin's project
+        related data.
+      default: .spin
     spin_dir:
       type: path internal
       help: |
@@ -89,4 +98,10 @@ platform:
     exe:
       type: path
     shell:
+      type: path
+
+virtualenv:
+  type: object
+  properties:
+    venv:
       type: path
