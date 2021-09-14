@@ -14,7 +14,9 @@ search the path up for 'spinfile.yaml'. Subcommands are provided by
 
 """
 
+import base64
 import glob
+import hashlib
 import importlib
 import logging
 import os
@@ -498,6 +500,7 @@ def load_spinfile(
     )
     cfg = spinschema.get_default()
     set_tree(cfg)
+    cfg.schema = spinschema
     userdata = readyaml(spinfile) if spinfile else config()
     tree.tree_update(cfg, userdata)
     tree.tree_merge(cfg, DEFAULTS)
@@ -533,12 +536,17 @@ def load_spinfile(
         minspin = packaging.version.parse(minspin)
         spinversion = packaging.version.parse(importlib_metadata.version("spin"))
         if minspin > spinversion:
-            die(f"this projects requires spin>={minspin}")
+            die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
         cfg.spin.project_root = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
         if not cwd:
             cd(cfg.spin.project_root)
         cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
+        path_hash = hashlib.sha256(
+            os.path.dirname(cfg.spin.project_root).encode()
+        ).digest()
+        path_hash = base64.urlsafe_b64encode(path_hash).decode()[:8]
+        cfg.spin.project_hash = f"{cfg.spin.project_name}-{path_hash}"
 
         if not exists("{spin.spin_dir}"):
             mkdir("{spin.spin_dir}")
