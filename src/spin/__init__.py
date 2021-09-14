@@ -497,18 +497,62 @@ def option(*args, **kwargs):
 
 
 def task(*args, **kwargs):
+    """Decorator that creates a task. This is a wrapper around Click's
+    `click.command` decorator, with some extras:
+
+    * a string keyword argument `when` adds the task to the list of
+      commands to run using `invoke`
+
+    * `aliases` is a list of aliases for the command (e.g. "check" is
+      an alias for "lint")
+
+    * `task` introspects the signature of the decorated function and
+      handles certain argument names automatically:
+
+      * ``ctx`` will pass the Click context object into the task; this
+        is rarely useful for spin tasks
+
+      * ``cfg`` will automatically pass the configuration tree; this
+        very useful most of the time, except for the simplest of tasks
+
+      * ``args`` will simply pass through all command line arguments
+        by using the ``ignore_unknown_options`` and
+        ``allow_extra_args`` options of the Click context; this is
+        often used for tasks that launch a specific command line tool
+        to enable arbitrary arguments
+
+    All other arguments to the task must be annotated with either
+    `option` or `argument`. They both support the same arguments as
+    the corresponding decorators `click.option` and `click.argument`.
+
+    A simple example:
+
+    .. code-block:: python
+
+       @task()
+       def simple_task(cfg, args):
+           # do something
+
+    This would make ``simple_task`` available as a new subcommand of
+    spin.
+
+    More elaborate examples can be found in the built-in plugins
+    shipping with spin.
+
+    """
+
+    # Import cli here, to avoid an import cycle
     from . import cli
 
     def task_wrapper(fn, group=cli.commands):
-        def alternate_callback(*args, **kwargs):
-            return fn(get_tree(), *args, **kwargs)
-
         task_object = fn
+        pass_context = False
         context_settings = config()
         sig = inspect.signature(fn)
         param_names = list(sig.parameters.keys())
         if param_names:
             if param_names[0] == "ctx":
+                pass_context = True
                 task_object = click.pass_context(fn)
                 param_names.pop(0)
         pass_config = False
@@ -529,6 +573,10 @@ def task(*args, **kwargs):
         task_object = group.command(*args, **kwargs, context_settings=context_settings)(
             task_object
         )
+        if group != cli.commands:
+            task_object.full_name = " ".join((group.name, task_object.name))
+        else:
+            task_object.full_name = task_object.name
         if hook:
             cfg = get_tree()
             hook_tree = cfg.get("hooks", config())
@@ -536,8 +584,21 @@ def task(*args, **kwargs):
             hooks.append(task_object)
         for alias in aliases:
             group.register_alias(alias, task_object)
+
+        def regular_callback(*args, **kwargs):
+            ensure(task_object)
+            return fn(*args, **kwargs)
+
+        def alternate_callback(*args, **kwargs):
+            ensure(task_object)
+            return fn(get_tree(), *args, **kwargs)
+
         if pass_config:
             task_object.callback = alternate_callback
+        elif pass_context:
+            task_object.callback = click.pass_context(regular_callback)
+        else:
+            task_object.callback = regular_callback
         task_object.__doc__ = fn.__doc__
         return task_object
 
@@ -563,7 +624,81 @@ def group(*args, **kwargs):
     return group_decorator
 
 
+def getmtime(fn):
+    return os.path.getmtime(interpolate1(fn))
+
+
+def is_up_to_date(target, sources):
+    if not exists(target):
+        return False
+    target_mtime = getmtime(target)
+    source_mtimes = [getmtime(src) for src in sources] + [0.0]
+    return target_mtime >= max(source_mtimes)
+
+
+def run_script(script):
+    for line in script:
+        sh(line)
+
+
+def run_spin(script):
+    from .cli import commands
+
+    for line in script:
+        line = shlex.split(line.replace("\\", "\\\\"))
+        try:
+            commands(line)
+        except SystemExit:
+            pass
+
+
+def ensure(command):
+    """Check 'command_name' for a 'needs' attribute, and make sure to produce it."""
+    logging.debug("checking preconditions for %s", command.__dict__)
+    cfg = get_tree()
+    tree = cfg.get(command.full_name, config())
+    needs = tree.get("needs", [])
+    howtobuild = cfg.get("howtobuild", config())
+    if needs:
+        if not isinstance(needs, list):
+            needs = [needs]
+        for need in needs:
+            rule = howtobuild.get(need, config())
+            sources = rule.get("sources", [])
+            if not is_up_to_date(need, sources):
+                info(f"provide {need}")
+                script = rule.get("script", [])
+                spinscript = rule.get("spin", [])
+                if not (script or spinscript):
+                    die(
+                        f"Sorry, I don't know how to produce '{need}'. You may want to"
+                        " add a rule to your spinfile.yaml in the 'howtobuild'"
+                        " section."
+                    )
+                run_script(script)
+                run_spin(spinscript)
+            else:
+                info(f"{need} is up to date")
+
+
 def invoke(hook, *args, **kwargs):
+    """``invoke()`` invokes the tasks that have the ``when`` hook
+    `hook`. As an example, here is the implementation of **lint**:
+
+    .. code-block:: python
+
+       @task(aliases=["check"])
+       def lint(allsource: option("--all", "allsource", is_flag=True)):
+           '''Run all linters defined in this project.'''
+           invoke("lint", allsource=allsource)
+
+    Note that in this case, all linters are required to support the
+    ``allsource`` argument, i.e. the way a task that uses `invoke` is
+    invoking other tasks is part of the call interface contract for
+    linters: *all* linter tasks *must* support the ``allsource``
+    argument as part of their Python function signature (albeit not
+    necessarily the same command line flag ``--all``).
+    """
     ctx = click.get_current_context()
     cfg = get_tree()
     for task_object in cfg.hooks.setdefault(hook, []):
