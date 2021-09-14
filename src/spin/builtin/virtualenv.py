@@ -68,7 +68,6 @@ def get_abi_tag(cfg):
         abitag = backtick(
             "{python.interpreter}",
             get_abi_tag.__file__,
-            silent=not cfg.verbose,
         )
         cfg.virtualenv.abitag = abitag.strip()
 
@@ -82,7 +81,7 @@ def init(cfg):
 
 
 @task()
-def activate(cfg):
+def shell(cfg):
     part1 = os.path.basename(interpolate1("{spin.project_root}"))
     part2 = interpolate1("{virtualenv.abitag}")
     os.environ["PS1"] = f"({part1}:{part2}) " + os.environ["PS1"]
@@ -306,7 +305,7 @@ def provision(cfg):
 
     # Update pip in the venv
     if fresh_virtualenv:
-        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip", "setuptools")
 
     # This is a much faster alternative to calling pip config; we
     # leave it active here for now, enjoying a faster spin until we
