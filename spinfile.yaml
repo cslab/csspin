@@ -2,7 +2,7 @@
 
 # Each spinfile must have this. Spin will refuse to run if
 # 'minimum-spin' is absent or larger than the release of spin used.
-minimum-spin: "0.2"
+minimum-spin: "0.2d"
 
 # Path to local plugins. It is just here for demonstration purposes --
 # the spin project does not use local plugins.
@@ -28,6 +28,7 @@ plugins:
 # (additional development dependencies, Python)
 requirements:
   - black
+  - pip-tools
   - sphinx-click
   - sphinx-rtd-theme
 
