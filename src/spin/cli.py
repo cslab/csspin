@@ -354,14 +354,20 @@ class GroupWithAliases(click.Group):
         return cmd
 
 
+_nested = False
+
+
 @click.command(cls=GroupWithAliases, help=__doc__)
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options
 @click.pass_context
 def commands(ctx, **kwargs):
+    global _nested
     ctx.obj = get_tree()
-    toporun(ctx.obj, "init")
+    if not _nested:
+        toporun(ctx.obj, "init")
+        _nested = True
 
 
 @click.command(
