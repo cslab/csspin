@@ -17,7 +17,11 @@ defaults = config(
 
 
 @task()
-def docs(cfg, html: option("--html", "html", is_flag=True)):
+def docs(
+    cfg,
+    html: option("--html", "html", is_flag=True),
+    pdf: option("--pdf", "pdf", is_flag=True),
+):
     cmd = [
         "make",
         "-C",
@@ -27,4 +31,5 @@ def docs(cfg, html: option("--html", "html", is_flag=True)):
     ]
     if html:
         sh(*cmd, "html")
-    sh(*cmd, "latexpdf")
+    if pdf:
+        sh(*cmd, "latexpdf")
