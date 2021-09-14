@@ -1,12 +1,18 @@
 # This is the spinfile.yaml of spin.
 
-# Each spinfile must have this
+# Each spinfile must have this. Spin will refuse to run if
+# 'minimum-spin' is absent or larger than the release of spin used.
 minimum-spin: "0.2"
 
+# Path to local plugins. It is just here for demonstration purposes --
+# the spin project does not use local plugins.
 plugin-path:
   - plugins
 
+# The list of plugins to be used for this project.
 plugins:
+  # Nested entries like these save some typing for
+  # 'spin.builtin.flake8', 'spin.builtin.pytest' etc. ...
   - spin.builtin:
       - flake8
       - pytest
@@ -15,16 +21,22 @@ plugins:
       - build
       - pre_commit
       - sphinx
-      - apt
+      - docker
   - demo_plugin
 
+# Stuff that must be installed into the project's environments
+# (additional development dependencies, Python)
 requirements:
   - black
   - sphinx-click
   - sphinx-rtd-theme
 
 python:
+  needs: phony
   version: 3.8.11
+
+test:
+  needs: phony
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
@@ -34,6 +46,24 @@ extra-tasks:
       USE_EMOJI: no
     script:
       - pipx install --force --editable .
+
+docker build:
+  needs: requirements.txt
+docker:
+  images:
+    - dockerfile: docker/spin-base.dockerfile
+      tag: registry.contact.de/spin-base
+    #- dockerfile: docker/spin-dev.dockerfile
+    #  tag: registry.contact.de/spin-dev
+
+howtobuild:
+  phony:
+    spin:
+      - exec echo phony
+  requirements.txt:
+    sources: [setup.cfg, setup.py]
+    script:
+      - pip-compile --generate-hashes --no-build-isolation --reuse-hashes
 
 cruise:
   "@docker":
