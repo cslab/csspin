@@ -34,9 +34,6 @@ python:
   needs: phony
   version: 3.8.11
 
-test:
-  needs: phony
-
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
   # it is under development.
@@ -55,10 +52,14 @@ docker:
     #- dockerfile: docker/spin-dev.dockerfile
     #  tag: registry.contact.de/spin-dev
 
+docs:
+  needs: docs/schemaref.rst
+
 howtobuild:
-  phony:
+  docs/schemaref.rst:
+    sources: [src/spin/schema.yaml]
     spin:
-      - exec echo phony
+      - schemadoc -o docs/schemaref.rst
   requirements.txt:
     sources: [setup.cfg, setup.py]
     script:

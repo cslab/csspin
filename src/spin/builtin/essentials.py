@@ -4,7 +4,9 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import sh, task
+import click
+
+from spin import option, sh, task
 
 
 @task("run", add_help_option=False)
@@ -15,26 +17,35 @@ def exec_shell(args):
     sh(*args)
 
 
-def pretty_descriptor(prefix, name, descriptor):
+def pretty_descriptor(parent, name, descriptor):
     typename = " ".join(getattr(descriptor, "type", ["any"]))
     default = getattr(descriptor, "default", None)
-    decl = f"{prefix}{name}: {typename}"
-    if default:
-        decl += f" = '{default}'"
-    print(decl)
-    helptext = getattr(descriptor, "help", "").split("\n")
-    prefix = len(prefix) * " "
-    for line in helptext:
-        print(prefix + line)
+    if name:
+        if parent:
+            name = f"{parent}.{name}"
+        decl = f".. py:data:: {name}\n   :type: '{typename}'\n"
+        if default:
+            decl += f"   :value: '{default}'\n"
+        helptext = getattr(descriptor, "help", "")
+        decl += f"\n{helptext}\n"
+    else:
+        decl = "================\nSchema Reference\n================\n\n"
+    return decl
 
 
 @task()
-def propinfo(cfg, args):
+def schemadoc(
+    cfg, outfile: option("-o", "outfile", default="-", type=click.File("w")), args
+):
     schema = cfg.schema
-    arg = "The Spinfile Schema"
+    arg = ""
     for arg in args:
         schema = schema.properties.get(arg)
-    pretty_descriptor("", arg, schema)
-    properties = getattr(schema, "properties", {})
-    for prop, desc in properties.items():
-        pretty_descriptor("* ", prop, desc)
+
+    def do_docwrite(parent, name, desc):
+        outfile.write(pretty_descriptor(parent, name, desc))
+        properties = getattr(desc, "properties", {})
+        for prop, desc in properties.items():
+            do_docwrite(name, prop, desc)
+
+    do_docwrite("", arg, schema)

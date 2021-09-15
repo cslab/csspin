@@ -727,6 +727,7 @@ def run_spin(script):
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
         try:
+            echo(" ".join(line))
             commands(line)
         except SystemExit:
             pass

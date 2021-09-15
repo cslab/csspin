@@ -12,6 +12,9 @@
 
 minimum-spin:
   type: str internal
+  help: |
+    The minimal version of spin, that can process this spinfile. This
+    property is required.
 
 spin:
   type: object
@@ -33,8 +36,7 @@ spin:
     project_root:
       type: path internal
       help: |
-        The relative path from <project_root> to spin's project
-        related data.
+        The absolute path to the project directory.
       default: .spin
     spin_dir:
       type: path internal
