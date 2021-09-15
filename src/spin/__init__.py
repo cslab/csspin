@@ -779,10 +779,10 @@ def is_up_to_date(target, sources):
     return target_mtime >= max(source_mtimes)
 
 
-def run_script(script):
+def run_script(script, env=None):
     """Run a list of shell commands."""
     for line in script:
-        sh(line)
+        sh(line, env=env)
 
 
 def run_spin(script):

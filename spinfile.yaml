@@ -40,6 +40,8 @@ extra-tasks:
       USE_EMOJI: no
     script:
       - pipx install --force --editable .
+    help: |
+      This installs spin via pipx
 
 docker build:
   needs: requirements.txt

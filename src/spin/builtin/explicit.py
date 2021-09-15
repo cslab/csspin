@@ -7,7 +7,7 @@
 """Grab explicitly defined tasks from the configuration tree and add
 them as subcommands."""
 
-from spin import sh, task
+from spin import run_script, run_spin, sh, task
 
 
 class TaskDefinition:
@@ -16,10 +16,11 @@ class TaskDefinition:
 
     def __call__(self):
         env = self._definition.get("env", None)
-        for cmd in self._definition.get("script", []):
-            sh(cmd, env=env)
+        run_script(self._definition.get("script", []), env)
+        run_spin(self._definition.get("spin", []))
 
 
 def configure(cfg):
     for task_name, task_definition in cfg.get("extra-tasks", {}).items():
-        task(task_name)(TaskDefinition(task_definition))
+        help = task_definition.get("help", "")
+        task(task_name, help=help)(TaskDefinition(task_definition))
