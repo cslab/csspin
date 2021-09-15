@@ -26,6 +26,8 @@ def pretty_descriptor(parent, name, descriptor):
         decl = f".. py:data:: {name}\n   :type: '{typename}'\n"
         if default:
             decl += f"   :value: '{default}'\n"
+        if hasattr(descriptor, "noindex"):
+            decl += f"   :noindex:\n"
         helptext = getattr(descriptor, "help", "")
         decl += f"\n{helptext}\n"
     else:
