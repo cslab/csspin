@@ -28,6 +28,7 @@ def docs(
         "{sphinx.docs}",
         "SPHINXOPTS={sphinx.opts}",
         "BUILDDIR={sphinx.build_dir}",
+        "LATEXMKOPTS=-silent",
     ]
     if html:
         sh(*cmd, "html")
