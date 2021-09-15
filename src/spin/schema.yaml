@@ -68,13 +68,14 @@ spin:
   # keep sanity
   unknown-properties: false
 
-requirements:
-  type: list usersetting
-  help: |
-    The list of this project's external Python requirements, that have
-    to be installed into the project's virtual environment. This
-    excludes requirements stated as 'install_requires' in
-    setup.py/setup.cfg.
+python:
+  requirements:
+    type: list usersetting
+    help: |
+      The list of this project's external Python requirements, that
+      have to be installed into the project's virtual
+      environment. This excludes requirements stated as
+      'install_requires' in setup.py/setup.cfg.
 
 extra-tasks:
   type: object

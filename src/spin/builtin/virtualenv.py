@@ -361,7 +361,7 @@ def provision(cfg):
                 hook(cfg)
 
         # Install packages required by the project ('requirements')
-        for req in cfg.requirements:
+        for req in cfg.python.requirements:
             pipit(req)
 
         # Install packages required by plugins used

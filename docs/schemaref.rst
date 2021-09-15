@@ -71,13 +71,9 @@ this file.
    :type: 'path internal'
 
 
-.. py:data:: requirements
-   :type: 'list usersetting'
+.. py:data:: python
+   :type: 'object'
 
-The list of this project's external Python requirements, that have
-to be installed into the project's virtual environment. This
-excludes requirements stated as 'install_requires' in
-setup.py/setup.cfg.
 
 .. py:data:: extra-tasks
    :type: 'object'

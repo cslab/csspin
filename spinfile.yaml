@@ -22,17 +22,15 @@ plugins:
       - docker
   - demo_plugin
 
-# Stuff that must be installed into the project's environments
-# (additional development dependencies, Python)
-requirements:
-  - black
-  - pip-tools
-  - sphinx-click
-  - sphinx-rtd-theme
-
 python:
-  needs: phony
   version: 3.8.11
+  # Stuff that must be installed into the project's virtual
+  # environments (additional development dependencies, Python)
+  requirements:
+    - black
+    - pip-tools
+    - sphinx-click
+    - sphinx-rtd-theme
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
