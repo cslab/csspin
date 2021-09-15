@@ -400,10 +400,12 @@ def appendtext(fn, data):
 
 
 def persist(fn, data):
+    """Persist the Python object(s) in `data` using :py:mod:`pickle`."""
     writebytes(fn, pickle.dumps(data))
 
 
 def unpersist(fn, default=None):
+    """Load pickled Python object(s) from the file `fn`."""
     try:
         return pickle.loads(readbytes(fn))
     except FileNotFoundError:
@@ -486,6 +488,7 @@ NSSTACK = []
 
 @contextmanager
 def namespaces(*nslist):
+    """Add namespaces for interpolation."""
     for ns in nslist:
         NSSTACK.append(ns)
     yield
@@ -494,6 +497,7 @@ def namespaces(*nslist):
 
 
 def interpolate1(literal, *extra_dicts):
+    """Interpolate a string against the configuration tree."""
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )
@@ -508,6 +512,7 @@ def interpolate1(literal, *extra_dicts):
 
 
 def interpolate(literals, *extra_dicts):
+    """Interpolate an iterable of strings against the configuration tree."""
     out = []
     for literal in literals:
         # We allow None, which gets filtered out here, to enable
@@ -534,6 +539,7 @@ def config(*args, **kwargs):
 
 
 def readyaml(fname):
+    """Read a YAML file."""
     from .tree import tree_load
 
     fname = interpolate1(fname)
@@ -541,6 +547,7 @@ def readyaml(fname):
 
 
 def download(url, location):
+    """Download data from `url` to `location`."""
     url, location = interpolate((url, location))
     echo(f"Download {url} -> {location} ...")
     response = urllib.request.urlopen(url)
@@ -553,16 +560,30 @@ CONFIG = config()
 
 
 def get_tree():
+    """Return the global configuration tree."""
     return CONFIG
 
 
 def set_tree(cfg):
+    # Intentionally undocumented
     global CONFIG
     CONFIG = cfg
     return cfg
 
 
 def argument(**kwargs):
+    """Annotations task arguments.
+
+    This works just like :py:func:`click.argument`, accepting all the
+    same parameters. Example:
+
+    .. code-block:: python
+
+       @task()
+       def mytask(outfile: argument(type="...", help="...")
+
+    """
+
     def wrapper(param_name):
         return click.argument(param_name, **kwargs)
 
@@ -570,6 +591,22 @@ def argument(**kwargs):
 
 
 def option(*args, **kwargs):
+    """Annotations for task options.
+
+    This works just like :py:func:`click.option`, accepting the same
+    parameters. Example:
+
+    .. code-block:: python
+
+       @task()
+       def mytask(
+           outfile: option("-o", "outfile",
+                           default="-",
+                           type=click.File("w"),
+                           help="... usage information ..."))
+
+    """
+
     def wrapper(param_name):
         return click.option(*args, **kwargs)
 
@@ -686,6 +723,23 @@ def task(*args, **kwargs):
 
 
 def group(*args, **kwargs):
+    """Decorator for task groups, to create nested commands.
+
+    This works like :py:class:`click.Group`, but additionally supports
+    subcommand aliases, that can be set via the `aliases` keyword
+    argument to :py:func:`task`. Example:
+
+    .. code-block:: python
+
+       @group()
+       def foo(): pass
+
+       @foo.task()
+       def bar(): pass
+
+    The above example creates a ``spin foo bar`` command.
+
+    """
     from . import cli
 
     def group_decorator(fn):
@@ -705,10 +759,19 @@ def group(*args, **kwargs):
 
 
 def getmtime(fn):
+    """Get the modification of file `fn`.
+
+    `fn` is interpolated against the configuration tree.
+
+    """
     return os.path.getmtime(interpolate1(fn))
 
 
 def is_up_to_date(target, sources):
+    """Check whether `target` exists and is newer than all of the
+    `sources`.
+
+    """
     if not exists(target):
         return False
     target_mtime = getmtime(target)
@@ -717,24 +780,28 @@ def is_up_to_date(target, sources):
 
 
 def run_script(script):
+    """Run a list of shell commands."""
     for line in script:
         sh(line)
 
 
 def run_spin(script):
+    """Run a list of spin commands."""
     from .cli import commands
 
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
         try:
-            echo(" ".join(line))
+            echo("spin", " ".join(line))
             commands(line)
         except SystemExit:
             pass
 
 
 def ensure(command):
-    """Check 'command_name' for a 'needs' attribute, and make sure to produce it."""
+    # Check 'command_name' for a 'needs' attribute, and make sure to
+    # produce it. This is used internally and intentionally
+    # undocumented.
     logging.debug("checking preconditions for %s", command.__dict__)
     cfg = get_tree()
     tree = cfg.get(command.full_name, config())
@@ -817,4 +884,5 @@ def _main(*args, **kwargs):
 
 
 def parse_version(verstr):
+    """Parse a version string."""
     return packaging.version.parse(verstr)
