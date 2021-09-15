@@ -236,10 +236,10 @@ Is it necessary to run everything via spin?
 Absolutely not! `spin` intentionally echoes the verbatim commands it
 runs, to make users understand what is going on. It also provides
 activation commands for development environments, to enable users to
-"switch" to an environment provisioned by spin, and run the commands
-manually. Spin plugins try to be well-behaved in this regard, and do
-not silently modify the process environment, to make everything that
-is going on transparent to the user.
+"switch" to an environment provisioned by spin, and run arbitrary
+commands themselves. Spin plugins try to be well-behaved in this
+regard, and do not silently modify the process environment, to make
+everything that is going on transparent to the user.
 
 Why YAML?
 ---------
