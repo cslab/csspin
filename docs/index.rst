@@ -21,7 +21,6 @@ Welcome to spin's documentation!
    schemaref
    todo
 
-
 Indices and tables
 ==================
 

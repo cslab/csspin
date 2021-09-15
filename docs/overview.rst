@@ -42,44 +42,6 @@ As a result, *anyone* will be able to check out *any project*, run
 suite becomes as simple as doing ``spin test`` etc.
 
 
-Most Frequently Asked Questions
-===============================
-
-Why not ...?
-------------
-
-There are *many* tools that do things similar to `spin`, e.g. it is
-customary to have standardized targets like ``clean``, ``all``,
-``dist`` etc. for Unix Makefiles. Alas, we were not aware of tools
-that at the same time:
-
-* Are platform and technology stack independent: spin works with
-  Python, Java, Node and C/C++ projects. Other stacks can be added by
-  creating plugins.
-* Can provision other software.
-* Allow for re-usable definitions, that can be shared between many
-  projects.
-* Don't suck ;-)
-
-Spin explicitly does *not* aim to be a build tool like GNU Make, CMake
-or SCons, nor does it try to replace or improve other tools or tech
-stacks: it is just a unpretentious way to store and re-use the
-knowledge and conventions for installing and running development
-tools.
-
-
-Is it necessary to run everything via spin?
--------------------------------------------
-
-Absolutely not! `spin` intentionally echoes the verbatim commands it
-runs, to make users understand what is going on. It also provides
-activation commands for development environments, to enable users to
-"switch" to an environment provisioned by spin, and run the commands
-manually. Spin plugins try to be well-behaved in this regard, and do
-not silently modify the process environment, to make everything that
-is going on transparent to the user.
-
-
 Spin's Plugin System
 ====================
 
@@ -241,3 +203,54 @@ automatically installs all the tools and sets up the
 This is a basic pattern working with spin: you modify your environment
 by editing :file:`spinfile.yaml` and ask spin to re-provision the
 environment.
+
+
+Most Frequently Asked Questions
+===============================
+
+Why not ...?
+------------
+
+There are *many* tools that do things similar to `spin`, e.g. it is
+customary to have standardized targets like ``clean``, ``all``,
+``dist`` etc. for Unix Makefiles. Alas, we were not aware of tools
+that at the same time:
+
+* Are platform and technology stack independent: spin works with
+  Python, Java, Node and C/C++ projects. Other stacks can be added by
+  creating plugins.
+* Can provision other software.
+* Allow for re-usable definitions, that can be shared between many
+  projects.
+* Don't suck ;-)
+
+Spin explicitly does *not* aim to be a build tool like GNU Make, CMake
+or SCons, nor does it try to replace or improve other tools or tech
+stacks: it is just a unpretentious way to store and re-use the
+knowledge and conventions for installing and running development
+tools.
+
+Is it necessary to run everything via spin?
+-------------------------------------------
+
+Absolutely not! `spin` intentionally echoes the verbatim commands it
+runs, to make users understand what is going on. It also provides
+activation commands for development environments, to enable users to
+"switch" to an environment provisioned by spin, and run the commands
+manually. Spin plugins try to be well-behaved in this regard, and do
+not silently modify the process environment, to make everything that
+is going on transparent to the user.
+
+Why YAML?
+---------
+
+Good question. I wasn't inclined to write a parser for this project,
+and YAML seemed like the choice that sucked least: it has comments, it
+is well supported by text editors, and its data model blends naturally
+with the configuration tree paradigm of spin. YAML has the same
+information model as JSON: supported data types include dictionaries,
+lists and literals (mostly strings).
+
+However, YAML is a complex beast. You can do all kinds of mischievous
+tricks with YAML, and if you mess up the tree, the ``spin`` command
+will most likely fail to run.

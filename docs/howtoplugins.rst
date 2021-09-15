@@ -86,7 +86,8 @@ of module names to import.
 
 `spin` will install installable plugins into ``{spin.plugin_dir}``,
 which is ``{spin.project_root}/.spin/plugins`` unless the plugin path
-was modified by the :option:`--plugin-directory` command line option.
+was modified by the :option:`--plugin-directory <spin
+--plugin-directory>` command line option.
 
 
 Plugin Lifecycle
@@ -129,15 +130,16 @@ Plugin Lifecycle
    the `python` plugin sets ``PYENV_VERSION`` here when using `pyenv`,
    to select the Python version requested by the project.
 
-6. If `spin` is in cleanup mode via the :option:`--cleanup` command
-   line option, each plugins' ``cleanup(cfg)`` function is
-   called. ``cleanup`` is meant to remove stuff from the filesystem
-   that has been provisioned by the plugin before.
+6. If `spin` is in cleanup mode via the :option:`--cleanup <spin
+   --cleanup>` command line option, each plugins' ``cleanup(cfg)``
+   function is called. ``cleanup`` is meant to remove stuff from the
+   filesystem that has been provisioned by the plugin before.
 
-7. If `spin` is in provisioning mode via the :option:`--provision`
-   option, each plugins' ``provision(cfg)`` callback is called. This
-   is meant to create stuff in the filesystem, e.g. the `virtualenv`
-   plugin creates a Python virtual environment here.
+7. If `spin` is in provisioning mode via the :option:`--provision
+   <spin --provision>` option, each plugins' ``provision(cfg)``
+   callback is called. This is meant to create stuff in the
+   filesystem, e.g. the `virtualenv` plugin creates a Python virtual
+   environment here.
 
 8. After all provisioning callbacks have been processed, each plugins'
    ``finalize_provision(cfg)`` callback is invoked. This is meant to
@@ -150,11 +152,13 @@ Plugin Lifecycle
    environment here.
 
 Note,that the cleanup and provisioning steps 6, 7 and 8, will *only*
-be called when the provisioning options :option:`--cleanup` or
-:option:`--provision` have been used.
+be called when the provisioning options :option:`--cleanup <spin
+--cleanup>` or :option:`--provision <spin --provision>` have been
+used.
 
-Using the command line option :option:`--log-level=debug`, `spin` will
-show a detailed log of callback invocations.
+Using the command line option :option:`--log-level=debug <spin
+--log-level>`, `spin` can output a detailed log of callback
+invocations.
 
 Developing Plugins
 ------------------

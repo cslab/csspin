@@ -2,6 +2,201 @@
 Using Spin
 ==========
 
+Spin, or better the spin plugins, do just two things: they provision
+development environments, and run development tools.
+
+.. index::
+   single: environment
+
+An **environment** is a directory, where spin creates language stack
+specific things, e.g. for Python it creates a virtual
+environments. Then, the project's runtime and development dependencies
+and the project itself are installed into the
+environment. Environments must be created explicitly, by passing the
+command line option :option:`--provision <spin --provision>` to
+spin. Spin will refuse to run most tasks before an environment has
+been created.
+
+Environments are generally created *outside* the source tree, in
+:file:`~/.spin`. Spin plugins try hard to place everything that is
+generated while building, testing etc. in the environment directory,
+to keep the source tree clean.
+
+**Tasks** are commands run by spin plugins inside an environment,
+e.g. the Python plugin registers a :program:`python` task, that
+simply runs the Python interpreter.
+
+.. index::
+   single: workflow
+
+**Workflows** are tasks that run *other* tasks. This can be used to
+abstract from specific tools and stacks: the :program:`test` workflow
+runs :program:`pytest`, when the project uses `pytest`_, but
+:program:`nosetests`, when the project uses `nosetests`_. When a
+project also uses Javascript, :program:`test` might also run
+:program:`jest`.
+
+Workflows can also combine tools and other workflows: the
+:program:`preflight` workflow runs tests and lints and checks all
+changed files.
+
+
+Writing ``spinfile.yaml``
+=========================
+
+Spin expects a `YAML <https://yaml.org/>`_ file named
+``spinfile.yaml`` in the top-level folder of the project that lists
+the plugins to use, parameters for task etc. This file is used to
+construct a *configuration tree*, a nested data structure that defines
+the project and the behavior of the task plugins. The configuration
+tree is built from (in this order):
+
+* The default configuration of each plugin and spin itself. E.g. the
+  ``flake8.cmd`` setting has a default value of ``"flake8"`` that is
+  set by the :py:mod:`spin.builtin.flake8`. This setting is used to
+  construct the command line to call ``flake8``.
+* The settings from ``spinfile.yaml`` complement (or override) the
+  defaults.
+* If it exists, user-specific settings are read from
+  ``~/.spin/global.yaml`` and complement the project configuration
+  tree; an example for a user-specific setting is ``devpi.host``, the
+  host name of a devpi package server.
+* Command line settings given by :option:`-p prop=value <spin -p>`
+  override all other settings; a typical use case is to override the
+  version of the Python interpreter using ``spin -p
+  python.use=python3.7``.
+
+
+Each spinfile must have at least :py:data:`minimum-spin`, to state the
+oldest version of spin that can process the file. To do anything
+useful, at least one plugin must be included. Here, we use the Python
+plugin, that also requires a version.
+
+.. code-block:: yaml
+
+   minimum-spin: 0.2.dev
+
+   plugins:
+     - spin.builtin.python
+
+   python:
+     version: 3.9.6
+
+You can visualize the configuration tree for this minimal example by
+using the :option:`--debug <spin --debug>` option (many lines left
+out):
+
+.. code-block:: console
+   :emphasize-lines: 4,9,10,12
+
+   $ spin --debug
+   spin: cd /home/me/myproj
+   spin: set PYENV_VERSION=3.9.6
+   spinfile.yaml:1:                       |minimum-spin: '0.2.dev'
+   ~/spin/src/spin/schema.yaml:19:        |spin:
+   ~/spin/src/spin/cli.py:528:            |  spinfile: Path('/home/me/myproj/spinfile.yaml')
+   ~/spin/src/spin/schema.yaml:36:        |  env_base: '{spin.userprofile}/{spin.project_hash}'
+   ... more lines ...
+   spinfile.yaml:3:                       |plugins:
+					  |  - 'spin.builtin.python'
+   ~/spin/src/spin/builtin/python.py:91:  |python:
+   spinfile.yaml:7:                       |  version: '3.9.6'
+   ... even more lines ...
+
+:option:`--debug <spin --debug>` shows the complete configuration
+tree, and for each setting, where it came from. The highlighted lines
+are from the project spinfile, while the rest are spin's default
+settings.
+
+
+Importing Plugins
+-----------------
+
+Plugins are Python modules, and they are imported by spin using their
+(full) import name. Plugin import names are listed under the
+:py:data:`plugins` key. It is important to note, that plugin modules
+and spin itself are totally separate from your project, even it uses
+Python. Spin's builtin plugins live in the :py:mod:`spin.builtin`
+namespaces. The example below imports four plugins:
+
+.. code-block:: yaml
+
+   plugins:
+     - spin.builtin.python
+     - spin.builtin.docker
+     - spin.builtin.flake8
+     - spin.builtin.pytest
+
+To not repeat yourself, this can be expressed more compact by nesting
+the plugins under some namespaces. The next example is equivalent to
+the previous one:
+
+.. code-block:: yaml
+
+   plugins:
+     - spin.builtin:
+       - python
+       - docker
+       - flake8
+       - pytest
+
+
+Local Plugins
+-------------
+
+Spin supports project-specific plugins local to a project. You can
+specify a list of paths relative to the root directory of the project,
+where spin looks for local plugins using the ``plugin-path`` key:
+
+.. code-block:: yaml
+
+   plugin-path:
+     - plugins/deployment
+     - plugins/distros
+
+   # Assuming pluginA.py is in of those directories, it can now be
+   # loaded
+   plugins:
+     - pluginA
+     - ...
+
+
+Shared Plugins
+--------------
+
+Shared plugins are intended to be used by many different
+projects. They are distributed as Python packages, and can be
+installed from a package server or a Git repository.  Plugin packages
+can be listed under the ``plugin-packages`` key as pip-compatible
+dependency specifiers:
+
+.. code-block:: yaml
+
+   plugin-packages:
+     - someones-spin-plugins~=2.0
+     - git+https://git.example.com/projstds#egg=projstds
+
+Spin will install plugin packages into :file:`<yourproject>/.spin`.
+
+
+Interpolation
+-------------
+
+Settings in the configuration tree can refer to other settings by
+using *string interpolation*: path expressions surrounded by braces
+are replaced by the setting given. E.g. ``{spin.project_root}`` is the
+setting ``project_root`` in the subtree ``spin`` and its semantic is
+to hold the relative path of root directory of the project (i.e. where
+``spinfile.yaml`` is located). Strings are interpolated until they no
+longer contain an expression. Expressions are resolved recursively so
+an interpolation can result in another interpolatable expression, that
+will be interpolated as well, until the process reaches its fix point.
+
+
+=========
+Old Stuff
+=========
+
 Here are examples from spin itself.
 
 * Run spin's test suite:
@@ -128,20 +323,6 @@ plugin comes with its own set of settings and uses settings from other
 plugins and the framework.
 
 
-Why YAML?
----------
-
-Good question. To me it seemed like the choice that sucked least. It
-has comments, it is well supported by text editors, and its data model
-blends naturally with the configuration tree paradigm of spin. YAML
-has the same information model as JSON: supported data types include
-dictionaries, lists and literals (mostly strings).
-
-However, YAML is a complex beast. You can do all kinds of mischievous
-tricks with YAML, and if you mess up the tree, the ``spin`` command
-will most likely fail to run.
-
-
 
 Built-in Plugins
 ----------------
@@ -190,7 +371,7 @@ the following cruises:
        # The docker containers are set up to have 'python' in PATH as the
        # Python version they announce in their name.
        properties:
-         python.use: python
+	 python.use: python
      windows:
        image: registry.contact.de/cp38-win_amd64
        tags: docker windows
@@ -414,7 +595,7 @@ specific settings like in the example below.
    virtualenv:
      pipconf:
        global:
-         extra-index-url: "{devpi.stage}/+simple/"
+	 extra-index-url: "{devpi.stage}/+simple/"
 
    # The 'devpackages' key defines mappings from dependency names to
    # actual pip specs. This can be used like below to install certain
@@ -435,27 +616,32 @@ annotated with the places settings came from. Example:
 
    $ spin --debug test
    spinfile.yaml:1:     plugins:
-                          - 'flake8'
-                          - 'pytest'
-                          - 'devpi'
-                          - 'git'
-                          - 'radon'
+			  - 'flake8'
+			  - 'pytest'
+			  - 'devpi'
+			  - 'git'
+			  - 'radon'
    spinfile.yaml:10:    cruise:
    spinfile.yaml:11:      @docker:
    spinfile.yaml:14:        opts:
-		              - '-p'
-                              - 'python.use=python'
+			      - '-p'
+			      - 'python.use=python'
    src/spin/cli.py:38:      executor: <class 'spin.cruise.DockerExecutor'>
    spinfile.yaml:15:      cp27-win:
    spinfile.yaml:16:        banner: 'Manylinux Container with Python 2.7 on Windows'
    spinfile.yaml:17:        image: 'registry.contact.de/cp27m-win_amd64'
    spinfile.yaml:18:        tags:
-                              - 'docker'
-                              - 'windows'
+			      - 'docker'
+			      - 'windows'
    spinfile.yaml:14:        opts:
-		              - '-p'
-                              - 'python.use=python'
+			      - '-p'
+			      - 'python.use=python'
    src/spin/cli.py:38:      executor: <class 'spin.cruise.DockerExecutor'>
    ~/.spin/global.yaml:8:   context: 'winsrv2019'
    ~/.spin/global.yaml:9:   volprefix: 'c:'
    ...
+
+.. hyperlinks
+
+.. _pytest: https://pytest.org/
+.. _nosetests: https://nose.readthedocs.io/
