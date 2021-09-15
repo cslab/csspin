@@ -436,9 +436,12 @@ def cli(
 
     mkdir("{spin.userprofile}")
 
-    # Debug aid: dump config tree for --debug
+    # Debug aid: dump config tree when given --debug; if nothing else
+    # is requested ... that's it!
     if debug:
         print(tree.tree_dump(cfg))
+        if not ctx.args:
+            return
 
     if not cruiseopt:
         # When not cruising, and we have any of the provisioning
