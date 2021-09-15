@@ -15,13 +15,14 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
+import importlib.metadata
 
 project = "spin"
 copyright = "2021, Frank Patz-Brockmann"
 author = "Frank Patz-Brockmann"
 
 # The full version, including alpha/beta/rc tags
-release = "0.2"
+release = importlib.metadata.version("spin")
 
 
 # -- General configuration ---------------------------------------------------
