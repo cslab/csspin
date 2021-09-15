@@ -108,6 +108,10 @@ tree, and for each setting, where it came from. The highlighted lines
 are from the project spinfile, while the rest are spin's default
 settings.
 
+There are dozens of settings defined by the spin framework, and each
+plugin comes with its own set of settings and uses settings from other
+plugins and the framework.
+
 
 Importing Plugins
 -----------------
@@ -192,10 +196,107 @@ longer contain an expression. Expressions are resolved recursively so
 an interpolation can result in another interpolatable expression, that
 will be interpolated as well, until the process reaches its fix point.
 
+In YAML, braces are syntactical meta-characters that indicate a
+literal dictionary (like in JSON, of which YAML is
+super-set). Settings using string interpolation must therefore be
+quoted. Example:
 
-=========
-Old Stuff
-=========
+.. code-block:: yaml
+
+   devpi:
+      user: frank
+      url: http://haskell:4033
+      stage: "{devpi.url}/{devpi.user}/staging"
+
+
+Extra Tasks
+-----------
+
+If a project needs a few extra tasks, those can be defined explicitly
+in spinfile using ``extra-tasks``: for each new task a key is added,
+and each task can define the following sub-keys:
+
+* ``script``: a list of shell commands
+* ``env``: a dictionary of environment variables, that should be set
+  when runing the shell commands
+* ``spin``: a list of spin commands (without ``spin``)
+* ``help``: help text to display
+
+The following example adds ``pipx-install`` and ``all`` as tasks to
+spin:
+
+.. code-block:: yaml
+
+   extra-tasks:
+     pipx-install:
+       env:
+         USE_EMOJI: no
+       script:
+         - pipx install --force --editable .
+       help: |
+         This installs spin via pipx
+
+     all:
+       spin:
+         - build
+	 - tests
+	 - docs
+	 - package
+	 - upload
+
+
+Dependencies
+------------
+
+Spin has a *very* simple built-in facility for automatically
+generating target files depending on source files -- similar to Unix
+Make, although *much* more primitive. Don't use this to simulate a
+real build tool!
+
+Here are two examples from the spin project: ``docker build`` needs
+:file:`requirements.txt`. The ``needs`` key defines the required
+inputs for a command:
+
+.. code-block:: yaml
+
+   docker build:
+     needs: requirements.txt
+
+``needs`` is either a filename or a list of filenames.
+
+The ``howtobuild`` key defines a script for creating the required
+inputs. ``sources`` is a list of source files. If a the target doesn't
+exist or any of the source files is newer, the shell commands under
+``script`` are executed:
+
+.. code-block:: yaml
+
+   howtobuild:
+     requirements.txt:
+       sources: [setup.cfg, setup.py]
+       script:
+         - pip-compile --generate-hashes --reuse-hashes
+
+As another example, the reference documentation for the spinfile
+schema is generated from a schema file by a spin task. The resulting
+:file:`docs/schemaref.rst` is updated whenever :program:`spin docs` is
+executed, and :file:`src/spin/schema.yaml` is more recent than
+:file:`schemaref.rst`:
+
+.. code-block:: yaml
+
+   docs:
+     needs: docs/schemaref.rst
+
+   howtobuild:
+     docs/schemaref.rst:
+       sources: [src/spin/schema.yaml]
+       spin:
+         - schemadoc -o docs/schemaref.rst
+
+
+Old Examples
+============
 
 Here are examples from spin itself.
 
@@ -273,56 +374,6 @@ A plugin can do one or more of the following:
   Python release
 
 
-The Configuration Tree
-----------------------
-
-Spin expects a `YAML <https://yaml.org/>`_ file named
-``spinfile.yaml`` in the top-level folder of the project that declares
-tasks, dependencies etc. This file is used to construct a
-*configuration tree*, a nested data structure that defines the project
-and the behavior of the task plugins. The configuration tree is built
-from (in this order):
-
-* the default configuration of each plugin and spin itself. E.g. the
-  ``flake8.cmd`` setting is ``"flake8"``. This setting is used to
-  construct the command line to call ``flake8``.
-* the settings from ``spinfile.yaml`` complement (or override) the
-  defaults
-* if it exists, user-specific settings are read from
-  ``~/.spin/global.yaml`` and complement the project configuration
-  tree; an example for a user-specific setting is ``devpi.stage``, the
-  staging index for uploading packages
-* command line settings given by ``-p prop=value`` override all other
-  settings; a typical use case is setting the python interpreter to
-  use with ``spin -p python.use=python3.7`` etc.
-
-Settings in the configuration tree can refer to other settings by
-using *string interpolation*: path expressions surrounded by braces
-are replaced by the setting given. E.g. ``{spin.project_root}`` is the
-setting ``project_root`` in the subtree ``spin`` and its semantic is
-to hold the relative path of root directory of the project (i.e. where
-``spinfile.yaml`` is located). Strings are interpolated until they no
-longer contain an expression. Expressions are resolved recursively so
-an interpolation can result in another interpolatable expression, that
-will be interpolated as well, until the process reaches its fix point.
-
-In YAML, braces are syntactical meta-characters that indicate a
-literal dictionary (like in JSON, of which YAML is
-super-set). Settings using string interpolation must therefore be
-quoted. Example:
-
-.. code-block:: yaml
-
-   devpi:
-      user: frank
-      url: http://haskell:4033
-      stage: "{devpi.url}/{devpi.user}/staging"
-
-There are dozens of settings defined by the spin framework, and each
-plugin comes with its own set of settings and uses settings from other
-plugins and the framework.
-
-
 
 Built-in Plugins
 ----------------
@@ -343,20 +394,9 @@ Spin comes with a set of built-in plugins:
 * **test** -- provide subcommand ``tests`` that runs automatic tests
 
 
-Workflows
----------
-
-Workflows are simply plugins that trigger tasks from other
-plugins. **lint** is a simple workflow that launches all linters set
-for the project. Another workflow is **preflight** that runs tests and
-lint checks.
-
-We plan to add things similar (and better) than those in the driver
-``Makefile`` currently used for `cs.platform` (**to be completed**).
-
 
 Cruising
---------
+========
 
 Spin supports running itself in one or many docker containers (and
 maybe elsewhere in the future). This is called *cruising*, and it is
@@ -426,126 +466,6 @@ A special selector is ``@all``, selecting all cruises. In spin's case
 this means running the requested task for all supported platforms.
 
 
-Example
-=======
-
-The following shows an invocation of ``spin lint`` when nothing has
-been provisioned yet.
-
-.. code-block:: console
-
-   $ spin lint --all
-   spin: cd /Users/frank/Projects/spin
-
-
-The project requires Python 3.8.1 which is provisioned by the
-**python** plugin using ``python-build`` from the ``pyenv``
-distribution (on Windows **python** would use ``nuget``).
-
-.. code-block:: console
-
-   spin: Installing Python 3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
-   spin: set PYTHON_BUILD_CACHE_PATH=/Users/frank/.spin/cache
-   spin: /Users/frank/.spin/pyenv/plugins/python-build/bin/python-build 3.8.1 /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
-   python-build: use openssl@1.1 from homebrew
-   python-build: use readline from homebrew
-   Installing Python-3.8.1...
-   python-build: use readline from homebrew
-   python-build: use zlib from xcode sdk
-   Installed Python-3.8.1 to /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1
-   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install -q --upgrade pip wheel
-   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python -m pip install virtualenv
-
-
-Next, the **virtualenv** plugin creates a virtual environment in the
-project directory and installs all packages required by the project
-(via the ``requirements`` key in ``spinfile.yaml``), or by the plugins
-used.
-
-.. code-block:: console
-
-   spin: /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
-	 -m virtualenv -q \
-	 -p /Users/frank/.spin/macosx_10_15_x86_64/python/3.8.1/bin/python \
-	 ./cp38-macosx_10_15_x86_64
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install radon
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-cov
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install pytest-tldr
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-fixme
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-import-order
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-comprehensions
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-copyright
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-bugbear
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install devpi-client
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install keyring
-
-If the project has a ``setup.py`` it is installed into the virtual
-environment in development mode:
-
-.. code-block:: console
-
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install -e .
-
-
-Finally, ``spin`` modifies ``PATH`` to include the virtual environment
-and launches all linters declared for this project (``flake8`` and
-``radon`` in this case).
-
-
-.. code-block:: console
-
-   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
-   spin: flake8 ./src ./tests
-   spin: radon mi -n B ./src ./tests
-
-
-Invoking the same command a second time will naturally not
-re-provision everything, but simply launch the linters:
-
-.. code-block:: console
-
-   $ spin lint --all
-   spin: cd /Users/frank/Projects/spin
-   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
-   spin: flake8 ./src ./tests
-   spin: radon mi -n B ./src ./tests
-
-Note that dependencies are taken care off automatically. Adding
-
-.. code-block:: yaml
-
-   requirements:
-      - flake8-docstrings
-
-to ``spinfile.yaml`` will automatically add the requested package to
-the virtual environment:
-
-.. code-block:: console
-
-   $ spin lint --all
-   spin: cd /Users/frank/Projects/spin
-   spin: ./cp38-macosx_10_15_x86_64/bin/pip -q install flake8-docstrings
-   spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
-   spin: flake8 ./src ./tests
-   ./src/spin/cruise.py:15:1: D103 Missing docstring in public function
-   ./src/spin/cruise.py:25:1: D103 Missing docstring in public function
-   ./src/spin/cruise.py:39:1: D103 Missing docstring in public function
-   ... and so on ...
-
-
-Simply removing the ``requirements`` setting from ``spinfile.yaml``
-will not remove that package, though. We can either simply remove that
-environment, or use ``spin exec`` to run ``pip`` inside the
-environment:
-
-.. code-block:: console
-
-   $ spin exec pip uninstall flake8-docstrings
-
-
-
 Reference
 =========
 
@@ -557,10 +477,6 @@ Where files go
 
 * ``<project_root>/.spin`` -- plugin packages and project-specific
   settings
-
-* ``<project_root>/<venv>`` -- platform/ABI specific virtual
-  environment (provisioned by the built-in plugin *virtualenv*)
-
 
 
 Sample ``global.yaml``
@@ -604,42 +520,6 @@ specific settings like in the example below.
    devpackages:
      cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
 
-
-Understanding the Configuration Tree
-====================================
-
-The ``--debug`` option makes ``spin`` dump the configuration tree
-annotated with the places settings came from. Example:
-
-
-.. code-block:: console
-
-   $ spin --debug test
-   spinfile.yaml:1:     plugins:
-			  - 'flake8'
-			  - 'pytest'
-			  - 'devpi'
-			  - 'git'
-			  - 'radon'
-   spinfile.yaml:10:    cruise:
-   spinfile.yaml:11:      @docker:
-   spinfile.yaml:14:        opts:
-			      - '-p'
-			      - 'python.use=python'
-   src/spin/cli.py:38:      executor: <class 'spin.cruise.DockerExecutor'>
-   spinfile.yaml:15:      cp27-win:
-   spinfile.yaml:16:        banner: 'Manylinux Container with Python 2.7 on Windows'
-   spinfile.yaml:17:        image: 'registry.contact.de/cp27m-win_amd64'
-   spinfile.yaml:18:        tags:
-			      - 'docker'
-			      - 'windows'
-   spinfile.yaml:14:        opts:
-			      - '-p'
-			      - 'python.use=python'
-   src/spin/cli.py:38:      executor: <class 'spin.cruise.DockerExecutor'>
-   ~/.spin/global.yaml:8:   context: 'winsrv2019'
-   ~/.spin/global.yaml:9:   volprefix: 'c:'
-   ...
 
 .. hyperlinks
 
