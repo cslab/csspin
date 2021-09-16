@@ -505,7 +505,8 @@ def interpolate1(literal, *extra_dicts):
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
-        literal = eval("rf'''%s'''" % literal, {}, where_to_look)  # noqa
+        literal = eval("rf''' %s '''" % literal, {}, where_to_look)  # noqa
+        literal = literal[1:-1]
         if previous == literal:
             break
     return literal
@@ -798,35 +799,48 @@ def run_spin(script):
             pass
 
 
+def get_sources(tree):
+    sources = tree.get("sources", [])
+    if not isinstance(sources, list):
+        sources = [sources]
+    return sources
+
+
+def build_target(cfg, target, phony):
+    info(f"target '{target}'{' (phony)' if phony else ''}")
+    build_rules = cfg.get("build-rules", config())
+    target_def = build_rules.get(target, None)
+    if target_def is None:
+        if not exists(target) and not phony:
+            die(
+                f"Sorry, I don't know how to produce '{target}'. You may want to"
+                " add a rule to your spinfile.yaml in the 'build-rules'"
+                " section."
+            )
+        return
+    sources = get_sources(target_def)
+    # First, build preconditions
+    if sources:
+        for source in sources:
+            build_target(cfg, source, False)
+    if not phony:
+        if not is_up_to_date(target, sources):
+            info(f"build '{target}'")
+            script = target_def.get("script", [])
+            spinscript = target_def.get("spin", [])
+            run_script(script)
+            run_spin(spinscript)
+        else:
+            info(f"{target} is up to date")
+
+
 def ensure(command):
-    # Check 'command_name' for a 'needs' attribute, and make sure to
-    # produce it. This is used internally and intentionally
-    # undocumented.
+    # Check 'command_name' for dependencies declared under
+    # "build-rules", and make sure to produce it. This is used
+    # internally and intentionally undocumented.
     logging.debug("checking preconditions for %s", command.__dict__)
     cfg = get_tree()
-    tree = cfg.get(command.full_name, config())
-    needs = tree.get("needs", [])
-    howtobuild = cfg.get("howtobuild", config())
-    if needs:
-        if not isinstance(needs, list):
-            needs = [needs]
-        for need in needs:
-            rule = howtobuild.get(need, config())
-            sources = rule.get("sources", [])
-            if not is_up_to_date(need, sources):
-                info(f"provide {need}")
-                script = rule.get("script", [])
-                spinscript = rule.get("spin", [])
-                if not (script or spinscript):
-                    die(
-                        f"Sorry, I don't know how to produce '{need}'. You may want to"
-                        " add a rule to your spinfile.yaml in the 'howtobuild'"
-                        " section."
-                    )
-                run_script(script)
-                run_spin(spinscript)
-            else:
-                info(f"{need} is up to date")
+    build_target(cfg, f"task {command.full_name}", phony=True)
 
 
 def invoke(hook, *args, **kwargs):

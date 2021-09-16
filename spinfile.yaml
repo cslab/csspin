@@ -43,8 +43,7 @@ extra-tasks:
     help: |
       This installs spin via pipx
 
-docker build:
-  needs: requirements.txt
+
 docker:
   images:
     - dockerfile: docker/spin-base.dockerfile
@@ -52,10 +51,11 @@ docker:
     #- dockerfile: docker/spin-dev.dockerfile
     #  tag: registry.contact.de/spin-dev
 
-docs:
-  needs: docs/schemaref.rst
-
-howtobuild:
+build-rules:
+  task docker build:
+    sources: requirements.txt
+  task docs:
+    sources: docs/schemaref.rst
   docs/schemaref.rst:
     sources: [src/spin/schema.yaml]
     spin:
