@@ -696,7 +696,7 @@ def task(*args, **kwargs):
             task_object
         )
         if noenv:
-            get_tree().spin._global_commands[task_object.name] = True
+            cli.register_noenv(task_object.name)
         if group != cli.commands:
             task_object.full_name = " ".join((group.name, task_object.name))
         else:
@@ -761,7 +761,7 @@ def group(*args, **kwargs):
         kwargs["cls"] = cli.GroupWithAliases
         grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))
         if noenv:
-            get_tree().spin._global_commands[grp.name] = True
+            cli.register_noenv(grp.name)
         grp.task = subtask
         return grp
 

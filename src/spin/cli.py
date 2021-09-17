@@ -66,7 +66,6 @@ DEFAULTS = config(
         spinfile="spinfile.yaml",
         userprofile=N(os.path.expanduser("~/.spin")),
         extra_index=None,
-        _global_commands=config(),
     ),
     quiet=False,
     verbose=False,
@@ -332,6 +331,14 @@ class GroupWithAliases(click.Group):
         return cmd
 
 
+NOENV_COMMANDS = set()
+
+
+def register_noenv(cmdname):
+    global NOENV_COMMANDS
+    NOENV_COMMANDS.add(cmdname)
+
+
 _nested = False
 
 
@@ -344,8 +351,7 @@ def commands(ctx, **kwargs):
     global _nested
     cfg = ctx.obj = get_tree()
     if not _nested:
-        skip_init = cfg.spin._global_commands.get(ctx.invoked_subcommand, False)
-        if not skip_init:
+        if not ctx.invoked_subcommand in NOENV_COMMANDS:
             toporun(ctx.obj, "init")
         _nested = True
 
