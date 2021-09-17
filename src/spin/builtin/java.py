@@ -9,7 +9,11 @@ import os
 from spin import config, die, info, interpolate1, memoizer, mkdir, setenv
 
 defaults = config(
-    version="16", installdir="{spin.userprofile}/{platform.tag}", java_home=None
+    # FIXME: we should not set a default for the JDK version, but make
+    # this a required property to be set in spinfile
+    version="16",
+    installdir="{spin.userprofile}/{platform.tag}",
+    java_home=None,
 )
 
 N = os.path.normcase
