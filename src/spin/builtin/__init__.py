@@ -17,6 +17,7 @@ import entrypoints
 from spin import (
     EXPORTS,
     argument,
+    die,
     group,
     interpolate1,
     memoizer,
@@ -152,7 +153,10 @@ def merge_dicts(a, b):
 
 
 @task("system-provision", noenv=True)
-def do_system_provisioning(cfg):
+def do_system_provisioning(
+    cfg,
+    distroargs: argument(nargs=-1),
+):
     """Provision system dependencies for the host.
 
     This will output a script on stdout, that uses OS package managers
@@ -162,9 +166,17 @@ def do_system_provisioning(cfg):
     or any subcommands.
 
     """
-    dinfo = distro.info()
-    distroname = dinfo["id"]
-    distroversion = parse_version(dinfo["version"])
+    if distroargs:
+        distroname = distroargs[0]
+        if len(distroargs) > 1:
+            distroversion = parse_version(distroargs[1])
+        else:
+            distroversion = parse_version("")
+    else:
+        dinfo = distro.info()
+        distroname = dinfo["id"]
+        distroversion = parse_version(dinfo["version"])
+
     out = {}
     for pi in cfg.topo_plugins:
         supported = True
