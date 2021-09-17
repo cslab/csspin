@@ -56,7 +56,7 @@ spin:
       default: "{spin.userprofile}/plugins"
     plugin_dir:
       type: path internal
-      default: "{spin.spin_dir}/plugins"
+      default: "{spin.env_base}/plugins"
     plugin_packages:
       type: list
     cruise_spin:

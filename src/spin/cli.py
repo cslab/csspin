@@ -24,7 +24,6 @@ import site
 import sys
 
 import click
-import distro
 import entrypoints
 import packaging.version
 from packaging import tags
@@ -44,7 +43,6 @@ from . import (
     interpolate1,
     memoizer,
     mkdir,
-    parse_version,
     readtext,
     readyaml,
     rmtree,
@@ -68,6 +66,7 @@ DEFAULTS = config(
         spinfile="spinfile.yaml",
         userprofile=N(os.path.expanduser("~/.spin")),
         extra_index=None,
+        _global_commands=config(),
     ),
     quiet=False,
     verbose=False,
@@ -220,18 +219,6 @@ def base_options(fn):
             ),
         ),
         click.option(
-            "--plugin-directory",
-            "-P",
-            "plugin_dir",
-            type=click.Path(file_okay=False, exists=False),
-            help=(
-                "Alternative directory where spin installs and "
-                "searches plugin packages. The default is "
-                "{project_root}/.spin/plugins. This option overrides "
-                "the 'spin.plugin_dir' setting."
-            ),
-        ),
-        click.option(
             "--log-level",
             "log_level",
             type=str,
@@ -313,18 +300,6 @@ def base_options(fn):
             ),
         ),
         click.option(
-            "--system-provision",
-            is_flag=True,
-            default=False,
-            help=(
-                "Provision system dependencies for the host. This will output a script"
-                " on stdout, that uses OS package managers like apt, yum etc. to"
-                " install system-level dependencies for the project. The output can for"
-                " example be piped into a sudo shell. This flag can not be combined"
-                " with --cleanup, --provision or any subcommands."
-            ),
-        ),
-        click.option(
             "--cleanup",
             is_flag=True,
             default=False,
@@ -367,9 +342,11 @@ _nested = False
 @click.pass_context
 def commands(ctx, **kwargs):
     global _nested
-    ctx.obj = get_tree()
+    cfg = ctx.obj = get_tree()
     if not _nested:
-        toporun(ctx.obj, "init")
+        skip_init = cfg.spin._global_commands.get(ctx.invoked_subcommand, False)
+        if not skip_init:
+            toporun(ctx.obj, "init")
         _nested = True
 
 
@@ -392,7 +369,6 @@ def cli(
     version,
     cwd,
     spinfile,
-    plugin_dir,
     quiet,
     verbose,
     log_level,
@@ -402,7 +378,6 @@ def cli(
     properties,
     provision,
     cleanup,
-    system_provision,
 ):
     # Set up logging
     if log_level:
@@ -413,10 +388,6 @@ def cli(
     # We want to honor the 'quiet' and 'verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
     # code uses 'echo' and/or 'log'.
-    if system_provision:
-        # --system-provision implies -q, otherwise the generated
-        # --script would be spoiled.
-        quiet = True
     get_tree().quiet = quiet
     get_tree().verbose = verbose
 
@@ -430,8 +401,8 @@ def cli(
     else:
         spinfile = find_spinfile(spinfile)
 
-    cfg = load_spinfile(
-        spinfile, cwd, quiet, verbose, cleanup, provision, plugin_dir, properties
+    cfg = load_config_tree(
+        spinfile, cwd, quiet, verbose, cleanup, provision, properties
     )
 
     mkdir("{spin.userprofile}")
@@ -446,9 +417,6 @@ def cli(
     if not cruiseopt:
         # When not cruising, and we have any of the provisioning
         # flags, do provisioning now.
-        if system_provision:
-            do_system_provisioning(cfg)
-            return
         if cleanup:
             toporun(cfg, "cleanup", reverse=True)
             if not provision:
@@ -488,14 +456,13 @@ def yield_plugin_import_specs(cfg):
             yield item
 
 
-def load_spinfile(
+def load_config_tree(
     spinfile,
     cwd=False,
     quiet=False,
     verbose=False,
     cleanup=False,
     provision=False,
-    plugin_dir=None,
     properties=(),
 ):
     logging.info(f"Loading {spinfile}")
@@ -559,8 +526,6 @@ def load_spinfile(
             )
 
         # Setup plugin_dir, where spin installs plugin packages.
-        if plugin_dir:
-            cfg.spin.plugin_dir = plugin_dir
         cfg.spin.plugin_dir = interpolate1(cfg.spin.plugin_dir)
         if not os.path.isabs(cfg.spin.plugin_dir):
             cfg.spin.plugin_dir = os.path.abspath(
@@ -585,6 +550,7 @@ def load_spinfile(
     # objects.
     cfg.loaded = config()
     logging.debug("loading project plugins:")
+    load_plugin(cfg, "spin.builtin")
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec)
 
@@ -677,36 +643,3 @@ def install_plugin_packages(cfg):
         writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
 
     site.addsitedir(cfg.spin.plugin_dir)
-
-
-def merge_dicts(a, b):
-    for k, v in b.items():
-        if k in a:
-            a[k] = " ".join((a[k], v))
-        else:
-            a[k] = v
-
-
-def do_system_provisioning(cfg):
-    dinfo = distro.info()
-    distroname = dinfo["id"]
-    distroversion = parse_version(dinfo["version"])
-    out = {}
-    for pi in cfg.topo_plugins:
-        fn = getattr(cfg.loaded[pi], "system_requirements", lambda cfg: [])
-        reqs = fn(cfg)
-        for check, items in reqs:
-            if check(distroname, distroversion):
-                merge_dicts(out, items)
-
-    for check, items in cfg.get("system-requirements", {}).items():
-        check = eval(f"lambda distro, version: {check}")
-        if check(distroname, distroversion):
-            merge_dicts(out, items)
-
-    for syscmd in ("apt-get", "yum", "dnf"):
-        package_list = out.get(syscmd, "")
-        if package_list:
-            if syscmd == "apt-get":
-                print("apt-get update")
-            print(f"{syscmd} install -y {package_list}")

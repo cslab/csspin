@@ -639,6 +639,9 @@ def task(*args, **kwargs):
         often used for tasks that launch a specific command line tool
         to enable arbitrary arguments
 
+      * ``noenv`` registers the command as a global command, that can
+        run without a provisioned environment
+
     All other arguments to the task must be annotated with either
     `option` or `argument`. They both support the same arguments as
     the corresponding decorators `click.option` and `click.argument`.
@@ -687,10 +690,13 @@ def task(*args, **kwargs):
             task_object = param.annotation(pn)(task_object)
         hook = kwargs.pop("when", None)
         aliases = kwargs.pop("aliases", [])
+        noenv = kwargs.pop("noenv", False)
         group = kwargs.pop("group", group)
         task_object = group.command(*args, **kwargs, context_settings=context_settings)(
             task_object
         )
+        if noenv:
+            get_tree().spin._global_commands[task_object.name] = True
         if group != cli.commands:
             task_object.full_name = " ".join((group.name, task_object.name))
         else:
@@ -751,8 +757,11 @@ def group(*args, **kwargs):
 
             return task_decorator
 
+        noenv = kwargs.pop("noenv", False)
         kwargs["cls"] = cli.GroupWithAliases
         grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))
+        if noenv:
+            get_tree().spin._global_commands[grp.name] = True
         grp.task = subtask
         return grp
 
@@ -838,7 +847,7 @@ def ensure(command):
     # Check 'command_name' for dependencies declared under
     # "build-rules", and make sure to produce it. This is used
     # internally and intentionally undocumented.
-    logging.debug("checking preconditions for %s", command.__dict__)
+    logging.debug("checking preconditions for %s", command)
     cfg = get_tree()
     build_target(cfg, f"task {command.full_name}", phony=True)
 
