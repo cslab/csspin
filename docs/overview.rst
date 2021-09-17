@@ -201,7 +201,7 @@ automatically installs all the tools and sets up the
    pre-commit installed at .git/hooks/pre-commit
 
 This is a basic pattern working with spin: you modify your environment
-by editing :file:`spinfile.yaml` and ask spin to re-provision the
+by editing :file:`spinfile.yaml` and let spin re-provision the
 environment.
 
 

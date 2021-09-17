@@ -14,16 +14,6 @@ lower-level plugins are pulled in automatically. For example, the
 `pytest` plugin naturally requires the `python` plugin, so it is
 unnecessary to also include `python` (it won't hurt either, though).
 
-**Built-in plugins** are simply listed by their name. To use the
-`python` plugin in a project, add its name to the ``plugins`` list:
-
-.. code-block:: yaml
-
-   # spinfile.yaml
-   plugins:
-     - python
-
-
 **Project-local plugins** are modules in some subdirectory of the
 project. Plugin directories can be declared using ``plugin-path``.
 Local plugins can then by used adding their name prefixed with a
@@ -50,44 +40,13 @@ Local plugins can then by used adding their name prefixed with a
      - spinplugins
 
    plugins:
-     - .myplugin
+     - myplugin
 
-
-**Installable plugins** are declared in ``plugins`` as a YAML
-dictionary, where some pip requirement is the key, followed by a list
-of module names to import.
-
-
-.. todo:: nonsense
-
-   FIXME: this is nonsense. We should have a *separate* key to list
-   plugin install instructions.
-
-.. todo:: plugin subtrees
-
-   FIXME: also, there is a bug in cli.py: plugin subtrees must not use
-   the basename of the plugin, but the full, dotted name (except for
-   builtin plugins).
-
-.. code-block:: yaml
-
-   # spinfile.yaml
-
-   plugins:
-     # Installing from a git repo; note the colon ':', without it this
-     # would not be recognized as a YAML key. The colon will be
-     # stripped from the requirement.
-     - git+https://github.com/acme/best-practices#egg=acme-best-practices:
-       - acme_best_practices
-
-     # A package name, possibly with a version constraint.
-     - spin-jira>=1.0:
-       spin_jira.issues
-
-`spin` will install installable plugins into ``{spin.plugin_dir}``,
-which is ``{spin.project_root}/.spin/plugins`` unless the plugin path
-was modified by the :option:`--plugin-directory <spin
---plugin-directory>` command line option.
+**Installable plugins** are declared in ``plugin-packages``. `spin`
+will install installable plugins into ``{spin.plugin_dir}``, which is
+``{spin.project_root}/.spin/plugins`` unless the plugin path was
+modified by the :option:`--plugin-directory <spin --plugin-directory>`
+command line option.
 
 
 Plugin Lifecycle
@@ -256,26 +215,14 @@ to print our message:
 Plugin API
 ----------
 
-The API for plugin development is defined in ``spin`` (sorry,
-documentation pretty incomplete right now). The general idea is to
-keep plugin scripts short and tidy, similar to shell scripts of
-commands in a Makefile. Thus, ``spin`` provides simple, short-named
-Python function to do things like manipulating files and running
-programs.
+The API for plugin development is defined in :py:mod:`spin`. The
+general idea is to keep plugin scripts short and tidy, similar to
+shell scripts of commands in a Makefile. Thus, :py:mod:`spin` provides
+simple, short-named Python function to do things like manipulating
+files and running programs.
 
 Arguments to spin APIs are automatically interpolated against
 the configuration tree.
-
-
-Others (not yet really documented):
-
-* ``persist()`` and ``unpersist()`` read and write Python objects
-  from/to the file system
-* ``download()`` downloads something to disk
-* ``get_tree()`` gets the global configuration tree (which may be
-  necessary sometimes when it is not passed into a plugin hook by spin
-  automatically)
-
 
 Here is a simple example of using the spin API:
 
