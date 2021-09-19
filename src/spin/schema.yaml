@@ -53,17 +53,14 @@ spin:
       default: "{SPIN_CONFIG}/global.yaml"
     spin_global_plugins:
       type: path internal
-      default: "{SPIN_CONFIG}/plugins"
+      default: "{SPIN_CACHE}/plugins"
     plugin_dir:
       type: path internal
       default: "{spin.env_base}/plugins"
-    plugin_packages:
-      type: list
     cruise_spin:
       type: path
       default: spin
-    userprofile:
-      type: path internal
+
   # disallow plugins or user setting to write to the 'spin' context to
   # keep sanity
   unknown-properties: false
@@ -79,22 +76,47 @@ python:
 
 extra-tasks:
   type: object
+  help: |
+    `extra-tasks` maps task names to task definitions, where task
+    definitions support ``env`` and ``script`` keys.
 
 quiet:
   type: boolean
+  default: false
+  help: |
+    Spin normally echos the verbatim commands it runs. When `quiet` is
+    set, this output is suppressed. Additionally, some plugins use
+    `quiet` to suppress more output of the tools they run.
 
 verbose:
   type: boolean
   default: false
+  help: |
+    When `verbose` is on, spin outputs additional information, like
+    the time spent running tasks. Some plugins use `verbose` to make
+    tools more chatty.
 
 hooks:
   type: object
+  help: |
+    A dictionary mapping workflow names to lists of commands. This is
+    automatically set up by the `when` argument to
+    :py:func:`spin.task`.
 
 cruise:
   type: object
 
 plugins:
   type: list
+  help: |
+    The list of plugins to import.
+
+plugin-packages:
+  type: list
+  help: |
+    A list of plugin packages to install. Supports the same
+    requirements specifiers as pip, including URLs, local file names
+    and PEP 440 specifiers.
 
 platform:
   type: object
