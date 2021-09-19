@@ -12,7 +12,7 @@ defaults = config(
     # FIXME: we should not set a default for the JDK version, but make
     # this a required property to be set in spinfile
     version="16",
-    installdir="{spin.userprofile}/{platform.tag}",
+    installdir="{spin.cache}/{platform.tag}",
     java_home=None,
 )
 

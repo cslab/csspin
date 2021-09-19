@@ -64,7 +64,8 @@ N = os.path.normcase
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
-        userprofile=N(os.path.expanduser("~/.spin")),
+        cache=N("{SPIN_CACHE}"),
+        config=N("{SPIN_CONFIG}"),
         extra_index=None,
     ),
     quiet=False,
@@ -334,6 +335,8 @@ class GroupWithAliases(click.Group):
 NOENV_COMMANDS = set()
 
 
+# FIXME: now that we have 'noenv', all non-'noenv' commands should be
+# protected by simply checking whether env_base exists.
 def register_noenv(cmdname):
     global NOENV_COMMANDS
     NOENV_COMMANDS.add(cmdname)
@@ -349,9 +352,9 @@ _nested = False
 @click.pass_context
 def commands(ctx, **kwargs):
     global _nested
-    cfg = ctx.obj = get_tree()
+    ctx.obj = get_tree()
     if not _nested:
-        if not ctx.invoked_subcommand in NOENV_COMMANDS:
+        if ctx.invoked_subcommand not in NOENV_COMMANDS:
             toporun(ctx.obj, "init")
         _nested = True
 
@@ -411,7 +414,7 @@ def cli(
         spinfile, cwd, quiet, verbose, cleanup, provision, properties
     )
 
-    mkdir("{spin.userprofile}")
+    mkdir("{spin.cache}")
 
     # Debug aid: dump config tree when given --debug; if nothing else
     # is requested ... that's it!

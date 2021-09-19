@@ -25,7 +25,7 @@ class BaseDescriptor:
         return value
 
     def get_default(self, defaultdefault=None):
-        return getattr(self, "default", defaultdefault)
+        return self.coerce(getattr(self, "default", defaultdefault))
 
 
 DESCRIPTOR_REGISTRY = {}

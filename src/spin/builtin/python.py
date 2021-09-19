@@ -69,6 +69,7 @@ import re
 import sys
 
 from spin import (
+    Path,
     cd,
     config,
     die,
@@ -85,22 +86,22 @@ from spin import (
     warn,
 )
 
-N = os.path.normcase
+N = Path
 
 
 defaults = config(
     pyenv=config(
         url="https://github.com/pyenv/pyenv.git",
-        path=N("{spin.userprofile}/pyenv"),
-        cache=N("{spin.userprofile}/cache"),
+        path=N("{spin.cache}/pyenv"),
+        cache=N("{spin.cache}/cache"),
         python_build=(N("{python.pyenv.path}/plugins/python-build/bin/python-build")),
     ),
     nuget=config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
-        exe=N("{spin.userprofile}/nuget.exe"),
+        exe=N("{spin.cache}/nuget.exe"),
     ),
     version=None,
-    plat_dir=N("{spin.userprofile}/{platform.tag}"),
+    plat_dir=N("{spin.cache}/{platform.tag}"),
     inst_dir=(
         N("{python.plat_dir}/python/{python.version}")
         if sys.platform != "win32"
@@ -261,14 +262,14 @@ def pyenv_install(cfg):
 def nuget_install(cfg):
     if not exists("{python.nuget.exe}"):
         download("{python.nuget.url}", "{python.nuget.exe}")
-    setenv(NUGET_HTTP_CACHE_PATH=N("{spin.userprofile}/nugetcache"))
+    setenv(NUGET_HTTP_CACHE_PATH=N("{spin.cache}/nugetcache"))
     sh(
         "{python.nuget.exe}",
         "install",
         "-verbosity",
         "quiet",
         "-o",
-        N("{spin.userprofile}/{platform.tag}"),
+        N("{spin.cache}/{platform.tag}"),
         "python",
         "-version",
         "{python.version}",

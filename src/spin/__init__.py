@@ -21,6 +21,8 @@ from contextlib import contextmanager
 
 import click
 import packaging
+import xdg
+from path import Path
 
 __all__ = [
     "echo",
@@ -56,6 +58,7 @@ __all__ = [
     "group",
     "invoke",
     "toporun",
+    "Path",
 ]
 
 
@@ -496,11 +499,16 @@ def namespaces(*nslist):
         NSSTACK.pop()
 
 
+os.environ["SPIN_CONFIG"] = Path(xdg.xdg_config_home()) / "spin"
+os.environ["SPIN_CACHE"] = Path(xdg.xdg_cache_home()) / "spin"
+
+
 def interpolate1(literal, *extra_dicts):
     """Interpolate a string against the configuration tree."""
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )
+    is_path = isinstance(literal, Path)
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
@@ -509,6 +517,8 @@ def interpolate1(literal, *extra_dicts):
         literal = literal[1:-1]
         if previous == literal:
             break
+    if is_path:
+        literal = Path(literal)
     return literal
 
 

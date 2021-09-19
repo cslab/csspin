@@ -8,7 +8,7 @@ from spin import cli, cruise
 
 
 def test_cruise():
-    cfg = cli.load_spinfile("spinfile.yaml")
+    cfg = cli.load_config_tree("spinfile.yaml")
 
     def match(*selectors):
         return [name for name, _ in cruise.match_cruises(cfg, *selectors)]

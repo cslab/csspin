@@ -33,7 +33,7 @@ spin:
       type: path internal
       help: |
         Where environments are provisioned.
-      default: "{spin.userprofile}/{spin.project_hash}"
+      default: "{SPIN_CACHE}/{spin.project_hash}"
     project_root:
       type: path internal
       help: |
@@ -50,10 +50,10 @@ spin:
       help: |
         User settings that will apply to all projects are read from
         this file.
-      default: "{spin.userprofile}/global.yaml"
+      default: "{SPIN_CONFIG}/global.yaml"
     spin_global_plugins:
       type: path internal
-      default: "{spin.userprofile}/plugins"
+      default: "{SPIN_CONFIG}/plugins"
     plugin_dir:
       type: path internal
       default: "{spin.env_base}/plugins"

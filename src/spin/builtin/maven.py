@@ -29,7 +29,7 @@ defaults = config(
     url=(
         "maven/maven-3/{maven.version}/binaries/apache-maven-{maven.version}-bin.tar.gz"
     ),
-    mavendir="{spin.userprofile}/apache-maven-{maven.version}",
+    mavendir="{spin.cache}/apache-maven-{maven.version}",
 )
 
 
