@@ -14,7 +14,6 @@ Welcome to spin's documentation!
    installation
    userman
    howtoplugins
-   provision
    plugins
    cliref
    apiref
