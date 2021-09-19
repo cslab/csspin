@@ -14,3 +14,4 @@ __pycache__/
 /_minted-*/
 *.py,cover
 /.cov2emacs.log
+*.log
