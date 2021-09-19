@@ -1,0 +1,5 @@
+minimum-spin: "0.2d"
+plugins:
+  - spin.builtin.python
+python:
+  version: "3.9.6"
