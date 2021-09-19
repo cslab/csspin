@@ -509,6 +509,7 @@ def interpolate1(literal, *extra_dicts):
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )
     is_path = isinstance(literal, Path)
+    n = 0
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
@@ -517,6 +518,9 @@ def interpolate1(literal, *extra_dicts):
         literal = literal[1:-1]
         if previous == literal:
             break
+        n += 1
+        if n > 30:
+            raise RecursionError(literal)
     if is_path:
         literal = Path(literal)
     return literal

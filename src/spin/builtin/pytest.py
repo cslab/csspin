@@ -11,7 +11,7 @@ from spin import config, option, sh, task
 defaults = config(
     requires=[".virtualenv", ".preflight"],
     opts=[""],
-    coverage_opts=["--cov=spin", "--cov=tests", "--cov-report=html"],
+    coverage_opts=["--cov=spin", "--cov=tests"],
     packages=["pytest", "pytest-cov", "pytest-tldr"],
 )
 
@@ -21,6 +21,7 @@ def pytest(
     cfg,
     instance: option("--instance", "instance"),
     coverage: option("--coverage", "coverage", is_flag=True),
+    covreport: option("--cov-report", "covreport", default="html"),
     args,
 ):
     """Run the 'pytest' command."""
@@ -31,4 +32,5 @@ def pytest(
         opts = cfg.pytest.opts
         if coverage:
             opts.extend(cfg.pytest.coverage_opts)
+            opts.append(f"--cov-report={covreport}")
         sh("{virtualenv.scriptdir}/pytest", *opts, *args)
