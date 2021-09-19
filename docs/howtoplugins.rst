@@ -28,7 +28,7 @@ Local plugins can then by used adding their name prefixed with a
    │   └── myplugin.py
    └── ...
 
-``myplugin`` can be used like so (note the dot!):
+``myplugin`` can be used like so:
 
 .. code-block:: yaml
 
@@ -44,9 +44,7 @@ Local plugins can then by used adding their name prefixed with a
 
 **Installable plugins** are declared in ``plugin-packages``. `spin`
 will install installable plugins into ``{spin.plugin_dir}``, which is
-``{spin.project_root}/.spin/plugins`` unless the plugin path was
-modified by the :option:`--plugin-directory <spin --plugin-directory>`
-command line option.
+``{spin.env_base}/plugins``.
 
 
 Plugin Lifecycle
@@ -119,8 +117,9 @@ Using the command line option :option:`--log-level=debug <spin
 --log-level>`, `spin` can output a detailed log of callback
 invocations.
 
+
 Developing Plugins
-------------------
+==================
 
 Plugins are Python modules that are imported by ``spin``, doing
 whatever side-effects are required. Plugins are loaded in one the
@@ -196,7 +195,7 @@ To activate this plugin, it has to be declared in ``spinfile.yaml``:
    plugins:
      - example   # assuming 'example' is available somewhere in sys.path
 
-By this ``spin`` gains a new subcommand ``example`` which we can use
+By this, ``spin`` gains a new subcommand ``example`` which we can use
 to print our message:
 
 .. code-block:: console
@@ -213,7 +212,7 @@ to print our message:
 
 
 Plugin API
-----------
+==========
 
 The API for plugin development is defined in :py:mod:`spin`. The
 general idea is to keep plugin scripts short and tidy, similar to
@@ -242,3 +241,9 @@ Here is a simple example of using the spin API:
 
        if not exists("project_root.txt"):
 	   die("I didn't expect that!")
+
+
+Files and Directories
+---------------------
+
+.. todo:: explain path.Path

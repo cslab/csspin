@@ -102,14 +102,14 @@ virtual environment for working with the project:
    spin: activate /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64
    spin: pip -q install -e .
 
-In this case, Python was provisioned by using `pyenv
+In this case, Python was provisioned using `pyenv
 <https://github.com/pyenv/pyenv>`_, which happened to be already
-present in the user's home directory. This is not a requirement,
-though. Depending on the platform -- and without a suitable Python
-environment management tool -- `spin` would have downloaded a source
-or binary distribution of Python, and install that into a cache
-directory that is reused between different projects. In the same vein,
-`spin` handles other stacks like Java and Node.
+installed by the user in her home directory. This is not a
+requirement, though. Depending on the platform -- and without a
+suitable Python environment management tool -- `spin` would have
+downloaded a source or binary distribution of Python, and install that
+into a cache directory that is reused between different projects. In
+the same vein, `spin` handles other stacks like Java and Node.
 
 Now you want to test your project using `pytest`. All that is
 necessary (besides writing the tests), is to add the
@@ -200,9 +200,9 @@ automatically installs all the tools and sets up the
    spin: pre-commit install
    pre-commit installed at .git/hooks/pre-commit
 
-This is a basic pattern working with spin: you modify your environment
-by editing :file:`spinfile.yaml` and let spin re-provision the
-environment.
+This is a basic pattern when working with spin: you modify your
+environment by editing :file:`spinfile.yaml` and let spin re-provision
+the environment.
 
 
 Most Frequently Asked Questions
@@ -240,6 +240,11 @@ activation commands for development environments, to enable users to
 commands themselves. Spin plugins try to be well-behaved in this
 regard, and do not silently modify the process environment, to make
 everything that is going on transparent to the user.
+
+.. todo:: Can we check that plugins behave well?
+
+   Instead of "plugins trying hard", it would be better if spin could
+   check, what plugins do.
 
 Why YAML?
 ---------

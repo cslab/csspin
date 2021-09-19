@@ -24,7 +24,7 @@ be overriden via 'spin -f <filename>'.
 
 .. py:data:: spin.env_base
    :type: 'path internal'
-   :value: '{spin.userprofile}/{spin.project_hash}'
+   :value: '{SPIN_CACHE}/{spin.project_hash}'
 
 Where environments are provisioned.
 
@@ -43,32 +43,24 @@ related data.
 
 .. py:data:: spin.spin_global
    :type: 'path internal'
-   :value: '{spin.userprofile}/global.yaml'
+   :value: '{SPIN_CONFIG}/global.yaml'
 
 User settings that will apply to all projects are read from
 this file.
 
 .. py:data:: spin.spin_global_plugins
    :type: 'path internal'
-   :value: '{spin.userprofile}/plugins'
+   :value: '{SPIN_CACHE}/plugins'
 
 
 .. py:data:: spin.plugin_dir
    :type: 'path internal'
-   :value: '{spin.spin_dir}/plugins'
-
-
-.. py:data:: spin.plugin_packages
-   :type: 'list'
+   :value: '{spin.env_base}/plugins'
 
 
 .. py:data:: spin.cruise_spin
    :type: 'path'
    :value: 'spin'
-
-
-.. py:data:: spin.userprofile
-   :type: 'path internal'
 
 
 .. py:data:: python
@@ -78,18 +70,29 @@ this file.
 .. py:data:: extra-tasks
    :type: 'object'
 
+`extra-tasks` maps task names to task definitions, where task
+definitions support ``env`` and ``script`` keys.
 
 .. py:data:: quiet
    :type: 'boolean'
 
+Spin normally echos the verbatim commands it runs. When `quiet` is
+set, this output is suppressed. Additionally, some plugins use
+`quiet` to suppress more output of the tools they run.
 
 .. py:data:: verbose
    :type: 'boolean'
 
+When `verbose` is on, spin outputs additional information, like
+the time spent running tasks. Some plugins use `verbose` to make
+tools more chatty.
 
 .. py:data:: hooks
    :type: 'object'
 
+A dictionary mapping workflow names to lists of commands. This is
+automatically set up by the `when` argument to
+:py:func:`spin.task`.
 
 .. py:data:: cruise
    :type: 'object'
@@ -98,6 +101,14 @@ this file.
 .. py:data:: plugins
    :type: 'list'
 
+The list of plugins to import.
+
+.. py:data:: plugin-packages
+   :type: 'list'
+
+A list of plugin packages to install. Supports the same
+requirements specifiers as pip, including URLs, local file names
+and PEP 440 specifiers.
 
 .. py:data:: platform
    :type: 'object'

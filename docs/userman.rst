@@ -245,8 +245,8 @@ spin:
 	 - upload
 
 
-Dependencies
-------------
+Build Rules
+-----------
 
 Spin has a *very* simple built-in facility for automatically
 generating target files depending on source files -- similar to Unix
@@ -306,53 +306,6 @@ is updated whenever :program:`spin docs` is executed, and
 	 - schemadoc -o docs/schemaref.rst
 
 
-Old Examples
-============
-
-Here are examples from spin itself.
-
-* Run spin's test suite:
-
-  .. code-block:: console
-
-     $ spin tests
-     spin: cd /Users/frank/Projects/spin
-     spin: set PATH=/Users/frank/Projects/spin/cp38-macosx_10_15_x86_64/bin:$PATH
-     spin: ./cp38-macosx_10_15_x86_64/bin/pytest --cov=spin --cov=tests --cov-report=html ./tests
-     .........
-     ------------------------------------------------------------------------------
-     Ran 9 tests in 1.10s
-
-     ---------- coverage: platform darwin, python 3.8.1-final-0 -----------
-     Coverage HTML written to dir htmlcov
-
-
-     OK
-
-* Run preflight checks. This includes the tests, and also runs
-  available linters.
-
-  .. code-block:: console
-
-     $ spin preflight
-     spin: cd /Users/frank/Projects/spin
-     spin: ./cp38-macosx_10_15_x86_64/bin/pytest --cov=spin --cov=tests --cov-report=html ./tests
-     ........
-     ------------------------------------------------------------------------------
-     Ran 8 tests in 0.42s
-
-     ---------- coverage: platform darwin, python 3.8.1-final-0 -----------
-     Coverage HTML written to dir htmlcov
-
-
-     OK
-     spin: flake8 --exit-zero tests/test_cruise.py tests/test_flake8.py
-     spin: radon mi -n B tests/test_cruise.py tests/test_flake8.py
-
-
-Overview
-========
-
 
 Plugins
 -------
@@ -385,29 +338,8 @@ A plugin can do one or more of the following:
   Python release
 
 
-
-Built-in Plugins
-----------------
-
-Spin comes with a set of built-in plugins:
-
-* **python** -- provision Python by using a pre-existing Python
-  installation or automatically install the requested Python release
-* **virtualenv** -- provision a virtualenv in the project directory
-  and add required packages to that
-* **lint** -- provide subcommand ``lint`` that runs linters
-* **flake8**
-* **radon**
-* **devpi** -- provide the subcommand ``stage`` to upload the package
-  to a devpi staging index
-* **git** -- git support
-* **pytest** -- use pytest for Python tests
-* **test** -- provide subcommand ``tests`` that runs automatic tests
-
-
-
 Cruising
-========
+--------
 
 Spin supports running itself in one or many docker containers (and
 maybe elsewhere in the future). This is called *cruising*, and it is
@@ -475,6 +407,102 @@ Cruises can also be selected by specifying tags (which are prefixed by
 
 A special selector is ``@all``, selecting all cruises. In spin's case
 this means running the requested task for all supported platforms.
+
+
+System Dependencies
+-------------------
+
+Spin allows projects to define system dependencies. These are
+dependencies that can not be provisioned by spin locally to the
+project, but must be installed to the machine running spin by a system
+package manager (e.g. :program:`apt` on Debian Linux) or scripts. This
+mechanism is also used by plugins to support provisioning the host to
+support their particular function. For example, the Python plugin on
+Linux declares system dependencies that enable building Python from
+source.
+
+Installing system dependencies requires administrative access to
+the machine (e.g. :program:`sudo`). Spin's :program:`system-provision`
+task therefore simply generates a script that is to be executed via an
+elevated shell:
+
+.. code-block:: console
+
+   $ spin system-provision | sudo sh
+
+Package names and installation commands for system dependencies vary
+between operating systems and distributions. Declaring system
+dependencies therefore uses simple Python conditions to choose between
+different sets of packages: spin feeds :py:data:`distro` and
+:py:data:`version` to the conditions, and each matching condition
+contributes to the set of packages to install.
+
+System dependencies are declared under the key
+:py:data:`system-requirements`. The following sample would generate an
+installation command for :program:`libaio1` and :program:`gettext` on
+Debian systems.
+
+.. code-block:: yaml
+
+   system-requirements:
+     distro=="debian":
+       apt-get: libaio1 gettext
+
+Provisioning the project on a host running Debian would generate a
+script that looks like so (note all the other dependencies that are
+coming from plugins used by the project):
+
+.. code-block:: console
+
+   $ spin system-provision
+   spin: cd /home/me/myproj
+   spin: set PYENV_VERSION=3.8.11
+   apt-get update
+   apt-get install -y git make build-essential libssl-dev zlib1g-dev \
+           libbz2-dev libreadline-dev libsqlite3-dev curl
+	   libncursesw5-dev \
+	   xz-utils libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+	   libaio1 gettext
+
+Once a project has system requirements, spin naturally will generate
+an error message if provisioning is attempted on another system:
+
+.. code-block:: console
+
+   $ spin system-provision fedora
+   spin: cd /home/frank/spin
+   spin: set PYENV_VERSION=3.8.11
+   spin: error: this project does not support fedora
+   Aborted!
+
+The system provisioning feature can be used to conveniently and
+repeatably prepare developer workstations or Docker containers for
+working with a project.
+
+Distro names come from the ``distro`` package
+(https://github.com/python-distro/distro).
+
+
+Built-in Plugins
+================
+
+Spin comes with a set of built-in plugins:
+
+* **python** -- provision Python by using a pre-existing Python
+  installation or automatically install the requested Python release
+* **virtualenv** -- provision a virtualenv in the project directory
+  and add required packages to that
+* **lint** -- provide subcommand ``lint`` that runs linters
+* **flake8**
+* **radon**
+* **devpi** -- provide the subcommand ``stage`` to upload the package
+  to a devpi staging index
+* **git** -- git support
+* **pytest** -- use pytest for Python tests
+* **test** -- provide subcommand ``tests`` that runs automatic tests
+
+
+
 
 
 Reference
