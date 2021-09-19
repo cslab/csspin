@@ -147,7 +147,12 @@ def configure(cfg):
 def merge_dicts(a, b):
     for k, v in b.items():
         if k in a:
-            a[k] = " ".join((a[k], v))
+            # We support lists and strings in system-requirements;
+            # this is not very robust, though.
+            if isinstance(v, list):
+                a[k].extend(v)
+            else:
+                a[k] = " ".join((a[k], v))
         else:
             a[k] = v
 
@@ -189,7 +194,7 @@ def do_system_provisioning(
                     supported = True
                     merge_dicts(out, items)
         if not supported:
-            warn(f"{pi} does not support {distroname} {distroversion}")
+            warn(f"the '{pi}' plugin does not support {distroname} {distroversion}")
 
     supported = True
     system_requirements = cfg.get("system-requirements", None)
@@ -203,9 +208,22 @@ def do_system_provisioning(
     if not supported:
         die(f"this project does not support {distroname} {distroversion}")
 
+    for line in out.get("before", []):
+        print(line)
+
+    # FIXME: add support for zypper etc.
     for syscmd in ("apt-get", "yum", "dnf"):
         package_list = out.get(syscmd, "")
         if package_list:
             if syscmd == "apt-get":
                 print("apt-get update")
             print(f"{syscmd} install -y {package_list}")
+
+    for line in out.get("after", []):
+        print(line)
+
+
+@task("distro")
+def distro_task(cfg):
+    dinfo = distro.info()
+    print(f"distro={repr(dinfo['id'])} version={repr(parse_version(dinfo['version']))}")

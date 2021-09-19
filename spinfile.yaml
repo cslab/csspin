@@ -31,6 +31,7 @@ python:
     - pip-tools
     - sphinx-click
     - sphinx-rtd-theme
+    - pytest-mock
 
 extra-tasks:
   # This is the recommended way of installing spin locally as long as

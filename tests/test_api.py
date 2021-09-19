@@ -149,7 +149,6 @@ def test_build_target(cfg, mocker):
         phony=config(sources="notphony"), notphony=config(script=["1", "2"])
     )
     # According to the rule above, building "phony" would require
-    # "notphony" to exist, which would be produced by calling 1 and 2,
-    # so ...
+    # "notphony" to exist, which would be produced by calling 1 and 2.
     build_target(cfg, "phony", True)
     assert [c.args[0][0] for c in subprocess.run.call_args_list] == ["1", "2"]
