@@ -86,14 +86,6 @@ def init(cfg):
         exec(open(activate_this).read(), {"__file__": activate_this})
 
 
-@task()
-def shell(cfg):
-    part1 = os.path.basename(interpolate1("{spin.project_root}"))
-    part2 = interpolate1("{virtualenv.abitag}")
-    os.environ["PS1"] = f"({part1}:{part2}) " + os.environ["PS1"]
-    os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "--norc", "-i"])
-
-
 def patch_activate(schema):
     if exists(schema.activatescript):
         setters = []

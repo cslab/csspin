@@ -8,6 +8,7 @@
 through a plugin package and are always available.
 """
 
+import os
 import sys
 
 import click
@@ -37,6 +38,25 @@ def exec_shell(args):
     if not args:
         args = ("{platform.shell}",)
     sh(*args)
+
+
+@task()
+def shell(cfg):
+    os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "-i"])
+
+
+@task()
+def env(cfg):
+    """Generate commands to activate an environment"""
+    # FIXME: this is maybe better than patching virtualenv's
+    # activation scripts -- and also more appropriate for other
+    # stacks. It does not provide an easy way to "deactivate", though
+    # [= apparently, this is not true; it *does* provide deactivate
+    # via venv's activate, but that won't reset the environment
+    # variables =]. We'd need that for all kinds of shells, though.
+    for name, value in EXPORTS.items():
+        print(f'export {name}="{value}"')
+    print(interpolate1("; source {virtualenv.scriptdir}/activate"))
 
 
 def pretty_descriptor(parent, name, descriptor):
@@ -75,18 +95,6 @@ def schemadoc(
             do_docwrite(name, prop, desc)
 
     do_docwrite("", arg, schema)
-
-
-@task()
-def env(cfg):
-    """Generate commands to activate an environment"""
-    # FIXME: this is much better than patching virtualenv's activation
-    # scripts -- and also more appropriate for other stacks. It does
-    # not provide an easy way to "deactivate", though. We'd need that
-    # for all kinds of shells, though.
-    for name, value in EXPORTS.items():
-        print(f"export {name}={value}")
-    print(interpolate1(". {virtualenv.scriptdir}/activate"))
 
 
 @group("global", noenv=True)
