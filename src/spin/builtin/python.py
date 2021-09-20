@@ -70,6 +70,7 @@ import sys
 
 from spin import (
     Path,
+    backtick,
     cd,
     config,
     die,
@@ -322,8 +323,11 @@ def configure(cfg):
         cfg.python.interpreter = cfg.python.use
     elif "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
         setenv(PYENV_VERSION="{python.version}")
-        cfg.python.use = "python"
-        cfg.python.interpreter = cfg.python.use
+        # FIXME: this fails if there is pyenv installed, but PATH has
+        # another python before the pyenv shim
+        # cfg.python.use = "python"
+        # cfg.python.interpreter = cfg.python.use
+        cfg.python.interpreter = backtick("pyenv which python").strip()
 
 
 def init(cfg):
