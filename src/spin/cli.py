@@ -335,8 +335,6 @@ class GroupWithAliases(click.Group):
 NOENV_COMMANDS = set()
 
 
-# FIXME: now that we have 'noenv', all non-'noenv' commands should be
-# protected by simply checking whether env_base exists.
 def register_noenv(cmdname):
     global NOENV_COMMANDS
     NOENV_COMMANDS.add(cmdname)
@@ -352,9 +350,14 @@ _nested = False
 @click.pass_context
 def commands(ctx, **kwargs):
     global _nested
-    ctx.obj = get_tree()
+    cfg = ctx.obj = get_tree()
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
+            if not exists(cfg.spin.env_base):
+                die(
+                    "This project has not yet been provisioned. You "
+                    "may want to run spin with the --provison flag."
+                )
             toporun(ctx.obj, "init")
         _nested = True
 
