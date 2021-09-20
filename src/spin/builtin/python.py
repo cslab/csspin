@@ -202,7 +202,7 @@ def python(args):
     sh("{python.interpreter}", *args)
 
 
-@task(when="package")
+@task("python:wheel", when="package")
 def wheel(cfg):
     args = []
     if cfg.quiet:
