@@ -25,7 +25,7 @@ def venv_hook(cfg):
         opts.extend(["-i", cfg.eggs.extra_index_url])
     einstall = Command(cfg.eggs.cmd, *opts)
 
-    with memoizer("{virtualenv.venv}/eggs.memo") as m:
+    with memoizer("{python.venv}/eggs.memo") as m:
         for req in cfg.eggs.requirements:
             if not m.check(req):
                 einstall("install", *req.split())

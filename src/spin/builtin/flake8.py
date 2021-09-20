@@ -41,7 +41,7 @@ from spin import config, option, sh, task
 defaults = config(
     cmd="flake8",
     opts=["--exit-zero", f"-j{os.cpu_count()}"],
-    requires=[".virtualenv", ".vcs", ".preflight"],
+    requires=[".python", ".vcs", ".preflight"],
     # These are the flake8 plugins we want to use. Maybe this should
     # be configurable in spinfile (candidates are "flake8-spellcheck"
     # or "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)

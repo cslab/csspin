@@ -20,13 +20,13 @@ from spin import (
 
 defaults = config(
     formats=["bdist_wheel"],
-    requires=[".virtualenv"],
+    requires=[".python"],
     packages=["devpi-client", "keyring"],
 )
 
 
 def prepare_environment():
-    setenv(DEVPI_VENV="{virtualenv.venv}", DEVPI_CLIENTDIR="{spin.spin_dir}/devpi")
+    setenv(DEVPI_VENV="{python.venv}", DEVPI_CLIENTDIR="{spin.spin_dir}/devpi")
 
 
 @task()
@@ -40,7 +40,7 @@ def stage():
     if data.get("index", "") != interpolate1("{devpi.stage}"):
         devpi("use", "-t", "yes", "{devpi.stage}")
     devpi("login", "{devpi.user}")
-    python = os.path.abspath(get_tree().virtualenv.python)
+    python = os.path.abspath(get_tree().python.python)
     devpi(
         "upload",
         "-p",

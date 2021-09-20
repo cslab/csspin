@@ -115,10 +115,8 @@ def venv_hook(cfg):
             ),
         )
 
-    venv_base_path = interpolate1(cfg.virtualenv.venv)
-    ce_pth_path = os.path.join(
-        venv_base_path, venv_sppath(cfg.virtualenv.abitag), "ce.pth"
-    )
+    venv_base_path = interpolate1(cfg.python.venv)
+    ce_pth_path = os.path.join(venv_base_path, venv_sppath(cfg.python.abitag), "ce.pth")
     writetext(ce_pth_path, "\n".join(ce_pth_content))
 
     # This prevents an ugly warning to be printed by CE's sitecustomize.py

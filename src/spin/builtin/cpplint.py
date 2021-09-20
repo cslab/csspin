@@ -12,7 +12,7 @@ defaults = config(
     cmd="cpplint",
     opts=["--extensions=h,hh,hpp,c,cc,cpp,i"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
-    requires=[".virtualenv", ".vcs", ".preflight"],
+    requires=[".python", ".vcs", ".preflight"],
     packages=["cpplint"],
 )
 

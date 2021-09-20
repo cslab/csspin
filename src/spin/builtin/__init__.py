@@ -56,7 +56,7 @@ def env(cfg):
     # variables =]. We'd need that for all kinds of shells, though.
     for name, value in EXPORTS.items():
         print(f'export {name}="{value}"')
-    print(interpolate1("; source {virtualenv.scriptdir}/activate"))
+    print(interpolate1("; source {python.scriptdir}/activate"))
 
 
 def pretty_descriptor(parent, name, descriptor):

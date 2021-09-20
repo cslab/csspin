@@ -9,7 +9,7 @@ import os
 from spin import config, option, sh, task
 
 defaults = config(
-    requires=[".virtualenv", ".preflight"],
+    requires=[".python", ".preflight"],
     opts=[""],
     coverage_opts=["--cov=spin", "--cov=tests"],
     packages=["pytest", "pytest-cov", "pytest-tldr"],
@@ -33,4 +33,4 @@ def pytest(
         if coverage:
             opts.extend(cfg.pytest.coverage_opts)
             opts.append(f"--cov-report={covreport}")
-        sh("{virtualenv.scriptdir}/pytest", *opts, *args)
+        sh("{python.scriptdir}/pytest", *opts, *args)

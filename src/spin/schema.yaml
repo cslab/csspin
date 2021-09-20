@@ -125,9 +125,3 @@ platform:
       type: path
     shell:
       type: path
-
-virtualenv:
-  type: object
-  properties:
-    venv:
-      type: path

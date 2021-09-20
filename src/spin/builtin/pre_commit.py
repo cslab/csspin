@@ -8,7 +8,7 @@ import shutil
 
 from spin import config, sh, task
 
-defaults = config(requires=[".virtualenv"], packages=["pre-commit"])
+defaults = config(requires=[".python"], packages=["pre-commit"])
 
 
 @task("pre-commit")

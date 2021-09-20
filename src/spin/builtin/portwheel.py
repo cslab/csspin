@@ -9,7 +9,7 @@ from spin import config, exists, option, sh, task
 defaults = config(
     opts=["--wheel"],
     sdksrc="sdk",
-    requires=[".virtualenv"],
+    requires=[".python"],
     packages=["portwheel", "cpytoolchain"],
 )
 

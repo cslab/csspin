@@ -56,7 +56,6 @@ Properties
 * :py:data:`python.version` -- must be set to choose the
   required Python version
 * :py:data:`python.interpreter` -- path to the Python interpreter
-* :py:data:`python.pip` -- path to `pip`
 
 Note: don't use these properties when using `virtualenv`, they will
 point to the base installation.
@@ -66,25 +65,34 @@ point to the base installation.
 import logging
 import os
 import re
+import shutil
 import sys
 
 from spin import (
+    EXPORTS,
+    Command,
     Path,
     backtick,
     cd,
     config,
     die,
     download,
+    echo,
     exists,
     info,
+    interpolate,
     interpolate1,
+    memoizer,
     mkdir,
     namespaces,
     parse_version,
+    readtext,
+    rmtree,
     setenv,
     sh,
     task,
     warn,
+    writetext,
 )
 
 N = Path
@@ -108,17 +116,23 @@ defaults = config(
         if sys.platform != "win32"
         else N("{python.plat_dir}/python.{python.version}/tools")
     ),
+    # FIXME: bad name here, doubles 'bindir' below
     bin_dir=(
         N("{python.inst_dir}/bin") if sys.platform != "win32" else "{python.inst_dir}"
     ),
-    script_dir=(
-        N("{python.inst_dir}/bin")
-        if sys.platform != "win32"
-        else N("{python.inst_dir}/Scripts")
-    ),
     interpreter=N("{python.bin_dir}/python{platform.exe}"),
-    pip=N("{python.script_dir}/pip{platform.exe}"),
     use=None,
+    venv=N("{spin.env_base}/{python.abitag}-{platform.tag}"),
+    memo=N("{python.venv}/spininfo.memo"),
+    bindir=(N("{python.venv}/bin") if sys.platform != "win32" else "{python.venv}"),
+    scriptdir=(
+        N("{python.venv}/bin")
+        if sys.platform != "win32"
+        else N("{python.venv}/Scripts")
+    ),
+    python=N("{python.bindir}/python"),
+    pipconf=config(),
+    abitag=None,
 )
 
 
@@ -194,12 +208,8 @@ def system_requirements(cfg):
 
 @task()
 def python(args):
-    """Run the Python interpreter used for this projects.
-
-    Provisioning happens automatically. The 'python' task makes sure
-    the requested Python release is installed.
-    """
-    sh("{python.interpreter}", *args)
+    """Run the Python interpreter used for this projects."""
+    sh("python", *args)
 
 
 @task("python:wheel", when="package")
@@ -309,6 +319,7 @@ def provision(cfg):
         else:
             # Everything else (Linux and macOS) uses pyenv
             pyenv_install(cfg)
+    venv_provision(cfg)
 
 
 def configure(cfg):
@@ -327,7 +338,10 @@ def configure(cfg):
         # another python before the pyenv shim
         # cfg.python.use = "python"
         # cfg.python.interpreter = cfg.python.use
-        cfg.python.interpreter = backtick("pyenv which python").strip()
+        # FIXME: this is actually wrong (!)
+        cfg.python.interpreter = backtick(
+            "pyenv which python", env={"PYENV_VERSION": cfg.python.version}
+        ).strip()
 
 
 def init(cfg):
@@ -339,3 +353,308 @@ def init(cfg):
                 "Spin no longer auto-provisions dependencies in this release.\n"
                 "You might want to run 'spin provision', or use the'--provision' flag"
             )
+    venv_init(cfg)
+
+
+def get_abi_tag(cfg):
+    # To get the ABI tag, we've to call into the target interpreter,
+    # which is not the one running the spin program. Not super cool,
+    # firing up the interpreter just for that is slow.  ABI detection
+    # has been moved to file which is then called by the interpreter.
+    if not cfg.python.abitag:
+        from spin import get_abi_tag
+
+        abitag = backtick(
+            "{python.interpreter}",
+            get_abi_tag.__file__,
+        )
+        cfg.python.abitag = abitag.strip()
+
+
+def venv_init(cfg):
+    get_abi_tag(cfg)
+    if os.environ.get("VIRTUAL_ENV", "") != cfg.python.venv:
+        activate_this = interpolate1("{python.scriptdir}/activate_this.py")
+        if not exists(activate_this):
+            die(
+                "{python.venv} does not exist. You may want to provision it using"
+                " spin --provision"
+            )
+        echo("activate {python.venv}")
+        exec(open(activate_this).read(), {"__file__": activate_this})
+
+
+def patch_activate(schema):
+    if exists(schema.activatescript):
+        setters = []
+        resetters = []
+        for name, value in EXPORTS.items():
+            if value:
+                setters.append(schema.setpattern.format(name=name, value=value))
+                resetters.append(schema.resetpattern.format(name=name, value=value))
+        resetters = "\n".join(resetters)
+        setters = "\n".join(setters)
+        original = readtext(schema.activatescript)
+        if schema.patchmarker not in original:
+            shutil.copyfile(
+                interpolate1(f"{schema.activatescript}"),
+                interpolate1(f"{schema.activatescript}.bak"),
+            )
+        info(f"Patching {schema.activatescript}")
+        original = readtext(f"{schema.activatescript}.bak")
+        for repl in schema.replacements:
+            original = original.replace(repl[0], repl[1])
+        newscript = schema.script.format(
+            patchmarker=schema.patchmarker,
+            original=original,
+            resetters=resetters,
+            setters=setters,
+        )
+        writetext(f"{schema.activatescript}", newscript)
+
+
+class BashActivate:
+    patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
+    activatescript = "{python.scriptdir}/activate"
+    replacements = [
+        ("deactivate", "origdeactivate"),
+    ]
+    setpattern = """
+_OLD_SPIN_{name}="${name}"
+{name}="{value}"
+export {name}
+"""
+    resetpattern = """
+    if ! [ -z "${{_OLD_SPIN_{name}+_}}" ] ; then
+        {name}="$_OLD_SPIN_{name}"
+        export {name}
+        unset _OLD_SPIN_{name}
+    fi
+"""
+    script = """
+{patchmarker}
+{original}
+deactivate () {{
+    {resetters}
+    if [ ! "${{1-}}" = "nondestructive" ] ; then
+        # Self destruct!
+        unset -f deactivate
+        origdeactivate
+    fi
+}}
+
+deactivate nondestructive
+
+{setters}
+
+# The hash command must be called to get it to forget past
+# commands. Without forgetting past commands the $PATH changes
+# we made may not be respected
+hash -r 2>/dev/null
+
+"""
+
+
+class PowershellActivate:
+    patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
+    activatescript = "{python.scriptdir}/activate.ps1"
+    replacements = [
+        ("deactivate", "origdeactivate"),
+    ]
+    setpattern = """
+New-Variable -Scope global -Name _OLD_SPIN_{name} -Value $env:{name}
+$env:{name} = "{value}"
+"""
+    resetpattern = """
+    if (Test-Path variable:_OLD_SPIN_{name}) {{
+        $env:{name} = $variable:_OLD_SPIN_{name}
+        Remove-Variable "_OLD_SPIN_{name}" -Scope global
+    }}
+"""
+    script = """
+{patchmarker}
+{original}
+function global:deactivate([switch] $NonDestructive) {{
+    {resetters}
+    if (!$NonDestructive) {{
+        Remove-Item function:deactivate
+        origdeactivate
+    }}
+}}
+
+deactivate -nondestructive
+
+{setters}
+"""
+
+
+class BatchActivate:
+    patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
+    activatescript = "{python.scriptdir}/activate.bat"
+    replacements = ()
+    setpattern = """
+if not defined _OLD_SPIN_{name} goto ENDIFSPIN{name}1
+    set "{name}=%_OLD_SPIN_{name}%"
+:ENDIFSPIN{name}1
+if defined _OLD_SPIN_{name} goto ENDIFSPIN{name}2
+    set "_OLD_SPIN_{name}=%{name}%"
+:ENDIFSPIN{name}2
+set "{name}={value}"
+"""
+    resetpattern = ""
+    script = """
+@echo off
+{patchmarker}
+{original}
+{setters}
+"""
+
+
+class BatchDeactivate:
+    patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
+    activatescript = "{python.scriptdir}/deactivate.bat"
+    replacements = ()
+    setpattern = ""
+    resetpattern = """
+if not defined _OLD_SPIN_{name} goto ENDIFVSPIN{name}
+    set "{name}=%_OLD_SPIN_{name}%"
+    set _OLD_SPIN_{name}=
+:ENDIFVSPIN{name}
+"""
+    script = """
+@echo off
+{patchmarker}
+{original}
+{resetters}
+"""
+
+
+def finalize_provision(cfg):
+    for schema in (
+        BashActivate,
+        BatchActivate,
+        BatchDeactivate,
+        PowershellActivate,
+    ):
+        patch_activate(schema)
+
+    site_packages = (
+        sh(
+            "{python.python}",
+            "-c",
+            "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+            capture_output=True,
+            silent=not cfg.verbose,
+        )
+        .stdout.decode()
+        .strip()
+    )
+    info(f"Create {site_packages}/_set_env.pth")
+    pthline = interpolate1(
+        "import os; "
+        "bindir='{python.bindir}'; "
+        "os.environ['PATH'] = "
+        "os.environ['PATH'] if bindir in os.environ['PATH'] "
+        "else os.pathsep.join((bindir, os.environ['PATH']))\n"
+    )
+    writetext(f"{site_packages}/_set_env.pth", pthline)
+
+
+def install_to_venv(cfg, *args):
+    args = interpolate(args)
+    sh("pip", "install", cfg.quietflag, *args)
+
+
+def venv_provision(cfg):
+    get_abi_tag(cfg)
+    fresh_virtualenv = False
+    if not exists("{python.venv}"):
+        # Make sure the Python interpreter we'll use to create the
+        # virtual environment has the virtualenv package installed.
+        sh(
+            "{python.interpreter}",
+            "-mpip",
+            cfg.quietflag,
+            "install",
+            "virtualenv",
+            "packaging",
+        )
+        cmd = ["{python.interpreter}", "-mvirtualenv", cfg.quietflag]
+        virtualenv = Command(*cmd)
+        # do not download seeds, since we update pip later anyway
+        virtualenv("-p", "{python.interpreter}", "{python.venv}")
+        fresh_virtualenv = True
+
+    # This sets PATH to the venv
+    init(cfg)
+
+    # Update pip in the venv
+    if fresh_virtualenv:
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip", "setuptools")
+
+    # This is a much faster alternative to calling pip config; we
+    # leave it active here for now, enjoying a faster spin until we
+    # better understand the drawbacks.
+    text = []
+    for section, settings in cfg.python.pipconf.items():
+        text.append(f"[{section}]")
+        for key, value in settings.items():
+            text.append(f"{key} = {interpolate1(value)}")
+    if sys.platform == "win32":
+        pipconf = "{python.venv}/pip.ini"
+    else:
+        pipconf = "{python.venv}/pip.conf"
+
+    if not exists(pipconf):
+        writetext(pipconf, "\n".join(text))
+
+    # If there is a setup.py, make an editable install (which
+    # transitively also installs runtime dependencies of the
+    # project).  FIXME: filename/location of setup.py should
+    # probably be configurable
+    if exists("setup.py"):
+        install_to_venv(cfg, "-e", ".")
+
+    with memoizer("{python.memo}") as m:
+
+        replacements = cfg.get("devpackages", {})
+
+        requirements = []
+
+        def pipit(req):
+            req = replacements.get(req, req)
+            if not m.check(req):
+                requirements.extend(req.split())
+                m.add(req)
+
+        # Plugins can define a 'venv_hook' function, to give them a
+        # chance to do something with the virtual environment just
+        # being provisioned (e.g. preparing the venv by adding pth
+        # files or by adding packages with other installers like
+        # easy_install).
+        for plugin in cfg.topo_plugins:
+            plugin_module = cfg.loaded[plugin]
+            hook = getattr(plugin_module, "venv_hook", None)
+            if hook is not None:
+                logging.debug(f"{plugin_module.__name__}.venv_hook()")
+                hook(cfg)
+
+        # Install packages required by the project ('requirements')
+        for req in cfg.python.requirements:
+            pipit(req)
+
+        # Install packages required by plugins used
+        # ('<plugin>.packages')
+        for plugin in cfg.topo_plugins:
+            plugin_module = cfg.loaded[plugin]
+            for req in plugin_module.defaults.get("packages", []):
+                pipit(req)
+
+        if requirements:
+            install_to_venv(cfg, *requirements)
+
+
+def cleanup(cfg):
+    get_abi_tag(cfg)
+    if exists("{python.venv}"):
+        rmtree("{python.venv}")

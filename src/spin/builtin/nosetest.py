@@ -13,7 +13,7 @@ defaults = config(
     cmd="nosetests",
     opts=["--logging-filter=-morepath"],
     coverage_opts=["--with-coverage"],
-    requires=[".virtualenv", ".preflight"],
+    requires=[".python", ".preflight"],
 )
 
 
