@@ -18,9 +18,9 @@ spin. Spin will refuse to run most tasks before an environment has
 been created.
 
 Environments are generally created *outside* the source tree, in
-:file:`~/.spin`. Spin plugins try hard to place everything that is
-generated while building, testing etc. in the environment directory,
-to keep the source tree clean.
+:file:`$XDG_CACHE_HOME/spin`. Spin plugins try hard to place
+everything that is generated while building, testing etc. in the
+environment directory, to keep the source tree clean.
 
 **Tasks** are commands run by spin plugins inside an environment,
 e.g. the Python plugin registers a :program:`python` task, that
@@ -58,9 +58,9 @@ tree is built from (in this order):
 * The settings from ``spinfile.yaml`` complement (or override) the
   defaults.
 * If it exists, user-specific settings are read from
-  ``~/.spin/global.yaml`` and complement the project configuration
-  tree; an example for a user-specific setting is ``devpi.host``, the
-  host name of a devpi package server.
+  ``$XDG_CONFIG_HOME/spin/global.yaml`` and complement the project
+  configuration tree; an example for a user-specific setting is
+  ``devpi.host``, the host name of a devpi package server.
 * Command line settings given by :option:`-p prop=value <spin -p>`
   override all other settings; a typical use case is to override the
   version of the Python interpreter using ``spin -p
@@ -180,7 +180,7 @@ dependency specifiers:
      - someones-spin-plugins~=2.0
      - git+https://git.example.com/projstds#egg=projstds
 
-Spin will install plugin packages into :file:`<yourproject>/.spin`.
+Spin will install plugin packages into :file:`{spin.env_base}/plugins`.
 
 
 Interpolation
@@ -375,7 +375,7 @@ already prepared to have the required Python release.
 This set includes docker images for Windows as well as Linux, which
 means we need to have one docker daemon available for each
 platform. These are defined as user-specific settings in
-``$HOME/.spin/global.yaml``:
+``$XDG_CONFIG_HOME/spin/global.yaml``:
 
 .. code-block:: yaml
 
@@ -483,48 +483,13 @@ Distro names come from the ``distro`` package
 (https://github.com/python-distro/distro).
 
 
-Built-in Plugins
-================
-
-Spin comes with a set of built-in plugins:
-
-* **python** -- provision Python by using a pre-existing Python
-  installation or automatically install the requested Python release
-* **virtualenv** -- provision a virtualenv in the project directory
-  and add required packages to that
-* **lint** -- provide subcommand ``lint`` that runs linters
-* **flake8**
-* **radon**
-* **devpi** -- provide the subcommand ``stage`` to upload the package
-  to a devpi staging index
-* **git** -- git support
-* **pytest** -- use pytest for Python tests
-* **test** -- provide subcommand ``tests`` that runs automatic tests
-
-
-
-
-
-Reference
-=========
-
-Where files go
---------------
-
-* ``$HOME/.spin/`` -- Python releases and configuration files that are
-  not project-specific
-
-* ``<project_root>/.spin`` -- plugin packages and project-specific
-  settings
-
-
 Sample ``global.yaml``
 ======================
 
 ``spin`` looks for a file called ``global.yaml`` in
-``~/.spin``. Settings from this file are merged into the project
-configuration tree. This facility can be used to provide user/machine
-specific settings like in the example below.
+``$XDG_CONFIG_HOME/spin``. Settings from this file are merged into the
+project configuration tree. This facility can be used to provide
+user/machine specific settings like in the example below.
 
 .. code-block:: yaml
 

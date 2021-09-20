@@ -13,6 +13,7 @@ Welcome to spin's documentation!
    overview
    installation
    userman
+   relnotes
    howtoplugins
    plugins
    cliref
