@@ -19,8 +19,7 @@ defaults = config(
 @task()
 def docs(
     cfg,
-    html: option("--html", "html", is_flag=True),
-    pdf: option("--pdf", "pdf", is_flag=True),
+    args,
 ):
     cmd = [
         "make",
@@ -30,7 +29,4 @@ def docs(
         "BUILDDIR={sphinx.build_dir}",
         "LATEXMKOPTS=-silent",
     ]
-    if html:
-        sh(*cmd, "html")
-    if pdf:
-        sh(*cmd, "latexpdf")
+    sh(*cmd, *args)
