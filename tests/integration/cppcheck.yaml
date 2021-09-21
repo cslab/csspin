@@ -1,0 +1,16 @@
+minimum-spin: "0.2d"
+plugins:
+  - spin.builtin.cppcheck
+
+devpi:
+ user: apps
+ url: https://packages.contact.de/apps/16.0-dev/+simple/
+
+python:
+  version: 3.9.6
+  pipconf:
+    global:
+      index-url: "{devpi.url}/+simple/"
+      # this is necessary, since we have some py2 only packages at packages.contact.de
+      extra-index-url: "https://pypi.org/simple"
+      trusted-host: "{devpi.host}"
