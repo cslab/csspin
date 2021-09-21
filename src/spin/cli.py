@@ -89,6 +89,8 @@ DEFAULTS = config(
 def find_spinfile(spinfile):
     """Find a file 'spinfile' by walking up the directory tree."""
     cwd = os.getcwd()
+    if spinfile is None:
+        spinfile = DEFAULTS.spin.spinfile
     spinfile_ = spinfile
     while not os.path.exists(spinfile_):
         cwd_ = os.path.dirname(cwd)
@@ -210,7 +212,7 @@ def base_options(fn):
         click.option(
             "-f",
             "spinfile",
-            default=DEFAULTS.spin.spinfile,
+            default=None,
             type=click.Path(dir_okay=False, exists=False),
             help=(
                 "An alternative name for the configuration file. "
@@ -402,7 +404,10 @@ def cli(
     if cwd:
         cd(cwd)
     else:
-        spinfile = find_spinfile(spinfile)
+        _spinfile = find_spinfile(spinfile)
+        if spinfile and not _spinfile:
+            die(f"{spinfile} not found")
+        spinfile = _spinfile
 
     cfg = load_config_tree(
         spinfile, cwd, quiet, verbose, cleanup, provision, properties
