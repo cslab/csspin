@@ -414,6 +414,10 @@ def cli(
     get_tree().quiet = quiet
     get_tree().verbose = verbose
 
+    # When the output is redirected, set quiet
+    if os.fstat(0) != os.fstat(1):
+        quiet = get_tree().quiet = True
+
     if version:
         print(importlib_metadata.version("spin"))
         return 0
