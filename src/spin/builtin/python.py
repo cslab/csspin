@@ -372,9 +372,14 @@ def get_abi_tag(cfg):
         cfg.python.abitag = abitag.strip()
 
 
+# We won't activate more than once.
+ACTIVATED = False
+
+
 def venv_init(cfg):
+    global ACTIVATED
     get_abi_tag(cfg)
-    if os.environ.get("VIRTUAL_ENV", "") != cfg.python.venv:
+    if os.environ.get("VIRTUAL_ENV", "") != cfg.python.venv and not ACTIVATED:
         activate_this = interpolate1("{python.scriptdir}/activate_this.py")
         if not exists(activate_this):
             die(
@@ -383,6 +388,7 @@ def venv_init(cfg):
             )
         echo("activate {python.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
+        ACTIVATED = True
 
 
 def patch_activate(schema):
