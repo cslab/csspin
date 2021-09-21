@@ -335,11 +335,6 @@ def configure(cfg):
         cfg.python.interpreter = cfg.python.use
     elif "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
         setenv(PYENV_VERSION="{python.version}")
-        # FIXME: this fails if there is pyenv installed, but PATH has
-        # another python before the pyenv shim
-        # cfg.python.use = "python"
-        # cfg.python.interpreter = cfg.python.use
-        # FIXME: this is actually wrong (!)
         cfg.python.interpreter = backtick(
             "pyenv which python", env={"PYENV_VERSION": cfg.python.version}
         ).strip()

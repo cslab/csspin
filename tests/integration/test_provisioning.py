@@ -1,6 +1,6 @@
 import pytest
 
-from spin import backtick, cli, sh, writetext
+from spin import backtick, cli
 
 
 @pytest.fixture(autouse=True)

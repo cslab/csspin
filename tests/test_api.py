@@ -12,7 +12,6 @@ from spin import (
     cd,
     cli,
     config,
-    download,
     echo,
     exists,
     get_tree,
@@ -67,7 +66,7 @@ def test_echo(cfg, mocker):
     for c in click.echo.call_args_list:
         if marker in c.args[0]:
             return
-    assert False, "echo didn't echo"
+    assert not "echo didn't echo"
 
 
 def test_quiet(cfg, mocker):
@@ -87,7 +86,7 @@ def test_info(cfg, mocker):
     for c in click.echo.call_args_list:
         if marker in c.args[0]:
             return
-    assert False, "verbose did not work as expected"
+    assert not "verbose did not work as expected"
 
 
 def test_cd(tmpdir):
@@ -120,10 +119,10 @@ def test_sh(cfg, mocker):
 def test_memoizer(tmpdir):
     memo = f"{tmpdir}/memo"
     with memoizer(memo) as m:
-        assert m.check("abc") == False
+        assert not m.check("abc")
         m.add("abc")
     with memoizer(memo) as m:
-        assert m.check("abc") == True
+        assert m.check("abc")
         assert m.items() == ["abc"]
         m.clear()
     with memoizer(memo) as m:

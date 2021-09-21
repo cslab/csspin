@@ -4,7 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, option, sh, task
+from spin import config, sh, task
 
 defaults = config(
     docs="{spin.project_root}/docs",

@@ -4,8 +4,6 @@
 # All rights reserved.
 # http://www.contact.de/
 
-import os
-
 from click.testing import CliRunner
 
 from spin import cd, cli, mkdir, writetext
@@ -26,4 +24,4 @@ def test_find_spinfile(tmpdir):
         location1 = cli.find_spinfile("xx.yaml")
         location2 = cli.find_spinfile("SPIN_TEST_CLI_DOESNOTEXIST")
     assert location1 == spinf
-    assert location2 == None
+    assert location2 is None

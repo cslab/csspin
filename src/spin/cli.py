@@ -210,8 +210,8 @@ def base_options(fn):
             "envbase",
             type=click.Path(file_okay=False, exists=False),
             help=(
-                "Where spin puts the environment"
-                # FIXME: add documentation
+                "Set an alternative directory for the environment instead of the name"
+                " computed by spin (SPIN_ENVBASE)."
             ),
         ),
         click.option(
