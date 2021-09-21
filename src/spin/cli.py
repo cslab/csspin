@@ -69,7 +69,7 @@ DEFAULTS = config(
         extra_index=None,
     ),
     quiet=False,
-    verbose=False,
+    verbose=0,
     cruise=config(
         # We'll have to use a dict literal here, since the keys are
         # not valid Python identifiers.
@@ -219,12 +219,6 @@ def base_options(fn):
             ),
         ),
         click.option(
-            "--log-level",
-            "log_level",
-            type=str,
-            help="Setup lower-level logging. Meaningful values are 'info' and 'debug'.",
-        ),
-        click.option(
             "--quiet",
             "-q",
             is_flag=True,
@@ -239,7 +233,7 @@ def base_options(fn):
         click.option(
             "--verbose",
             "-v",
-            is_flag=True,
+            count=True,
             default=DEFAULTS.verbose,
             help=(
                 "Be more verbose. By default, spin will generate no output, except the"
@@ -383,7 +377,6 @@ def cli(
     spinfile,
     quiet,
     verbose,
-    log_level,
     debug,
     cruiseopt,
     interactive,
@@ -391,11 +384,9 @@ def cli(
     provision,
     cleanup,
 ):
-    # Set up logging
-    if log_level:
-        log_level = getattr(logging, log_level.upper(), None)
-        if log_level:
-            logging.basicConfig(level=log_level)
+    if verbose > 1:
+        # Set up logging
+        logging.basicConfig(level=logging.DEBUG)
 
     # We want to honor the 'quiet' and 'verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
