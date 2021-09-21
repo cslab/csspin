@@ -18,7 +18,7 @@ defaults = config(
     opts=[],
     defines={},
     pom_file="pom.xml",
-    requires=[".java"],
+    requires=config(spin=[".java"]),
     packages=[],
     version="3.8.2",
     mirrors=[

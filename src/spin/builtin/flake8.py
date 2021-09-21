@@ -41,25 +41,27 @@ from spin import config, option, sh, task
 defaults = config(
     cmd="flake8",
     opts=["--exit-zero", f"-j{os.cpu_count()}"],
-    requires=[".python", ".vcs", ".preflight"],
-    # These are the flake8 plugins we want to use. Maybe this should
-    # be configurable in spinfile (candidates are "flake8-spellcheck"
-    # or "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
-    packages=[
-        "flake8",
-        # "flake8-import-order",
-        "flake8-isort",
-        "flake8-comprehensions",
-        "flake8-copyright",
-        "flake8-polyfill",
-        # These are not Py2-compatible; dont use them by default, as
-        # they would break the flake8 task on Py2. Users which are
-        # Py3-only may get them via overwriting the
-        # "packages"-property in thier spinfile
-        #
-        "flake8-fixme",
-        "flake8-bugbear",
-    ],
+    requires=config(
+        spin=[".python", ".vcs", ".preflight"],
+        # These are the flake8 plugins we want to use. Maybe this should
+        # be configurable in spinfile (candidates are "flake8-spellcheck"
+        # or "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
+        python=[
+            "flake8",
+            # "flake8-import-order",
+            "flake8-isort",
+            "flake8-comprehensions",
+            "flake8-copyright",
+            "flake8-polyfill",
+            # These are not Py2-compatible; dont use them by default, as
+            # they would break the flake8 task on Py2. Users which are
+            # Py3-only may get them via overwriting the
+            # "packages"-property in thier spinfile
+            #
+            "flake8-fixme",
+            "flake8-bugbear",
+        ],
+    ),
     allsource=["{spin.project_root}/src", "{spin.project_root}/tests"],
 )
 

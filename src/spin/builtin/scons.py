@@ -12,8 +12,10 @@ from spin import config, sh, task
 defaults = config(
     cmd="scons",
     opts=[f"-j{os.cpu_count()}"],
-    requires=[".python"],
-    packages=["scons"],
+    requires=config(
+        spin=[".python"],
+        python=["scons"],
+    ),
 )
 
 

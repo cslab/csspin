@@ -12,8 +12,10 @@ defaults = config(
     cmd="cppcheck",
     opts=[f"-j{os.cpu_count()}"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
-    requires=[".python", ".vcs", ".preflight"],
-    packages=["cs.cppcheck-dev"],
+    requires=config(
+        spin=[".python", ".vcs", ".preflight"],
+        python=["cs.cppcheck-dev"],
+    ),
 )
 
 

@@ -9,8 +9,10 @@ from spin import config, exists, option, sh, task
 defaults = config(
     opts=["--wheel"],
     sdksrc="sdk",
-    requires=[".python"],
-    packages=["portwheel", "cpytoolchain"],
+    requires=config(
+        spin=[".python"],
+        python=["portwheel", "cpytoolchain"],
+    ),
 )
 
 

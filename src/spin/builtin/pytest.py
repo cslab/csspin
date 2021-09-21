@@ -9,10 +9,11 @@ import os
 from spin import config, option, sh, task
 
 defaults = config(
-    requires=[".python", ".preflight"],
+    requires=config(
+        spin=[".python", ".preflight"], python=["pytest", "pytest-cov", "pytest-tldr"]
+    ),
     opts=[""],
     coverage_opts=["--cov=spin", "--cov=tests"],
-    packages=["pytest", "pytest-cov", "pytest-tldr"],
 )
 
 

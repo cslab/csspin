@@ -12,8 +12,10 @@ from spin import config, option, sh, task
 defaults = config(
     cmd="cdbtest",
     opts=[],
-    requires=[".python", ".preflight"],
-    packages=["behave"],
+    requires=config(
+        spin=[".python", ".preflight"],
+        python=["behave"],
+    ),
 )
 
 

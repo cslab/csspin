@@ -12,8 +12,10 @@ defaults = config(
     opts=["-n", "{radon.mi_treshold}"],
     cmd="radon",
     mi_treshold="B",
-    requires=[".vcs", ".preflight"],
-    packages=["radon"],
+    requires=config(
+        spin=[".vcs", ".preflight"],
+        python=["radon"],
+    ),
 )
 
 

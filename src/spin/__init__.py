@@ -930,3 +930,11 @@ def _main(*args, **kwargs):
 def parse_version(verstr):
     """Parse a version string."""
     return packaging.version.parse(verstr)
+
+
+def get_requires(tree, keyname):
+    """Access the 'requires.<keyname>' property in a subtree. Return [] if
+    not there.
+    """
+    requires = tree.get("requires", config())
+    return requires.get(keyname, [])

@@ -13,7 +13,7 @@ from spin import Command, config, memoizer
 defaults = config(
     cmd="easy_install",
     opts=["-q", "--no-deps"],
-    requires=[".ce15"],
+    requires=config(spin=[".ce15"]),
     requirements=[],
     extra_index_url=None,
 )

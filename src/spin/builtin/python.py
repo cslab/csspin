@@ -79,6 +79,7 @@ from spin import (
     download,
     echo,
     exists,
+    get_requires,
     info,
     interpolate,
     interpolate1,
@@ -640,14 +641,14 @@ def venv_provision(cfg):
                 hook(cfg)
 
         # Install packages required by the project ('requirements')
-        for req in cfg.python.requirements:
+        for req in cfg.python.get("requirements", []):
             pipit(req)
 
         # Install packages required by plugins used
-        # ('<plugin>.packages')
+        # ('<plugin>.requires.python')
         for plugin in cfg.topo_plugins:
             plugin_module = cfg.loaded[plugin]
-            for req in plugin_module.defaults.get("packages", []):
+            for req in get_requires(plugin_module.defaults, "python"):
                 pipit(req)
 
         if requirements:

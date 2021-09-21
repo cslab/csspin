@@ -11,7 +11,7 @@ import warnings
 from spin import config, interpolate1, option, sh, task
 
 defaults = config(
-    requires=[".python", ".preflight"],
+    requires=config(spin=[".python", ".preflight"]),
     opts=["--gtest_brief=1", "--gtest_color=yes"],
 )
 

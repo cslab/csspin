@@ -20,8 +20,7 @@ from spin import (
 
 defaults = config(
     formats=["bdist_wheel"],
-    requires=[".python"],
-    packages=["devpi-client", "keyring"],
+    requires=config(spin=[".python"], python=["devpi-client", "keyring"]),
 )
 
 

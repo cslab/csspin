@@ -39,6 +39,7 @@ from . import (
     cruise,
     die,
     exists,
+    get_requires,
     get_tree,
     interpolate1,
     memoizer,
@@ -144,14 +145,9 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
         tree.tree_merge(plugin_config_tree, plugin_defaults)
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")
-            for requirement in plugin_config_tree.get("requires", [])
+            for requirement in get_requires(plugin_config_tree, "spin")
         ]
-        ki = None
-        if "requires" in plugin_config_tree:
-            ki = tree.tree_keyinfo(plugin_config_tree, "requires")
-        plugin_config_tree.requires = [dep.__name__ for dep in dependencies]
-        if ki:
-            tree.tree_set_keyinfo(plugin_config_tree, "requires", ki)
+        plugin_config_tree._requires = [dep.__name__ for dep in dependencies]
         mod.defaults = plugin_config_tree
     return mod
 
@@ -595,13 +591,14 @@ def load_config_tree(
         load_plugin(cfg, ep.module_name)
 
     # Create a topologically sorted list of the plugins by their
-    # 'requires' dependencies. This will be used later by 'toporun' to
-    # run initialization functions in order (e.g. a tool like 'flake8'
+    # dependencies, which have been stored in "_requires" by
+    # load_plugin. This will be used later by 'toporun' to run
+    # initialization functions in order (e.g. a tool like 'flake8'
     # requires a virtualenv where it can be installed; the virtualenv
     # is provided by the 'virtualenv' plugin, which in turn requires
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
-    graph = {n: getattr(mod.defaults, "requires", []) for n, mod in cfg.loaded.items()}
+    graph = {n: getattr(mod.defaults, "_requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
     # Add command line settings.
