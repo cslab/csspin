@@ -284,7 +284,14 @@ def sh(*cmd, **kwargs):
             cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
     if not kwargs.pop("silent", False):
-        echo(" ".join(cmd))
+
+        def quote(arg):
+            if len(cmd) > 1:
+                if " " in arg:
+                    return f"'{arg}'"
+            return arg
+
+        echo(" ".join(quote(c) for c in cmd))
 
     try:
         t0 = time.monotonic()
