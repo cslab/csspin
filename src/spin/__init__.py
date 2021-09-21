@@ -836,7 +836,7 @@ def get_sources(tree):
     return sources
 
 
-def build_target(cfg, target, phony):
+def build_target(cfg, target, phony=False):
     info(f"target '{target}'{' (phony)' if phony else ''}")
     build_rules = cfg.get("build-rules", config())
     target_def = build_rules.get(target, None)
