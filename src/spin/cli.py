@@ -210,6 +210,27 @@ def base_options(fn):
             ),
         ),
         click.option(
+            "--env",
+            "envbase",
+            type=click.Path(file_okay=False, exists=False),
+            help=(
+                "Where spin puts the environment"
+                # FIXME: add documentation
+            ),
+        ),
+        click.option(
+            "--change-directory",
+            "-C",
+            "cwd",
+            type=click.Path(file_okay=False, exists=True),
+            help=(
+                "Change directory before doing anything else. "
+                "In this case, the configuration file "
+                "(spinfile.yaml) is expected to live in the "
+                "directory changed to."
+            ),
+        ),
+        click.option(
             "-f",
             "spinfile",
             default=None,
@@ -376,6 +397,7 @@ def cli(
     ctx,
     version,
     cwd,
+    envbase,
     spinfile,
     quiet,
     verbose,
@@ -410,7 +432,7 @@ def cli(
         spinfile = _spinfile
 
     cfg = load_config_tree(
-        spinfile, cwd, quiet, verbose, cleanup, provision, properties
+        spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
     )
 
     mkdir("{spin.cache}")
@@ -467,6 +489,7 @@ def yield_plugin_import_specs(cfg):
 def load_config_tree(
     spinfile,
     cwd=False,
+    envbase=None,
     quiet=False,
     verbose=False,
     cleanup=False,
@@ -490,6 +513,9 @@ def load_config_tree(
             f"Merging user settings from {interpolate1('{spin.spin_global}')}"
         )
         tree.tree_update(cfg, readyaml(interpolate1("{spin.spin_global}")))
+
+    if envbase:
+        cfg.spin.env_base = envbase
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
