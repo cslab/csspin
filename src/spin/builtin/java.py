@@ -9,9 +9,7 @@ import os
 from spin import config, die, info, interpolate1, memoizer, mkdir, setenv
 
 defaults = config(
-    # FIXME: we should not set a default for the JDK version, but make
-    # this a required property to be set in spinfile
-    version="16",
+    version=None,
     installdir="{spin.cache}/{platform.tag}",
     java_home=None,
 )
@@ -69,4 +67,12 @@ def init(cfg):
         die(
             "JDK {java.version} is not yet provisioned.\n"
             "You might want to run spin with the --provision flag."
+        )
+
+
+def configure(cfg):
+    if not cfg.java.version:
+        die(
+            "Spin's Java plugin no longer sets a default version.\n"
+            "Please choose a version in spinfile.yaml by setting java.version"
         )
