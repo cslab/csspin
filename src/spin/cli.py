@@ -535,7 +535,7 @@ def load_config_tree(
     if spinfile:
 
         # Check spin version requested by this spinfile
-        minspin = getattr(cfg, "minimum-spin", None)
+        minspin = cfg.get("minimum-spin")
         if not minspin:
             die("spin requires 'minimum-spin' to be set")
         minspin = packaging.version.parse(minspin)
