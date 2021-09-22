@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, die, info, interpolate1, memoizer, mkdir, setenv
+from spin import config, die, info, interpolate1, memoizer, mkdir, rmtree, setenv
 
 defaults = config(
     version=None,
@@ -53,6 +53,7 @@ def provision(cfg):
     jdk.get_download_url = monkey_get_download_url
 
     with memoizer("{java.installdir}/java.pickle") as m:
+        rmtree(cfg.java.installdir)
         java_home = jdk.install(
             cfg.java.version, path=interpolate1(cfg.java.installdir)
         )
