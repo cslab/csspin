@@ -636,7 +636,7 @@ def venv_provision(cfg):
 
     def addreq(req):
         req = replacements.get(req, req)
-        cfg.python.provisioner.add("dev", req)
+        cfg.python.provisioner.add("dev", interpolate1(req))
 
     # Plugins can define a 'venv_hook' function, to give them a
     # chance to do something with the virtual environment just
