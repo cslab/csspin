@@ -33,6 +33,9 @@ python:
     - sphinx-click
     - pytest-mock
 
+piptools:
+  hashes: true
+
 extra-tasks:
   # This is the recommended way of installing spin locally as long as
   # it is under development.
