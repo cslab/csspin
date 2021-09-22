@@ -20,6 +20,7 @@ plugins:
       - pre_commit
       - sphinx
       - docker
+      - piptools
   - demo_plugin
 
 python:
@@ -30,7 +31,6 @@ python:
     - black
     - pip-tools
     - sphinx-click
-    - sphinx-rtd-theme
     - pytest-mock
 
 extra-tasks:

@@ -71,6 +71,7 @@ import sys
 from spin import (
     EXPORTS,
     Command,
+    Memoizer,
     Path,
     backtick,
     cd,
@@ -134,6 +135,7 @@ defaults = config(
     python=N("{python.bindir}/python"),
     pipconf=config(),
     abitag=None,
+    provisioner=None,
 )
 
 
@@ -562,9 +564,37 @@ def finalize_provision(cfg):
     writetext(f"{site_packages}/_set_env.pth", pthline)
 
 
+class SimpleProvisioner:
+    def __init__(self):
+        self.requirements = []
+        self.m = Memoizer("{python.memo}")
+
+    def lock(self, setname, cfg):
+        if setname == "":
+            # If there is a setup.py, make an editable install (which
+            # transitively also installs runtime dependencies of the project).
+            # FIXME: filename/location of setup.py should probably be
+            # configurable
+            if exists("setup.py"):
+                sh("pip", "install", cfg.quietflag, "-e", ".")
+
+    def add(self, setname, req):
+        if setname == "dev":
+            if not self.m.check(req):
+                self.requirements.extend(req.split())
+                self.m.add(req)
+
+    def sync(self, cfg):
+        if self.requirements:
+            sh("pip", "install", cfg.quietflag, *self.requirements)
+        self.m.save()
+
+    def prerequisites(self, cfg):
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
+
+
 def install_to_venv(cfg, *args):
     args = interpolate(args)
-    sh("pip", "install", cfg.quietflag, *args)
 
 
 def venv_provision(cfg):
@@ -590,9 +620,12 @@ def venv_provision(cfg):
     # This sets PATH to the venv
     init(cfg)
 
+    if cfg.python.provisioner is None:
+        cfg.python.provisioner = SimpleProvisioner()
+
     # Update pip in the venv
     if fresh_virtualenv:
-        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip", "setuptools")
+        cfg.python.provisioner.prerequisites(cfg)
 
     # This is a much faster alternative to calling pip config; we
     # leave it active here for now, enjoying a faster spin until we
@@ -610,50 +643,40 @@ def venv_provision(cfg):
     if not exists(pipconf):
         writetext(pipconf, "\n".join(text))
 
-    # If there is a setup.py, make an editable install (which
-    # transitively also installs runtime dependencies of the
-    # project).  FIXME: filename/location of setup.py should
-    # probably be configurable
-    if exists("setup.py"):
-        install_to_venv(cfg, "-e", ".")
+    cfg.python.provisioner.lock("", cfg)
 
-    with memoizer("{python.memo}") as m:
+    replacements = cfg.get("devpackages", {})
 
-        replacements = cfg.get("devpackages", {})
+    def addreq(req):
+        req = replacements.get(req, req)
+        cfg.python.provisioner.add("dev", req)
 
-        requirements = []
+    # Plugins can define a 'venv_hook' function, to give them a
+    # chance to do something with the virtual environment just
+    # being provisioned (e.g. preparing the venv by adding pth
+    # files or by adding packages with other installers like
+    # easy_install).
+    for plugin in cfg.topo_plugins:
+        plugin_module = cfg.loaded[plugin]
+        hook = getattr(plugin_module, "venv_hook", None)
+        if hook is not None:
+            logging.debug(f"{plugin_module.__name__}.venv_hook()")
+            hook(cfg)
 
-        def pipit(req):
-            req = replacements.get(req, req)
-            if not m.check(req):
-                requirements.extend(req.split())
-                m.add(req)
+    # Install packages required by the project ('requirements')
+    for req in cfg.python.get("requirements", []):
+        addreq(req)
 
-        # Plugins can define a 'venv_hook' function, to give them a
-        # chance to do something with the virtual environment just
-        # being provisioned (e.g. preparing the venv by adding pth
-        # files or by adding packages with other installers like
-        # easy_install).
-        for plugin in cfg.topo_plugins:
-            plugin_module = cfg.loaded[plugin]
-            hook = getattr(plugin_module, "venv_hook", None)
-            if hook is not None:
-                logging.debug(f"{plugin_module.__name__}.venv_hook()")
-                hook(cfg)
+    # Install packages required by plugins used
+    # ('<plugin>.requires.python')
+    for plugin in cfg.topo_plugins:
+        plugin_module = cfg.loaded[plugin]
+        for req in get_requires(plugin_module.defaults, "python"):
+            addreq(req)
 
-        # Install packages required by the project ('requirements')
-        for req in cfg.python.get("requirements", []):
-            pipit(req)
+    cfg.python.provisioner.lock("dev", cfg)
 
-        # Install packages required by plugins used
-        # ('<plugin>.requires.python')
-        for plugin in cfg.topo_plugins:
-            plugin_module = cfg.loaded[plugin]
-            for req in get_requires(plugin_module.defaults, "python"):
-                pipit(req)
-
-        if requirements:
-            install_to_venv(cfg, *requirements)
+    cfg.python.provisioner.sync(cfg)
 
 
 def cleanup(cfg):

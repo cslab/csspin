@@ -355,6 +355,18 @@ def _read_file(fn, mode):
         return f.read()
 
 
+def readlines(fn):
+    fn = interpolate1(fn)
+    with open(fn, "r") as f:
+        return f.readlines()
+
+
+def writelines(fn, lines):
+    fn = interpolate1(fn)
+    with open(fn, "w") as f:
+        return f.writelines(lines)
+
+
 def _write_file(fn, mode, data):
     fn = interpolate1(fn)
     with open(fn, mode) as f:
