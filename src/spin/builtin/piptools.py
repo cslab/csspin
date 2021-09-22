@@ -23,12 +23,17 @@ defaults = config(
         spin=[".python"],
         python=["setuptools"],
     ),
+    hashes=False,
     pip_compile=config(
         cmd="pip-compile",
-        options=[
+        options_hash=[
             "--generate-hashes",
             "--reuse-hashes",
-            "--upgrade",
+        ],
+        options=[
+            # FIXME: we need a separate upgrade mechanism, otherwise
+            # pip-tools will push us to latest (possible) for all deps
+            # every time ###"--upgrade",
             "--allow-unsafe",
             "--header",
             "--annotate",
@@ -65,17 +70,22 @@ class SetupPySet:
 
 
 class DevSet:
-    def __init__(self, requirements_txt):
+    def __init__(self, cfg, requirements_txt):
+        self.cfg = cfg
         self.requirements_txt = requirements_txt
-        self.reqs = []
+        self.reqs = set()
 
     def add(self, req):
-        self.reqs.append(req)
+        if req.startswith("-e") and self.cfg.piptools.hashes:
+            die("Hashed dependencies are incompatible with editable installs.")
+        self.reqs.add(req)
 
-    def lock(self, cfg):
-        infile = self.requirements_txt + ".in"
-        newtext = [f"{req}\n" for req in self.reqs]
-        newtext.sort()
+    def do_lock(self, cfg, reqset, options):
+        requirements_txt = self.requirements_txt
+        infile = requirements_txt + ".in"
+        reqlist = list(reqset)
+        reqlist.sort()
+        newtext = [f"{req}\n" for req in reqlist]
         oldtext = []
         if exists(infile):
             oldtext = readlines(infile)
@@ -89,23 +99,34 @@ class DevSet:
                 )
             )
             writelines(infile, newtext)
+            options = cfg.piptools.pip_compile.options
+            if cfg.piptools.hashes:
+                options.extend(cfg.piptools.pip_compile.options_hash)
             sh(
                 cfg.piptools.pip_compile.cmd,
-                *cfg.piptools.pip_compile.options,
+                *options,
                 infile,
                 "-o",
-                self.requirements_txt,
+                requirements_txt,
             )
 
+    def lock(self, cfg):
+        self.do_lock(
+            cfg,
+            self.reqs,
+            cfg.piptools.pip_compile.options,
+        )
+
     def get_txt(self):
-        return [self.requirements_txt]
+        out = [self.requirements_txt]
+        return out
 
 
 class PiptoolsProvisioner:
-    def __init__(self):
+    def __init__(self, cfg):
         self.sets = {
             "": SetupPySet("setup.py", "requirements.txt"),
-            "dev": DevSet("spin-reqs.txt"),
+            "dev": DevSet(cfg, "spin-reqs.txt"),
         }
 
     def add(self, setname, req):
@@ -118,10 +139,16 @@ class PiptoolsProvisioner:
         allreqs = []
         for reqset in self.sets.values():
             allreqs.extend(reqset.get_txt())
+        options = list(cfg.piptools.pip_sync.options)
+        pipconf = cfg.python.pipconf.get("global", config())
+        for option in ("index-url", "extra-index-url", "trusted-host"):
+            value = pipconf.get(option, None)
+            if value:
+                options.extend([f"--{option}", value])
         sh(
             cfg.piptools.pip_sync.cmd,
             cfg.quietflag,
-            *cfg.piptools.pip_sync.options,
+            *options,
             *allreqs,
         )
         if exists("setup.py"):
@@ -132,4 +159,4 @@ class PiptoolsProvisioner:
 
 
 def configure(cfg):
-    cfg.python.provisioner = PiptoolsProvisioner()
+    cfg.python.provisioner = PiptoolsProvisioner(cfg)
