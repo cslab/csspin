@@ -84,7 +84,6 @@ from spin import (
     info,
     interpolate,
     interpolate1,
-    memoizer,
     mkdir,
     namespaces,
     parse_version,
@@ -118,11 +117,11 @@ defaults = config(
         if sys.platform != "win32"
         else N("{python.plat_dir}/python.{python.version}/tools")
     ),
-    # FIXME: bad name here, doubles 'bindir' below
-    bin_dir=(
-        N("{python.inst_dir}/bin") if sys.platform != "win32" else "{python.inst_dir}"
+    interpreter=N(
+        "{python.inst_dir}/bin/python{platform.exe}"
+        if sys.platform != "win32"
+        else "{python.inst_dir}/python{platform.exe}"
     ),
-    interpreter=N("{python.bin_dir}/python{platform.exe}"),
     use=None,
     venv=N("{spin.env_base}/{python.abitag}-{platform.tag}"),
     memo=N("{python.venv}/spininfo.memo"),
@@ -306,17 +305,9 @@ def nuget_install(cfg):
     )
 
 
-def check_python_interpreter(cfg):
-    try:
-        pi = sh("{python.interpreter}", "--version", check=False, may_fail=True)
-        return pi.returncode == 0
-    except Exception:
-        return False
-
-
 def provision(cfg):
     info("Checking {python.interpreter}")
-    if not check_python_interpreter(cfg):
+    if not shutil.which(cfg.python.interpreter):
         if sys.platform == "win32":
             nuget_install(cfg)
         else:
@@ -623,13 +614,7 @@ def venv_provision(cfg):
     if cfg.python.provisioner is None:
         cfg.python.provisioner = SimpleProvisioner()
 
-    # Update pip in the venv
-    if fresh_virtualenv:
-        cfg.python.provisioner.prerequisites(cfg)
-
-    # This is a much faster alternative to calling pip config; we
-    # leave it active here for now, enjoying a faster spin until we
-    # better understand the drawbacks.
+    # Update pip.conf in the virtual environment
     text = []
     for section, settings in cfg.python.pipconf.items():
         text.append(f"[{section}]")
@@ -639,9 +624,11 @@ def venv_provision(cfg):
         pipconf = "{python.venv}/pip.ini"
     else:
         pipconf = "{python.venv}/pip.conf"
+    writetext(pipconf, "\n".join(text))
 
-    if not exists(pipconf):
-        writetext(pipconf, "\n".join(text))
+    # Update pip in the venv
+    if fresh_virtualenv:
+        cfg.python.provisioner.prerequisites(cfg)
 
     cfg.python.provisioner.lock("", cfg)
 
