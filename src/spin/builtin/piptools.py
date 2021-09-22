@@ -118,7 +118,14 @@ class PiptoolsProvisioner:
         allreqs = []
         for reqset in self.sets.values():
             allreqs.extend(reqset.get_txt())
-        sh(cfg.piptools.pip_sync.cmd, *cfg.piptools.pip_sync.options, *allreqs)
+        sh(
+            cfg.piptools.pip_sync.cmd,
+            cfg.quietflag,
+            *cfg.piptools.pip_sync.options,
+            *allreqs,
+        )
+        if exists("setup.py"):
+            sh("pip", "install", cfg.quietflag, "--no-deps", "-e", ".")
 
     def prerequisites(self, cfg):
         sh("pip", "install", cfg.quietflag, "pip-tools")
