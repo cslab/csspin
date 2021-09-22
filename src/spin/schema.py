@@ -25,7 +25,10 @@ class BaseDescriptor:
         return value
 
     def get_default(self, defaultdefault=None):
-        return self.coerce(getattr(self, "default", defaultdefault))
+        val = getattr(self, "default", defaultdefault)
+        if val is not None:
+            val = self.coerce(val)
+        return val
 
 
 DESCRIPTOR_REGISTRY = {}
