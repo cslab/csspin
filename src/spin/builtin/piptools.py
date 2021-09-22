@@ -5,6 +5,7 @@
 # http://www.contact.de/
 
 import difflib
+import os
 
 from spin import (
     Path,
@@ -15,6 +16,7 @@ from spin import (
     readlines,
     readtext,
     sh,
+    task,
     writelines,
 )
 
@@ -37,12 +39,14 @@ defaults = config(
             "--allow-unsafe",
             "--header",
             "--annotate",
+            "--no-emit-options",
         ],
     ),
     pip_sync=config(
         cmd="pip-sync",
         options=[],
     ),
+    prerequisites=["pip-tools"],
 )
 
 
@@ -55,9 +59,12 @@ class SetupPySet:
 
     def lock(self, cfg):
         if not is_up_to_date(self.requirements_txt, (self.setup_py, self.setup_cfg)):
+            options = cfg.piptools.pip_compile.options
+            if cfg.piptools.hashes:
+                options.extend(cfg.piptools.pip_compile.options_hash)
             sh(
                 cfg.piptools.pip_compile.cmd,
-                *cfg.piptools.pip_compile.options,
+                *options,
                 "-o",
                 self.requirements_txt,
             )
@@ -89,7 +96,7 @@ class DevSet:
         oldtext = []
         if exists(infile):
             oldtext = readlines(infile)
-        if newtext != oldtext:
+        if newtext != oldtext or not exists(requirements_txt):
             echo(f"{infile} changed!")
             print(
                 "".join(
@@ -141,10 +148,13 @@ class PiptoolsProvisioner:
             allreqs.extend(reqset.get_txt())
         options = list(cfg.piptools.pip_sync.options)
         pipconf = cfg.python.pipconf.get("global", config())
-        for option in ("index-url", "extra-index-url", "trusted-host"):
-            value = pipconf.get(option, None)
-            if value:
-                options.extend([f"--{option}", value])
+        # for option in ("index-url", "extra-index-url", "trusted-host"):
+        #    value = pipconf.get(option, None)
+        #    if value:
+        #        options.extend([f"--{option}", value])
+        find_links = pipconf.get("find-links", None)
+        if exists(find_links):
+            options.append("--no-index")
         sh(
             cfg.piptools.pip_sync.cmd,
             cfg.quietflag,
@@ -155,8 +165,26 @@ class PiptoolsProvisioner:
             sh("pip", "install", cfg.quietflag, "--no-deps", "-e", ".")
 
     def prerequisites(self, cfg):
-        sh("pip", "install", cfg.quietflag, "pip-tools")
+        sh("pip", "install", cfg.quietflag, *cfg.piptools.prerequisites)
+
+    def wheelhouse(self, cfg):
+        reqfiles = []
+        for reqset in self.sets.values():
+            for reqfile in reqset.get_txt():
+                reqfiles.extend(["-r", reqfile])
+        sh(
+            "pip",
+            "download",
+            "-d",
+            cfg.python.pipconf.get("global").get("find-links"),
+            *reqfiles,
+        )
 
 
 def configure(cfg):
     cfg.python.provisioner = PiptoolsProvisioner(cfg)
+
+
+@task("python:wheelhouse")
+def wheelhouse(cfg):
+    cfg.python.provisioner.wheelhouse(cfg)
