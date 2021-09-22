@@ -10,10 +10,21 @@ from spin import config, option, sh, task
 
 defaults = config(
     requires=config(
-        spin=[".python", ".preflight"], python=["pytest", "pytest-cov", "pytest-tldr"]
+        spin=[
+            ".python",
+            ".preflight",
+        ],
+        python=[
+            "pytest",
+            "pytest-cov",
+            "pytest-tldr",
+        ],
     ),
     opts=[""],
-    coverage_opts=["--cov=spin", "--cov=tests"],
+    coverage_opts=[
+        "--cov=spin",
+        "--cov=tests",
+    ],
 )
 
 
@@ -34,4 +45,4 @@ def pytest(
         if coverage:
             opts.extend(cfg.pytest.coverage_opts)
             opts.append(f"--cov-report={covreport}")
-        sh("{python.scriptdir}/pytest", *opts, *args)
+        sh("pytest", *opts, *args)
