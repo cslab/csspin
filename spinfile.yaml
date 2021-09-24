@@ -24,7 +24,7 @@ plugins:
   - demo_plugin
 
 python:
-  version: 3.8.11
+  version: 3.8.10
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
