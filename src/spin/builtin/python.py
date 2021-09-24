@@ -132,7 +132,15 @@ defaults = config(
         else N("{python.venv}/Scripts")
     ),
     python=N("{python.bindir}/python"),
-    pipconf=config(),
+    pipconf=config(
+        {
+            "global": config(
+                {
+                    "find-links": "{spin.env_base}/wheelhouse",
+                }
+            ),
+        }
+    ),
     abitag=None,
     provisioner=None,
 )
