@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from spin import backtick, cli
@@ -12,6 +14,7 @@ def do_test(tmpdir, what, cmd):
     output = backtick(
         f"spin -C tests/integration --env {tmpdir} -f {what} --provision {cmd}"
     )
+    output = output.strip()
     print(output)
     return output
 
@@ -22,43 +25,47 @@ def test_python(tmpdir):
         tmpdir,
         "python.yaml",
         "python --version",
-    ).endswith("Python 3.9.6\n")
+    ).endswith("Python 3.9.6")
 
 
 @pytest.mark.slow
 def test_cppcheck(tmpdir):
-    assert do_test(
+    out = do_test(
         tmpdir,
         "cppcheck.yaml",
-        "run which cppcheck",
-    ).endswith("cppcheck\n")
+        "python -c \"import shutil; print(shutil.which('cppcheck'))\"",
+    )
+    assert re.match(r".*cppcheck(.exe)?$", out, re.IGNORECASE)
 
 
 @pytest.mark.slow
 def test_cpplint(tmpdir):
-    assert do_test(
+    out = do_test(
         tmpdir,
         "cpplint.yaml",
-        "run which cpplint",
-    ).endswith("cpplint\n")
+        "python -c \"import shutil; print(shutil.which('cpplint'))\"",
+    )
+    assert re.match(r".*cpplint(.exe)?$", out, re.IGNORECASE)
 
 
 @pytest.mark.slow
 def test_flake(tmpdir):
-    assert do_test(
+    out = do_test(
         tmpdir,
         "flake.yaml",
-        "run which flake8",
-    ).endswith("flake8\n")
+        "python -c \"import shutil; print(shutil.which('flake8'))\"",
+    )
+    assert re.match(r".*flake8(.exe)?$", out, re.IGNORECASE)
 
 
 @pytest.mark.slow
 def test_buildout(tmpdir):
-    assert do_test(
+    out = do_test(
         tmpdir,
         "buildout.yaml",
-        "run which buildout",
-    ).endswith("buildout\n")
+        "python -c \"import shutil; print(shutil.which('buildout'))\"",
+    )
+    assert re.match(r".*buildout(.exe)?$", out, re.IGNORECASE)
 
 
 @pytest.mark.slow

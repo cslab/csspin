@@ -26,6 +26,8 @@ defaults = config(
         python=["setuptools"],
     ),
     hashes=False,
+    requirements="requirements-{python.abitag}-{platform.tag}.txt",
+    devrequirements="spin-reqs-{python.abitag}-{platform.tag}.txt",
     pip_compile=config(
         cmd="pip-compile",
         options_hash=[
@@ -41,6 +43,9 @@ defaults = config(
             "--annotate",
             "--no-emit-options",
         ],
+        env=config(
+            CUSTOM_COMPILE_COMMAND="spin --provision",
+        ),
     ),
     pip_sync=config(
         cmd="pip-sync",
@@ -67,6 +72,7 @@ class SetupPySet:
                 *options,
                 "-o",
                 self.requirements_txt,
+                env=cfg.piptools.pip_compile.env,
             )
 
     def add(self, req):
@@ -132,8 +138,8 @@ class DevSet:
 class PiptoolsProvisioner:
     def __init__(self, cfg):
         self.sets = {
-            "": SetupPySet("setup.py", "requirements.txt"),
-            "dev": DevSet(cfg, "spin-reqs.txt"),
+            "": SetupPySet("setup.py", cfg.piptools.requirements),
+            "dev": DevSet(cfg, cfg.piptools.devrequirements),
         }
 
     def add(self, setname, req):

@@ -307,7 +307,7 @@ def nuget_install(cfg):
 
 def provision(cfg):
     info("Checking {python.interpreter}")
-    if not shutil.which(cfg.python.interpreter):
+    if not shutil.which(interpolate1(cfg.python.interpreter)):
         if sys.platform == "win32":
             nuget_install(cfg)
         else:
@@ -535,9 +535,9 @@ def finalize_provision(cfg):
 
     site_packages = (
         sh(
-            "{python.python}",
+            "python",
             "-c",
-            "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+            'import sysconfig; print(sysconfig.get_path("purelib"))',
             capture_output=True,
             silent=not cfg.verbose,
         )
@@ -547,7 +547,7 @@ def finalize_provision(cfg):
     info(f"Create {site_packages}/_set_env.pth")
     pthline = interpolate1(
         "import os; "
-        "bindir='{python.bindir}'; "
+        "bindir=r'{python.bindir}'; "
         "os.environ['PATH'] = "
         "os.environ['PATH'] if bindir in os.environ['PATH'] "
         "else os.pathsep.join((bindir, os.environ['PATH']))\n"

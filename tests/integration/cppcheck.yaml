@@ -4,7 +4,8 @@ plugins:
 
 devpi:
  user: apps
- url: https://packages.contact.de/apps/16.0-dev/+simple/
+ host: packages.contact.de
+ url: https://{devpi.host}/apps/16.0-dev
 
 python:
   version: 3.9.6

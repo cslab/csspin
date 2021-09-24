@@ -543,10 +543,13 @@ def load_config_tree(
         if minspin > spinversion:
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
-        cfg.spin.project_root = os.path.dirname(os.path.abspath(cfg.spin.spinfile))
+        cfg.spin.project_root = os.path.dirname(
+            os.path.normcase(os.path.abspath(cfg.spin.spinfile))
+        )
         if not cwd:
             cd(cfg.spin.project_root)
         cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
+
         path_hash = hashlib.sha256(
             os.path.dirname(cfg.spin.project_root).encode()
         ).digest()

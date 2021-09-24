@@ -4,6 +4,8 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import os
+
 from click.testing import CliRunner
 
 from spin import cd, cli, mkdir, writetext
@@ -16,7 +18,7 @@ def test_cli():
 
 
 def test_find_spinfile(tmpdir):
-    spinf = f"{tmpdir}/xx.yaml"
+    spinf = os.path.normpath(f"{tmpdir}/xx.yaml")
     writetext(spinf, "")
     insidetree = f"{tmpdir}/a/b/c"
     mkdir(insidetree)
