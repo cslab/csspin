@@ -7,7 +7,7 @@
 import os
 import sys
 
-from spin import config, sh, task
+from spin import config, setenv, sh, task
 
 defaults = config(
     cmd="scons",
@@ -16,6 +16,7 @@ defaults = config(
         spin=[".python"],
         python=["scons"],
     ),
+    cache_vcvars=False,
 )
 
 
@@ -26,6 +27,6 @@ def scons(cfg, args):
     args = list(args)
     if cfg.quiet:
         args.insert(0, "-s")
-    if sys.platform.startswith("win32"):
-        cmd += ".bat"
+    if cfg.scons.cache_vcvars:
+        setenv(SCONS_CACHE_MSVC_CONFIG="1")
     sh(cmd, *cfg.scons.opts, *args)
