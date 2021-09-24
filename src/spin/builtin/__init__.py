@@ -165,6 +165,15 @@ def merge_dicts(a, b):
             a[k] = v
 
 
+def get_distro():
+    dinfo = distro.info()
+    if sys.platform == "win32":
+        dinfo["id"] = "windows"
+        winver = sys.getwindowsversion()
+        dinfo["version"] = f"{winver.major}.{winver.minor}.{winver.build}"
+    return dinfo
+
+
 @task("system-provision", noenv=True)
 def do_system_provisioning(
     cfg,
@@ -186,7 +195,7 @@ def do_system_provisioning(
         else:
             distroversion = parse_version("")
     else:
-        dinfo = distro.info()
+        dinfo = get_distro()
         distroname = dinfo["id"]
         distroversion = parse_version(dinfo["version"])
 
@@ -233,5 +242,5 @@ def do_system_provisioning(
 
 @task("distro")
 def distro_task(cfg):
-    dinfo = distro.info()
+    dinfo = get_distro()
     print(f"distro={repr(dinfo['id'])} version={repr(parse_version(dinfo['version']))}")
