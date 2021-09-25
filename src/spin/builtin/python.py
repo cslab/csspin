@@ -563,6 +563,9 @@ class SimpleProvisioner:
             if exists("setup.py"):
                 sh("pip", "install", cfg.quietflag, "-e", ".")
 
+    def finalize_lock(self, cfg):
+        pass
+
     def add(self, setname, req):
         if setname == "dev":
             if not self.m.check(req):
