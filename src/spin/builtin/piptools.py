@@ -12,6 +12,7 @@ from spin import (
     config,
     echo,
     exists,
+    info,
     is_up_to_date,
     readlines,
     readtext,
@@ -74,6 +75,8 @@ class SetupPySet:
                 self.requirements_txt,
                 env=cfg.piptools.pip_compile.env,
             )
+            return True
+        return False
 
     def add(self, req):
         raise NotImplementedError()
@@ -122,9 +125,11 @@ class DevSet:
                 "-o",
                 requirements_txt,
             )
+            return True
+        return False
 
     def lock(self, cfg):
-        self.do_lock(
+        return self.do_lock(
             cfg,
             self.reqs,
             cfg.piptools.pip_compile.options,
@@ -141,25 +146,30 @@ class PiptoolsProvisioner:
             "": SetupPySet("setup.py", cfg.piptools.requirements),
             "dev": DevSet(cfg, cfg.piptools.devrequirements),
         }
+        self.locks_updated = False
 
     def add(self, setname, req):
         self.sets[setname].add(req)
 
     def lock(self, setname, cfg):
-        self.sets[setname].lock(cfg)
+        self.locks_updated = self.locks_updated or self.sets[setname].lock(cfg)
+
+    def finalize_lock(self, cfg):
+        if self.locks_updated and self.have_wheelhouse(cfg):
+            info("Updating the wheelhouse!")
+            self.wheelhouse(cfg)
+
+    def have_wheelhouse(self, cfg):
+        pipconf = cfg.python.pipconf.get("global", config())
+        find_links = pipconf.get("find-links", None)
+        return exists(find_links)
 
     def sync(self, cfg):
         allreqs = []
         for reqset in self.sets.values():
             allreqs.extend(reqset.get_txt())
         options = list(cfg.piptools.pip_sync.options)
-        pipconf = cfg.python.pipconf.get("global", config())
-        # for option in ("index-url", "extra-index-url", "trusted-host"):
-        #    value = pipconf.get(option, None)
-        #    if value:
-        #        options.extend([f"--{option}", value])
-        find_links = pipconf.get("find-links", None)
-        if exists(find_links):
+        if self.have_wheelhouse(cfg):
             options.append("--no-index")
         sh(
             cfg.piptools.pip_sync.cmd,

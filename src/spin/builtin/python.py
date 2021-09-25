@@ -656,6 +656,7 @@ def venv_provision(cfg):
             addreq(req)
 
     cfg.python.provisioner.lock("dev", cfg)
+    cfg.python.provisioner.finalize_lock(cfg)
 
     cfg.python.provisioner.sync(cfg)
 
