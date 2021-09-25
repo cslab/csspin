@@ -245,15 +245,7 @@ def pyenv_install(cfg):
         if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
             info("Using your existing pyenv installation ...")
             sh("pyenv install --skip-existing {version}")
-            sh(
-                "python",
-                "-mpip",
-                "install",
-                cfg.quietflag,
-                "-U",
-                "pip",
-                "packaging",
-            )
+            cfg.python.interpreter = backtick("pyenv which python --nosystem").strip()
         else:
             info("Installing Python {version} to {inst_dir}")
             # For Linux/macOS using the 'python-build' plugin from
@@ -268,16 +260,6 @@ def pyenv_install(cfg):
             setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
             setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
             sh("{pyenv.python_build} {version} {inst_dir}")
-            sh(
-                "{interpreter}",
-                "-mpip",
-                "install",
-                cfg.quietflag,
-                "-U",
-                "pip",
-                "wheel",
-                "packaging",
-            )
 
 
 def nuget_install(cfg):
@@ -336,9 +318,13 @@ def configure(cfg):
         cfg.python.interpreter = cfg.python.use
     elif "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
         setenv(PYENV_VERSION="{python.version}")
-        cfg.python.interpreter = backtick(
-            "pyenv which python", env={"PYENV_VERSION": cfg.python.version}
-        ).strip()
+        try:
+            cfg.python.interpreter = backtick(
+                "pyenv which python --nosystem",
+                may_fail=True,
+            ).strip()
+        except Exception:
+            pass
 
 
 def init(cfg):
