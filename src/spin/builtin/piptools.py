@@ -180,6 +180,8 @@ class PiptoolsProvisioner:
                 reqfiles.extend(["-r", reqfile])
         sh(
             "pip",
+            "--exists-action",
+            "b",
             "download",
             "-d",
             cfg.python.pipconf.get("global").get("find-links"),
