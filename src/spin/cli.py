@@ -215,18 +215,6 @@ def base_options(fn):
             ),
         ),
         click.option(
-            "--change-directory",
-            "-C",
-            "cwd",
-            type=click.Path(file_okay=False, exists=True),
-            help=(
-                "Change directory before doing anything else. "
-                "In this case, the configuration file "
-                "(spinfile.yaml) is expected to live in the "
-                "directory changed to."
-            ),
-        ),
-        click.option(
             "-f",
             "spinfile",
             default=None,
