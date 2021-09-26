@@ -5,7 +5,7 @@
 # http://www.contact.de/
 
 import difflib
-import os
+import itertools
 
 from spin import (
     Path,
@@ -15,11 +15,12 @@ from spin import (
     info,
     is_up_to_date,
     readlines,
-    readtext,
     sh,
     task,
     writelines,
 )
+
+from .python import ProvisionerProtocol
 
 defaults = config(
     requires=config(
@@ -28,7 +29,9 @@ defaults = config(
     ),
     hashes=False,
     requirements="requirements-{python.abitag}-{platform.tag}.txt",
-    devrequirements="spin-reqs-{python.abitag}-{platform.tag}.txt",
+    requirements_sources=["setup.py", "setup.cfg"],
+    extras="spin-reqs-{python.abitag}-{platform.tag}.txt",
+    extras_in="{piptools.extras}.in",
     pip_compile=config(
         cmd="pip-compile",
         options_hash=[
@@ -56,57 +59,48 @@ defaults = config(
 )
 
 
-class SetupPySet:
-    def __init__(self, setup_py, requirements_txt):
-        self.setup_py = setup_py
-        self.setup_cfg = setup_py.replace(".py", ".cfg")
-        self.setup_dir = Path(setup_py).abspath().dirname().relpath()
-        self.requirements_txt = requirements_txt
+def pip_compile(cfg, *args):
+    options = cfg.piptools.pip_compile.options
+    if cfg.piptools.hashes:
+        options.extend(cfg.piptools.pip_compile.options_hash)
+    sh(
+        cfg.piptools.pip_compile.cmd,
+        *options,
+        *args,
+        env=cfg.piptools.pip_compile.env,
+    )
+
+
+class PiptoolsProvisioner(ProvisionerProtocol):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.extras = set()
+        self.locks_updated = False
+
+    def prerequisites(self, cfg):
+        sh("pip", "install", cfg.quietflag, *cfg.piptools.prerequisites)
 
     def lock(self, cfg):
-        if not is_up_to_date(self.requirements_txt, (self.setup_py, self.setup_cfg)):
-            options = cfg.piptools.pip_compile.options
-            if cfg.piptools.hashes:
-                options.extend(cfg.piptools.pip_compile.options_hash)
-            sh(
-                cfg.piptools.pip_compile.cmd,
-                *options,
-                "-o",
-                self.requirements_txt,
-                env=cfg.piptools.pip_compile.env,
-            )
-            return True
-        return False
-
-    def add(self, req):
-        raise NotImplementedError()
-
-    def get_txt(self):
-        return [self.requirements_txt]
-
-
-class DevSet:
-    def __init__(self, cfg, requirements_txt):
-        self.cfg = cfg
-        self.requirements_txt = requirements_txt
-        self.reqs = set()
+        if not is_up_to_date(
+            cfg.piptools.requirements, cfg.piptools.requirements_sources
+        ):
+            pip_compile(cfg, "-o", self.requirements_txt)
+            self.locks_updated = True
 
     def add(self, req):
         if req.startswith("-e") and self.cfg.piptools.hashes:
             die("Hashed dependencies are incompatible with editable installs.")
-        self.reqs.add(req)
+        self.extras.add(req)
 
-    def do_lock(self, cfg, reqset, options):
-        requirements_txt = self.requirements_txt
-        infile = requirements_txt + ".in"
-        reqlist = list(reqset)
-        reqlist.sort()
-        newtext = [f"{req}\n" for req in reqlist]
+    def lock_extras(self, cfg):
+        extras = list(self.extras)
+        extras.sort()
+        newtext = [f"{extra}\n" for extra in extras]
         oldtext = []
-        if exists(infile):
-            oldtext = readlines(infile)
-        if newtext != oldtext or not exists(requirements_txt):
-            echo(f"{infile} changed!")
+        if exists(cfg.piptools.extras_in):
+            oldtext = readlines(cfg.piptools.extras_in)
+        if newtext != oldtext or not exists(cfg.piptools.extras):
+            # Show a nice diff of the updated .in file
             print(
                 "".join(
                     difflib.context_diff(
@@ -115,59 +109,13 @@ class DevSet:
                 )
             )
             writelines(infile, newtext)
-            options = cfg.piptools.pip_compile.options
-            if cfg.piptools.hashes:
-                options.extend(cfg.piptools.pip_compile.options_hash)
-            sh(
-                cfg.piptools.pip_compile.cmd,
-                *options,
-                infile,
-                "-o",
-                requirements_txt,
-            )
-            return True
-        return False
+            pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extra)
+            self.locks_updated = True
 
-    def lock(self, cfg):
-        return self.do_lock(
-            cfg,
-            self.reqs,
-            cfg.piptools.pip_compile.options,
-        )
-
-    def get_txt(self):
-        out = [self.requirements_txt]
-        return out
-
-
-class PiptoolsProvisioner:
-    def __init__(self, cfg):
-        self.sets = {
-            "": SetupPySet("setup.py", cfg.piptools.requirements),
-            "dev": DevSet(cfg, cfg.piptools.devrequirements),
-        }
-        self.locks_updated = False
-
-    def add(self, setname, req):
-        self.sets[setname].add(req)
-
-    def lock(self, setname, cfg):
-        self.locks_updated = self.locks_updated or self.sets[setname].lock(cfg)
-
-    def finalize_lock(self, cfg):
+    def sync(self, cfg):
         if self.locks_updated and self.have_wheelhouse(cfg):
             info("Updating the wheelhouse!")
             self.wheelhouse(cfg)
-
-    def have_wheelhouse(self, cfg):
-        pipconf = cfg.python.pipconf.get("global", config())
-        find_links = pipconf.get("find-links", None)
-        return exists(find_links)
-
-    def sync(self, cfg):
-        allreqs = []
-        for reqset in self.sets.values():
-            allreqs.extend(reqset.get_txt())
         options = list(cfg.piptools.pip_sync.options)
         if self.have_wheelhouse(cfg):
             options.append("--no-index")
@@ -175,13 +123,16 @@ class PiptoolsProvisioner:
             cfg.piptools.pip_sync.cmd,
             cfg.quietflag,
             *options,
-            *allreqs,
+            cfg.piptools.requirements,
+            cfg.piptools.extras,
         )
         if exists("setup.py"):
             sh("pip", "install", cfg.quietflag, "--no-deps", "-e", ".")
 
-    def prerequisites(self, cfg):
-        sh("pip", "install", cfg.quietflag, *cfg.piptools.prerequisites)
+    def have_wheelhouse(self, cfg):
+        pipconf = cfg.python.pipconf.get("global", config())
+        find_links = pipconf.get("find-links", None)
+        return exists(find_links)
 
     def wheelhouse(self, cfg):
         reqfiles = []
@@ -200,9 +151,39 @@ class PiptoolsProvisioner:
 
 
 def configure(cfg):
+    # We simply overwrite the default provisioner of the Python plugin
+    # to replace the dependency management strategy.
     cfg.python.provisioner = PiptoolsProvisioner(cfg)
 
 
 @task("python:wheelhouse")
 def wheelhouse(cfg):
+    """Download wheels to speed up provisioning new environments.
+
+    Downloads the exact versions packages specified in the lock files
+    into the wheelhouse for this project.
+    """
     cfg.python.provisioner.wheelhouse(cfg)
+
+
+@task("python:upgrade")
+def python_upgrade(cfg, args):
+    """Upgrade packages using pip-compile.
+
+    With no arguments, upgrade all packages. If arguments are given,
+    they are interpreted as the names of packages that are to be
+    updated.
+
+    Note that python:upgrade just modifies the lock files. To actually
+    install upgrades, use 'spin --provision'. When a wheelhouse is
+    used, the upgraded packages must be downloaded first using
+    'python:wheelhouse'.
+    """
+    if not args:
+        args = ["--upgrade"]
+    else:
+        args = itertools.chain.from_iterable(
+            itertools.product(("--upgrade-package",), args)
+        )
+    pip_compile(cfg, "-o", cfg.piptools.requirements, *args)
+    pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extras, *args)

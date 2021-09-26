@@ -312,7 +312,6 @@ def configure(cfg):
             "Spin's Python plugin no longer sets a default version.\n"
             "Please choose a version in spinfile.yaml by setting python.version"
         )
-    # FIXME: refactor the pyenv check, as it also used elsewhere
     if cfg.python.use:
         warn("python.version will be ignored, using '{python.use}' instead")
         cfg.python.interpreter = cfg.python.use
@@ -549,36 +548,47 @@ def finalize_provision(cfg):
     writetext(f"{site_packages}/_set_env.pth", pthline)
 
 
-class SimpleProvisioner:
+class ProvisionerProtocol:
+    def prerequisites(self, cfg):
+        """Provide requirements for the provisioning strategy."""
+
+    def lock(self, cfg):
+        """Lock the project's dependencies."""
+
+    def add(self, req):
+        """Add an extra dependency (development dependencies)."""
+
+    def lock_extras(self, cfg):
+        """Lock the extra dependencies."""
+
+    def sync(self, cfg):
+        """Synchronize the environment with the locked dependencies."""
+
+
+class SimpleProvisioner(ProvisionerProtocol):
+    # The simplest Python dependency provisioner:
     def __init__(self):
         self.requirements = []
         self.m = Memoizer("{python.memo}")
 
-    def lock(self, setname, cfg):
-        if setname == "":
-            # If there is a setup.py, make an editable install (which
-            # transitively also installs runtime dependencies of the project).
-            # FIXME: filename/location of setup.py should probably be
-            # configurable
-            if exists("setup.py"):
-                sh("pip", "install", cfg.quietflag, "-e", ".")
+    def prerequisites(self, cfg):
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
 
-    def finalize_lock(self, cfg):
-        pass
+    def lock(self, cfg):
+        # If there is a setup.py, make an editable install (which
+        # transitively also installs runtime dependencies of the project).
+        if exists("setup.py"):
+            sh("pip", "install", cfg.quietflag, "-e", ".")
 
-    def add(self, setname, req):
-        if setname == "dev":
-            if not self.m.check(req):
-                self.requirements.extend(req.split())
-                self.m.add(req)
+    def add(self, req):
+        if not self.m.check(req):
+            self.requirements.extend(req.split())
+            self.m.add(req)
 
     def sync(self, cfg):
         if self.requirements:
             sh("pip", "install", cfg.quietflag, *self.requirements)
         self.m.save()
-
-    def prerequisites(self, cfg):
-        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
 
 
 def install_to_venv(cfg, *args):
@@ -627,13 +637,13 @@ def venv_provision(cfg):
     if fresh_virtualenv:
         cfg.python.provisioner.prerequisites(cfg)
 
-    cfg.python.provisioner.lock("", cfg)
+    cfg.python.provisioner.lock(cfg)
 
     replacements = cfg.get("devpackages", {})
 
     def addreq(req):
         req = replacements.get(req, req)
-        cfg.python.provisioner.add("dev", interpolate1(req))
+        cfg.python.provisioner.add(interpolate1(req))
 
     # Plugins can define a 'venv_hook' function, to give them a
     # chance to do something with the virtual environment just
@@ -658,9 +668,7 @@ def venv_provision(cfg):
         for req in get_requires(plugin_module.defaults, "python"):
             addreq(req)
 
-    cfg.python.provisioner.lock("dev", cfg)
-    cfg.python.provisioner.finalize_lock(cfg)
-
+    cfg.python.provisioner.lock_extras(cfg)
     cfg.python.provisioner.sync(cfg)
 
 
