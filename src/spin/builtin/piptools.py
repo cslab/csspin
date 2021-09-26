@@ -32,6 +32,11 @@ defaults = config(
     requirements_sources=["setup.py", "setup.cfg"],
     extras="spin-reqs-{python.abitag}-{platform.tag}.txt",
     extras_in="{piptools.extras}.in",
+    editable_options=[
+        "--no-deps",
+        "--use-feature=in-tree-build",
+        "--no-build-isolation",
+    ],
     pip_compile=config(
         cmd="pip-compile",
         options_hash=[
@@ -127,7 +132,14 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             cfg.piptools.extras,
         )
         if exists("setup.py"):
-            sh("pip", "install", cfg.quietflag, "--no-deps", "-e", ".")
+            sh(
+                "pip",
+                "install",
+                cfg.quietflag,
+                *cfg.piptools.editable_options,
+                "-e",
+                ".",
+            )
 
     def have_wheelhouse(self, cfg):
         pipconf = cfg.python.pipconf.get("global", config())
