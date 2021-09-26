@@ -7,18 +7,7 @@
 import difflib
 import itertools
 
-from spin import (
-    Path,
-    config,
-    echo,
-    exists,
-    info,
-    is_up_to_date,
-    readlines,
-    sh,
-    task,
-    writelines,
-)
+from spin import config, exists, info, is_up_to_date, readlines, sh, task, writelines
 
 from .python import ProvisionerProtocol
 
