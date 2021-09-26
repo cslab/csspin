@@ -5,7 +5,6 @@
 # http://www.contact.de/
 
 import os
-import sys
 
 from spin import config, setenv, sh, task
 
