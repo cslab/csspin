@@ -78,7 +78,7 @@ class PiptoolsProvisioner(ProvisionerProtocol):
         if not is_up_to_date(
             cfg.piptools.requirements, cfg.piptools.requirements_sources
         ):
-            pip_compile(cfg, "-o", self.requirements_txt)
+            pip_compile(cfg, "-o", cfg.piptools.requirements)
             self.locks_updated = True
 
     def add(self, req):
@@ -102,8 +102,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
                     )
                 )
             )
-            writelines(infile, newtext)
-            pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extra)
+            writelines(cfg.piptools.extras_in, newtext)
+            pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extras)
             self.locks_updated = True
 
     def sync(self, cfg):
