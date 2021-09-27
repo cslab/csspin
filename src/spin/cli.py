@@ -407,7 +407,7 @@ def cli(
         quiet = get_tree().quiet = True
 
     if version:
-        print(importlib_metadata.version("spin"))
+        print(importlib_metadata.version("cs.spin"))
         return 0
 
     # Find a project file and load it.
@@ -527,7 +527,7 @@ def load_config_tree(
         if not minspin:
             die("spin requires 'minimum-spin' to be set")
         minspin = packaging.version.parse(minspin)
-        spinversion = packaging.version.parse(importlib_metadata.version("spin"))
+        spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
         if minspin > spinversion:
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
