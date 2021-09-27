@@ -136,10 +136,6 @@ class PiptoolsProvisioner(ProvisionerProtocol):
         return exists(find_links)
 
     def wheelhouse(self, cfg):
-        reqfiles = []
-        for reqset in self.sets.values():
-            for reqfile in reqset.get_txt():
-                reqfiles.extend(["-r", reqfile])
         sh(
             "pip",
             "--exists-action",
@@ -147,7 +143,10 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             "download",
             "-d",
             cfg.python.pipconf.get("global").get("find-links"),
-            *reqfiles,
+            "-r",
+            cfg.piptools.requirements,
+            "-r",
+            cfg.piptools.extras,
         )
 
 
