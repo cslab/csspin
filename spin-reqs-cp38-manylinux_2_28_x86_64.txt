@@ -360,6 +360,7 @@ packaging==21.0 \
     # via
     #   build
     #   pytest
+    #   setuptools-scm
     #   sphinx
     #   tox
 pathspec==0.9.0 \
@@ -537,6 +538,10 @@ secretstorage==3.3.1 \
     --hash=sha256:422d82c36172d88d6a0ed5afdec956514b189ddbfb72fefab0c8a1cee4eaf71f \
     --hash=sha256:fd666c51a6bf200643495a04abb261f83229dcb6fd8472ec393df7ffc8b6f195
     # via keyring
+setuptools-scm==6.3.2 \
+    --hash=sha256:4c64444b1d49c4063ae60bfe1680f611c8b13833d556fd1d6050c0023162a119 \
+    --hash=sha256:a49aa8081eeb3514eb9728fa5040f2eaa962d6c6f4ec9c32f6c1fba88f88a0f2
+    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
@@ -600,6 +605,7 @@ tomli==1.2.1 \
     #   black
     #   build
     #   pep517
+    #   setuptools-scm
 tox==3.24.4 \
     --hash=sha256:5e274227a53dc9ef856767c21867377ba395992549f02ce55eb549f9fb9a8d10 \
     --hash=sha256:c30b57fa2477f1fb7c36aa1d83292d5c2336cd0018119e1b1c17340e2c2708ca
@@ -641,4 +647,5 @@ setuptools==58.1.0 \
     #   check-manifest
     #   flake8-copyright
     #   pip-tools
+    #   setuptools-scm
     #   sphinx

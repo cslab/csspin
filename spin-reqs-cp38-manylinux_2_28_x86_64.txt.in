@@ -16,4 +16,5 @@ pytest-mock
 pytest-tldr
 radon
 setuptools
+setuptools_scm
 sphinx-click

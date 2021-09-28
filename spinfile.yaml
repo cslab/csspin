@@ -32,6 +32,7 @@ python:
     - pip-tools
     - sphinx-click
     - pytest-mock
+    - setuptools_scm
 
 pytest:
   coverage_opts: [--cov=spin, --cov=tests]
