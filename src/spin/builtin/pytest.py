@@ -20,11 +20,8 @@ defaults = config(
             "pytest-tldr",
         ],
     ),
-    opts=[""],
-    coverage_opts=[
-        "--cov=spin",
-        "--cov=tests",
-    ],
+    opts=["-k", "not slow"],
+    coverage_opts=[],
 )
 
 

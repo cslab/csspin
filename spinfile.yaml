@@ -33,6 +33,9 @@ python:
     - sphinx-click
     - pytest-mock
 
+pytest:
+  coverage_opts: [--cov=spin, --cov=tests]
+
 piptools:
   hashes: true
 
