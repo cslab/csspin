@@ -3,7 +3,7 @@ pages:
   tags:
     - Docker
   script:
-    - spin --provision -p sphinx.build_dir=_build docs html
+    - spin --provision -p python.use=python -p sphinx.build_dir=_build docs html
   artifacts:
     paths:
       - docs/_build/html
