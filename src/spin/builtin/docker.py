@@ -6,14 +6,14 @@
 
 import os
 
-from spin import config, group, sh
+from spin import config, group, interpolate1, sh
 
 defaults = config(
     executable="docker",
     hub="",
     name="",
     tags=["latest"],
-    build_args=[],
+    build_options=[],
 )
 
 
@@ -25,16 +25,18 @@ def docker(cfg):
 @docker.task()
 def build(cfg):
     options = []
-    # if not cfg.verbose:
-    # options.append("-q")
     if "INSIDE_EMACS" in os.environ:
         options.append("--progress=plain")
     for definition in cfg.docker.images:
+        build_args = []
+        for key, value in definition.get("args", config()).items():
+            build_args.extend(["--build-arg", interpolate1(f"{key}={value}")])
         sh(
             "{docker.executable}",
             "build",
-            *cfg.docker.build_args,
+            *cfg.docker.build_options,
             *options,
+            *build_args,
             "-f",
             definition.dockerfile,
             "-t",
