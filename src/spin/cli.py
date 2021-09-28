@@ -354,7 +354,7 @@ def commands(ctx, **kwargs):
     cfg = ctx.obj = get_tree()
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
-            if not exists(cfg.spin.env_base):
+            if "project_hash" in cfg.spin and not exists(cfg.spin.env_base):
                 die(
                     "This project has not yet been provisioned. You "
                     "may want to run spin with the --provison flag."
