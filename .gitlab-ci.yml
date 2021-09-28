@@ -1,5 +1,5 @@
 pages:
-  image: registry.contact.de/spin:0.2
+  image: registry.contact.de/spin-dev:0.2
   tags:
     - Docker
   script:
