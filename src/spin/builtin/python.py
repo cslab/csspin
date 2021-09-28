@@ -12,16 +12,6 @@
 This plugin provisions the requested version of the Python
 programming languages.
 
-.. code-block:: yaml
-
-   # Add 'python' to the plugin list
-   plugins:
-     - python
-
-   # Request a specific version of Python
-   python:
-     version: 3.8.12
-
 On Linux and macOS, Python is installed by compiling from source
 (implying, that Python's build requirements must be installed). On
 Windows, pre-built binaries are downloaded using `nuget`.
@@ -549,6 +539,14 @@ def finalize_provision(cfg):
 
 
 class ProvisionerProtocol:
+    """An implementation of this protocol is used to provision
+    dependencies to a virtual environment.
+
+    Separate plugins, e.g. piptools, implement this interface and
+    overwrite cfg.python.provisioner.
+
+    """
+
     def prerequisites(self, cfg):
         """Provide requirements for the provisioning strategy."""
 
@@ -566,12 +564,20 @@ class ProvisionerProtocol:
 
 
 class SimpleProvisioner(ProvisionerProtocol):
-    # The simplest Python dependency provisioner:
+    """The simplest Python dependency provisioner using pip.
+
+    This provisioner will never uninstall dependencies that are no
+    longer required.
+    """
+
     def __init__(self):
+        # Note that self.requirements is effectively a set, since we
+        # record requirements in the memoizer
         self.requirements = []
         self.m = Memoizer("{python.memo}")
 
     def prerequisites(self, cfg):
+        # We'll need pip
         sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
 
     def lock(self, cfg):
@@ -581,11 +587,13 @@ class SimpleProvisioner(ProvisionerProtocol):
             sh("pip", "install", cfg.quietflag, "-e", ".")
 
     def add(self, req):
+        # Add the requirement if it's not already there.
         if not self.m.check(req):
             self.requirements.extend(req.split())
             self.m.add(req)
 
     def sync(self, cfg):
+        # Install missing requirements.
         if self.requirements:
             sh("pip", "install", cfg.quietflag, *self.requirements)
         self.m.save()
