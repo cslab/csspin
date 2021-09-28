@@ -55,7 +55,7 @@ extra-tasks:
 docker:
   images:
     - dockerfile: docker/spin-base.dockerfile
-      tag: registry.contact.de/spin:{spin.version}
+      tag: registry.contact.de/spin:0.2
       args:
         REQUIREMENTS: "{piptools.requirements}"
 
