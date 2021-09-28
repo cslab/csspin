@@ -1,6 +1,6 @@
 # Each spinfile must have this. Spin will refuse to run if
 # 'minimum-spin' is absent or larger than the release of spin used.
-minimum-spin: "0.2d"
+minimum-spin: "0.2"
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
