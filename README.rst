@@ -7,6 +7,8 @@ workflows for many similar projects. It does this by encapsulating
 task definitions in Python packages and automating the provisioning of
 development sandboxes and dependencies.
 
+`Documentation <http://frank.pages.contact.de/spin/index.html>`_
+
 Status
 ======
 
