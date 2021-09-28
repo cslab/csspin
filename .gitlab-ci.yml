@@ -4,9 +4,10 @@ pages:
     - Docker
   script:
     - spin --provision -p python.use=python -p sphinx.build_dir=_build docs html
+    - mv docs/_build/html public
   artifacts:
     paths:
-      - docs/_build/html
+      - public
   only:
     - master
 
