@@ -56,10 +56,9 @@ def build(cfg):
 
 @docker.task()
 def push(cfg):
-    options = []
-    if not cfg.verbose:
-        options.append("-q")
-    if cfg.docker.name:
-        imagename = "/".join((cfg.docker.hub, cfg.docker.name))
-        for tag in cfg.docker.tags:
-            sh("{docker.executable}", "push", *options, f"{imagename}:{tag}")
+    for definition in cfg.docker.images:
+        sh(
+            "{docker.executable}",
+            "push",
+            definition.tag,
+        )
