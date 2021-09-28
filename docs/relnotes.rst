@@ -10,7 +10,8 @@ Core
 
 * provisioning is no longer automatic, but has to be explicitly
   requested by using ``--provision``; this avoids the provisioning
-  checks for every command invocation, making spin much faster
+  checks for every command invocation, making spin much faster (the
+  inverse is ``--cleanup``).
 
 * removed all the magic from importing plugins: ``plugins`` now simply
   has the list of plugin modules, while ``plugin-packages`` lists pip
@@ -32,7 +33,9 @@ Core
   environments and provisioned dependencies, and
   :envvar:`XDG_CONFIG_HOME` for configuration files
 
-* environments are created out-of-tree in ``~/.cache/spin``
+* environments are created out-of-tree in :file:`$XDG_CACHE_HOME/spin`
+  (which defaults to ``~/.cache/spin``)
+
 
 Python
 ------

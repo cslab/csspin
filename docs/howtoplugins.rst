@@ -113,9 +113,8 @@ be called when the provisioning options :option:`--cleanup <spin
 --cleanup>` or :option:`--provision <spin --provision>` have been
 used.
 
-Using the command line option :option:`--log-level=debug <spin
---log-level>`, `spin` can output a detailed log of callback
-invocations.
+Using the command line option :option:`--debug <spin --debug>`, `spin`
+can output a detailed log of callback invocations.
 
 
 Developing Plugins

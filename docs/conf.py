@@ -17,12 +17,12 @@
 # -- Project information -----------------------------------------------------
 import importlib.metadata
 
-project = "spin"
-copyright = "2021, Frank Patz-Brockmann"
+project = "cs.spin"
+copyright = "2021, Contact Software"
 author = "Frank Patz-Brockmann"
 
 # The full version, including alpha/beta/rc tags
-release = importlib.metadata.version("spin")
+release = importlib.metadata.version("cs.spin")
 
 
 # -- General configuration ---------------------------------------------------

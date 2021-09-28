@@ -9,7 +9,7 @@ Python Related
 
 .. automodule:: spin.builtin.python
 
-.. automodule:: spin.builtin.virtualenv
+.. automodule:: spin.builtin.piptools
 
 
 General
