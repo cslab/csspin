@@ -51,13 +51,14 @@ extra-tasks:
 docker:
   images:
     - dockerfile: docker/spin-base.dockerfile
-      tag: registry.contact.de/spin-base
+      tag: registry.contact.de/spin:{spin.version}
+      args:
+        REQUIREMENTS: "{piptools.requirements}"
+
     #- dockerfile: docker/spin-dev.dockerfile
     #  tag: registry.contact.de/spin-dev
 
 build-rules:
-  task docker build:
-    sources: requirements.txt
   task docs:
     sources: docs/schemaref.rst
   docs/schemaref.rst:
