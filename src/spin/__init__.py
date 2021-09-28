@@ -185,6 +185,14 @@ def exists(path):
     return os.path.exists(path)
 
 
+def normpath(*args):
+    return os.path.normpath(os.path.join(*interpolate(args)))
+
+
+def abspath(*args):
+    return os.path.abspath(normpath(*args))
+
+
 def mkdir(path):
     """Ensure that `path` exists.
 
