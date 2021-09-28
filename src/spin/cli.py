@@ -68,6 +68,7 @@ DEFAULTS = config(
         cache=N("{SPIN_CACHE}"),
         config=N("{SPIN_CONFIG}"),
         extra_index=None,
+        version=importlib_metadata.version("cs.spin"),
     ),
     quiet=False,
     verbose=0,
