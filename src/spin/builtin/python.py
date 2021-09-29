@@ -89,6 +89,9 @@ from spin import (
 N = Path
 
 
+WHEELHOUSE_MARKER = object()
+
+
 defaults = config(
     pyenv=config(
         url="https://github.com/pyenv/pyenv.git",
@@ -122,14 +125,13 @@ defaults = config(
         else N("{python.venv}/Scripts")
     ),
     python=N("{python.bindir}/python"),
+    wheelhouse="{spin.env_base}/wheelhouse",
     pipconf=config(
         {
             "global": config(
-                {
-                    "find-links": "{spin.env_base}/wheelhouse",
-                }
+                {"find-links": WHEELHOUSE_MARKER},
             ),
-        }
+        },
     ),
     abitag=None,
     provisioner=None,
@@ -634,6 +636,11 @@ def venv_provision(cfg):
     for section, settings in cfg.python.pipconf.items():
         text.append(f"[{section}]")
         for key, value in settings.items():
+            if value == WHEELHOUSE_MARKER:
+                if exists(cfg.python.wheelhouse):
+                    value = cfg.python.wheelhouse
+                else:
+                    continue
             text.append(f"{key} = {interpolate1(value)}")
     if sys.platform == "win32":
         pipconf = "{python.venv}/pip.ini"
