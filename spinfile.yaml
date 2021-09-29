@@ -59,8 +59,8 @@ docker:
       args:
         REQUIREMENTS: "{piptools.requirements}"
 
-    #- dockerfile: docker/spin-dev.dockerfile
-    #  tag: registry.contact.de/spin-dev
+    - dockerfile: docker/spin-dev.dockerfile
+      tag: registry.contact.de/spin-dev:0.2
 
 build-rules:
   task docs:

@@ -241,10 +241,6 @@ commands themselves. Spin plugins try to be well-behaved in this
 regard, and do not silently modify the process environment, to make
 everything that is going on transparent to the user.
 
-.. todo:: Can we check that plugins behave well?
-
-   Instead of "plugins trying hard", it would be better if spin could
-   check, what plugins do.
 
 Why YAML?
 ---------

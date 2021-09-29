@@ -27,21 +27,8 @@ configuration, so commands from packages installed by ``pipx`` are
 available in ``PATH``. Make sure to restart your shell to make the
 setting effective.
 
-Use ``pipx`` to install spin:
-
-.. code-block:: console
-
-   $ pipx install -i https://packages.contact.de/tools/misc/ cs.spin
-
-The ``spin`` command is now available in your ``PATH``, linked to your
-clone of the spin repository. Updating the repository will
-automatically give you the most up-to-date version of spin.
-
-Installing from Git
-===================
-
-If you want be on the bleeding edge, you can install spin from its
-cloned repository:
+It is currently recommended to make an editable install from spin's
+Git repository:
 
 .. code-block:: console
 

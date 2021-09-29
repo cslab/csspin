@@ -4,7 +4,18 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""This is the core API of spin."""
+"""This is the plugin API of spin. It contains functions and classes
+that are necessary for plugins to register themselves with spin,
+e.g. :py:func:`task`, and convenience APIs that aim to simplify plugin
+implementation.
+
+spin's task management (aka subcommands) is just a thin wrapper on top
+of the venerable `package click
+<https://click.palletsprojects.com/en/8.0.x/>`_, so to create any
+slightly advanced command line interfaces for plugins you want to make
+yourself comfortable with click's documentation.
+
+"""
 
 import collections
 import inspect
@@ -59,6 +70,7 @@ __all__ = [
     "invoke",
     "toporun",
     "Path",
+    "Memoizer",
 ]
 
 

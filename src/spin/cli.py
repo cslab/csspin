@@ -358,7 +358,7 @@ def commands(ctx, **kwargs):
             if "project_hash" in cfg.spin and not exists(cfg.spin.env_base):
                 die(
                     "This project has not yet been provisioned. You "
-                    "may want to run spin with the --provison flag."
+                    "may want to run spin with the --provision flag."
                 )
             toporun(ctx.obj, "init")
         _nested = True
