@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, die, info, interpolate1, memoizer, mkdir, rmtree, setenv
+from spin import config, die, echo, info, interpolate1, memoizer, mkdir, rmtree, setenv
 
 defaults = config(
     version=None,
@@ -43,20 +43,31 @@ def provision(cfg):
 
     import jdk
 
-    real_get_downoad_url = jdk.get_download_url
+    real_get_download_url = jdk.get_download_url
 
     def monkey_get_download_url(*args):
-        url = real_get_downoad_url(*args)
-        info(f"Downloading JDK from {url}")
+        url = real_get_download_url(*args)
+        echo(f"Downloading JDK from {url}")
         return url
 
     jdk.get_download_url = monkey_get_download_url
 
     with memoizer("{java.installdir}/java.pickle") as m:
-        rmtree(cfg.java.installdir)
-        java_home = jdk.install(
-            cfg.java.version, path=interpolate1(cfg.java.installdir)
-        )
+        # FIXME: in case there already is a JDK installation, but it
+        # is not yet memoized, unpacking the freshly downloaded new
+        # distribution into the same directory will fail, since the
+        # JDK archives have r/o files. But we cannot remove the
+        # installation directory beforehand, since we do not know it's
+        # name: `java_home` is computed from the archive contents.
+        try:
+            java_home = jdk.install(
+                cfg.java.version, path=interpolate1(cfg.java.installdir)
+            )
+        except PermissionError as ex:
+            die(
+                "Unpacking the JDK archive failed. There probably already is a JDK in"
+                f" the same location, that you have to remove manually ({ex})."
+            )
         m.add((cfg.java.version, java_home))
         cfg.java.java_home = java_home
 
