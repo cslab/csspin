@@ -22,7 +22,11 @@ plugins:
       - docker
       - piptools
       - gitlab
+      - node
   - demo_plugin
+
+node:
+  version: 16.10.0
 
 python:
   version: 3.8.10
