@@ -21,6 +21,7 @@ plugins:
       - sphinx
       - docker
       - piptools
+      - gitlab
   - demo_plugin
 
 python:
@@ -103,3 +104,4 @@ system-requirements:
     apt-get: libaio1
   distro=="fedora" and version>=parse_version("22"):
     dnf: libaio-fedora
+  distro=="windows": {}

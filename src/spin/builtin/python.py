@@ -205,6 +205,14 @@ def system_requirements(cfg):
                 )
             },
         ),
+        (
+            # On Windows, we use binaries from nuget (and the nuget
+            # CLI is automatically installed into spin's cache, and
+            # not a system dependency), so we'll have no particular
+            # system dependencies.
+            lambda distro, version: distro == "windows",
+            {},
+        ),
     ]
 
 
