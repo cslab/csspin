@@ -404,7 +404,7 @@ def cli(
     get_tree().verbose = verbose
 
     # Special case for 'env' and 'system-provision:
-    if ctx.args[0] in ("env", "system-provision"):
+    if ctx.args and ctx.args[0] in ("env", "system-provision"):
         quiet = get_tree().quiet = True
 
     if version:
