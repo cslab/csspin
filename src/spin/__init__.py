@@ -603,6 +603,8 @@ def readyaml(fname):
 def download(url, location):
     """Download data from `url` to `location`."""
     url, location = interpolate((url, location))
+    dirname = os.path.dirname(location)
+    mkdir(dirname)
     echo(f"Download {url} -> {location} ...")
     response = urllib.request.urlopen(url)
     data = response.read()
