@@ -4,9 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
-"""
-
-``python``
+"""``python``
 ==========
 
 This plugin provisions the requested version of the Python
@@ -16,8 +14,9 @@ On Linux and macOS, Python is installed by compiling from source
 (implying, that Python's build requirements must be installed). On
 Windows, pre-built binaries are downloaded using `nuget`.
 
-If `pyenv <https://github.com/pyenv/pyenv>`_ is installed and active,
-Python versions are automatically shared with `pyenv`.
+If a user has `pyenv <https://github.com/pyenv/pyenv>`_ installed it
+can be activated by setting ``python.user_pyenv`` in
+:file:`global.yaml`.
 
 To skip provisioning of Python and use an already installed version,
 :py:data:`python.use` can be set to the name or the full path of an
@@ -99,6 +98,7 @@ defaults = config(
         cache=N("{spin.cache}/cache"),
         python_build=(N("{python.pyenv.path}/plugins/python-build/bin/python-build")),
     ),
+    user_pyenv=False,
     nuget=config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
         exe=N("{spin.cache}/nuget.exe"),
@@ -242,7 +242,7 @@ def wheel(cfg):
 
 def pyenv_install(cfg):
     with namespaces(cfg.python):
-        if "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
+        if cfg.python.user_pyenv:
             info("Using your existing pyenv installation ...")
             sh("pyenv install --skip-existing {version}")
             cfg.python.interpreter = backtick("pyenv which python --nosystem").strip()
@@ -315,7 +315,7 @@ def configure(cfg):
     if cfg.python.use:
         warn("python.version will be ignored, using '{python.use}' instead")
         cfg.python.interpreter = cfg.python.use
-    elif "PYENV_ROOT" in os.environ or "PYENV_SHELL" in os.environ:
+    elif cfg.python.user_pyenv:
         setenv(PYENV_VERSION="{python.version}")
         try:
             cfg.python.interpreter = backtick(
