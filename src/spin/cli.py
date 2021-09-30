@@ -403,8 +403,8 @@ def cli(
     get_tree().quiet = quiet
     get_tree().verbose = verbose
 
-    # When the output is redirected, set quiet
-    if os.fstat(0) != os.fstat(1):
+    # Special case for 'env' and 'system-provision:
+    if ctx.args[0] in ("env", "system-provision"):
         quiet = get_tree().quiet = True
 
     if version:
