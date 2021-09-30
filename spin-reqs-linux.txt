@@ -25,7 +25,7 @@ backports.entry-points-selectable==1.1.0 \
 black==21.9b0 \
     --hash=sha256:380f1b5da05e5a1429225676655dddb96f5ae8c75bdf91e53d798871b902a115 \
     --hash=sha256:7de4cfc7eb6b710de325712d40125689101d21d25283eed7e9998722cf10eb91
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 build==0.7.0 \
     --hash=sha256:1aaadcd69338252ade4f7ec1265e1a19184bf916d84c9b7df095f423948cb89f \
     --hash=sha256:21b7ebbd1b22499c4dac536abc7606696ea4d909fd755e00f09f3c0f2c05e3c8
@@ -158,31 +158,32 @@ coverage==5.5 \
     --hash=sha256:f0b278ce10936db1a37e6954e15a3730bea96a0997c26d7fee88e6c396c2086d \
     --hash=sha256:f11642dddbb0253cc8853254301b51390ba0081750a8ac03f20ea8103f0c56b6
     # via pytest-cov
-cryptography==3.4.8 \
-    --hash=sha256:0a7dcbcd3f1913f664aca35d47c1331fce738d44ec34b7be8b9d332151b0b01e \
-    --hash=sha256:1eb7bb0df6f6f583dd8e054689def236255161ebbcf62b226454ab9ec663746b \
-    --hash=sha256:21ca464b3a4b8d8e86ba0ee5045e103a1fcfac3b39319727bc0fc58c09c6aff7 \
-    --hash=sha256:34dae04a0dce5730d8eb7894eab617d8a70d0c97da76b905de9efb7128ad7085 \
-    --hash=sha256:3520667fda779eb788ea00080124875be18f2d8f0848ec00733c0ec3bb8219fc \
-    --hash=sha256:3c4129fc3fdc0fa8e40861b5ac0c673315b3c902bbdc05fc176764815b43dd1d \
-    --hash=sha256:3fa3a7ccf96e826affdf1a0a9432be74dc73423125c8f96a909e3835a5ef194a \
-    --hash=sha256:5b0fbfae7ff7febdb74b574055c7466da334a5371f253732d7e2e7525d570498 \
-    --hash=sha256:695104a9223a7239d155d7627ad912953b540929ef97ae0c34c7b8bf30857e89 \
-    --hash=sha256:8695456444f277af73a4877db9fc979849cd3ee74c198d04fc0776ebc3db52b9 \
-    --hash=sha256:94cc5ed4ceaefcbe5bf38c8fba6a21fc1d365bb8fb826ea1688e3370b2e24a1c \
-    --hash=sha256:94fff993ee9bc1b2440d3b7243d488c6a3d9724cc2b09cdb297f6a886d040ef7 \
-    --hash=sha256:9965c46c674ba8cc572bc09a03f4c649292ee73e1b683adb1ce81e82e9a6a0fb \
-    --hash=sha256:a00cf305f07b26c351d8d4e1af84ad7501eca8a342dedf24a7acb0e7b7406e14 \
-    --hash=sha256:a305600e7a6b7b855cd798e00278161b681ad6e9b7eca94c721d5f588ab212af \
-    --hash=sha256:cd65b60cfe004790c795cc35f272e41a3df4631e2fb6b35aa7ac6ef2859d554e \
-    --hash=sha256:d2a6e5ef66503da51d2110edf6c403dc6b494cc0082f85db12f54e9c5d4c3ec5 \
-    --hash=sha256:d9ec0e67a14f9d1d48dd87a2531009a9b251c02ea42851c060b25c782516ff06 \
-    --hash=sha256:f44d141b8c4ea5eb4dbc9b3ad992d45580c1d22bf5e24363f2fbf50c2d7ae8a7
+cryptography==35.0.0 \
+    --hash=sha256:07bb7fbfb5de0980590ddfc7f13081520def06dc9ed214000ad4372fb4e3c7f6 \
+    --hash=sha256:18d90f4711bf63e2fb21e8c8e51ed8189438e6b35a6d996201ebd98a26abbbe6 \
+    --hash=sha256:1ed82abf16df40a60942a8c211251ae72858b25b7421ce2497c2eb7a1cee817c \
+    --hash=sha256:22a38e96118a4ce3b97509443feace1d1011d0571fae81fc3ad35f25ba3ea999 \
+    --hash=sha256:2d69645f535f4b2c722cfb07a8eab916265545b3475fdb34e0be2f4ee8b0b15e \
+    --hash=sha256:4a2d0e0acc20ede0f06ef7aa58546eee96d2592c00f450c9acb89c5879b61992 \
+    --hash=sha256:54b2605e5475944e2213258e0ab8696f4f357a31371e538ef21e8d61c843c28d \
+    --hash=sha256:7075b304cd567694dc692ffc9747f3e9cb393cc4aa4fb7b9f3abd6f5c4e43588 \
+    --hash=sha256:7b7ceeff114c31f285528ba8b390d3e9cfa2da17b56f11d366769a807f17cbaa \
+    --hash=sha256:7eba2cebca600a7806b893cb1d541a6e910afa87e97acf2021a22b32da1df52d \
+    --hash=sha256:928185a6d1ccdb816e883f56ebe92e975a262d31cc536429041921f8cb5a62fd \
+    --hash=sha256:9933f28f70d0517686bd7de36166dda42094eac49415459d9bdf5e7df3e0086d \
+    --hash=sha256:a688ebcd08250eab5bb5bca318cc05a8c66de5e4171a65ca51db6bd753ff8953 \
+    --hash=sha256:abb5a361d2585bb95012a19ed9b2c8f412c5d723a9836418fab7aaa0243e67d2 \
+    --hash=sha256:c10c797ac89c746e488d2ee92bd4abd593615694ee17b2500578b63cad6b93a8 \
+    --hash=sha256:ced40344e811d6abba00295ced98c01aecf0c2de39481792d87af4fa58b7b4d6 \
+    --hash=sha256:d57e0cdc1b44b6cdf8af1d01807db06886f10177469312fbde8f44ccbb284bc9 \
+    --hash=sha256:d99915d6ab265c22873f1b4d6ea5ef462ef797b4140be4c9d8b179915e0985c6 \
+    --hash=sha256:eb80e8a1f91e4b7ef8b33041591e6d89b2b8e122d787e87eeb2b08da71bb16ad \
+    --hash=sha256:ebeddd119f526bcf323a89f853afb12e225902a24d29b55fe18dd6fcb2838a76
     # via secretstorage
 devpi-client==5.2.2 \
     --hash=sha256:24ac6d94108996efad4ff5185dabb1e5120ae238134b8175d6de2ca9e766cd92 \
     --hash=sha256:fa8d206653badb2befec5a76363ea762810f0dafb38ca7fd2d22cf7868a1ef49
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 devpi-common==3.6.0 \
     --hash=sha256:6394b7a8c0cf7aca838f86d5a218d32aaedebfe641ef562e428ebf8bce84c712 \
     --hash=sha256:fc14aa6b74d4d9e27dc2e9cbff000ed9be5cd723d3ac9672e66e4e8fce797227
@@ -197,9 +198,9 @@ docutils==0.17.1 \
     # via
     #   sphinx
     #   sphinx-click
-filelock==3.0.12 \
-    --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
-    --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836
+filelock==3.2.0 \
+    --hash=sha256:61a99e9b12b47b685d1389f4cf969c1eba0efd2348a8471f86e01e8c622267af \
+    --hash=sha256:85ecb30757aa19d06bfcdad29cc332b9a3e4851bf59976aea1e8dadcbd9ef883
     # via
     #   tox
     #   virtualenv
@@ -207,36 +208,36 @@ flake8==3.9.2 \
     --hash=sha256:07528381786f2a6237b061f6e96610a4167b226cb926e2aa2b6b1d78057c576b \
     --hash=sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907
     # via
-    #   -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    #   -r spin-reqs-linux.txt.in
     #   flake8-bugbear
     #   flake8-comprehensions
     #   flake8-isort
     #   flake8-polyfill
-flake8-bugbear==21.9.1 \
-    --hash=sha256:2f60c8ce0dc53d51da119faab2d67dea978227f0f92ed3c44eb7d65fb2e06a96 \
-    --hash=sha256:45bfdccfb9f2d8aa140e33cac8f46f1e38215c13d5aa8650e7e188d84e2f94c6
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+flake8-bugbear==21.9.2 \
+    --hash=sha256:4f7eaa6f05b7d7ea4cbbde93f7bcdc5438e79320fa1ec420d860c181af38b769 \
+    --hash=sha256:db9a09893a6c649a197f5350755100bb1dd84f110e60cf532fdfa07e41808ab2
+    # via -r spin-reqs-linux.txt.in
 flake8-comprehensions==3.6.1 \
     --hash=sha256:4888de89248b7f7535159189ff693c77f8354f6d37a02619fa28c9921a913aa0 \
     --hash=sha256:e9a010b99aa90c05790d45281ad9953df44a4a08a1a8f6cd41f98b4fc6a268a0
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 flake8-copyright==0.2.2 \
     --hash=sha256:5c3632dd8c586547b25fff4272282005fdbcba56eeb77b7487564aa636b6e533 \
     --hash=sha256:616a960c9602ad2d0136bf3f12564e253caffe82f151d2982f78a12a42e1faa0 \
     --hash=sha256:dbad92ee5f51398722cd571b6e36cc3651914bf1b286b0e638bba1f4af0b6f5b
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 flake8-fixme==1.1.1 \
     --hash=sha256:226a6f2ef916730899f29ac140bed5d4a17e5aba79f00a0e3ae1eff1997cb1ac \
     --hash=sha256:50cade07d27a4c30d4f12351478df87339e67640c83041b664724bda6d16f33a
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 flake8-isort==4.0.0 \
     --hash=sha256:2b91300f4f1926b396c2c90185844eb1a3d5ec39ea6138832d119da0a208f4d9 \
     --hash=sha256:729cd6ef9ba3659512dee337687c05d79c78e1215fdf921ed67e5fe46cce2f3c
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 flake8-polyfill==1.0.2 \
     --hash=sha256:12be6a34ee3ab795b19ca73505e7b55826d5f6ad7230d31b18e106400169b9e9 \
     --hash=sha256:e44b087597f6da52ec6393a709e7108b2905317d0c0b744cdca6208e670d8eda
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 future==0.18.2 \
     --hash=sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d
     # via radon
@@ -277,7 +278,7 @@ jinja2==3.0.1 \
 keyring==23.2.1 \
     --hash=sha256:6334aee6073db2fb1f30892697b1730105b5e9a77ce7e61fca6b435225493efe \
     --hash=sha256:bd2145a237ed70c8ce72978b497619ddfcae640b6dcf494402d5143e37755c6e
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 lazy==1.4 \
     --hash=sha256:2c6d27a5ab130fb85435320651a47403adcb37ecbcc501b0c6606391f65f5b43 \
     --hash=sha256:9f293fd531546f3eda039da8f919b513b94f219e562764e3ceefc26fa503bf03
@@ -353,7 +354,9 @@ mypy-extensions==0.4.3 \
 nodeenv==1.6.0 \
     --hash=sha256:3ef13ff90291ba2a4a7a4ff9a979b63ffdd00a464dbe04acf0ea6471517a4c2b \
     --hash=sha256:621e6b7076565ddcacd2db0294c0381e01fd28945ab36bcf00f41c5daf63bef7
-    # via pre-commit
+    # via
+    #   -r spin-reqs-linux.txt.in
+    #   pre-commit
 packaging==21.0 \
     --hash=sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7 \
     --hash=sha256:c86254f9220d55e31cc94d69bade760f0847da8000def4dfe1c6b872fd14ff14
@@ -376,14 +379,14 @@ pep517==0.11.0 \
 pip-tools==6.3.0 \
     --hash=sha256:1835a1848bdfb22b2b6e5d10d630844ff5ee15e24b6c3bf92319c76f205d347f \
     --hash=sha256:f5119d08558d4b44f5d3be6c433a5710050282d5aeecb1bfa392e86963827548
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 pkginfo==1.7.1 \
     --hash=sha256:37ecd857b47e5f55949c41ed061eb51a0bee97a87c969219d144c0e023982779 \
     --hash=sha256:e7432f81d08adec7297633191bbf0bd47faf13cd8724c3a13250e51d542635bd
     # via devpi-client
-platformdirs==2.3.0 \
-    --hash=sha256:15b056538719b1c94bdaccb29e5f81879c7f7f0f4a153f46086d155dffcd4f0f \
-    --hash=sha256:8003ac87717ae2c7ee1ea5a84a1a61e87f3fbd16eb5aadba194ea30a9019f648
+platformdirs==2.4.0 \
+    --hash=sha256:367a5e80b3d04d2428ffa76d33f124cf11e8fff2acdaa9b43d545f5c7d661ef2 \
+    --hash=sha256:8868bbe3c3c80d42f20156f22e7131d2fb321f5bc86a2a345375c6481a67021d
     # via
     #   black
     #   virtualenv
@@ -397,7 +400,7 @@ pluggy==0.13.1 \
 pre-commit==2.15.0 \
     --hash=sha256:3c25add78dbdfb6a28a651780d5c311ac40dd17f160eb3954a0c59da40a505a7 \
     --hash=sha256:a4ed01000afcb484d9eb8d504272e642c4c4099bbad3a6b27e519bd6a3e928a6
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 py==1.10.0 \
     --hash=sha256:21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3 \
     --hash=sha256:3b80836aa6d1feeaa108e046da6423ab8f6ceda6468545ae8d02d9d58d18818a
@@ -430,22 +433,22 @@ pytest==6.2.5 \
     --hash=sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89 \
     --hash=sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
     # via
-    #   -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    #   -r spin-reqs-linux.txt.in
     #   pytest-cov
     #   pytest-mock
     #   pytest-tldr
 pytest-cov==2.12.1 \
     --hash=sha256:261bb9e47e65bd099c89c3edf92972865210c36813f80ede5277dceb77a4a62a \
     --hash=sha256:261ceeb8c227b726249b376b8526b600f38667ee314f910353fa318caa01f4d7
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 pytest-mock==3.6.1 \
     --hash=sha256:30c2f2cc9759e76eee674b81ea28c9f0b94f8f0445a1b87762cadf774f0df7e3 \
     --hash=sha256:40217a058c52a63f1042f0784f62009e976ba824c418cced42e88d5f40ab0e62
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 pytest-tldr==0.2.4 \
     --hash=sha256:764f928e9ecdc615c2b4e6f78cee3bb865c76a08c57fdf93ee5f0ee99f5f25ee \
     --hash=sha256:f538fe13764a6ea512a0b7d1c874ba8088a5c541d885cba4096fd7593cbd2943
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 pytz==2021.1 \
     --hash=sha256:83a4a90894bf38e243cf052c8b58f381bfe9a7a483f6a9cab140bc7f702ac4da \
     --hash=sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798
@@ -484,7 +487,7 @@ pyyaml==5.4.1 \
 radon==5.1.0 \
     --hash=sha256:cb1d8752e5f862fb9e20d82b5f758cbc4fb1237c92c9a66450ea0ea7bf29aeee \
     --hash=sha256:fa74e018197f1fcb54578af0f675d8b8e2342bd8e0b72bef8197bc4c9e645f36
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 regex==2021.9.24 \
     --hash=sha256:0628ed7d6334e8f896f882a5c1240de8c4d9b0dd7c7fb8e9f4692f5684b7d656 \
     --hash=sha256:09eb62654030f39f3ba46bc6726bea464069c29d00a9709e28c9ee9623a8da4a \
@@ -541,7 +544,7 @@ secretstorage==3.3.1 \
 setuptools-scm==6.3.2 \
     --hash=sha256:4c64444b1d49c4063ae60bfe1680f611c8b13833d556fd1d6050c0023162a119 \
     --hash=sha256:a49aa8081eeb3514eb9728fa5040f2eaa962d6c6f4ec9c32f6c1fba88f88a0f2
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
@@ -560,7 +563,7 @@ sphinx==4.2.0 \
 sphinx-click==3.0.1 \
     --hash=sha256:9b24c46f3b8f25fc639f47c97ac0361d9f80d48c2ed6b3917de2865bbdbe1785 \
     --hash=sha256:e9ee2237e5a6b6620e9996b8214934afdf8f7f9f9fc082482c77be0e4379038e
-    # via -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    # via -r spin-reqs-linux.txt.in
 sphinxcontrib-applehelp==1.0.2 \
     --hash=sha256:806111e5e962be97c29ec4c1e7fe277bfd19e9652fb1a4392105b43e01af885a \
     --hash=sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58
@@ -585,9 +588,9 @@ sphinxcontrib-serializinghtml==1.1.5 \
     --hash=sha256:352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd \
     --hash=sha256:aa5f6de5dfdf809ef505c4895e51ef5c9eac17d0f287933eb49ec495280b6952
     # via sphinx
-testfixtures==6.18.2 \
-    --hash=sha256:61c25cb0213f68d2dcd2b098d9d2e7f47afc3b4429d66e1cdeb1072be2fcb241 \
-    --hash=sha256:9c2316232de0ef6915d5446dcccaec9c4a6092751ba2ff7d30b9c14a954a90e3
+testfixtures==6.18.3 \
+    --hash=sha256:2600100ae96ffd082334b378e355550fef8b4a529a6fa4c34f47130905c7426d \
+    --hash=sha256:6ddb7f56a123e1a9339f130a200359092bd0a6455e31838d6c477e8729bb7763
     # via flake8-isort
 toml==0.10.2 \
     --hash=sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b \
@@ -629,9 +632,9 @@ wheel==0.37.0 \
     --hash=sha256:21014b2bd93c6d0034b6ba5d35e4eb284340e09d63c59aef6fc14b0f346146fd \
     --hash=sha256:e2ef7239991699e3355d54f8e968a21bb940a1dbf34a4d226741e64462516fad
     # via pip-tools
-zipp==3.5.0 \
-    --hash=sha256:957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3 \
-    --hash=sha256:f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4
+zipp==3.6.0 \
+    --hash=sha256:71c644c5369f4a6e07636f0aa966270449561fcea2e3d6747b8d23efaa9d7832 \
+    --hash=sha256:9fe5ea21568a0a70e50f273397638d39b03353731e6cbbb3fd8502a33fec40bc
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -643,7 +646,7 @@ setuptools==58.1.0 \
     --hash=sha256:5de67252090e08d25f240f07d80310f778a5a46cdcf9ea9855662630ac8547b2 \
     --hash=sha256:7324fd4b66efa05cdfc9c89174573a4410acc7848f318cc0565c7fb659dfdc81
     # via
-    #   -r spin-reqs-cp38-manylinux_2_28_x86_64.txt.in
+    #   -r spin-reqs-linux.txt.in
     #   check-manifest
     #   flake8-copyright
     #   pip-tools

@@ -14,12 +14,12 @@ from .python import ProvisionerProtocol
 defaults = config(
     requires=config(
         spin=[".python"],
-        python=["setuptools"],
+        python=["setuptools", "pip-tools"],
     ),
     hashes=False,
-    requirements="requirements-{python.abitag}-{platform.tag}.txt",
+    requirements="requirements-{platform.kind}.txt",
     requirements_sources=["setup.py", "setup.cfg"],
-    extras="spin-reqs-{python.abitag}-{platform.tag}.txt",
+    extras="spin-reqs-{platform.kind}.txt",
     extras_in="{piptools.extras}.in",
     editable_options=[
         "--no-deps",
@@ -131,9 +131,7 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             )
 
     def have_wheelhouse(self, cfg):
-        pipconf = cfg.python.pipconf.get("global", config())
-        find_links = pipconf.get("find-links", None)
-        return exists(find_links)
+        return exists(cfg.python.wheelhouse)
 
     def wheelhouse(self, cfg):
         sh(
@@ -142,7 +140,7 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             "b",
             "download",
             "-d",
-            cfg.python.pipconf.get("global").get("find-links"),
+            cfg.python.wheelhouse,
             "-r",
             cfg.piptools.requirements,
             "-r",

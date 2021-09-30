@@ -8,6 +8,7 @@ flake8-fixme
 flake8-isort
 flake8-polyfill
 keyring
+nodeenv
 pip-tools
 pre-commit
 pytest
@@ -16,4 +17,5 @@ pytest-mock
 pytest-tldr
 radon
 setuptools
+setuptools_scm
 sphinx-click

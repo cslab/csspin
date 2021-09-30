@@ -84,6 +84,7 @@ DEFAULTS = config(
         exe=".exe" if sys.platform == "win32" else "",
         shell="{SHELL}",
         tag=next(tags.sys_tags()).platform,
+        kind=sys.platform,
     ),
 )
 
