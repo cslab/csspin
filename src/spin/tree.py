@@ -366,6 +366,9 @@ class YamlParser(object):
         # key '$' and we return that instead of the parsed dict.
         if "$" in config:
             config = config["$"]
+        # if the config is empty, it should be replaced by None
+        if len(config) == 0:
+            config = None
         return config
 
     def directive_var(self, key, expression, value, out):

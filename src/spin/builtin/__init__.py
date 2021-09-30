@@ -221,7 +221,8 @@ def do_system_provisioning(
             check = eval(f"lambda distro, version: {check}")
             if check(distroname, distroversion):
                 supported = True
-                merge_dicts(out, items)
+                if items:
+                    merge_dicts(out, items)
     if not supported:
         die(f"this project does not support {distroname} {distroversion}")
 
