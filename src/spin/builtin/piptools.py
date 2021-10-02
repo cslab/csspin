@@ -33,9 +33,6 @@ defaults = config(
             "--reuse-hashes",
         ],
         options=[
-            # FIXME: we need a separate upgrade mechanism, otherwise
-            # pip-tools will push us to latest (possible) for all deps
-            # every time ###"--upgrade",
             "--allow-unsafe",
             "--header",
             "--annotate",
