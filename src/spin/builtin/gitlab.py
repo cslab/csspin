@@ -4,11 +4,12 @@
 # All rights reserved.
 # http://www.contact.de/
 
-from spin import config, download, exists, normpath, sh, task
+from spin import config, sh, task
 
 defaults = config(
     cmd="gitlab-ci-local",
     requires=config(
+        spin=[".node"],
         npm=["gitlab-ci-local"],
     ),
 )
