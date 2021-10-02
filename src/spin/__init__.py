@@ -673,33 +673,36 @@ def task(*args, **kwargs):
     """Decorator that creates a task. This is a wrapper around Click's
     :py:func:`click.command` decorator, with some extras:
 
-    * A string keyword argument `when` adds the task to the list of
-      commands to run using `invoke`
+    * a string keyword argument ``when`` adds the task to the list of
+      commands to run using :py:func:`invoke`
 
     * `aliases` is a list of aliases for the command (e.g. "check" is
       an alias for "lint")
 
-    * `task` introspects the signature of the decorated function and
-      handles certain argument names automatically:
+    * ``noenv=True`` registers the command as a global command, that
+      can run without a provisioned environment
 
-      * ``ctx`` will pass the Click context object into the task; this
-        is rarely useful for spin tasks
+    `task` introspects the signature of the decorated function and
+    handles certain argument names automatically:
 
-      * ``cfg`` will automatically pass the configuration tree; this
-        very useful most of the time, except for the simplest of tasks
+    * ``ctx`` will pass the :py:class:`Click context object
+      <click.Context>` into the task; this is rarely useful for spin
+      tasks
 
-      * ``args`` will simply pass through all command line arguments
-        by using the ``ignore_unknown_options`` and
-        ``allow_extra_args`` options of the Click context; this is
-        often used for tasks that launch a specific command line tool
-        to enable arbitrary arguments
+    * ``cfg`` will automatically pass the configuration tree; this is
+      very useful most of the time, except for the simplest of tasks
 
-      * ``noenv`` registers the command as a global command, that can
-        run without a provisioned environment
+    * ``args`` will simply pass through all command line arguments
+      by using the ``ignore_unknown_options`` and
+      ``allow_extra_args`` options of the Click context; this is
+      often used for tasks that launch a specific command line tool
+      to enable arbitrary arguments
+
 
     All other arguments to the task must be annotated with either
-    `option` or `argument`. They both support the same arguments as
-    the corresponding decorators `click.option` and `click.argument`.
+    :py:func:`option` or :py:func:`argument`. They both support the
+    same arguments as the corresponding decorators
+    :py:func:`click.option` and :py:func:`click.argument`.
 
     A simple example:
 
