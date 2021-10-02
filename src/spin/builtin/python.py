@@ -224,13 +224,10 @@ def python(args):
 
 @task("python:wheel", when="package")
 def wheel(cfg):
-    args = []
-    if cfg.quiet:
-        args = ["-q"]
     sh(
         "python",
         "setup.py",
-        *args,
+        cfg.quietflag,
         "build",
         "-b",
         "{spin.env_base}/build",

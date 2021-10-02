@@ -60,5 +60,6 @@ def push(cfg):
         sh(
             "{docker.executable}",
             "push",
+            cfg.quietflag,
             definition.tag,
         )
