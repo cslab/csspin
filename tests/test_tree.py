@@ -52,3 +52,17 @@ def test_keyinfo_yamlfile():
     ki = tree.tree_keyinfo(config, "foo")
     assert ki.file.endswith("sample.yaml")
     assert ki.line == 1
+
+
+def test_update():
+    a = tree.ConfigTree(sub=tree.ConfigTree(a="a"))
+    b = tree.ConfigTree(sub=tree.ConfigTree(a="b"))
+    tree.tree_update(a, b)
+    assert a.sub.a == "b"
+
+
+def test_merge():
+    a = tree.ConfigTree(sub=tree.ConfigTree(a="a"))
+    b = tree.ConfigTree(sub=tree.ConfigTree(a="b"))
+    tree.tree_merge(a, b)
+    assert a.sub.a == "a"
