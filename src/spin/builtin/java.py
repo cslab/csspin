@@ -6,7 +6,7 @@
 
 import os
 
-from spin import config, die, echo, info, interpolate1, memoizer, mkdir, rmtree, setenv
+from spin import config, die, echo, interpolate1, memoizer, mkdir, setenv
 
 defaults = config(
     version=None,
@@ -53,12 +53,16 @@ def provision(cfg):
     jdk.get_download_url = monkey_get_download_url
 
     with memoizer("{java.installdir}/java.pickle") as m:
-        # FIXME: in case there already is a JDK installation, but it
-        # is not yet memoized, unpacking the freshly downloaded new
+        # In case there already is a JDK installation, but it is not
+        # yet memoized, unpacking the freshly downloaded new
         # distribution into the same directory will fail, since the
         # JDK archives have r/o files. But we cannot remove the
         # installation directory beforehand, since we do not know it's
         # name: `java_home` is computed from the archive contents.
+        #
+        # FIXME: with some effort, we should be able to come up with a
+        # better solution than to error out and let the user manually
+        # remove the target directory.
         try:
             java_home = jdk.install(
                 cfg.java.version, path=interpolate1(cfg.java.installdir)
