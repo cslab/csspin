@@ -12,7 +12,7 @@ def cfg():
 
 def do_test(tmpdir, what, cmd):
     output = backtick(
-        f"spin -C tests/integration --env {tmpdir} -f {what} --provision {cmd}"
+        f"spin -q -C tests/integration --env {tmpdir} -f {what} --provision {cmd}"
     )
     output = output.strip()
     print(output)
