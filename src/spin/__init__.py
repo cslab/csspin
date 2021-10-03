@@ -955,6 +955,7 @@ def main(*args, **kwargs):
     if not args:
         args = None
     kwargs["auto_envvar_prefix"] = "SPIN"
+    kwargs["complete_var"] = "XOKSAPOKA"
     kwargs.setdefault("standalone_mode", False)
     cli.click_main_kwargs = kwargs
     cli.main(args, **kwargs)

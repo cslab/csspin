@@ -454,6 +454,7 @@ def cli(
         # Invoke the main command group, which by now has all the
         # sub-commands from the plugins.
         kwargs = getattr(cli, "click_main_kwargs", {})
+        kwargs["complete_var"] = "_SPIN_COMPLETE"
         commands.main(args=ctx.args, **kwargs)
     else:
         cruise.do_cruise(cfg, cruiseopt, interactive)
