@@ -20,7 +20,7 @@ defaults = config(
     pom_file="pom.xml",
     requires=config(spin=[".java"]),
     packages=[],
-    version="3.8.2",
+    version="3.8.3",
     mirrors=[
         "http://ftp.fau.de/apache/",
         "http://dlcdn.apache.org/",
