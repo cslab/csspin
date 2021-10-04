@@ -538,8 +538,12 @@ def namespaces(*nslist):
         NSSTACK.pop()
 
 
-os.environ["SPIN_CONFIG"] = Path(xdg.xdg_config_home()) / "spin"
-os.environ["SPIN_CACHE"] = Path(xdg.xdg_cache_home()) / "spin"
+os.environ["SPIN_CONFIG"] = os.environ.get(
+    "SPIN_CONFIG", Path(xdg.xdg_config_home()) / "spin"
+)
+os.environ["SPIN_CACHE"] = os.environ.get(
+    "SPIN_CACHE", Path(xdg.xdg_cache_home()) / "spin"
+)
 
 
 def interpolate1(literal, *extra_dicts):
