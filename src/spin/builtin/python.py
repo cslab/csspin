@@ -585,7 +585,9 @@ class SimpleProvisioner(ProvisionerProtocol):
 
     def prerequisites(self, cfg):
         # We'll need pip
-        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
+        # FIXME tst: see https://github.com/jazzband/pip-tools/issues/1503
+        # remove pin after fix
+        sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip==21.2.4")
 
     def lock(self, cfg):
         # If there is a setup.py, make an editable install (which
