@@ -10,7 +10,7 @@ import sys
 import tarfile
 import urllib
 
-from spin import config, exists, info, interpolate1, option, setenv, sh, task
+from spin import config, exists, info, interpolate1, option, setenv, sh, task, warn
 
 defaults = config(
     cmd="mvn",
@@ -38,7 +38,20 @@ def provision(cfg):
         mirror = random.choice(cfg.maven.mirrors)
         url = interpolate1(mirror + cfg.maven.url)
         info(f"Downloading {url}")
-        filename, headers = urllib.request.urlretrieve(url)
+        try:
+            filename, headers = urllib.request.urlretrieve(url)
+        except urllib.error.HTTPError as e:
+            # maven removes old version from the mirrors...
+            if e.status == 404:
+                warn(
+                    f"Maven {cfg.maven.version} not found in the mirrors... "
+                    f"Trying to retrieve version {cfg.maven.version} from archive."
+                )
+                mirror = "http://archive.apache.org/dist/"
+                url = interpolate1(mirror + cfg.maven.url)
+                filename, headers = urllib.request.urlretrieve(url)
+            else:
+                raise
         with tarfile.open(filename, "r:gz") as tar:
             tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))
     init(cfg)

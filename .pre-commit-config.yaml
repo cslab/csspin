@@ -19,5 +19,6 @@ repos:
   - id: isort
     name: isort
     entry: isort
+    args: ["--profile", "black"]
     language: system
     types: [python]
