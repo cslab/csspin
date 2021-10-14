@@ -124,7 +124,7 @@ defaults = config(
         if sys.platform != "win32"
         else N("{python.venv}/Scripts")
     ),
-    python=N("{python.bindir}/python"),
+    python=N("{python.scriptdir}/python"),
     wheelhouse="{spin.env_base}/wheelhouse",
     pipconf=config(
         {

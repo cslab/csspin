@@ -69,7 +69,16 @@ class PiptoolsProvisioner(ProvisionerProtocol):
         self.locks_updated = False
 
     def prerequisites(self, cfg):
-        sh("pip", "install", cfg.quietflag, *cfg.piptools.prerequisites)
+        # use python -m pip otherwise this could lead to permission issues under
+        # windows
+        sh(
+            cfg.python.python,
+            "-m",
+            "pip",
+            "install",
+            cfg.quietflag,
+            *cfg.piptools.prerequisites,
+        )
 
     def lock(self, cfg):
         if not is_up_to_date(
