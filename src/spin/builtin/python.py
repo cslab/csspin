@@ -186,7 +186,7 @@ def system_requirements(cfg):
         ),
         (
             # FIXME: no idea, whether this makes any sense
-            lambda distro, version: distro == re.match("opensuse", distro),
+            lambda distro, version: re.match("opensuse", distro),
             {
                 "zypper": (
                     "git gcc automake bzip2 libbz2-devel xz xz-devel openssl-devel"
