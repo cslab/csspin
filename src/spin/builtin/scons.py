@@ -26,6 +26,5 @@ def scons(cfg, args):
     args = list(args)
     if cfg.quiet:
         args.insert(0, "-s")
-    if cfg.scons.cache_vcvars:
-        setenv(SCONS_CACHE_MSVC_CONFIG="1")
+    setenv(SCONS_CACHE_MSVC_CONFIG=str(cfg.scons.cache_vcvars))
     sh(cmd, *cfg.scons.opts, *args)
