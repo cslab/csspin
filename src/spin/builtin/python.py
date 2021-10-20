@@ -224,6 +224,7 @@ def python(args):
 
 @task("python:wheel", when="package")
 def wheel(cfg):
+    """Build a wheel of the current project."""
     sh(
         "python",
         "setup.py",

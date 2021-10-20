@@ -42,6 +42,7 @@ def exec_shell(args):
 
 @task()
 def shell(cfg):
+    """Run an interactive shell in the project context."""
     os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "-i"])
 
 
@@ -83,6 +84,7 @@ def schemadoc(
     outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa
     args,
 ):
+    """Print the schema definitions for spin."""
     schema = cfg.schema
     arg = ""
     for arg in args:
@@ -243,5 +245,6 @@ def do_system_provisioning(
 
 @task("distro")
 def distro_task(cfg):
+    """Print the distro information."""
     dinfo = get_distro()
     print(f"distro={repr(dinfo['id'])} version={repr(parse_version(dinfo['version']))}")
