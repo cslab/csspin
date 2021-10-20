@@ -26,6 +26,7 @@ import sys
 import click
 import entrypoints
 import packaging.version
+import ruamel.yaml
 from packaging import tags
 
 if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
@@ -606,7 +607,9 @@ def load_config_tree(
         scope = cfg
         while len(path) > 1:
             scope = getattr(scope, path.pop(0))
-        setattr(scope, path[0], v)
+        yaml = ruamel.yaml.YAML()
+        data = yaml.load(v)
+        setattr(scope, path[0], data)
 
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
