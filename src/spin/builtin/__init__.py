@@ -31,6 +31,8 @@ from spin import (
     warn,
 )
 
+from . import shell
+
 
 @task("run", add_help_option=False)
 def exec_shell(args):
@@ -38,12 +40,6 @@ def exec_shell(args):
     if not args:
         args = ("{platform.shell}",)
     sh(*args)
-
-
-@task()
-def shell(cfg):
-    """Run an interactive shell in the project context."""
-    os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "-i"])
 
 
 @task()
