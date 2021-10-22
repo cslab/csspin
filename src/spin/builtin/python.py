@@ -615,6 +615,15 @@ def venv_provision(cfg):
     get_abi_tag(cfg)
     fresh_virtualenv = False
     if not exists("{python.venv}"):
+        # Make sure pip is up to date
+        sh(
+            cfg.python.interpreter,
+            "-mpip",
+            cfg.quietflag,
+            "install",
+            "-U",
+            "pip",
+        )
         # Make sure the Python interpreter we'll use to create the
         # virtual environment has the virtualenv package installed.
         sh(
