@@ -23,7 +23,6 @@ defaults = config(
     extras_in="{piptools.extras}.in",
     editable_options=[
         "--no-deps",
-        "--use-feature=in-tree-build",
         "--no-build-isolation",
     ],
     pip_compile=config(
