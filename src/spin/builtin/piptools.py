@@ -27,7 +27,7 @@ defaults = config(
         "--no-build-isolation",
     ],
     pip_compile=config(
-        cmd="pip-compile",
+        cmd="compile",
         options_hash=[
             "--generate-hashes",
             "--reuse-hashes",
@@ -43,18 +43,23 @@ defaults = config(
         ),
     ),
     pip_sync=config(
-        cmd="pip-sync",
+        cmd="sync",
         options=[],
     ),
     prerequisites=["pip-tools"],
 )
 
 
+def piptools_cmd(cfg, cmd, *args, **kwargs):
+    sh(cfg.python.python, "-mpiptools", cmd, cfg.quietflag, *args, **kwargs)
+
+
 def pip_compile(cfg, *args):
     options = cfg.piptools.pip_compile.options
     if cfg.piptools.hashes:
         options.extend(cfg.piptools.pip_compile.options_hash)
-    sh(
+    piptools_cmd(
+        cfg,
         cfg.piptools.pip_compile.cmd,
         *options,
         *args,
@@ -119,16 +124,17 @@ class PiptoolsProvisioner(ProvisionerProtocol):
         options = list(cfg.piptools.pip_sync.options)
         if self.have_wheelhouse(cfg):
             options.append("--no-index")
-        sh(
+        piptools_cmd(
+            cfg,
             cfg.piptools.pip_sync.cmd,
-            cfg.quietflag,
             *options,
             cfg.piptools.requirements,
             cfg.piptools.extras,
         )
         if exists("setup.py"):
             sh(
-                "pip",
+                cfg.python.python,
+                "-mpip",
                 "install",
                 cfg.quietflag,
                 *cfg.piptools.editable_options,
@@ -141,7 +147,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
 
     def wheelhouse(self, cfg):
         sh(
-            "pip",
+            cfg.python.python,
+            "-mpip",
             "--exists-action",
             "b",
             "download",
