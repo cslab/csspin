@@ -15,15 +15,17 @@ def init(cfg):
 
         client = svn.local.LocalClient(".")
         changes = client.status()
+        # this not working for the ci
         modified = [f.name for f in changes if f.type in (1, 9)]
-        cfg.vcs = config(modified=modified)
+        cfg.vcs = config(modified=cfg.vcs.get("modified", []) + modified)
         cpi = sh("svn", "diff", capture_output=True, silent=True)
         cfg.vcs.unidiff = cpi.stdout
     elif os.path.isdir(".git"):
         from git import Repo
 
         repo = Repo(".")
+        # this not working for the ci
         modified = [item.a_path for item in repo.index.diff(None)]
-        cfg.vcs = config(modified=modified)
+        cfg.vcs = config(modified=cfg.vcs.get("modified", []) + modified)
         cpi = sh("git", "diff", capture_output=True, silent=True)
         cfg.vcs.unidiff = cpi.stdout
