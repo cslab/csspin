@@ -11,6 +11,7 @@ defaults = config(
     requires=config(
         spin=[".python"],
         python=["nodeenv"],
+        npm=["sass"],
     ),
     memo="{python.venv}/nodeversions.memo",
 )
