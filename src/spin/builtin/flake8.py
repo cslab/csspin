@@ -78,9 +78,8 @@ def flake8(
     args,
 ):
     """Run flake8 to lint Python code."""
-    files = args
-    if not files:
-        files = [f for f in cfg.vcs.modified if f.endswith(".py")]
+    files = args or cfg.vcs.modified
+    files = [f for f in files if f.endswith(".py")]
     if allsource:
         files = cfg.flake8.allsource
     if files:
