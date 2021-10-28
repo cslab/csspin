@@ -19,7 +19,7 @@ pages:
 test_py3:
   extends: .test
   script:
-    - spin --provision -p python.use=python test
+    - spin --provision --debug -p python.use=python test --verbose
 
 # test_py2_linux:
 #   extends: .test
