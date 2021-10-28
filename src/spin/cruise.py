@@ -15,7 +15,7 @@ from . import info, sh, tree
 def spin_is_editable():
     editable = None
     for path_item in sys.path:
-        egg_link = os.path.join(path_item, "spin.egg-link")
+        egg_link = os.path.join(path_item, "cs.spin.egg-link")
         if os.path.isfile(egg_link):
             with open(egg_link) as f:
                 editable = os.path.normpath(
