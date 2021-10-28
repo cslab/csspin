@@ -28,7 +28,7 @@ def configure(cfg):
 def provision(cfg):
     with memoizer(cfg.node.memo) as m:
         if not m.check(cfg.node.version):
-            sh("nodeenv", "--python-virtualenv", cfg.node.version)
+            sh("python", "-mnodeenv", "--python-virtualenv", "-n", cfg.node.version)
             m.add(cfg.node.version)
         for plugin in cfg.topo_plugins:
             plugin_module = cfg.loaded[plugin]
