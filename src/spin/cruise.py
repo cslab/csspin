@@ -48,7 +48,7 @@ def match_cruises(cfg, selectors):
 
 def do_cruise(cfg, cruiseopt, interactive):
     spin_args = sys.argv[1:]
-    while spin_args[0] in ("-c", "--cruise", "-C", "--change-directory"):
+    while spin_args and spin_args[0] in ("-c", "--cruise", "-C", "--change-directory"):
         spin_args.pop(0)
         spin_args.pop(0)
     for name, definition in match_cruises(cfg, cruiseopt):
