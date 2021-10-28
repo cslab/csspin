@@ -18,6 +18,7 @@ import entrypoints
 from spin import (
     EXPORTS,
     argument,
+    config,
     die,
     group,
     interpolate1,
@@ -31,7 +32,11 @@ from spin import (
     warn,
 )
 
-from . import shell
+defaults = config(
+    requires=config(
+        spin=[".shell"],
+    ),
+)
 
 
 @task("run", add_help_option=False)
