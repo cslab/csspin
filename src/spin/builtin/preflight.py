@@ -33,9 +33,9 @@ def test(
 
 
 @task(aliases=["check"])
-def lint(allsource: option("--all", "allsource", is_flag=True)):
+def lint(allsource: option("--all", "allsource", is_flag=True), args):
     """Run all linters defined in this project."""
-    invoke("lint", allsource=allsource)
+    invoke("lint", allsource=allsource, args=args)
 
 
 @task()

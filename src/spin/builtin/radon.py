@@ -22,9 +22,8 @@ defaults = config(
 @task(when="lint")
 def radon(cfg, allsource: option("--all", "allsource", is_flag=True), args):
     """Run radon to measure code complexity."""
-    files = args
-    if not files:
-        files = [f for f in cfg.vcs.modified if f.endswith(".py")]
+    files = args or cfg.vcs.modified
+    files = [f for f in files if f.endswith(".py")]
     if allsource:
         files = ("{spin.project_root}/src", "{spin.project_root}/tests")
     if files:

@@ -15,7 +15,7 @@ from . import info, sh, tree
 def spin_is_editable():
     editable = None
     for path_item in sys.path:
-        egg_link = os.path.join(path_item, "spin.egg-link")
+        egg_link = os.path.join(path_item, "cs.spin.egg-link")
         if os.path.isfile(egg_link):
             with open(egg_link) as f:
                 editable = os.path.normpath(
@@ -48,7 +48,7 @@ def match_cruises(cfg, selectors):
 
 def do_cruise(cfg, cruiseopt, interactive):
     spin_args = sys.argv[1:]
-    while spin_args[0] in ("-c", "--cruise", "-C", "--change-directory"):
+    while spin_args and spin_args[0] in ("-c", "--cruise", "-C", "--change-directory"):
         spin_args.pop(0)
         spin_args.pop(0)
     for name, definition in match_cruises(cfg, cruiseopt):
