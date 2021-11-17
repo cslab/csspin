@@ -1,8 +1,11 @@
 # This is the spinfile.yaml of spin.
+minimum-spin: "0.2"
+
 plugins:
-   - ce15
-   - eggs
-   - pytest
+  - spin.builtin:
+    - eggs
+    - pytest
+    - ce15
 
 eggs:
   requirements: ["cs.web"]

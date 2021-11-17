@@ -27,9 +27,10 @@ from spin import invoke, option, task
 def test(
     instance: option("--instance", "instance"),
     coverage: option("--coverage", "coverage", is_flag=True),
+    args,
 ):
     """Run all tests defined in this project."""
-    invoke("test", instance=instance, coverage=coverage)
+    invoke("test", instance=instance, coverage=coverage, args=args)
 
 
 @task(aliases=["check"])

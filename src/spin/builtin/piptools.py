@@ -192,8 +192,10 @@ def python_upgrade(cfg, args):
     if not args:
         args = ["--upgrade"]
     else:
-        args = itertools.chain.from_iterable(
-            itertools.product(("--upgrade-package",), args)
+        args = list(
+            itertools.chain.from_iterable(
+                itertools.product(("--upgrade-package",), args)
+            )
         )
     pip_compile(cfg, "-o", cfg.piptools.requirements, *args)
     pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extras, *args)
