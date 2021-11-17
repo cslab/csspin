@@ -34,7 +34,7 @@ from spin import (
 
 defaults = config(
     requires=config(
-        spin=[".shell"],
+        spin=[".shell", ".cache"],
     ),
 )
 
