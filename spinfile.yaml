@@ -29,7 +29,7 @@ node:
   version: 16.10.0
 
 python:
-  version: 3.8.10
+  version: 3.9.8
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
