@@ -240,7 +240,7 @@ def die(*msg):
     """
     msg = interpolate(msg)
     error(*msg)
-    raise click.Abort()
+    raise click.Abort(msg)
 
 
 class Command:
