@@ -537,7 +537,7 @@ def load_config_tree(
 
             d = importlib_metadata.distribution("cs.spin")
             echo(d._path)
-            echo(d._files)
+            echo(d.files)
             echo(dict(importlib_metadata.metadata("cs.spin")))
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
