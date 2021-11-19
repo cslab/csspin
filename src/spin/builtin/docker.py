@@ -4,6 +4,7 @@
 # All rights reserved.
 # http://www.contact.de/
 
+import itertools
 import os
 
 from spin import config, group, interpolate1, sh
@@ -39,8 +40,7 @@ def build(cfg):
             *build_args,
             "-f",
             definition.dockerfile,
-            "-t",
-            definition.tag,
+            *itertools.chain.from_iterable(itertools.product(("-t",), definition.tags)),
             ".",
         )
 
@@ -57,9 +57,10 @@ def build(cfg):
 @docker.task()
 def push(cfg):
     for definition in cfg.docker.images:
-        sh(
-            "{docker.executable}",
-            "push",
-            cfg.quietflag,
-            definition.tag,
-        )
+        for tag in definition.tags:
+            sh(
+                "{docker.executable}",
+                "push",
+                cfg.quietflag,
+                tag,
+            )
