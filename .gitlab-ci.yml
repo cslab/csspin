@@ -19,7 +19,9 @@ pages:
 test_py3:
   extends: .test
   script:
-    - spin --provision --debug -p python.use=python test --verbose
+    - python -m pip list
+    - whereis spin
+    - spin --provision --debug -p python.use=python test -vvvv
 
 # test_py2_linux:
 #   extends: .test
