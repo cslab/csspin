@@ -8,16 +8,6 @@ from spin import cli, cruise
 
 
 def test_cruise():
-    # debugging
-    import sys
-
-    import spin
-
-    print(sys.path)
-    print(spin.__path__)
-    print(spin.__package__)
-    print(spin.__name__)
-    # debugging
     cfg = cli.load_config_tree("spinfile.yaml")
 
     def match(*selectors):
