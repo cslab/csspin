@@ -19,28 +19,4 @@ pages:
 test_py3:
   extends: .test
   script:
-    - spin --provision --debug -p python.use=python test -vvvv
-
-# test_py2_linux:
-#   extends: .test
-#   script:
-#     - apt-get update
-#     - apt-get install -y --no-install-recommends python-setuptools python-pip
-#     - python2 -m pip install virtualenv
-#     - cd tests/data/trivial
-#     - spin -p python.use=/usr/bin/python2 test
-
-# test_ce154_linux:
-#   image: registry.contact.de/ubuntu_app_15.4
-#   before_script:
-#     - sudo apt-get update
-#     - sudo apt-get install -y --no-install-recommends python3.8 python3-pip
-#     - LD_LIBRARY_PATH= /usr/bin/python3.8 -m pip install --user setuptools
-#     - LD_LIBRARY_PATH= /usr/bin/python3.8 -m pip install --user --editable .
-#     - export PATH=~/.local/bin:$PATH
-#     - /opt/platform/bin/python -m pip install --user virtualenv
-#   script:
-#     - cd tests/data/cs.something
-#     - spin -p python.use=/opt/platform/bin/python test
-#   tags:
-#     - Docker
+    - spin --provision --debug --verbose -p python.use=python test -vvvv
