@@ -120,16 +120,18 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
     else:
         logging.debug(f"{indent}import plugin {import_spec}")
 
+    mod = None
+    full_name = None
     try:
         mod = importlib.import_module(import_spec, package)
+        full_name = mod.__name__
     except ModuleNotFoundError as ex:
         warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
         # We tolerate this only when --cleanup and not --provision
         if not cfg.cleanup or cfg.provision:
             raise ex
 
-    full_name = mod.__name__
-    if full_name not in cfg.loaded:
+    if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
         # initialize it and recursively load dependencies
         cfg.loaded[full_name] = mod
@@ -567,7 +569,7 @@ def load_config_tree(
             cfg.spin.plugin_dir = os.path.abspath(
                 os.path.join(cfg.spin.project_root, cfg.spin.plugin_dir)
             )
-            sys.path.insert(0, cfg.spin.plugin_dir)
+        sys.path.insert(0, cfg.spin.plugin_dir)
         if cleanup and exists(cfg.spin.plugin_dir):
             rmtree(cfg.spin.plugin_dir)
 
