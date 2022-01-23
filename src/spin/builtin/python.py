@@ -336,17 +336,21 @@ def init(cfg):
     venv_init(cfg)
 
 
-def get_abi_tag(cfg):
+def get_abi_tag(cfg, cleanup=False):
     # To get the ABI tag, we've to call into the target interpreter,
     # which is not the one running the spin program. Not super cool,
     # firing up the interpreter just for that is slow.  ABI detection
     # has been moved to file which is then called by the interpreter.
+    #
+    # In cleanup mode, we don't abort but let the exception from
+    # `sh()` propagate to be handled elsewhere.
     if not cfg.python.abitag:
         from spin import get_abi_tag
 
         abitag = backtick(
             "{python.interpreter}",
             get_abi_tag.__file__,
+            may_fail=cleanup,
         )
         cfg.python.abitag = abitag.strip()
 
@@ -703,6 +707,10 @@ def venv_provision(cfg):
 
 
 def cleanup(cfg):
-    get_abi_tag(cfg)
-    if exists("{python.venv}"):
-        rmtree("{python.venv}")
+    try:
+        get_abi_tag(cfg, cleanup)
+        if exists("{python.venv}"):
+            rmtree("{python.venv}")
+    except Exception:
+        warn("cleanup: no Python interpreter installed")
+        pass
