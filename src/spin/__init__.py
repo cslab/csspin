@@ -299,7 +299,6 @@ def sh(*cmd, **kwargs):
         env = process_env
 
     if sys.platform == "win32":
-        shell = True
         if len(cmd) == 1:
             cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
