@@ -671,14 +671,6 @@ def venv_provision(cfg):
     if fresh_virtualenv:
         cfg.python.provisioner.prerequisites(cfg)
 
-    cfg.python.provisioner.lock(cfg)
-
-    replacements = cfg.get("devpackages", {})
-
-    def addreq(req):
-        req = replacements.get(req, req)
-        cfg.python.provisioner.add(interpolate1(req))
-
     # Plugins can define a 'venv_hook' function, to give them a
     # chance to do something with the virtual environment just
     # being provisioned (e.g. preparing the venv by adding pth
@@ -690,6 +682,14 @@ def venv_provision(cfg):
         if hook is not None:
             logging.debug(f"{plugin_module.__name__}.venv_hook()")
             hook(cfg)
+
+    cfg.python.provisioner.lock(cfg)
+
+    replacements = cfg.get("devpackages", {})
+
+    def addreq(req):
+        req = replacements.get(req, req)
+        cfg.python.provisioner.add(interpolate1(req))
 
     # Install packages required by the project ('requirements')
     for req in cfg.python.get("requirements", []):
