@@ -302,7 +302,8 @@ def sh(*cmd, **kwargs):
     if sys.platform == "win32":
         if len(cmd) == 1:
             cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
-        executable = shutil.which(cmd[0])
+        if not shell:
+            executable = shutil.which(cmd[0])
 
     if not kwargs.pop("silent", False):
 
