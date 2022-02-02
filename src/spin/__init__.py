@@ -298,9 +298,12 @@ def sh(*cmd, **kwargs):
         process_env.update(env)
         env = process_env
 
+    executable = None
     if sys.platform == "win32":
         if len(cmd) == 1:
             cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
+        if not shell:
+            executable = shutil.which(cmd[0])
 
     if not kwargs.pop("silent", False):
 
@@ -315,10 +318,12 @@ def sh(*cmd, **kwargs):
     try:
         t0 = time.monotonic()
         logging.debug(
-            "subprocess.run(%s, shell=%s, check=%s, env=%s, kwargs=%s"
-            % (cmd, shell, check, argenv, kwargs)
+            "subprocess.run(%s, shell=%s, check=%s, env=%s, executable=%s, kwargs=%s"
+            % (cmd, shell, check, argenv, executable, kwargs)
         )
-        cpi = subprocess.run(cmd, shell=shell, check=check, env=env, **kwargs)
+        cpi = subprocess.run(
+            cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
+        )
         t1 = time.monotonic()
         info(click.style("[%g seconds]" % (t1 - t0), fg="cyan"))
     except FileNotFoundError as ex:
