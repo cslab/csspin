@@ -534,7 +534,6 @@ def load_config_tree(
             die("spin requires 'minimum-spin' to be set")
         minspin = packaging.version.parse(minspin)
         spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
-        print("spinver", spinversion)
         if minspin > spinversion:
             from spin import echo
 
