@@ -442,6 +442,8 @@ def cli(
         # flags, do provisioning now.
         if cleanup:
             toporun(cfg, "cleanup", reverse=True)
+            if exists(cfg.spin.plugin_dir):
+                rmtree(cfg.spin.plugin_dir)
             if not provision:
                 # There is nothing we can meaningfully do after 'cleanup',
                 # unless 'provision' is also given => so do not run any
@@ -569,8 +571,6 @@ def load_config_tree(
                 os.path.join(cfg.spin.project_root, cfg.spin.plugin_dir)
             )
         sys.path.insert(0, cfg.spin.plugin_dir)
-        if cleanup and exists(cfg.spin.plugin_dir):
-            rmtree(cfg.spin.plugin_dir)
 
         if provision:
             install_plugin_packages(cfg)
