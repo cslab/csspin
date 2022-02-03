@@ -537,12 +537,6 @@ def load_config_tree(
         minspin = packaging.version.parse(minspin)
         spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
         if minspin > spinversion:
-            from spin import echo
-
-            d = importlib_metadata.distribution("cs.spin")
-            print(d._path)
-            print(list(d.files))
-            print(dict(importlib_metadata.metadata("cs.spin")))
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
         cfg.spin.project_root = os.path.dirname(
