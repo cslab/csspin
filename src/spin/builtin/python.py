@@ -329,9 +329,8 @@ def init(cfg):
         logging.debug("Checking for %s", interpolate1("{python.interpreter}"))
         if not exists("{python.interpreter}"):
             die(
-                "No Python interpreter has been provisioned for this project.\n\n"
-                "Spin no longer auto-provisions dependencies in this release.\n"
-                "You might want to run 'spin provision', or use the'--provision' flag"
+                "Python {python.version} has not been provisioned for this project. "
+                "You might want to run spin with the'--provision' flag."
             )
     venv_init(cfg)
 
