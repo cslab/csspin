@@ -255,3 +255,13 @@ lists and literals (mostly strings).
 However, YAML is a complex beast. You can do all kinds of mischievous
 tricks with YAML, and if you mess up the tree, the ``spin`` command
 will most likely fail to run.
+
+
+A lib is missing on my system, e.g python can't be provisioned
+--------------------------------------------------------------
+
+System provisiong is an extra step done with `spin system-provision`.
+
+.. code-block:: console
+
+   $ spin system-provision | sudo sh
