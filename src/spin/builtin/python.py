@@ -148,10 +148,25 @@ def system_requirements(cfg):
         (
             lambda distro, version: distro in ("debian", "mint", "ubuntu"),
             {
-                "apt-get": (
-                    "git make build-essential libssl-dev zlib1g-dev libbz2-dev"
-                    " libreadline-dev libsqlite3-dev curl libncursesw5-dev"
-                    " xz-utils libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev"
+                "apt-get": " ".join(
+                    [
+                        "build-essential",
+                        "curl",
+                        "git",
+                        "libbz2-dev",
+                        "libffi-dev",
+                        "libkrb5-dev",
+                        "liblzma-dev",
+                        "libncursesw5-dev",
+                        "libreadline-dev",
+                        "libsqlite3-dev",
+                        "libssl-dev",
+                        "libxml2-dev",
+                        "libxmlsec1-dev",
+                        "make",
+                        "xz-utils",
+                        "zlib1g-dev",
+                    ]
                 ),
             },
         ),
