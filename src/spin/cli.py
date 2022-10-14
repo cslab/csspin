@@ -418,11 +418,10 @@ def cli(
     # Find a project file and load it.
     if cwd:
         cd(cwd)
-    else:
-        _spinfile = find_spinfile(spinfile)
-        if spinfile and not _spinfile:
-            die(f"{spinfile} not found")
-        spinfile = _spinfile
+    _spinfile = find_spinfile(spinfile)
+    if spinfile and not _spinfile:
+        die(f"{spinfile} not found")
+    spinfile = _spinfile
 
     cfg = load_config_tree(
         spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
