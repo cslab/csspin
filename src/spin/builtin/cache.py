@@ -13,9 +13,22 @@ from spin import echo, interpolate1, option, task
 @task()
 def cache(cfg, remove: option("--rm", "remove", is_flag=True)):
     if sys.platform == "win32":
+        # find scons cache
+        # scons.cache_vcvars might be a path
+        # new cache name is scons_msvc_cache.json
+        # old cache name is .scons_msvc_cache
+        scons_cache = interpolate1(cfg.scons.cache_vcvars)
+        if not os.path.exists(scons_cache):
+            scons_cache = os.path.join(
+                os.environ["USERPROFILE"], "scons_msvc_cache.json"
+            )
+            if not os.path.exists(scons_cache):
+                scons_cache = os.path.join(
+                    os.environ["USERPROFILE"], ".scons_msvc_cache"
+                )
         caches = {
             "compiler": os.path.join(interpolate1(cfg.python.venv), "compiler.pickle"),
-            "msvc": os.path.join(os.environ["USERPROFILE"], ".scons_msvc_cache"),
+            "msvc": scons_cache,
         }
         echo(f"{'removing' if remove else 'showing'} caches...")
 
