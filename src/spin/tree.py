@@ -150,7 +150,10 @@ def tree_build(data, fn):
 def tree_load(fn):
     yaml = ruamel.yaml.YAML()
     with open(fn) as f:
-        data = yaml.load(f)
+        try:
+            data = yaml.load(f)
+        except ruamel.yaml.parser.ParserError as ex:
+            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")
     data = parse_yaml(data, fn)
     return data
 
