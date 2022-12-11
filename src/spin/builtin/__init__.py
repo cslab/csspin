@@ -141,8 +141,8 @@ class TaskDefinition:
 
     def __call__(self):
         env = self._definition.get("env", None)
-        run_script(self._definition.get("script", []), env)
         run_spin(self._definition.get("spin", []))
+        run_script(self._definition.get("script", []), env)
 
 
 def configure(cfg):
