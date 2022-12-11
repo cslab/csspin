@@ -365,6 +365,7 @@ def get_abi_tag(cfg, cleanup=False):
             "{python.interpreter}",
             get_abi_tag.__file__,
             may_fail=cleanup,
+            silent=True,
         )
         cfg.python.abitag = abitag.strip()
 
