@@ -150,9 +150,10 @@ def configure(cfg):
     them as subcommands.
 
     """
-    for task_name, task_definition in cfg.get("extra-tasks", {}).items():
-        help = task_definition.get("help", "")
-        task(task_name, help=help)(TaskDefinition(task_definition))
+    for clause_name in ("extra-tasks", "tasks"):
+        for task_name, task_definition in cfg.get(clause_name, {}).items():
+            help = task_definition.get("help", "")
+            task(task_name, help=help)(TaskDefinition(task_definition))
 
 
 def merge_dicts(a, b):
