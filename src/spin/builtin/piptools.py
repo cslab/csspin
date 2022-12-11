@@ -37,14 +37,19 @@ defaults = config(
             "--header",
             "--annotate",
             "--no-emit-options",
+            "--resolver=backtracking",
         ],
         env=config(
             CUSTOM_COMPILE_COMMAND="spin --provision",
+            PYTHONWARNINGS="ignore:setuptools",
         ),
     ),
     pip_sync=config(
         cmd="sync",
         options=[],
+        env=config(
+            PYTHONWARNINGS="ignore:setuptools",
+        ),
     ),
     prerequisites=["pip-tools"],
 )
