@@ -272,6 +272,7 @@ def base_options(fn):
                 " container. Refer to spin's user manual for more information about"
                 " 'cruise'."
             ),
+            hidden=True,
         ),
         click.option(
             "--interactive",
@@ -283,6 +284,7 @@ def base_options(fn):
                 " command. This option is only relevant together with the -c/--cruise"
                 " option."
             ),
+            hidden=True,
         ),
         click.option(
             "-p",
