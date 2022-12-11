@@ -10,7 +10,7 @@ import sys
 from spin import echo, interpolate1, option, task
 
 
-@task()
+@task(hidden=True)
 def cache(cfg, remove: option("--rm", "remove", is_flag=True)):
     if sys.platform == "win32":
         # find scons cache
