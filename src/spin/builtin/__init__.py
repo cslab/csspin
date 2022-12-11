@@ -79,7 +79,7 @@ def pretty_descriptor(parent, name, descriptor):
     return decl
 
 
-@task()
+@task(hidden=True)
 def schemadoc(
     cfg,
     outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa
