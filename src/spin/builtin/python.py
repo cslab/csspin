@@ -334,6 +334,7 @@ def configure(cfg):
             cfg.python.interpreter = backtick(
                 "pyenv which python --nosystem",
                 may_fail=True,
+                silent=not cfg.verbose,
             ).strip()
         except Exception:
             pass
