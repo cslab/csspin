@@ -10,7 +10,7 @@ from spin import config, sh
 def init(cfg):
     from git import Repo
 
-    repo = Repo(".")
+    repo = Repo(cfg.spin.project_root)
     modified = [item.a_path for item in repo.index.diff(None)]
     cfg.vcs = config(modified=modified)
     cpi = sh("git", "diff", capture_output=True, silent=True)
