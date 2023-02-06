@@ -334,6 +334,7 @@ def configure(cfg):
             cfg.python.interpreter = backtick(
                 "pyenv which python --nosystem",
                 may_fail=True,
+                silent=not cfg.verbose,
             ).strip()
         except Exception:
             pass
@@ -365,6 +366,7 @@ def get_abi_tag(cfg, cleanup=False):
             "{python.interpreter}",
             get_abi_tag.__file__,
             may_fail=cleanup,
+            silent=True,
         )
         cfg.python.abitag = abitag.strip()
 

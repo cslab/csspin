@@ -858,7 +858,7 @@ def is_up_to_date(target, sources):
 def run_script(script, env=None):
     """Run a list of shell commands."""
     for line in script:
-        sh(line, env=env)
+        sh(line, shell=True, env=env)
 
 
 def run_spin(script):
@@ -870,8 +870,9 @@ def run_spin(script):
         try:
             echo("spin", " ".join(line))
             commands(line)
-        except SystemExit:
-            pass
+        except SystemExit as exc:
+            if exc.code:
+                raise
 
 
 def get_sources(tree):

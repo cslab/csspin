@@ -19,8 +19,9 @@ defaults = config(
     hashes=False,
     requirements="requirements-{platform.kind}.txt",
     requirements_sources=["setup.py", "setup.cfg"],
-    extras="spin-reqs-{platform.kind}.txt",
-    extras_in="{piptools.extras}.in",
+    spinreqs="spin-reqs-{platform.kind}.txt",
+    extras=[],
+    spinreqs_in="{piptools.spinreqs}.in",
     editable_options=[
         "--no-deps",
         "--no-build-isolation",
@@ -36,14 +37,19 @@ defaults = config(
             "--header",
             "--annotate",
             "--no-emit-options",
+            "--resolver=backtracking",
         ],
         env=config(
             CUSTOM_COMPILE_COMMAND="spin --provision",
+            PYTHONWARNINGS="ignore:setuptools",
         ),
     ),
     pip_sync=config(
         cmd="sync",
         options=[],
+        env=config(
+            PYTHONWARNINGS="ignore:setuptools",
+        ),
     ),
     prerequisites=["pip-tools"],
 )
@@ -69,7 +75,7 @@ def pip_compile(cfg, *args):
 class PiptoolsProvisioner(ProvisionerProtocol):
     def __init__(self, cfg):
         self.cfg = cfg
-        self.extras = set()
+        self.spinreqs = set()
         self.locks_updated = False
 
     def prerequisites(self, cfg):
@@ -88,22 +94,25 @@ class PiptoolsProvisioner(ProvisionerProtocol):
         if not is_up_to_date(
             cfg.piptools.requirements, cfg.piptools.requirements_sources
         ):
-            pip_compile(cfg, "-o", cfg.piptools.requirements)
+            extra_args = []
+            for extra in cfg.piptools.extras:
+                extra_args.append(f"--extra={extra}")
+            pip_compile(cfg, *extra_args, "-o", cfg.piptools.requirements)
             self.locks_updated = True
 
     def add(self, req):
         if req.startswith("-e") and self.cfg.piptools.hashes:
             die("Hashed dependencies are incompatible with editable installs.")
-        self.extras.add(req)
+        self.spinreqs.add(req)
 
     def lock_extras(self, cfg):
-        extras = list(self.extras)
-        extras.sort()
-        newtext = [f"{extra}\n" for extra in extras]
+        spinreqs = list(self.spinreqs)
+        spinreqs.sort()
+        newtext = [f"{extra}\n" for extra in spinreqs]
         oldtext = []
-        if exists(cfg.piptools.extras_in):
-            oldtext = readlines(cfg.piptools.extras_in)
-        if newtext != oldtext or not exists(cfg.piptools.extras):
+        if exists(cfg.piptools.spinreqs_in):
+            oldtext = readlines(cfg.piptools.spinreqs_in)
+        if newtext != oldtext or not exists(cfg.piptools.spinreqs):
             # Show a nice diff of the updated .in file
             print(
                 "".join(
@@ -112,8 +121,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
                     )
                 )
             )
-            writelines(cfg.piptools.extras_in, newtext)
-            pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extras)
+            writelines(cfg.piptools.spinreqs_in, newtext)
+            pip_compile(cfg, cfg.piptools.spinreqs_in, "-o", cfg.piptools.spinreqs)
             self.locks_updated = True
 
     def sync(self, cfg):
@@ -128,7 +137,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             cfg.piptools.pip_sync.cmd,
             *options,
             cfg.piptools.requirements,
-            cfg.piptools.extras,
+            cfg.piptools.spinreqs,
+            env=cfg.piptools.pip_sync.env,
         )
         if exists("setup.py"):
             sh(
@@ -156,7 +166,7 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             "-r",
             cfg.piptools.requirements,
             "-r",
-            cfg.piptools.extras,
+            cfg.piptools.spinreqs,
         )
 
 
@@ -198,4 +208,4 @@ def python_upgrade(cfg, args):
             )
         )
     pip_compile(cfg, "-o", cfg.piptools.requirements, *args)
-    pip_compile(cfg, cfg.piptools.extras_in, "-o", cfg.piptools.extras, *args)
+    pip_compile(cfg, cfg.piptools.spinreqs_in, "-o", cfg.piptools.spinreqs, *args)

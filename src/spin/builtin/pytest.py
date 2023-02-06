@@ -17,7 +17,6 @@ defaults = config(
         python=[
             "pytest",
             "pytest-cov",
-            "pytest-tldr",
         ],
     ),
     opts=["-k", "not slow"],
@@ -39,6 +38,8 @@ def pytest(
             args = ["./tests"]
     if args:
         opts = cfg.pytest.opts
+        if cfg.quiet:
+            opts.append("-q")
         if coverage:
             opts.extend(cfg.pytest.coverage_opts)
             opts.append(f"--cov-report={covreport}")

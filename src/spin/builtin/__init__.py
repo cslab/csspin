@@ -79,7 +79,7 @@ def pretty_descriptor(parent, name, descriptor):
     return decl
 
 
-@task()
+@task(hidden=True)
 def schemadoc(
     cfg,
     outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa
@@ -141,8 +141,8 @@ class TaskDefinition:
 
     def __call__(self):
         env = self._definition.get("env", None)
-        run_script(self._definition.get("script", []), env)
         run_spin(self._definition.get("spin", []))
+        run_script(self._definition.get("script", []), env)
 
 
 def configure(cfg):
@@ -150,9 +150,10 @@ def configure(cfg):
     them as subcommands.
 
     """
-    for task_name, task_definition in cfg.get("extra-tasks", {}).items():
-        help = task_definition.get("help", "")
-        task(task_name, help=help)(TaskDefinition(task_definition))
+    for clause_name in ("extra-tasks", "tasks"):
+        for task_name, task_definition in cfg.get(clause_name, {}).items():
+            help = task_definition.get("help", "")
+            task(task_name, help=help)(TaskDefinition(task_definition))
 
 
 def merge_dicts(a, b):
