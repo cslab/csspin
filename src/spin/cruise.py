@@ -7,6 +7,8 @@
 """Run spin commands elsewhere, e.g. in a Docker container."""
 
 import os
+import shutil
+import subprocess
 import sys
 
 from . import info, sh, tree
@@ -82,6 +84,33 @@ class BaseExecutor:
             info(self.banner)
 
 
+def find_container_exe(exe=""):
+    # If it's an absolute path to a file, return it without modification
+    if os.path.isfile(exe):
+        return exe
+    # Else: Try to find podman and fallback to docker
+    for executable in ("podman", "docker"):
+        exe = shutil.which(executable)
+        if exe is not None and os.path.isfile(exe):
+            return exe
+    return None
+
+
+def runner_is_podman(exe):
+    """
+    Check whether the given runner is podman or something else.
+    """
+    try:
+        proc = sh(exe, "version", capture_output=True, may_fail=True, encoding="UTF-8")
+        for line in proc.stdout.split(os.linesep):
+            key, value = line.split(":", 1)
+            if key.strip().lower() == "client":
+                return "podman" in value.strip().lower()
+        return False
+    except subprocess.CalledProcessError:
+        return False
+
+
 # Docker is straightforward: run the command in the container.
 class DockerExecutor(BaseExecutor):
     """Execute commands in Docker containers."""
@@ -89,7 +118,8 @@ class DockerExecutor(BaseExecutor):
     def __init__(self, name, definition, interactive):
         """Set up docker command line."""
         super().__init__(name, definition, interactive)
-        cmd = ["docker"]
+        runner = find_container_exe()
+        cmd = [runner]
 
         context = getattr(definition, "context", "")
         if context:
@@ -134,7 +164,7 @@ class DockerExecutor(BaseExecutor):
         else:
             cmd += ["-e", f"HOME={container_home}"]
 
-        if sys.platform == "linux":
+        if sys.platform == "linux" and not runner_is_podman(runner):
             # On a Linux system, we assume to run on the same kernel,
             # and set uid:gid
             cmd += ["-u", f"{os.getuid()}:{os.getgid()}"]

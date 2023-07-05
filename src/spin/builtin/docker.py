@@ -7,7 +7,7 @@
 import itertools
 import os
 
-from spin import config, group, interpolate1, sh
+from spin import config, cruise, group, interpolate1, sh
 
 defaults = config(
     executable="docker",
@@ -32,8 +32,10 @@ def build(cfg):
         build_args = []
         for key, value in definition.get("args", config()).items():
             build_args.extend(["--build-arg", interpolate1(f"{key}={value}")])
+
+        exe = cruise.find_container_exe(interpolate1("{docker.executable}"))
         sh(
-            "{docker.executable}",
+            exe,
             "build",
             *cfg.docker.build_options,
             *options,
@@ -56,10 +58,11 @@ def build(cfg):
 
 @docker.task()
 def push(cfg):
+    exe = cruise.find_container_exe(interpolate1("{docker.executable}"))
     for definition in cfg.docker.images:
         for tag in definition.tags:
             sh(
-                "{docker.executable}",
+                exe,
                 "push",
                 cfg.quietflag,
                 tag,
