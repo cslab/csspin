@@ -135,6 +135,7 @@ defaults = config(
     ),
     abitag=None,
     provisioner=None,
+    extras=[],
 )
 
 
@@ -612,7 +613,12 @@ class SimpleProvisioner(ProvisionerProtocol):
         # If there is a setup.py, make an editable install (which
         # transitively also installs runtime dependencies of the project).
         if exists("setup.py"):
-            sh("pip", "install", cfg.quietflag, "-e", ".")
+            cmd = ["pip", "install", cfg.quietflag, "-e"]
+            if cfg.python.extras:
+                cmd.append(f".[{','.join(cfg.python.extras)}]")
+            else:
+                cmd.append(".")
+            sh(*cmd)
 
     def add(self, req):
         # Add the requirement if it's not already there.

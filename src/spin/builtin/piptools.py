@@ -95,6 +95,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             cfg.piptools.requirements, cfg.piptools.requirements_sources
         ):
             extra_args = []
+            for extra in cfg.python.extras:
+                extra_args.append(f"--extra={extra}")
             for extra in cfg.piptools.extras:
                 extra_args.append(f"--extra={extra}")
             pip_compile(cfg, *extra_args, "-o", cfg.piptools.requirements)
