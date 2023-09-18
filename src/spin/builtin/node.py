@@ -11,6 +11,9 @@ from spin import config, die, get_requires, memoizer, sh
 
 defaults = config(
     version=None,
+    mirror=None,
+    ignore_ssl_certs=False,
+    jobs=os.cpu_count(),
     requires=config(
         spin=[".python"],
         python=["nodeenv"],
@@ -30,15 +33,22 @@ def configure(cfg):
 
 def provision(cfg):
     with memoizer(cfg.node.memo) as m:
-        if not m.check(cfg.node.version):
-            sh(
+        if cfg.node.version in ("latest", "lts") or not m.check(cfg.node.version):
+            cmd = [
                 cfg.python.python,
                 "-mnodeenv",
                 "--python-virtualenv",
-                "-n",
-                cfg.node.version,
-            )
+                f"--jobs={cfg.node.jobs}",
+                f"--node={cfg.node.version}",
+                "--with-npm",
+            ]
+            if cfg.node.mirror:
+                cmd.append(f"--mirror={cfg.node.mirror}")
+            if cfg.node.ignore_ssl_certs:
+                cmd.append("--ignore-ssl-certs")
+            sh(*cmd)
             m.add(cfg.node.version)
+
         for plugin in cfg.topo_plugins:
             plugin_module = cfg.loaded[plugin]
             for req in get_requires(plugin_module.defaults, "npm"):
