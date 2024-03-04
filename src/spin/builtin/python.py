@@ -537,6 +537,7 @@ if not defined _OLD_SPIN_{name} goto ENDIFVSPIN{name}
 
 
 def finalize_provision(cfg):
+    cfg.python.provisioner.install(cfg)
     for schema in (
         BashActivate,
         BatchActivate,
@@ -591,6 +592,9 @@ class ProvisionerProtocol:
     def sync(self, cfg):
         """Synchronize the environment with the locked dependencies."""
 
+    def install(self, cfg):
+        """Install the project itself."""
+
 
 class SimpleProvisioner(ProvisionerProtocol):
     """The simplest Python dependency provisioner using pip.
@@ -610,15 +614,7 @@ class SimpleProvisioner(ProvisionerProtocol):
         sh("python", "-mpip", cfg.quietflag, "install", "-U", "pip")
 
     def lock(self, cfg):
-        # If there is a setup.py, make an editable install (which
-        # transitively also installs runtime dependencies of the project).
-        if exists("setup.py"):
-            cmd = ["pip", "install", cfg.quietflag, "-e"]
-            if cfg.python.extras:
-                cmd.append(f".[{','.join(cfg.python.extras)}]")
-            else:
-                cmd.append(".")
-            sh(*cmd)
+        """Noop"""
 
     def add(self, req):
         # Add the requirement if it's not already there.
@@ -631,6 +627,17 @@ class SimpleProvisioner(ProvisionerProtocol):
         if self.requirements:
             sh("pip", "install", cfg.quietflag, *self.requirements)
         self.m.save()
+
+    def install(self, cfg):
+        # If there is a setup.py, make an editable install (which
+        # transitively also installs runtime dependencies of the project).
+        if exists("setup.py"):
+            cmd = ["pip", "install", cfg.quietflag, "-e"]
+            if cfg.python.extras:
+                cmd.append(f".[{','.join(cfg.python.extras)}]")
+            else:
+                cmd.append(".")
+            sh(*cmd)
 
 
 def install_to_venv(cfg, *args):
