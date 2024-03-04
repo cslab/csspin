@@ -142,6 +142,8 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             cfg.piptools.spinreqs,
             env=cfg.piptools.pip_sync.env,
         )
+
+    def install(self, cfg):
         if exists("setup.py"):
             sh(
                 cfg.python.python,
