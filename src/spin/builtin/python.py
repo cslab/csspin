@@ -546,6 +546,7 @@ def finalize_provision(cfg):
     ):
         patch_activate(schema)
 
+    # TODO: this should be exported via the property tree
     site_packages = (
         sh(
             "python",

@@ -279,7 +279,10 @@ def sh(*cmd, **kwargs):
     arguments are interpolated against the configuration tree. When
     `silent` is ``False``, the resulting command line will be
     echoed. When `shell` is ``True``, the command line is passed to
-    the system's shell. Other keyword arguments are passed into
+    the system's shell. When `may_fail` is ``True``, sh tolerates
+    failures when invocating the command.
+
+    Other keyword arguments are passed into
     :py:func:`subprocess.run`.
 
     All positional arguments are interpolated against the
@@ -315,6 +318,7 @@ def sh(*cmd, **kwargs):
 
         echo(" ".join(quote(c) for c in cmd))
 
+    cpi = None
     try:
         t0 = time.monotonic()
         logging.debug(
@@ -327,14 +331,16 @@ def sh(*cmd, **kwargs):
         t1 = time.monotonic()
         info(click.style("[%g seconds]" % (t1 - t0), fg="cyan"))
     except FileNotFoundError as ex:
+        msg = str(ex)
         if not may_fail:
-            die(str(ex))
-        raise
+            die(msg)
+        warn(msg)
     except subprocess.CalledProcessError as ex:
+        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
+        msg = f"Command '{cmd}' failed with return code {ex.returncode}"
         if not may_fail:
-            cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
-            die(f"Command '{cmd}' failed with return code {ex.returncode}")
-        raise
+            die(msg)
+        warn(msg)
 
     return cpi
 
