@@ -3,9 +3,9 @@ minimum-spin: "0.2"
 
 plugins:
   - spin.builtin:
-    - eggs
-    - pytest
-    - ce15
+      - eggs
+      - pytest
+      - ce15
 
 eggs:
   requirements: ["cs.web"]

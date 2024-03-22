@@ -37,7 +37,6 @@ else:  # pragma: no cover (PY38+)
 from . import (
     cd,
     config,
-    cruise,
     die,
     exists,
     get_requires,
@@ -73,14 +72,6 @@ DEFAULTS = config(
     ),
     quiet=False,
     verbose=0,
-    cruise=config(
-        # We'll have to use a dict literal here, since the keys are
-        # not valid Python identifiers.
-        {
-            "@docker": config(executor=cruise.DockerExecutor),
-            "@host": config(executor=cruise.HostExecutor),
-        }
-    ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
         shell="{SHELL}",
@@ -262,31 +253,6 @@ def base_options(fn):
             ),
         ),
         click.option(
-            "--cruise",
-            "-c",
-            "cruiseopt",
-            multiple=True,
-            help=(
-                "Run spin in the given 'cruise' environment(s). Spin's cruise feature"
-                " enables launching spin commands in other environments, e.g. a Docker"
-                " container. Refer to spin's user manual for more information about"
-                " 'cruise'."
-            ),
-            hidden=True,
-        ),
-        click.option(
-            "--interactive",
-            "-i",
-            is_flag=True,
-            default=False,
-            help=(
-                "Run Docker-based cruises interactively by passing '-it' to the Docker"
-                " command. This option is only relevant together with the -c/--cruise"
-                " option."
-            ),
-            hidden=True,
-        ),
-        click.option(
             "-p",
             "properties",
             multiple=True,
@@ -393,8 +359,6 @@ def cli(
     quiet,
     verbose,
     debug,
-    cruiseopt,
-    interactive,
     properties,
     provision,
     cleanup,
@@ -438,32 +402,28 @@ def cli(
         if not ctx.args:
             return
 
-    if not cruiseopt:
-        # When not cruising, and we have any of the provisioning
-        # flags, do provisioning now.
-        if cleanup:
-            toporun(cfg, "cleanup", reverse=True)
-            if exists(cfg.spin.plugin_dir):
-                rmtree(cfg.spin.plugin_dir)
-            if not provision:
-                # There is nothing we can meaningfully do after 'cleanup',
-                # unless 'provision' is also given => so do not run any
-                # tasks.
-                return
-        if provision:
-            toporun(cfg, "provision")
-            toporun(cfg, "finalize_provision")
-            if not ctx.args:
-                # When provisioning without a subcommand, don't run
-                # into the usage.
-                return
-        # Invoke the main command group, which by now has all the
-        # sub-commands from the plugins.
-        kwargs = getattr(cli, "click_main_kwargs", {})
-        kwargs["complete_var"] = "_SPIN_COMPLETE"
-        commands.main(args=ctx.args, **kwargs)
-    else:
-        cruise.do_cruise(cfg, cruiseopt, interactive)
+    # When we have any of the provisioning flags, do provisioning now.
+    if cleanup:
+        toporun(cfg, "cleanup", reverse=True)
+        if exists(cfg.spin.plugin_dir):
+            rmtree(cfg.spin.plugin_dir)
+        if not provision:
+            # There is nothing we can meaningfully do after 'cleanup',
+            # unless 'provision' is also given => so do not run any
+            # tasks.
+            return
+    if provision:
+        toporun(cfg, "provision")
+        toporun(cfg, "finalize_provision")
+        if not ctx.args:
+            # When provisioning without a subcommand, don't run
+            # into the usage.
+            return
+    # Invoke the main command group, which by now has all the
+    # sub-commands from the plugins.
+    kwargs = getattr(cli, "click_main_kwargs", {})
+    kwargs["complete_var"] = "_SPIN_COMPLETE"
+    commands.main(args=ctx.args, **kwargs)
 
 
 def find_plugin_packages(cfg):
@@ -618,8 +578,6 @@ def load_config_tree(
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
 
-    # We do this before 'debug' so people see the cruise config
-    cruise.build_cruises(cfg)
     return cfg
 
 

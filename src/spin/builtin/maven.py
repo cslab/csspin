@@ -52,7 +52,7 @@ def provision(cfg):
                     filename, headers = urllib.request.urlretrieve(url)
                 else:
                     raise
-            except urllib.error.URLError as e:
+            except urllib.error.URLError:
                 warn(f"Mirror {mirror} currently not reachable...")
                 continue
             break

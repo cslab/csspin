@@ -8,7 +8,6 @@
 through a plugin package and are always available.
 """
 
-import os
 import sys
 
 import click

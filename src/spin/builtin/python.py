@@ -57,6 +57,8 @@ import re
 import shutil
 import sys
 
+from click.exceptions import Abort
+
 from spin import (
     EXPORTS,
     Command,
@@ -241,17 +243,24 @@ def python(args):
 @task("python:wheel", when="package")
 def wheel(cfg):
     """Build a wheel of the current project."""
-    sh(
-        "python",
-        "setup.py",
-        cfg.quietflag,
-        "build",
-        "-b",
-        "{spin.env_base}/build",
-        "bdist_wheel",
-        "-d",
-        "{spin.env_base}/dist",
-    )
+    try:
+        echo("Building PEP 518 like wheel")
+        sh("python", "-m", "build", "-w")
+    except Abort:
+        # TODO: Maybe think of another way to support
+        # pyproject.toml _and_ setup.py style
+        echo("Building does not seem to work, use legacy setup.py style")
+        sh(
+            "python",
+            "setup.py",
+            cfg.quietflag,
+            "build",
+            "-b",
+            "{spin.env_base}/build",
+            "bdist_wheel",
+            "-d",
+            "{spin.env_base}/dist",
+        )
 
 
 def pyenv_install(cfg):
@@ -632,7 +641,7 @@ class SimpleProvisioner(ProvisionerProtocol):
     def install(self, cfg):
         # If there is a setup.py, make an editable install (which
         # transitively also installs runtime dependencies of the project).
-        if exists("setup.py"):
+        if any((exists("setup.py"), exists("setup.cfg"), exists("pyproject.toml"))):
             cmd = ["pip", "install", cfg.quietflag, "-e"]
             if cfg.python.extras:
                 cmd.append(f".[{','.join(cfg.python.extras)}]")

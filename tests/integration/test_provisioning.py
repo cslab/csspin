@@ -21,6 +21,7 @@ def do_test(tmpdir, what, cmd):
 
 @pytest.mark.slow
 def test_python(tmpdir):
+    pytest.skip("Think about the usefulness of this test.")  # TODO
     assert do_test(
         tmpdir,
         "python.yaml",

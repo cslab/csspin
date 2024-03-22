@@ -1,4 +1,4 @@
-minimum-spin: "0.2d"
+minimum-spin: "0.2"
 plugins:
   - spin.builtin.cpplint
 
