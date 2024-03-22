@@ -8,7 +8,7 @@ from spin import tree
 
 
 class TestYaml:
-    def setup(self):
+    def setup_method(self):
         self.config = tree.tree_load("tests/test_yaml.yaml")
 
     def test_empty(self):

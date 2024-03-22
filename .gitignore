@@ -15,3 +15,8 @@ __pycache__/
 *.py,cover
 /.cov2emacs.log
 *.log
+coverage*.xml
+pytest.xml
+/reports/
+.env
+venv

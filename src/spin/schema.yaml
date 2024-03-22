@@ -57,9 +57,6 @@ spin:
     plugin_dir:
       type: path internal
       default: "{spin.env_base}/plugins"
-    cruise_spin:
-      type: path
-      default: spin
 
   # disallow plugins or user setting to write to the 'spin' context to
   # keep sanity
@@ -102,9 +99,6 @@ hooks:
     A dictionary mapping workflow names to lists of commands. This is
     automatically set up by the `when` argument to
     :py:func:`spin.task`.
-
-cruise:
-  type: object
 
 plugins:
   type: list

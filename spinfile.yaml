@@ -12,62 +12,32 @@ plugins:
   # Nested entries like these save some typing for
   # 'spin.builtin.flake8', 'spin.builtin.pytest' etc. ...
   - spin.builtin:
-      - flake8
       - pytest
-      - devpi
-      - radon
-      - build
-      - pre_commit
       - sphinx
-      - docker
-      - piptools
-      - gitlab
-      - node
   - demo_plugin
-
-node:
-  version: 16.10.0
 
 python:
   version: 3.9.8
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
-    - black
-    - pip-tools
     - sphinx-click
     - pytest-mock
-    - setuptools_scm
+    - build # TODO: Maybe move into spin.builtin.python
 
 pytest:
-  coverage_opts: [--cov=spin, --cov=tests]
+  coverage_opts: [--cov]
 
-piptools:
-  hashes: true
-
-extra-tasks:
-  # This is the recommended way of installing spin locally as long as
-  # it is under development.
-  pipx-install:
-    env:
-      USE_EMOJI: no
-    script:
-      - pipx install --force --editable .
-    help: |
-      This installs spin via pipx
-
-
-docker:
-  images:
-    - dockerfile: docker/spin-base.dockerfile
-      tags:
-        - registry.contact.de/spin:0.2
-      args:
-        REQUIREMENTS: "{piptools.requirements}"
-
-    - dockerfile: docker/spin-dev.dockerfile
-      tags:
-        - registry.contact.de/spin-dev:0.2
+# extra-tasks: # TODO: Decide if useful
+#   # This is the recommended way of installing spin locally as long as
+#   # it is under development.
+#   pipx-install:
+#     env:
+#       USE_EMOJI: no
+#     script:
+#       - pipx install --force --editable .
+#     help: |
+#       This installs spin via pipx
 
 build-rules:
   task docs:
@@ -80,29 +50,6 @@ build-rules:
     sources: [setup.cfg, setup.py]
     script:
       - pip-compile --generate-hashes --no-build-isolation --reuse-hashes
-
-cruise:
-  "@docker":
-    # The docker containers are set up to have 'python' in PATH as the
-    # Python version they announce in their name.
-    properties:
-      python.use: python
-  windows:
-    banner: "\n\n*** Windows\n"
-    image: registry.contact.de/cp38-win_amd64
-    tags: docker windows
-    cruise_spin: devrun.bat
-  linux:
-    banner: "\n\n*** Linux\n"
-    image: registry.contact.de/cp38-manylinux2014_x86_64
-    tags: docker linux
-    cruise_spin: ensure-spin
-    env:
-      LOGLEVEL: DEBUG
-  host:
-    banner: "\n\n*** Host\n"
-    tags: host
-
 
 # Host system requirements
 system-requirements:

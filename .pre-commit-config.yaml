@@ -1,24 +1,127 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+# This is our configuration of pre-commit (https://pre-commit.com/),
+# which is a framework for managing and maintaining multi-language
+# pre-commit hooks.
+#
+# The hooks below do many things including running linters, remove
+# trailing whitespace or preventing CompArch checksum conflicts. The
+# basic idea to achieve some sort of basic code hygiene and catch
+# simple issues early.
+#
+# Another major feature is auto-formatting of code; see
+# https://howto.contact.de/index.php/Python_Coding_Guide#Code_Formatting
+# for backgrounds.
+#
+# Feel free to adapt it to your needs; e.g. remove the ESLint hook
+# if your component doesn't contain JS code.
+#
+# Related resources:
+# * https://howto.contact.de/index.php/Pre-commit
+# * https://pre-commit.com
+# * https://pre-commit.com/hooks.html
+#
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.4.0
-  hooks:
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-  - id: check-yaml
-  - id: check-added-large-files
-
-- repo: local
-  hooks:
-  - id: black
-    name: black
-    entry: black
-    language: system
-    types: [python]
-  - id: isort
-    name: isort
-    entry: isort
-    args: ["--profile", "black"]
-    language: system
-    types: [python]
+  # ------------------Format Hooks--------------- #
+  - repo: https://github.com/ambv/black
+    # Black is a PEP 8 compliant opinionated code formatter.
+    rev: 24.2.0
+    hooks:
+      - id: black
+        types: [file] # override `types: [python]`
+        files: \.(pyi?|ue)$
+        args: ["--include", '\.(pyi?|ue)$', "-v"]
+  # - repo: https://github.com/asottile/blacken-docs  # FIXME ?
+  #   # Runs black on Python code blocks in documentation files.
+  #   rev: 1.16.0
+  #   hooks:
+  #     - id: blacken-docs
+  - repo: https://github.com/pycqa/isort
+    # Python utility that sorts imports in files
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        types: [file] # override `types: [python]`
+        files: \.(pyi?|ue)$
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    # Prettier is an opinionated code formatter for JS, TS, json etc.
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.12.0
+    hooks:
+      - id: pretty-format-toml
+        args: [--autofix]
+  # ------------------Linter Hooks--------------- #
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevents large files from being committed. Default is args: ['--maxkb=500']
+      - id: check-added-large-files
+      # Check for files with names that would conflict on a case-insensitive filesystem
+      - id: check-case-conflict
+      # Checks for a common error of placing code before the docstring.
+      - id: check-docstring-first
+      # Checks that non-binary executables have a proper shebang.
+      - id: check-executables-have-shebangs
+      # Attempts to load all JSON files to verify syntax.
+      - id: check-json
+        exclude: ".eslintrc.json"
+      # Check for files that contain merge conflict strings.
+      - id: check-merge-conflict
+      # Attempts to load all YAML files to verify syntax.
+      - id: check-yaml
+      # Check for debugger imports and py37+ breakpoint() calls in Python source.
+      - id: debug-statements
+      # Checks for the existence of AWS secrets that you have set up with the AWS CLI.
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      # Checks for the existence of private keys.
+      - id: detect-private-key
+      # Removes UTF-8 byte order marker
+      - id: fix-byte-order-marker
+      # Makes sure files end in a newline and only a newline.
+      - id: end-of-file-fixer
+      # Replaces or checks mixed line ending.
+      - id: mixed-line-ending
+      # Trims trailing whitespace.
+      - id: trailing-whitespace
+  - repo: https://github.com/homebysix/pre-commit-macadmin
+    rev: v1.15.0
+    hooks:
+      # Checks, whether a correct identity is used to commit/ push
+      - id: check-git-config-email
+        args: ["--domains", "contact.de", "contact-software.com"]
+  - repo: https://github.com/PyCQA/flake8
+    # Flake8 is a wrapper around PyFlakes, pycodestyle and Ned Batchelder's McCabe script
+    # and runs these tools to lint files.
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [
+            "--format",
+            "pylint",
+            "--max-line-length",
+            "88",
+            "--ignore",
+            "F821,W503",
+            # "--copyright-check", # FIXME
+          ]
+        types: [file] # override `types: [python]`
+        files: \.(pyi?|ue)$
+        additional_dependencies:
+          - "flake8-copyright"
+  # - repo: https://github.com/pycqa/pylint  # FIXME
+  #   # Linting of Python 3 files
+  #   rev: v3.1.0
+  #   hooks:
+  #     - id: pylint
+  #       args:
+  #         - "--rcfile=pyproject.toml"
+  #         - "--output-format=parseable"
+  #         - "-d=W0511" # W0511 disables fixme checking
+  #         - "-j=4"
+  #       types: [file] # override `types: [python]`
+  #       files: \.(pyi?|ue)$
+default_language_version:
+  python: python3
+exclude: (.gitlab/.*)

@@ -1,11 +1,11 @@
-minimum-spin: "0.2d"
+minimum-spin: "0.2"
 plugins:
   - spin.builtin.cppcheck
 
 devpi:
- user: apps
- host: packages.contact.de
- url: https://{devpi.host}/apps/16.0-dev
+  user: apps
+  host: packages.contact.de
+  url: https://{devpi.host}/apps/16.0-dev
 
 python:
   version: 3.9.6

@@ -1,26 +1,251 @@
-# Example configuration for Black.
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 
-# NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
+[project]
+authors = [
+  {name = "Frank Patz-Brockmann", email = "frank.patz-brockmann@contact-software.com"}
+]
+dependencies = [
+  "Click",
+  "colorama",
+  "distro",
+  "entrypoints",
+  "GitPython",
+  "install-jdk",
+  "packaging",
+  "path",
+  "ruamel.yaml",
+  "svn",
+  "wheel",
+  "xdg"
+]
+description = "spin"
+dynamic = ["version", "readme"]
+license = {text = "Copyright (C) 2021 Contact Software"}
+maintainers = [
+  {name = "Waleri Enns", email = "waleri.enns@contact-software.com"},
+  {name = "Benjamin Thomas Schwertfeger", email = "benjaminthomas.schwertfeger@contact-software.com"},
+  {name = "Fabian Hafer", email = "fabian.hafer@contact-software.com"}
+]
+name = "cs.spin"
+
+[project.scripts]
+spin = "spin:_main"
+
+[project.urls]
+Documentation = "http://qs.pages.contact.de/tooling/cs.spin/"
+Issues = "https://code.contact.de/qs/tooling/cs.spin/-/issues"
+Repository = "https://code.contact.de/qs/tooling/cs.spin"
 
 [tool.black]
+enable-unstable-feature = ["string_processing"]
 line-length = 88
+preview = true
 target-version = ['py39']
-experimental-string-processing = true
+
+[tool.coverage.report]
+precision = 2
+
+[tool.coverage.run]
+parallel = true
+relative_files = true
+source_pkgs = ["spin"]
 
 [tool.isort]
-profile = "black"
 multi_line_output = 3
+profile = "black"
+
+[tool.pylint.design]
+# CON: raised some limits, which would otherwise generate
+# too many issues on our code bases
+#
+# Maximum number of arguments for function / method.
+# CON: original value: 7
+max-args = 9
+# Maximum number of attributes for a class (see R0902).
+# CON: original value: 7
+max-attributes = 12
+# Maximum number of boolean expressions in an if statement (see R0916).
+# CON: original value: 5
+max-bool-expr = 7
+# Maximum number of branch for function / method body.
+# CON: original value: 12
+max-branches = 20
+# Maximum number of locals for function / method body.
+# CON: original value: 15
+max-locals = 20
+# Maximum number of statements in function / method body.
+# CON: original value: 50
+max-statements = 75
+
+[tool.pylint.format]
+# Maximum number of characters on a single line.
+# CON: the current consensus (original value 100)
+max-line-length = 110
+
+[tool.pylint.imports]
+# Deprecated modules which should not be used, separated by a comma.
+deprecated-modules = ["regsub", "TERMIOS", "Bastion", "rexec", "cgi"]
+
+[tool.pylint.main]
+# Files or directories to be skipped. They should be base names, not paths.
+# CON: exclude the usual candidates
+ignore = [".svn", "node_modules", ".git", "build"]
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use.
+# CON: 0 to use all available cores (it actually works and scales quite good).
+jobs = 0
+
+[tool.pylint.messages_control]
+# Only show warnings with the listed confidence levels. Leave empty to show
+# all. Valid levels: HIGH, CONTROL_FLOW, INFERENCE, INFERENCE_FAILURE,
+# UNDEFINED.
+# CON: excluding INFERENCE_FAILURE to decrease the number of false positives
+confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "UNDEFINED"]
+# CON: We disable lots of rules to make Pylint less verbose and
+# actually usable. We do it for different reasons. First, we dont
+# check code formatting: nowadays, this is the job of
+# auto-formatters (black in this case). Second, there are some
+# informational rules which can be useful for setup debugging but
+# aren't useful day-to-day. Third, some rules are just bad/too
+# rigid/raise too many false positives.
+#
+# ** Setup debugging **
+# (I0011) locally-disabled
+# (I0013) file-ignored
+# (I0020) suppressed-message
+# (I0021) useless-suppression
+# (I0022) deprecated-pragma
+# (I0023) use-symbolic-message-instead
+# (I1101) c-extension-no-member: generates too many false positives, since we cannot load all c-extensions of external modules
+#
+# ** Bad/Too rigid/Generates too many false positives **
+# (C0103) invalid-name
+# (C0111) missing-docstring: to much noise
+# (C0112) empty-docstring: raises false positives on the shebang line :(
+# (C0303) trailing-whitespace: pre-commit
+# (C0325) superfluous-parens: Creates a huge number of issues on our code base (11.2017: > 4K)
+# (C0401) wrong-spelling-in-comment
+# (C0402) wrong-spelling-in-docstring
+# (C0403) invalid-characters-in-docstring
+# (C0415) import-outside-toplevel: too restricting
+#
+# (W0201) attribute-defined-outside-init: doesn't fit well with our ORM code.
+# (W0107) unnecessary-pass: too many false positives
+# (W1113) keyword-arg-before-vararg: false positives only
+# (W0123) eval-used: irrelevant
+# (W0246) useless-parent-delegation: when the child calls a parent function with the same name.
+# (W1402) anomalous-unicode-escape-in-string: false positives only
+# (W0613) unused-argument: too many false positives
+# (W0621) redefined-outer-name: not of much use, false positives when called function defines same variables as caller function
+#
+# (E0611) no-name-in-module: 100 percent false positives so far
+# (E0102) function-redefined: doesn't understand '@classbody' and 'Forward'
+# (E0203) access-member-before-definition: doesn't understand the magic used in our ORM code
+# (E0213) no-self-argument: conflicts with the pattern used in the StateChange-Classes
+# (E0401) import-error:
+# (E0632) unbalanced-tuple-unpacking: false positives only
+# (E1003) bad-super-call: doesn't understand the Forward(class)-semantics, which are used extensively in our code base.
+# (E1101) no-member: generates lots of false positives in the ORM code.
+# (E1136) unsubscriptable-object: requires precise type inference, which doesnt always work
+#
+# (R0903) too-few-public-methods: don't care most of the time...
+# (R0904) too-many-public-methods: fires on everything derived from cdb.objects.Object
+# (R1705) no-else-return: is allowed by PEP8 and is too rigid
+# (R1710) inconsistent-return-statements: prevents writing of compact code
+#
+# ** Not PyLints job **
+# (C0301) line-too-long: black
+# (C0304) missing-final-newline: black
+# (C0305) trailing-newlines: black
+# (W0311) bad-indentation: black
+# (C0327) mixed-line-endings: black
+# (C0410) multiple-imports: isort
+# (C0411) wrong-import-order: isort
+# (C0412) ungrouped-imports: isort
+# (C0413) wrong-import-position: isort
+#
+# ** Local modifications **
+# (W0707) raise-missing-from: No real value in pkgtest, as explicitly want to only raise the PkgtestError without any more context
+# similarities: Not much value and sonar does it better.
+disable = [
+  "access-member-before-definition",
+  "anomalous-unicode-escape-in-string",
+  "attribute-defined-outside-init",
+  "bad-indentation",
+  "bad-super-call",
+  "c-extension-no-member",
+  "deprecated-pragma",
+  "empty-docstring",
+  "eval-used",
+  "file-ignored",
+  "function-redefined",
+  "import-error",
+  "import-outside-toplevel",
+  "inconsistent-return-statements",
+  "invalid-characters-in-docstring",
+  "invalid-name",
+  "keyword-arg-before-vararg",
+  "line-too-long",
+  "locally-disabled",
+  "missing-docstring",
+  "missing-final-newline",
+  "mixed-line-endings",
+  "multiple-imports",
+  "no-else-return",
+  "no-member",
+  "no-name-in-module",
+  "no-self-argument",
+  "redefined-outer-name",
+  "superfluous-parens",
+  "suppressed-message",
+  "too-few-public-methods",
+  "too-many-public-methods",
+  "trailing-newlines",
+  "trailing-whitespace",
+  "unbalanced-tuple-unpacking",
+  "ungrouped-imports",
+  "unidiomatic-typecheck",
+  "unnecessary-pass",
+  "unsubscriptable-object",
+  "unused-argument",
+  "useless-parent-delegation",
+  "useless-suppression",
+  "use-symbolic-message-instead",
+  "wrong-import-order",
+  "wrong-import-position",
+  "wrong-spelling-in-comment",
+  "wrong-spelling-in-docstring"
+]
+
+[tool.pylint.miscellaneous]
+# List of note tags to take in consideration, separated by a comma.
+# CON: added some more
+notes = ["FIXME", "XXX", "TODO", "TBC", "TBD"]
+
+[tool.pylint.reports]
+# Activate the evaluation score.
+# CON: to make the output more consice
+score = "no"
+
+[tool.pylint.variables]
+# List of names allowed to shadow builtins
+# CON: the identifier 'id' is used too often in our sources
+allowed-redefined-builtins = "id"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')"
 ]
 
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst"]}
+
+[tool.setuptools.packages.find]
+namespaces = false
+where = ["src"]
 
 [tool.setuptools_scm]
+local_scheme = "no-local-version"

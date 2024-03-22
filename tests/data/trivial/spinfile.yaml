@@ -2,6 +2,6 @@
 minimum-spin: "0.2"
 plugins:
   - spin.builtin:
-    - pytest
-    - devpi
-    - radon
+      - pytest
+      - devpi
+      - radon
