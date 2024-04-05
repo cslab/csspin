@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """``python``
 ==========
@@ -346,7 +346,8 @@ def configure(cfg):
                 may_fail=True,
                 silent=not cfg.verbose,
             ).strip()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
+            # FIXME: add some proper logging
             pass
 
 
@@ -386,7 +387,7 @@ ACTIVATED = False
 
 
 def venv_init(cfg):
-    global ACTIVATED
+    global ACTIVATED  # pylint: disable=global-statement
     get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.python.venv and not ACTIVATED:
         activate_this = interpolate1("{python.scriptdir}/activate_this.py")
@@ -396,7 +397,9 @@ def venv_init(cfg):
                 " spin --provision"
             )
         echo("activate {python.venv}")
-        exec(open(activate_this).read(), {"__file__": activate_this})
+
+        with open(activate_this, encoding="utf-8") as file:
+            exec(file.read(), {"__file__": activate_this})  # pylint: disable=exec-used
         ACTIVATED = True
 
 
@@ -750,6 +753,6 @@ def cleanup(cfg):
         get_abi_tag(cfg, cleanup)
         if exists("{python.venv}"):
             rmtree("{python.venv}")
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         warn("cleanup: no Python interpreter installed")
         pass

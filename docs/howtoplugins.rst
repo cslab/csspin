@@ -181,6 +181,7 @@ Here is an example for a simple plugin:
 
    defaults = config(msg="This projects lives in {spin.project_root}")
 
+
    @task()
    def example(cfg):
        """Example plugin"""
@@ -225,21 +226,24 @@ the configuration tree.
 Here is a simple example of using the spin API:
 
 .. code-block:: python
+   :linenos:
+   :caption: Basic Spin API usage
 
    from spin import cd, die, echo, exists, sh
+
 
    def meaningless_example():
        echo("This project is located in {spin.project_root}")
        with cd("{spin.project_root}"):
            # We can pass each argument to a command separately,
-	   # which saves us from quoting stuff correctly:
-	   sh("ls", "-l", "spinfile.yaml")
+           # which saves us from quoting stuff correctly:
+           sh("ls", "-l", "spinfile.yaml")
 
-	   # We can also simply use whole command lines:
-	   sh("echo {spin.project_root} > project_root.txt")
+           # We can also simply use whole command lines:
+           sh("echo {spin.project_root} > project_root.txt")
 
-       if not exists("project_root.txt"):
-	   die("I didn't expect that!")
+           if not exists("project_root.txt"):
+               die("I didn't expect that!")
 
 
 Files and Directories

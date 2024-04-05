@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import inspect
 import os
@@ -12,7 +12,7 @@ from collections import OrderedDict, namedtuple
 
 import ruamel.yaml
 
-from . import die, interpolate1
+from spin import die, interpolate1  # pylint: disable=cyclic-import
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -44,12 +44,12 @@ class ConfigTree(OrderedDict):
     def __init__(self, *args, **kwargs):
         ofsframes = kwargs.pop("__ofs_frames__", 0)
         super().__init__(*args, **kwargs)
-        self.__schema = None
         self.__keyinfo = {}
-        self.__parentinfo = None
+        self.__parentinfo = None  # pylint: disable=unused-private-member
         for key, value in self.items():
             self.__keyinfo[key] = _call_location(2 + ofsframes)
             if isinstance(value, ConfigTree):
+                # pylint: disable=protected-access,unused-private-member
                 value.__parentinfo = ParentInfo(self, key)
 
     def __setitem__(self, key, value):
@@ -98,36 +98,42 @@ def tree_update_key(tree, key, value):
 
 
 def _call_location(depth):
-    fn, lno, _, _, _ = inspect.getframeinfo(sys._getframe(depth))
+    fn, lno, _, _, _ = inspect.getframeinfo(
+        sys._getframe(depth)  # pylint: disable=protected-access
+    )
     return KeyInfo(fn, lno)
 
 
 def _set_callsite(tree, key, depth, value):
     if hasattr(tree, "_ConfigTree__keyinfo"):
+        # pylint: disable=protected-access
         tree._ConfigTree__keyinfo[key] = _call_location(depth)
     tree_set_parent(value, tree, key)
 
 
 def tree_set_keyinfo(tree, key, ki):
     if hasattr(tree, "_ConfigTree__keyinfo"):
-        tree._ConfigTree__keyinfo[key] = ki
+        tree._ConfigTree__keyinfo[key] = ki  # pylint: disable=protected-access
 
 
 def tree_keyinfo(tree, k):
-    return tree._ConfigTree__keyinfo[k]
+    return tree._ConfigTree__keyinfo[k]  # pylint: disable=protected-access
 
 
 def tree_set_parent(tree, parent, name):
     if hasattr(tree, "_ConfigTree__parentinfo"):
-        tree._ConfigTree__parentinfo = ParentInfo(parent, name)
+        tree._ConfigTree__parentinfo = ParentInfo(  # pylint: disable=protected-access
+            parent, name
+        )
 
 
 def tree_keyname(tree, key):
     path = [key]
     try:
-        parentinfo = tree._ConfigTree__parentinfo
+        parentinfo = tree._ConfigTree__parentinfo  # pylint: disable=protected-access
         while parentinfo:
             path.insert(0, parentinfo.key)
+            # pylint: disable=protected-access
             parentinfo = parentinfo.parent._ConfigTree__parentinfo
     except AttributeError:
         pass
@@ -149,7 +155,7 @@ def tree_build(data, fn):
 
 def tree_load(fn):
     yaml = ruamel.yaml.YAML()
-    with open(fn) as f:
+    with open(fn, encoding="utf-8") as f:
         try:
             data = yaml.load(f)
         except ruamel.yaml.parser.ParserError as ex:
@@ -270,7 +276,7 @@ def tree_merge(target, source):
             try:
                 target[key] = value
                 tree_set_keyinfo(target, key, tree_keyinfo(source, key))
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 die(f"cannot merge {value} into '{target}[{key}]'")
         elif isinstance(value, dict):
             tree_merge(target[key], value)
@@ -285,8 +291,9 @@ def tree_merge(target, source):
 
 
 def tree_update(target, source):
-    # This will *overwrite*, not fill up, like tree_merge
-    from . import schema
+    # This will *overwrite*, not fill up, like tree_merge.
+    # (import here to avoid cyclic import)
+    from spin import schema  # pylint: disable=cyclic-import
 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
@@ -310,7 +317,7 @@ def tree_update(target, source):
 RE_VAR = re.compile(r"\$(\w+)")
 
 
-class YamlParser(object):
+class YamlParser:
     def __init__(self, fn, facts, variables):
         self._facts = {
             "win32": sys.platform == "win32",

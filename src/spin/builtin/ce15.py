@@ -2,12 +2,12 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """
 This plugin provisions a CONTACT Elements 15.x platform into a
 spin-powered project. This cannot be done the standard way via
-installing the corresponding Python package because CE 15.x doesnt
+installing the corresponding Python package because CE 15.x doesn't
 provide a such.
 
 Instead, we provide the according Python modules via putting an
@@ -61,9 +61,12 @@ def venv_hook(cfg):
         )
         paths.append(os.path.join(topdir, "cdb", "python"))
 
-        for line in open(os.path.join(sitepack_ce, "easy-install.pth")):
-            path = os.path.normpath(os.path.join(sitepack_ce, line.strip()))
-            paths.append(path)
+        with open(
+            os.path.join(sitepack_ce, "easy-install.pth"), encoding="utf-8"
+        ) as fh:
+            for line in fh:
+                path = os.path.normpath(os.path.join(sitepack_ce, line.strip()))
+                paths.append(path)
 
         return paths
 
@@ -82,20 +85,20 @@ def venv_hook(cfg):
 
             tmp = re.match(".*([0-9]{2}).*", abitag).group(1)
             assert len(tmp) == 2
-            postfix = "%s.%s" % tuple(tmp)
-            return os.path.join("lib", "python%s" % postfix, "site-packages")
+            postfix = f"{tmp[0]}.{tmp[1]}"
+            return os.path.join("lib", f"python{postfix}", "site-packages")
 
     ce_libpath, ce_sppath = ce_paths(interpolate1(cfg.python.use))
     if not os.path.exists(ce_libpath):
         die(
-            "cannot provision CE platform since the library folder (%s) doesn't exist"
-            % ce_libpath
+            f"cannot provision CE platform since the library folder ({ce_libpath})"
+            " doesn't exist"
         )
 
     if not os.path.exists(ce_sppath):
         die(
             "cannot provision CE platform since the site-packages "
-            "folder (%s) doesn't exist" % ce_sppath
+            f"folder ({ce_sppath}) doesn't exist"
         )
 
     ce_pth_content = ce_pythonpath(ce_sppath)
@@ -103,8 +106,8 @@ def venv_hook(cfg):
     # Eggs in CE platform often depend from shared libs in the lib folder
     libpath_var = "PATH" if os.name == "nt" else "LD_LIBRARY_PATH"
     ce_pth_content.append(
-        "import os; os.environ['%s'] = r'%s' + os.pathsep + os.environ.get('%s', '')"
-        % (libpath_var, ce_libpath, libpath_var)
+        f"import os;os.environ['{libpath_var}'] = r'{ce_libpath}' + os.pathsep +"
+        f" os.environ.get('{libpath_var}', '')"
     )
 
     if os.name != "nt":

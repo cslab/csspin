@@ -23,17 +23,17 @@ repos:
   # ------------------Format Hooks--------------- #
   - repo: https://github.com/ambv/black
     # Black is a PEP 8 compliant opinionated code formatter.
-    rev: 24.2.0
+    rev: 24.3.0
     hooks:
       - id: black
         types: [file] # override `types: [python]`
         files: \.(pyi?|ue)$
         args: ["--include", '\.(pyi?|ue)$', "-v"]
-  # - repo: https://github.com/asottile/blacken-docs  # FIXME ?
-  #   # Runs black on Python code blocks in documentation files.
-  #   rev: 1.16.0
-  #   hooks:
-  #     - id: blacken-docs
+  - repo: https://github.com/asottile/blacken-docs
+    # Runs black on Python code blocks in documentation files.
+    rev: 1.16.0
+    hooks:
+      - id: blacken-docs
   - repo: https://github.com/pycqa/isort
     # Python utility that sorts imports in files
     rev: 5.13.2
@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.12.0
+    rev: v2.13.0
     hooks:
       - id: pretty-format-toml
         args: [--autofix]
@@ -97,31 +97,27 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: [
-            "--format",
-            "pylint",
-            "--max-line-length",
-            "88",
-            "--ignore",
-            "F821,W503",
-            # "--copyright-check", # FIXME
-          ]
+        args:
+          - --format=pylint
+          - --max-line-length=110
+          - --ignore=F821,W503
+          # - --copyright-check # FIXME
         types: [file] # override `types: [python]`
         files: \.(pyi?|ue)$
-        additional_dependencies:
-          - "flake8-copyright"
-  # - repo: https://github.com/pycqa/pylint  # FIXME
-  #   # Linting of Python 3 files
-  #   rev: v3.1.0
-  #   hooks:
-  #     - id: pylint
-  #       args:
-  #         - "--rcfile=pyproject.toml"
-  #         - "--output-format=parseable"
-  #         - "-d=W0511" # W0511 disables fixme checking
-  #         - "-j=4"
-  #       types: [file] # override `types: [python]`
-  #       files: \.(pyi?|ue)$
+        additional_dependencies: [flake8-copyright]
+  - repo: https://github.com/pycqa/pylint
+    # Linting of Python 3 files
+    rev: v3.1.0
+    hooks:
+      - id: pylint
+        args:
+          - --rcfile=pyproject.toml
+          - --output-format=parseable
+          - -d=W0511 # W0511 disables fixme checking
+          - -j=4
+        types: [file] # override `types: [python]`
+        files: \.(pyi?|ue)$
+        exclude: tests|docs
 default_language_version:
   python: python3
 exclude: (.gitlab/.*)

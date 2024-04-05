@@ -27,7 +27,7 @@ spin:
       type: path
       help: |
         The name of the configuration file for the project. This can
-        be overriden via 'spin -f <filename>'.
+        be overridden via 'spin -f <filename>'.
       default: spinfile.yaml
     env_base:
       type: path internal

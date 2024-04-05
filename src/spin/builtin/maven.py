@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import os
 import random
@@ -39,7 +39,7 @@ def provision(cfg):
             url = interpolate1(mirror + cfg.maven.url)
             info(f"Downloading {url}")
             try:
-                filename, headers = urllib.request.urlretrieve(url)
+                filename, _ = urllib.request.urlretrieve(url)
             except urllib.error.HTTPError as e:
                 # maven removes old version from the mirrors...
                 if e.status == 404:
@@ -49,7 +49,7 @@ def provision(cfg):
                     )
                     mirror = "https://archive.apache.org/dist/"
                     url = interpolate1(mirror + cfg.maven.url)
-                    filename, headers = urllib.request.urlretrieve(url)
+                    filename, _ = urllib.request.urlretrieve(url)
                 else:
                     raise
             except urllib.error.URLError:
@@ -57,7 +57,9 @@ def provision(cfg):
                 continue
             break
         else:
-            raise Exception("Currently no mirror reachable")
+            raise Exception(  # pylint: disable=broad-exception-raised
+                "Currently no mirror reachable"
+            )
         with tarfile.open(filename, "r:gz") as tar:
             tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))
     init(cfg)
@@ -110,7 +112,7 @@ def maven(
         cfg_defines[name] = val
 
     for d in cfg_defines.items():
-        opts.append("-D{}={}".format(*d))
+        opts.append(f"-D{d[0]}={d[1]}")
 
     # do not use goals when some extra args are used
     if not args:

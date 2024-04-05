@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """Spin automates the provisioning of tools and other development
 requirements and provides shrink-wrapped project workflows.
@@ -34,7 +34,7 @@ if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
 else:  # pragma: no cover (PY38+)
     import importlib.metadata as importlib_metadata
 
-from . import (
+from spin import (
     cd,
     config,
     die,
@@ -143,7 +143,9 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
             load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")
             for requirement in get_requires(plugin_config_tree, "spin")
         ]
-        plugin_config_tree._requires = [dep.__name__ for dep in dependencies]
+        plugin_config_tree._requires = [  # pylint: disable=protected-access
+            dep.__name__ for dep in dependencies  # pylint: disable=protected-access
+        ]
         mod.defaults = plugin_config_tree
     return mod
 
@@ -310,7 +312,6 @@ NOENV_COMMANDS = set()
 
 
 def register_noenv(cmdname):
-    global NOENV_COMMANDS
     NOENV_COMMANDS.add(cmdname)
 
 
@@ -323,7 +324,7 @@ _nested = False
 @base_options
 @click.pass_context
 def commands(ctx, **kwargs):
-    global _nested
+    global _nested  # pylint: disable=global-statement
     cfg = ctx.obj = get_tree()
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
@@ -350,7 +351,7 @@ def commands(ctx, **kwargs):
 )
 @base_options
 @click.pass_context
-def cli(
+def cli(  # pylint: disable=too-many-arguments
     ctx,
     version,
     cwd,
@@ -429,8 +430,7 @@ def cli(
 def find_plugin_packages(cfg):
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
-    for item in cfg.get("plugin-packages", []):
-        yield item
+    yield from cfg.get("plugin-packages", [])
 
 
 def yield_plugin_import_specs(cfg):
@@ -443,7 +443,7 @@ def yield_plugin_import_specs(cfg):
             yield item
 
 
-def load_config_tree(
+def load_config_tree(  # pylint: disable=too-many-locals
     spinfile,
     cwd=False,
     envbase=None,
@@ -466,10 +466,12 @@ def load_config_tree(
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        logging.debug(
-            f"Merging user settings from {interpolate1('{spin.spin_global}')}"
-        )
-        tree.tree_update(cfg, readyaml(interpolate1("{spin.spin_global}")))
+        user_settings = readyaml(interpolate1("{spin.spin_global}"))
+        if user_settings:
+            logging.debug(
+                f"Merging user settings from {interpolate1('{spin.spin_global}')}"
+            )
+            tree.tree_update(cfg, user_settings)
 
     if envbase:
         cfg.spin.env_base = envbase

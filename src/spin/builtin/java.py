@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2021 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import os
 
