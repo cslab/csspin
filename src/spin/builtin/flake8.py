@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """
 
@@ -25,7 +25,7 @@ project. `flake8` plugins included by default are:
 Properties
 ----------
 
-* :py:data:`flake8.allsource` -- list of pathes to check, when
+* :py:data:`flake8.allsource` -- list of paths to check, when
   :option:`--all` is used. By default these are ``src`` and ``tests``
   in :py:data:`spin.project_root`.
 
@@ -56,7 +56,7 @@ defaults = config(
             # These are not Py2-compatible; dont use them by default, as
             # they would break the flake8 task on Py2. Users which are
             # Py3-only may get them via overwriting the
-            # "packages"-property in thier spinfile
+            # "packages"-property in their spinfile
             #
             "flake8-fixme",
             "flake8-bugbear",

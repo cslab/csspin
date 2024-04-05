@@ -2,14 +2,23 @@
 #
 # Copyright (C) 2021 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import difflib
 import itertools
 
-from spin import config, exists, info, is_up_to_date, readlines, sh, task, writelines
-
-from .python import ProvisionerProtocol
+from spin import (
+    config,
+    die,
+    exists,
+    info,
+    is_up_to_date,
+    readlines,
+    sh,
+    task,
+    writelines,
+)
+from spin.builtin.python import ProvisionerProtocol
 
 defaults = config(
     requires=config(

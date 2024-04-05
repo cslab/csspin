@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import os
 import shutil
@@ -29,6 +29,6 @@ def buildout(
     if not instance:
         instance = cfg.buildout.instance
     if rebuild and os.path.isdir(instance):
-        print("Deleting instance '%s'..." % instance)
+        print(f"Deleting instance '{instance}'...")
         shutil.rmtree(instance)
     sh("buildout", *cfg.buildout.opts, "install", instance)

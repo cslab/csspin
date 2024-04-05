@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """Plugins that come with spin. These don't have to be installed
 through a plugin package and are always available.
@@ -93,8 +93,8 @@ def schemadoc(
     def do_docwrite(parent, name, desc):
         outfile.write(pretty_descriptor(parent, name, desc))
         properties = getattr(desc, "properties", {})
-        for prop, desc in properties.items():
-            do_docwrite(name, prop, desc)
+        for prop, descr in properties.items():
+            do_docwrite(name, prop, descr)
 
     do_docwrite("", arg, schema)
 
@@ -151,8 +151,9 @@ def configure(cfg):
     """
     for clause_name in ("extra-tasks", "tasks"):
         for task_name, task_definition in cfg.get(clause_name, {}).items():
-            help = task_definition.get("help", "")
-            task(task_name, help=help)(TaskDefinition(task_definition))
+            task(task_name, help=task_definition.get("help", ""))(
+                TaskDefinition(task_definition)
+            )
 
 
 def merge_dicts(a, b):

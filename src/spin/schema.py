@@ -2,11 +2,11 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 from path import Path
 
-from . import tree
+from spin import tree
 
 
 class SchemaError(TypeError):
@@ -60,7 +60,7 @@ class BoolDescriptor(BaseDescriptor):
     def coerce(self, value):
         return bool(value)
 
-    def get_default(self):
+    def get_default(self):  # pylint: disable=arguments-differ
         return super().get_default(False)
 
 
@@ -71,7 +71,7 @@ class ListDescriptor(BaseDescriptor):
             value = value.split()
         return list(value)
 
-    def get_default(self):
+    def get_default(self):  # pylint: disable=arguments-differ
         return super().get_default([])
 
 
@@ -88,13 +88,14 @@ class ObjectDescriptor(BaseDescriptor):
             if odesc._keyinfo is None:
                 odesc._keyinfo = ki
 
-    def get_default(self):
+    def get_default(self):  # pylint: disable=arguments-differ
         data = super().get_default(tree.ConfigTree())
         for key, desc in self.properties.items():
             data[key] = desc.get_default()
+            # pylint: disable=protected-access
             if desc._keyinfo:
                 tree.tree_set_keyinfo(data, key, desc._keyinfo)
-        data._ConfigTree__schema = self
+        data._ConfigTree__schema = self  # pylint: disable=protected-access
         return data
 
     def coerce(self, value):

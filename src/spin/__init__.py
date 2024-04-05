@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 """This is the plugin API of spin. It contains functions and classes
 that are necessary for plugins to register themselves with spin,
@@ -322,14 +322,19 @@ def sh(*cmd, **kwargs):
     try:
         t0 = time.monotonic()
         logging.debug(
-            "subprocess.run(%s, shell=%s, check=%s, env=%s, executable=%s, kwargs=%s"
-            % (cmd, shell, check, argenv, executable, kwargs)
+            "subprocess.run(%s, shell=%s, check=%s, env=%s, executable=%s, kwargs=%s",
+            cmd,
+            shell,
+            check,
+            argenv,
+            executable,
+            kwargs,
         )
         cpi = subprocess.run(
             cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
         )
         t1 = time.monotonic()
-        info(click.style("[%g seconds]" % (t1 - t0), fg="cyan"))
+        info(click.style(f"[{t1 - t0} seconds]", fg="cyan"))
     except FileNotFoundError as ex:
         msg = str(ex)
         if not may_fail:
@@ -381,25 +386,25 @@ def setenv(*args, **kwargs):
 
 def _read_file(fn, mode):
     fn = interpolate1(fn)
-    with open(fn, mode) as f:
+    with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
         return f.read()
 
 
 def readlines(fn):
     fn = interpolate1(fn)
-    with open(fn, "r") as f:
+    with open(fn, "r", encoding="utf-8") as f:
         return f.readlines()
 
 
 def writelines(fn, lines):
     fn = interpolate1(fn)
-    with open(fn, "w") as f:
+    with open(fn, "w", encoding="utf-8") as f:
         return f.writelines(lines)
 
 
 def _write_file(fn, mode, data):
     fn = interpolate1(fn)
-    with open(fn, mode) as f:
+    with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
         f.write(data)
 
 
@@ -568,7 +573,7 @@ def interpolate1(literal, *extra_dicts):
         # nested variables.
         previous = literal
         seen.add(literal)
-        literal = eval("rf''' %s '''" % literal, {}, where_to_look)  # noqa
+        literal = eval(f"rf''' {literal} '''", {}, where_to_look)
         literal = literal[1:-1]
         if previous == literal:
             break
@@ -601,14 +606,14 @@ def config(*args, **kwargs):
 
     """
 
-    from .tree import ConfigTree
+    from spin.tree import ConfigTree
 
     return ConfigTree(*args, **kwargs, __ofs_frames__=1)
 
 
 def readyaml(fname):
     """Read a YAML file."""
-    from .tree import tree_load
+    from spin.tree import tree_load
 
     fname = interpolate1(fname)
     return tree_load(fname)
@@ -620,9 +625,10 @@ def download(url, location):
     dirname = os.path.dirname(location)
     mkdir(dirname)
     echo(f"Download {url} -> {location} ...")
-    response = urllib.request.urlopen(url)
-    data = response.read()
-    writebytes(location, data)
+
+    with urllib.request.urlopen(url) as response:
+        data = response.read()
+        writebytes(location, data)
 
 
 # This is the global configuration tree.
@@ -636,7 +642,7 @@ def get_tree():
 
 def set_tree(cfg):
     # Intentionally undocumented
-    global CONFIG
+    global CONFIG  # pylint: disable=global-statement
     CONFIG = cfg
     return cfg
 
@@ -648,9 +654,11 @@ def argument(**kwargs):
     same parameters. Example:
 
     .. code-block:: python
+        :linenos:
 
-       @task()
-       def mytask(outfile: argument(type="...", help="...")
+        @task()
+        def mytask(outfile: argument(type="...", help="...")):
+            foo("do something")
 
     """
 
@@ -667,13 +675,19 @@ def option(*args, **kwargs):
     parameters. Example:
 
     .. code-block:: python
+        :linenos:
 
-       @task()
-       def mytask(
-           outfile: option("-o", "outfile",
-                           default="-",
-                           type=click.File("w"),
-                           help="... usage information ..."))
+        @task()
+        def mytask(
+            outfile: option(
+                "-o",
+                "outfile",
+                default="-",
+                type=click.File("w"),
+                help="... usage information ...",
+            )
+        ):
+            foo("do something")
 
     """
 
@@ -721,10 +735,11 @@ def task(*args, **kwargs):
     A simple example:
 
     .. code-block:: python
+        :linenos:
 
-       @task()
-       def simple_task(cfg, args):
-           # do something
+        @task()
+        def simple_task(cfg, args):
+            foo("do something")
 
     This would make ``simple_task`` available as a new subcommand of
     spin.
@@ -735,7 +750,7 @@ def task(*args, **kwargs):
     """
 
     # Import cli here, to avoid an import cycle
-    from . import cli
+    from spin import cli  # pylint: disable=cyclic-import
 
     def task_wrapper(fn, group=cli.commands):
         task_object = fn
@@ -769,7 +784,7 @@ def task(*args, **kwargs):
         )
         if noenv:
             cli.register_noenv(task_object.name)
-        if group != cli.commands:
+        if group != cli.commands:  # pylint: disable=comparison-with-callable
             task_object.full_name = " ".join((group.name, task_object.name))
         else:
             task_object.full_name = task_object.name
@@ -811,15 +826,18 @@ def group(*args, **kwargs):
     .. code-block:: python
 
        @group()
-       def foo(): pass
+       def foo():
+           pass
+
 
        @foo.task()
-       def bar(): pass
+       def bar():
+           pass
 
     The above example creates a ``spin foo bar`` command.
 
     """
-    from . import cli
+    from spin import cli
 
     def group_decorator(fn):
         def subtask(*args, **kwargs):
@@ -869,7 +887,7 @@ def run_script(script, env=None):
 
 def run_spin(script):
     """Run a list of spin commands."""
-    from .cli import commands
+    from spin.cli import commands
 
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
@@ -877,7 +895,7 @@ def run_spin(script):
             echo("spin", " ".join(line))
             commands(line)
         except SystemExit as exc:
-            if exc.code:
+            if exc.code:  # pylint: disable=using-constant-test
                 raise
 
 
@@ -926,14 +944,14 @@ def ensure(command):
 
 
 def invoke(hook, *args, **kwargs):
-    """``invoke()`` invokes the tasks that have the ``when`` hook
+    '''``invoke()`` invokes the tasks that have the ``when`` hook
     `hook`. As an example, here is the implementation of **lint**:
 
     .. code-block:: python
 
        @task(aliases=["check"])
        def lint(allsource: option("--all", "allsource", is_flag=True)):
-           '''Run all linters defined in this project.'''
+           """Run all linters defined in this project"""
            invoke("lint", allsource=allsource)
 
     Note that in this case, all linters are required to support the
@@ -942,7 +960,7 @@ def invoke(hook, *args, **kwargs):
     linters: *all* linter tasks *must* support the ``allsource``
     argument as part of their Python function signature (albeit not
     necessarily the same command line flag ``--all``).
-    """
+    '''
     ctx = click.get_current_context()
     cfg = get_tree()
     for task_object in cfg.hooks.setdefault(hook, []):
@@ -965,7 +983,7 @@ def toporun(cfg, *fn_names, reverse=False):
 
 
 def main(*args, **kwargs):
-    from .cli import cli
+    from spin.cli import cli
 
     if not args:
         args = None

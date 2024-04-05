@@ -22,7 +22,7 @@ dependencies = [
 ]
 description = "spin"
 dynamic = ["version", "readme"]
-license = {text = "Copyright (C) 2021 Contact Software"}
+license = {text = "Copyright (C) 2021 Contact Software GmbH"}
 maintainers = [
   {name = "Waleri Enns", email = "waleri.enns@contact-software.com"},
   {name = "Benjamin Thomas Schwertfeger", email = "benjaminthomas.schwertfeger@contact-software.com"},
@@ -83,6 +83,8 @@ max-statements = 75
 # Maximum number of characters on a single line.
 # CON: the current consensus (original value 100)
 max-line-length = 110
+# Maximum number of lines in a module (original value 1000)
+max-module-lines = 1100
 
 [tool.pylint.imports]
 # Deprecated modules which should not be used, separated by a comma.
@@ -167,8 +169,7 @@ confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "UNDEFINED"]
 # (C0413) wrong-import-position: isort
 #
 # ** Local modifications **
-# (W0707) raise-missing-from: No real value in pkgtest, as explicitly want to only raise the PkgtestError without any more context
-# similarities: Not much value and sonar does it better.
+# (W1203) logging-fstring-interpolation: "code consistency" > "potential, minimal performance drop"
 disable = [
   "access-member-before-definition",
   "anomalous-unicode-escape-in-string",
@@ -189,6 +190,7 @@ disable = [
   "keyword-arg-before-vararg",
   "line-too-long",
   "locally-disabled",
+  "logging-fstring-interpolation",
   "missing-docstring",
   "missing-final-newline",
   "mixed-line-endings",
@@ -236,9 +238,7 @@ allowed-redefined-builtins = "id"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
-markers = [
-  "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-]
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst"]}

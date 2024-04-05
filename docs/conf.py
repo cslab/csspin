@@ -18,7 +18,7 @@
 import importlib.metadata
 
 project = "cs.spin"
-copyright = "2021, Contact Software"
+copyright = "2021, CONTACT Software GmbH"
 author = "Frank Patz-Brockmann"
 
 # The full version, including alpha/beta/rc tags

@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 from spin import config, exists, option, sh, task
 
@@ -28,4 +28,4 @@ def portwheel(cfg, sdksrc: option("--sdksrc", "sdksrc"), args):
         sdksrc = cfg.portwheel.sdksrc
     if not exists(sdksrc):
         sh("svn", "co", "https://svn.contact.de/svn/sdk/trunk", sdksrc)
-    sh("portwheel", "--sdksrc={}".format(sdksrc), *cfg.portwheel.opts, *files)
+    sh("portwheel", f"--sdksrc={sdksrc}", *cfg.portwheel.opts, *files)

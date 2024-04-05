@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2021 CONTACT Software GmbH
 # All rights reserved.
-# http://www.contact.de/
+# https://www.contact-software.com/
 
 import os
 import sys
@@ -39,7 +39,7 @@ def shell(cfg):
             name = proc.name().split(".")[0]
             if name in SHELLS:
                 shell = proc.exe()
-                subprocess.run([shell] + SHELLS[name])
+                subprocess.run([shell] + SHELLS[name], check=True)
                 break
     else:
         os.execvp(os.environ["SHELL"], [os.environ["SHELL"], "-i"])
