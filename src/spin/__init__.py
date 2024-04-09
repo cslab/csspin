@@ -29,6 +29,7 @@ import sys
 import time
 import urllib.request
 from contextlib import contextmanager
+from typing import Hashable
 
 import click
 import packaging
@@ -563,6 +564,9 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 
 def interpolate1(literal, *extra_dicts):
     """Interpolate a string against the configuration tree."""
+    if not isinstance(literal, Hashable):
+        die(f"Can't interpolate {literal=} since it's not hashable.")
+
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )

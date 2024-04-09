@@ -118,6 +118,27 @@ repos:
         types: [file] # override `types: [python]`
         files: \.(pyi?|ue)$
         exclude: tests|docs
+  # FIXME: Disabled since mypy's is always checking files named cli.py, that
+  #        behavior can't be changed by the 'exclude' or 'files' key. Thus this
+  #        hook can be activated first, as soon as src/spin/cli.py is typed.
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.9.0
+  #   hooks:
+  #     - id: mypy
+  #       args:
+  #         - --config-file=pyproject.toml
+  #         - --install-types
+  #         - --non-interactive
+  #       exclude: |
+  #         (?x)^(
+  #             tests/.*|
+  #             plugins/.*|
+  #             src/spin/builtin/.*|
+  #             src/spin/__main__\.py$|
+  #             src/spin/__init__\.py$|
+  #             src/spin/get_abi_tag\.py$|
+  #             src/spin/cli\.py$
+  #         )$
 default_language_version:
   python: python3
 exclude: (.gitlab/.*)

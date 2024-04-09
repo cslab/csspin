@@ -3,16 +3,27 @@
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+#
+# Disabling "union-attr" since inspect.currentframe() could return None, which
+# is not the case for the implementation in this file.
+# mypy: disable-error-code=union-attr
+
+from __future__ import annotations
 
 import inspect
 import os
 import re
 import sys
 from collections import OrderedDict, namedtuple
+from typing import TYPE_CHECKING
 
 import ruamel.yaml
+import ruamel.yaml.comments
 
 from spin import die, interpolate1  # pylint: disable=cyclic-import
+
+if TYPE_CHECKING:
+    from typing import Any, Generator, Hashable, Iterable
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -34,14 +45,14 @@ class ConfigTree(OrderedDict):
     done automatically, i.e for each update operation we inspect the
     callstack and store source file name and line number. For data
     read from another source (e.g. a YAML file), the location
-    information can be update manually via `tree_set_keyinfo`.
+    information can be updated manually via `tree_set_keyinfo`.
 
     Note that APIs used to access tracking information are *not* part
     of this class, as each identifier we add may clash with property
     names used.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self: ConfigTree, *args: Any, **kwargs: dict) -> None:
         ofsframes = kwargs.pop("__ofs_frames__", 0)
         super().__init__(*args, **kwargs)
         self.__keyinfo = {}
@@ -52,12 +63,12 @@ class ConfigTree(OrderedDict):
                 # pylint: disable=protected-access,unused-private-member
                 value.__parentinfo = ParentInfo(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self: ConfigTree, key: Hashable, value: Any) -> None:
         value = tree_typecheck(self, key, value)
         super().__setitem__(key, value)
         _set_callsite(self, key, 3, value)
 
-    def setdefault(self, key, default=None):
+    def setdefault(self: ConfigTree, key: Hashable, default: Any = None) -> Any:
         default = tree_typecheck(self, key, default)
         val = super().setdefault(key, default)
         _set_callsite(self, key, 3, default)
@@ -68,23 +79,23 @@ class ConfigTree(OrderedDict):
     # were properties; this makes for a more convenient notation when
     # using the settings in code and f-like interpolation expressions.
 
-    def __setattr__(self, name, value):
-        if name.startswith("_ConfigTree__"):
-            # "private" variables must not go into the dictionary,
-            # obviously.
+    def __setattr__(self: ConfigTree, name: str, value: Any) -> None:
+        if any(name.startswith(f"{char}_ConfigTree__") for char in ("", "_")):
+            # "protected" and "private" variables must not go into the
+            # dictionary, obviously.
             object.__setattr__(self, name, value)
         else:
             value = tree_typecheck(self, name, value)
             self[name] = value
             _set_callsite(self, name, 3, value)
 
-    def __getattr__(self, name):
+    def __getattr__(self: ConfigTree, name: str) -> Any:
         if name in self:
             return self.get(name)
         raise AttributeError(f"No property '{name}'")
 
 
-def tree_typecheck(tree, key, value):
+def tree_typecheck(tree: ConfigTree, key: Hashable, value: Any) -> Any:
     schema = getattr(tree, "_ConfigTree__schema", None)
     if schema:
         desc = schema.properties.get(key, None)
@@ -93,78 +104,72 @@ def tree_typecheck(tree, key, value):
     return value
 
 
-def tree_update_key(tree, key, value):
-    OrderedDict.__setitem__(tree, key, value)
+def tree_update_key(tree: ConfigTree, key: Hashable, value: Any) -> None:
+    OrderedDict.__setitem__(tree, key, value)  # type: ignore[assignment]
 
 
-def _call_location(depth):
+def _call_location(depth: int) -> KeyInfo:
     fn, lno, _, _, _ = inspect.getframeinfo(
         sys._getframe(depth)  # pylint: disable=protected-access
     )
     return KeyInfo(fn, lno)
 
 
-def _set_callsite(tree, key, depth, value):
+def _set_callsite(tree: ConfigTree, key: Hashable, depth: int, value: Any) -> None:
     if hasattr(tree, "_ConfigTree__keyinfo"):
+        # FIXME: Is that correct? The call location will always be this file and
+        #        the following lines.
         # pylint: disable=protected-access
         tree._ConfigTree__keyinfo[key] = _call_location(depth)
-    tree_set_parent(value, tree, key)
+    tree_set_parent(value, tree, key)  # type: ignore[arg-type]
 
 
-def tree_set_keyinfo(tree, key, ki):
+def tree_set_keyinfo(tree: ConfigTree, key: Hashable, ki: KeyInfo) -> None:
+    # FIXME: Do we need a warning or exception in case the following if
+    #        statement does not pass?
     if hasattr(tree, "_ConfigTree__keyinfo"):
         tree._ConfigTree__keyinfo[key] = ki  # pylint: disable=protected-access
 
 
-def tree_keyinfo(tree, k):
-    return tree._ConfigTree__keyinfo[k]  # pylint: disable=protected-access
+def tree_keyinfo(tree: ConfigTree, key: Hashable) -> KeyInfo:
+    if key not in tree:
+        die(f"{key=} not in configuration tree.")  # type: ignore[no-untyped-call]
+
+    return tree._ConfigTree__keyinfo[key]  # type: ignore[no-any-return] # pylint: disable=protected-access
 
 
-def tree_set_parent(tree, parent, name):
+def tree_set_parent(tree: ConfigTree, parent: ConfigTree, name: str) -> None:
     if hasattr(tree, "_ConfigTree__parentinfo"):
         tree._ConfigTree__parentinfo = ParentInfo(  # pylint: disable=protected-access
             parent, name
         )
 
 
-def tree_keyname(tree, key):
+def tree_keyname(tree: ConfigTree, key: str) -> str:
+    if key not in tree:
+        raise AttributeError(f"{key=} not in {tree=}")
+
     path = [key]
-    try:
-        parentinfo = tree._ConfigTree__parentinfo  # pylint: disable=protected-access
-        while parentinfo:
-            path.insert(0, parentinfo.key)
-            # pylint: disable=protected-access
-            parentinfo = parentinfo.parent._ConfigTree__parentinfo
-    except AttributeError:
-        pass
+    parentinfo = tree._ConfigTree__parentinfo  # pylint: disable=protected-access
+    while parentinfo:
+        path.insert(0, parentinfo.key)
+        parentinfo = (
+            parentinfo.parent._ConfigTree__parentinfo  # pylint: disable=protected-access
+        )
     return ".".join(path)
 
 
-def tree_build(data, fn):
-    if not data:
-        data = {}
-    config = ConfigTree(data)
-    for key, value in data.items():
-        if isinstance(value, dict):
-            config[key] = tree_build(value, fn)
-            tree_set_parent(config[key], config, key)
-        ki = KeyInfo(fn, data.lc.key(key)[0] + 1)
-        tree_set_keyinfo(config, key, ki)
-    return config
-
-
-def tree_load(fn):
+def tree_load(fn: str) -> ConfigTree | Any:
     yaml = ruamel.yaml.YAML()
     with open(fn, encoding="utf-8") as f:
         try:
             data = yaml.load(f)
         except ruamel.yaml.parser.ParserError as ex:
-            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")
-    data = parse_yaml(data, fn)
-    return data
+            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")  # type: ignore[no-untyped-call]
+    return parse_yaml(data, fn)
 
 
-def tree_walk(config, indent=""):
+def tree_walk(config: ConfigTree, indent: str = "") -> Generator:
     """Walk configuration tree depth-first, yielding the key, its value,
     the full name of the key, the tracking information and an
     indentation string that increases by ``" "`` for each level.
@@ -178,16 +183,16 @@ def tree_walk(config, indent=""):
                 yield key, value, fullname, info, subindent
 
 
-def tree_dump(tree):
+def tree_dump(tree: ConfigTree) -> str:
     text = []
 
-    def write(line):
+    def write(line: str) -> None:
         text.append(line)
 
     cwd = os.getcwd()
     home = os.path.expanduser("~")
 
-    def shorten_filename(fn):
+    def shorten_filename(fn: str) -> str:
         if fn.startswith(cwd):
             return fn[len(cwd) + 1 :]  # noqa: E203
         if fn.startswith(home):
@@ -215,6 +220,7 @@ def tree_dump(tree):
                 write(f"{tag}{space}{separator}{indent}{key}: []")
         elif isinstance(value, dict):
             if value:
+                # FIXME: Shouldn't the value be shown like for lists?
                 write(f"{tag}{space}{separator}{indent}{key}:")
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: {{}}")
@@ -223,25 +229,33 @@ def tree_dump(tree):
     return "\n".join(text)
 
 
-def directive_append(target, key, value):
+def directive_append(target: ConfigTree, key: Hashable, value: Any) -> None:
+    if key not in target:
+        die(f"{key=} not in passed target tree.")  # type: ignore[no-untyped-call]
+    if not isinstance(target[key], list):
+        die(f"Can't append {value=} to tree since {target[key]=} is not type 'list'")  # type: ignore[no-untyped-call] # noqa: E501
     if isinstance(value, list):
         target[key].extend(value)
     else:
         target[key].append(value)
 
 
-def directive_prepend(target, key, value):
+def directive_prepend(target: ConfigTree, key: Hashable, value: Any) -> None:
+    if key not in target:
+        die(f"{key=} not in passed target tree.")  # type: ignore[no-untyped-call]
+    if not isinstance(target[key], list):
+        die(f"Can't prepend {value=} to tree since {target[key]=} is not type 'list'")  # type: ignore[no-untyped-call] # noqa: E501
     if isinstance(value, list):
         target[key][0:0] = value
     else:
         target[key].insert(0, value)
 
 
-def directive_interpolate(target, key, value):
-    tree_update_key(target, key, interpolate1(value))
+def directive_interpolate(target: ConfigTree, key: Hashable, value: Any) -> None:
+    tree_update_key(target, key, interpolate1(value))  # type: ignore[no-untyped-call]
 
 
-def rpad(seq, length, padding=None):
+def rpad(seq: list, length: int, padding: int | None = None) -> list:
     """Right pad a sequence to become at least `length` long with `padding` items.
 
     Post-condition ``len(rpad(seq, n)) >= n``.
@@ -261,7 +275,7 @@ def rpad(seq, length, padding=None):
     return seq
 
 
-def tree_merge(target, source):
+def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
     """Merge the 'source' configuration tree into 'target'.
 
     Merging is done by adding values from 'source' to 'target' if they
@@ -271,14 +285,19 @@ def tree_merge(target, source):
     "append" for adding values or lists to a list, and "interpolate"
     for replacing configuration variables.
     """
+    if not isinstance(target, ConfigTree):
+        die("Can't merge tree's since 'target' is not type 'spin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
+    if not isinstance(source, ConfigTree):
+        die("Can't merge tree's since 'source' is not type 'spin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
+
     for key, value in source.items():
         if target.get(key, None) is None:
             try:
                 target[key] = value
                 tree_set_keyinfo(target, key, tree_keyinfo(source, key))
             except Exception:  # pylint: disable=broad-exception-caught
-                die(f"cannot merge {value} into '{target}[{key}]'")
-        elif isinstance(value, dict):
+                die(f"Can't merge {value=} into '{target=}[{key=}]'")  # type: ignore[no-untyped-call]
+        elif isinstance(value, ConfigTree):
             tree_merge(target[key], value)
     # Pass 2: process directives. Note that we need a list for the
     # iteration, as we remove directive keys on the fly.
@@ -290,7 +309,7 @@ def tree_merge(target, source):
             del target[clause]
 
 
-def tree_update(target, source):
+def tree_update(target: ConfigTree, source: ConfigTree) -> None:
     # This will *overwrite*, not fill up, like tree_merge.
     # (import here to avoid cyclic import)
     from spin import schema  # pylint: disable=cyclic-import
@@ -301,15 +320,16 @@ def tree_update(target, source):
             if isinstance(value, dict):
                 if key not in target:
                     target[key] = ConfigTree()
-                    tree_update(target[key], value)
+                    tree_update(target[key], value)  # type: ignore[arg-type]
                     tree_set_keyinfo(target, key, ki)
                 else:
-                    tree_update(target[key], value)
+                    tree_update(target[key], value)  # type: ignore[arg-type]
             else:
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
-        except schema.SchemaError as se:
-            die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {se}")
+        except (TypeError, schema.SchemaError) as exc:
+            # FIXME: Is it even possible to trigger the schema.SchemaError?
+            die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")  # type: ignore[no-untyped-call] # noqa: 501
 
 
 # Variable references are names prefixed by '$' (like $port, $version,
@@ -318,7 +338,7 @@ RE_VAR = re.compile(r"\$(\w+)")
 
 
 class YamlParser:
-    def __init__(self, fn, facts, variables):
+    def __init__(self: YamlParser, fn: str, facts: dict, variables: dict) -> None:
         self._facts = {
             "win32": sys.platform == "win32",
             "darwin": sys.platform == "darwin",
@@ -332,27 +352,32 @@ class YamlParser:
         self._var.update(variables)
         self._fn = fn
 
-    def parse_yaml(self, data):
+    def parse_yaml(
+        self: YamlParser,
+        data: str | int | list | dict | ruamel.yaml.comments.CommentedKeyMap | None,
+    ) -> ConfigTree | int | str | list | ruamel.yaml.comments.CommentedKeyMap | None:
         if isinstance(data, str):
             return self.parse_str(data)
         elif isinstance(data, list):
             return self.parse_list(data)
         elif isinstance(data, dict):
-            return self.parse_dict(data)
+            return self.parse_dict(data)  # type: ignore[arg-type]
         return data
 
-    def parse_str(self, data):
-        def replacer(mo):
-            return self._var.get(mo.group(1))
+    def parse_str(self: YamlParser, data: Any) -> str:
+        def replacer(mo: re.Match) -> str:
+            return self._var.get(mo.group(1))  # type: ignore[return-value]
 
         return RE_VAR.sub(replacer, data)
 
-    def parse_list(self, data):
+    def parse_list(self: YamlParser, data: Iterable) -> list:
         return [self.parse_yaml(x) for x in data]
 
-    def parse_dict(self, data):
+    def parse_dict(
+        self: YamlParser, data: ruamel.yaml.comments.CommentedKeyMap
+    ) -> ConfigTree | None:
         if not data:
-            data = {}
+            data = {}  # type: ignore[assignment]
         config = ConfigTree(data)
         for key, value in data.items():
             key = self.parse_yaml(key)
@@ -378,40 +403,63 @@ class YamlParser:
             config = config["$"]
         # if the config is empty, it should be replaced by None
         if len(config) == 0:
-            config = None
+            config = None  # type: ignore[assignment]
         return config
 
-    def directive_var(self, key, expression, value, out):
-        value = self.parse_yaml(value)
-        if isinstance(value, int):
+    def directive_var(
+        self: YamlParser,
+        key: str,
+        expression: str,
+        value: ruamel.yaml.comments.CommentedKeyMap,
+        out: ConfigTree,
+    ) -> None:
+        _value = self.parse_yaml(value)
+        if isinstance(_value, int):
             # re.sub works with str only
-            value = str(value)
-        self._var[expression] = value
+            _value = str(_value)
+        self._var[expression] = _value
         del out[key]
 
-    def directive_if(self, key, expression, value, out):
+    def directive_if(
+        self: YamlParser,
+        key: str,
+        expression: str,
+        value: ruamel.yaml.comments.CommentedKeyMap,
+        out: ConfigTree,
+    ) -> None:
         if eval(expression, self._facts):
             # We have to take care to not evaluate clauses
             # for falsy if statements -- thus
             # 'parse_yaml(v)' below, only when the
             # expression was true.
-            value = self.parse_yaml(value)
-            if isinstance(value, list):
+            _value = self.parse_yaml(value)
+            if isinstance(_value, list):
                 listout = out.setdefault("$", [])
-                listout.extend(value)
-            elif isinstance(value, dict):
-                for ifk, ifv in value.items():
+                listout.extend(_value)
+            elif isinstance(_value, dict):
+                for ifk, ifv in _value.items():
                     out[ifk] = ifv
         del out[key]
 
-    def parse_key(self, key, expression, value, out):
-        value = self.parse_yaml(value)
-        if isinstance(value, str):
-            self._var[expression] = value
-        out[key] = value
+    def parse_key(
+        self: YamlParser,
+        key: str,
+        expression: str,
+        value: ruamel.yaml.comments.CommentedKeyMap,
+        out: ConfigTree,
+    ) -> None:
+        _value = self.parse_yaml(value)
+        if isinstance(_value, str):
+            self._var[expression] = _value
+        out[key] = _value
 
 
-def parse_yaml(yaml_file, fn, facts=None, variables=None):
+def parse_yaml(
+    yaml_file: Any,
+    fn: str,
+    facts: dict | None = None,
+    variables: dict | None = None,
+) -> Any:
     facts = facts if facts else {}
     variables = variables if variables else {}
     yamlparser = YamlParser(fn, facts, variables)

@@ -1,12 +1,14 @@
+# -*- mode: yaml; coding: utf-8 -*-
+
 include:
-  - project: "qs/cs.template"
-    ref: v15.9.0.2
+  - project: qs/cs.template
+    ref: v15.9.0.3
     file:
-      - "ci/common.yml"
-      - "ci/wheel.yml"
-      - "ci/pre-commit.yml"
-      - "ci/release.yml"
-      - "ci/analyze.yml"
+      - ci/common.yml
+      - ci/wheel.yml
+      - ci/pre-commit.yml
+      - ci/release.yml
+      - ci/analyze.yml
 
 .python_base:
   image: python:3.9
