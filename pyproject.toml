@@ -45,6 +45,7 @@ preview = true
 target-version = ['py39']
 
 [tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
 precision = 2
 
 [tool.coverage.run]
@@ -55,6 +56,50 @@ source_pkgs = ["spin"]
 [tool.isort]
 multi_line_output = 3
 profile = "black"
+
+[tool.mypy]
+# ===== Untyped definitions and calls
+#
+check_untyped_defs = true
+color_output = true
+disallow_any_decorated = false
+disallow_any_explicit = false
+disallow_any_expr = false
+disallow_any_generics = false
+# ===== Disallow dynamic typing
+#
+disallow_any_unimported = false
+disallow_incomplete_defs = true
+disallow_subclassing_any = false
+disallow_untyped_calls = true
+disallow_untyped_decorators = false  # since click's decorators are untyped
+disallow_untyped_defs = true
+error_summary = true
+files = ["*.py"]
+hide_error_codes = false
+# ===== Suppressing errors
+#
+ignore_errors = false
+ignore_missing_imports = false
+# ===== None and Optional handling
+#
+implicit_optional = false
+pretty = true
+python_version = "3.10"
+show_absolute_path = true
+show_column_numbers = true
+# ===== Configuring error messages
+#
+show_error_context = true
+strict_optional = true
+warn_no_return = true
+# ===== Configuring warnings
+#
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [tool.pylint.design]
 # CON: raised some limits, which would otherwise generate
@@ -238,7 +283,10 @@ allowed-redefined-builtins = "id"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
-markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "wip: marks tests as work in progress (should not end up in vsc)"
+]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst"]}
