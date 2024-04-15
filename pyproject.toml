@@ -273,7 +273,7 @@ notes = ["FIXME", "XXX", "TODO", "TBC", "TBD"]
 
 [tool.pylint.reports]
 # Activate the evaluation score.
-# CON: to make the output more consice
+# CON: to make the output more concise
 score = "no"
 
 [tool.pylint.variables]
