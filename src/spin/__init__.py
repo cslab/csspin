@@ -17,6 +17,14 @@ yourself comfortable with click's documentation.
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterable, Type
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Generator
+    from spin.tree import ConfigTree
+
 import collections
 import inspect
 import logging
@@ -75,7 +83,7 @@ __all__ = [
 ]
 
 
-def echo(*msg, **kwargs):
+def echo(*msg: str, **kwargs: Any) -> None:
     """Print a message to the console by joining the positional arguments
     `msg` with spaces.
 
@@ -89,12 +97,12 @@ def echo(*msg, **kwargs):
 
     """
     if not CONFIG.quiet:
-        msg = interpolate(msg)
+        msg = interpolate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(click.style(" ".join(msg), bold=True), **kwargs)
 
 
-def info(*msg, **kwargs):
+def info(*msg: str, **kwargs: Any) -> None:
     """Print a message to the console by joining the positional arguments
     `msg` with spaces.
 
@@ -107,12 +115,12 @@ def info(*msg, **kwargs):
 
     """
     if CONFIG.verbose:
-        msg = interpolate(msg)
+        msg = interpolate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(" ".join(msg), **kwargs)
 
 
-def warn(*msg, **kwargs):
+def warn(*msg: str, **kwargs: Any) -> None:
     """Print a warning message to the console by joining the positional
     arguments `msg` with spaces.
 
@@ -123,12 +131,12 @@ def warn(*msg, **kwargs):
     :py:func:`click.echo`.
 
     """
-    msg = interpolate(msg)
+    msg = interpolate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: warning: ", fg="yellow"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
 
-def error(*msg, **kwargs):
+def error(*msg: str, **kwargs: Any) -> None:
     """Print an error message to the console by joining the positional
     arguments `msg` with spaces.
 
@@ -139,7 +147,7 @@ def error(*msg, **kwargs):
     :py:func:`click.echo`.
 
     """
-    msg = interpolate(msg)
+    msg = interpolate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
@@ -151,22 +159,22 @@ class DirectoryChanger:
     a context manager.
     """
 
-    def __init__(self, path):
+    def __init__(self: DirectoryChanger, path: str | Path) -> None:
         """Change directory."""
-        path = interpolate1(path)
+        path = interpolate1(path)  # type: ignore[assignment]
         self._cwd = os.getcwd()
         echo("cd", path)
         os.chdir(path)
 
-    def __enter__(self):
+    def __enter__(self: DirectoryChanger) -> None:
         """Nop."""
 
-    def __exit__(self, *args):
+    def __exit__(self: DirectoryChanger, *args: Any) -> None:
         """Change back to where we came from."""
         os.chdir(self._cwd)
 
 
-def cd(path):
+def cd(path: str | Path) -> DirectoryChanger:
     """Change directory.
 
     The `path` argument is interpolated against the configuration
@@ -189,57 +197,58 @@ def cd(path):
     return DirectoryChanger(path)
 
 
-def exists(path):
+def exists(path: str | Path) -> bool:
     """Check whether `path` exists. The argument is interpolated against
     the configuration tree.
 
     """
-    path = interpolate1(path)
+    path = interpolate1(path)  # type: ignore[assignment]
     return os.path.exists(path)
 
 
-def normpath(*args):
-    return os.path.normpath(os.path.join(*interpolate(args)))
+def normpath(*args: str | Path) -> str:
+    return os.path.normpath(os.path.join(*interpolate(args)))  # type: ignore[no-any-return]
 
 
-def abspath(*args):
+def abspath(*args: str | Path) -> str:
     return os.path.abspath(normpath(*args))
 
 
-def mkdir(path):
+def mkdir(path: str) -> str:
     """Ensure that `path` exists.
 
     If necessary, directories are recursively created to make `path`
     available. The argument is interpolated against the configuration
     tree.
+
     """
-    path = interpolate1(path)
+    path = interpolate1(path)  # type: ignore[assignment]
     if not exists(path):
         echo("mkdir", path)
         os.makedirs(path)
     return path
 
 
-def rmtree(path):
+def rmtree(path: str) -> None:
     """Recursively remove `path` and everything it contains. The argument
     is interpolated against the configuration tree.
 
     Obviously, this should be used with care.
 
     """
-    path = interpolate1(path)
+    path = interpolate1(path)  # type: ignore[assignment]
     echo("rmtree", path)
     shutil.rmtree(path)
 
 
-def die(*msg):
+def die(*msg: Any) -> None:
     """Terminates ``spin`` with a non-zero return code and print the error
     message `msg`.
 
     Arguments are interpolated against the configuration tree.
 
     """
-    msg = interpolate(msg)
+    msg = interpolate(msg)  # type: ignore[assignment]
     error(*msg)
     raise click.Abort(msg)
 
@@ -259,18 +268,20 @@ class Command:
 
     """
 
-    def __init__(self, *cmd):
+    def __init__(self: Command, *cmd: str) -> None:
         self._cmd = list(cmd)
 
-    def append(self, item):
+    def append(self: Command, item: str) -> None:
         self._cmd.append(item)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(
+        self: Command, *args: str, **kwargs: Any
+    ) -> subprocess.CompletedProcess | None:
         cmd = self._cmd + list(args)
         return sh(*cmd, **kwargs)
 
 
-def sh(*cmd, **kwargs):
+def sh(*cmd: str, **kwargs: Any) -> subprocess.CompletedProcess | None:
     """Run a program by building a command line from `cmd`.
 
     When multiple positional arguments are given, each is treated as
@@ -292,7 +303,7 @@ def sh(*cmd, **kwargs):
     >>> sh("ls", "{HOME}")
 
     """
-    cmd = interpolate(cmd)
+    cmd = interpolate(cmd)  # type: ignore[assignment]
     shell = kwargs.pop("shell", len(cmd) == 1)
     check = kwargs.pop("check", True)
     may_fail = kwargs.pop("may_fail", False)
@@ -311,10 +322,9 @@ def sh(*cmd, **kwargs):
 
     if not kwargs.pop("silent", False):
 
-        def quote(arg):
-            if len(cmd) > 1:
-                if " " in arg:
-                    return f"'{arg}'"
+        def quote(arg: str) -> str:
+            if len(cmd) > 1 and " " in arg:
+                return f"'{arg}'"
             return arg
 
         echo(" ".join(quote(c) for c in cmd))
@@ -342,7 +352,7 @@ def sh(*cmd, **kwargs):
             die(msg)
         warn(msg)
     except subprocess.CalledProcessError as ex:
-        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
+        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[assignment,unreachable] # noqa: E501
         msg = f"Command '{cmd}' failed with return code {ex.returncode}"
         if not may_fail:
             die(msg)
@@ -351,16 +361,16 @@ def sh(*cmd, **kwargs):
     return cpi
 
 
-def backtick(*cmd, **kwargs):
+def backtick(*cmd: str, **kwargs: Any) -> str:
     kwargs["stdout"] = subprocess.PIPE
     cpi = sh(*cmd, **kwargs)
-    return cpi.stdout.decode()
+    return cpi.stdout.decode()  # type: ignore[no-any-return,union-attr]
 
 
-EXPORTS = {}
+EXPORTS: dict = {}
 
 
-def setenv(*args, **kwargs):
+def setenv(*args, **kwargs) -> None:
     """Set or unset one or more environment variables. The values of
     keyword arguments are interpolated against the configuration tree.
 
@@ -385,39 +395,39 @@ def setenv(*args, **kwargs):
             EXPORTS[key] = value
 
 
-def _read_file(fn, mode):
-    fn = interpolate1(fn)
+def _read_file(fn: str | Path, mode: str) -> str | bytes:
+    fn = interpolate1(fn)  # type: ignore[assignment]
     with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
-        return f.read()
+        return f.read()  # type: ignore[no-any-return]
 
 
-def readlines(fn):
-    fn = interpolate1(fn)
+def readlines(fn: str | Path) -> list[str]:
+    fn = interpolate1(fn)  # type: ignore[assignment]
     with open(fn, "r", encoding="utf-8") as f:
         return f.readlines()
 
 
-def writelines(fn, lines):
-    fn = interpolate1(fn)
+def writelines(fn: str | Path, lines: str) -> None:
+    fn = interpolate1(fn)  # type: ignore[assignment]
     with open(fn, "w", encoding="utf-8") as f:
         return f.writelines(lines)
 
 
-def _write_file(fn, mode, data):
-    fn = interpolate1(fn)
+def _write_file(fn: str | Path, mode: str, data: bytes | str) -> int:
+    fn = interpolate1(fn)  # type: ignore[assignment]
     with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
-        f.write(data)
+        return f.write(data)
 
 
-def readbytes(fn):
+def readbytes(fn: str | Path) -> bytes:
     """`readbytes` reads binary data. The file name argument is
     interpolated against the configuration tree.
 
     """
-    return _read_file(fn, "rb")
+    return _read_file(fn, "rb")  # type: ignore[return-value]
 
 
-def writebytes(fn, data):
+def writebytes(fn: str | Path, data: bytes) -> int:
     """Write `data`` to the file named `fn`.
 
     Data is binary data (`bytes`).  The file name argument is
@@ -427,17 +437,17 @@ def writebytes(fn, data):
     return _write_file(fn, "wb", data)
 
 
-def readtext(fn):
+def readtext(fn: str | Path) -> str:
     """Read an UTF8 encoded text from the file 'fn'.
 
     The file name argument is interpolated against the configuration
     tree.
 
     """
-    return _read_file(fn, "r")
+    return _read_file(fn, "r")  # type: ignore[return-value]
 
 
-def writetext(fn, data):
+def writetext(fn: str | Path, data: str) -> int:
     """Write `data`, which is text (Unicode object of type `str`) to the
     file named `fn`.
 
@@ -447,7 +457,7 @@ def writetext(fn, data):
     return _write_file(fn, "w", data)
 
 
-def appendtext(fn, data):
+def appendtext(fn: str | Path, data: str) -> int:
     """Append `data`, which is text (Unicode object of type `str`) to the
     file named `fn`.
 
@@ -457,12 +467,12 @@ def appendtext(fn, data):
     return _write_file(fn, "a", data)
 
 
-def persist(fn, data):
+def persist(fn: str | Path, data: Type[object]) -> int:
     """Persist the Python object(s) in `data` using :py:mod:`pickle`."""
-    writebytes(fn, pickle.dumps(data))
+    return writebytes(fn, pickle.dumps(data))
 
 
-def unpersist(fn, default=None):
+def unpersist(fn: str, default: Any | None = None) -> Any | None:
     """Load pickled Python object(s) from the file `fn`."""
     try:
         return pickle.loads(readbytes(fn))
@@ -496,38 +506,38 @@ class Memoizer:
 
     """
 
-    def __init__(self, fn):
+    def __init__(self: Memoizer, fn: str | Path) -> None:
         self._fn = fn
         self._items = unpersist(fn, [])
 
-    def check(self, item):
+    def check(self: Memoizer, item: Iterable) -> bool:
         """Checks whether `item` is stored in the memoizer."""
-        return item in self._items
+        return item in self._items  # type: ignore[operator]
 
-    def clear(self):
+    def clear(self: Memoizer) -> None:
         """Remove all items"""
         self._items = []
 
-    def items(self):
-        return self._items
+    def items(self: Memoizer) -> Iterable:
+        return self._items  # type: ignore[return-value]
 
-    def add(self, item):
+    def add(self: Memoizer, item: Any) -> None:
         """Add `item` to the memoizer."""
-        self._items.append(item)
+        self._items.append(item)  # type: ignore[union-attr]
         self.save()
 
-    def save(self):
+    def save(self: Memoizer) -> None:
         """Persist the current state of the memoizer.
 
         This is done automatically when using `memoizer` as a context
         manager.
 
         """
-        persist(self._fn, self._items)
+        persist(self._fn, self._items)  # type: ignore[arg-type]
 
 
 @contextmanager
-def memoizer(fn):
+def memoizer(fn: str) -> Generator:
     """Context manager for creating a :py:class:`Memoizer` that
     automatically saves the fact base.
 
@@ -545,7 +555,7 @@ NSSTACK = []
 
 
 @contextmanager
-def namespaces(*nslist):
+def namespaces(*nslist: str) -> Generator:
     """Add namespaces for interpolation."""
     for ns in nslist:
         NSSTACK.append(ns)
@@ -562,13 +572,13 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 )
 
 
-def interpolate1(literal, *extra_dicts):
+def interpolate1(literal: Hashable | Path, *extra_dicts: dict) -> Hashable | Path:
     """Interpolate a string against the configuration tree."""
     if not isinstance(literal, Hashable):
-        die(f"Can't interpolate {literal=} since it's not hashable.")
+        die(f"Can't interpolate {literal=} since it's not hashable.")  # type: ignore[unreachable]
 
     where_to_look = collections.ChainMap(
-        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
+        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK  # type: ignore[arg-type]
     )
     is_path = isinstance(literal, Path)
     seen = set()
@@ -578,7 +588,7 @@ def interpolate1(literal, *extra_dicts):
         previous = literal
         seen.add(literal)
         literal = eval(f"rf''' {literal} '''", {}, where_to_look)
-        literal = literal[1:-1]
+        literal = literal[1:-1]  # type: ignore[index] # literal will be indexable at this point
         if previous == literal:
             break
         if literal in seen:
@@ -588,8 +598,10 @@ def interpolate1(literal, *extra_dicts):
     return literal
 
 
-def interpolate(literals, *extra_dicts):
-    """Interpolate an iterable of strings against the configuration tree."""
+def interpolate(literals: Iterable[Hashable], *extra_dicts: dict) -> list:
+    """
+    Interpolate an iterable of hashable items against the configuration tree.
+    """
     out = []
     for literal in literals:
         # We allow None, which gets filtered out here, to enable
@@ -600,11 +612,11 @@ def interpolate(literals, *extra_dicts):
     return out
 
 
-def config(*args, **kwargs):
+def config(*args: Any | None, **kwargs: dict) -> ConfigTree:
     """`config` creates a configuration subtree:
 
     >>> config(a="alpha", b="beta)
-    {"a": "alpha", "b": "beta")
+    {"a": "alpha", "b": "beta}
 
     Plugins use `config` to declare their ``defaults`` tree.
 
@@ -615,15 +627,15 @@ def config(*args, **kwargs):
     return ConfigTree(*args, **kwargs, __ofs_frames__=1)
 
 
-def readyaml(fname):
+def readyaml(fname: str | Path) -> ConfigTree:
     """Read a YAML file."""
     from spin.tree import tree_load
 
-    fname = interpolate1(fname)
+    fname = interpolate1(fname)  # type: ignore[assignment]
     return tree_load(fname)
 
 
-def download(url, location):
+def download(url: str, location: str | Path) -> None:
     """Download data from `url` to `location`."""
     url, location = interpolate((url, location))
     dirname = os.path.dirname(location)
@@ -639,19 +651,19 @@ def download(url, location):
 CONFIG = config()
 
 
-def get_tree():
+def get_tree() -> ConfigTree:
     """Return the global configuration tree."""
     return CONFIG
 
 
-def set_tree(cfg):
+def set_tree(cfg: ConfigTree) -> ConfigTree:
     # Intentionally undocumented
     global CONFIG  # pylint: disable=global-statement
     CONFIG = cfg
     return cfg
 
 
-def argument(**kwargs):
+def argument(**kwargs: Any) -> Callable:
     """Annotations task arguments.
 
     This works just like :py:func:`click.argument`, accepting all the
@@ -666,13 +678,13 @@ def argument(**kwargs):
 
     """
 
-    def wrapper(param_name):
+    def wrapper(param_name: str) -> Callable:
         return click.argument(param_name, **kwargs)
 
     return wrapper
 
 
-def option(*args, **kwargs):
+def option(*args: Any, **kwargs: Any) -> Callable:
     """Annotations for task options.
 
     This works just like :py:func:`click.option`, accepting the same
@@ -695,13 +707,13 @@ def option(*args, **kwargs):
 
     """
 
-    def wrapper(param_name):
+    def wrapper(param_name: str) -> Callable:
         return click.option(*args, **kwargs)
 
     return wrapper
 
 
-def task(*args, **kwargs):
+def task(*args: Any, **kwargs: Any) -> Callable:
     """Decorator that creates a task. This is a wrapper around Click's
     :py:func:`click.command` decorator, with some extras:
 
@@ -756,7 +768,7 @@ def task(*args, **kwargs):
     # Import cli here, to avoid an import cycle
     from spin import cli  # pylint: disable=cyclic-import
 
-    def task_wrapper(fn, group=cli.commands):
+    def task_wrapper(fn: str | Path, group=cli.commands) -> Callable:
         task_object = fn
         pass_context = False
         context_settings = config()
@@ -820,7 +832,7 @@ def task(*args, **kwargs):
     return task_wrapper
 
 
-def group(*args, **kwargs):
+def group(*args: Any, **kwargs: Any) -> Callable:
     """Decorator for task groups, to create nested commands.
 
     This works like :py:class:`click.Group`, but additionally supports
@@ -843,9 +855,9 @@ def group(*args, **kwargs):
     """
     from spin import cli
 
-    def group_decorator(fn):
-        def subtask(*args, **kwargs):
-            def task_decorator(fn):
+    def group_decorator(fn: str | Path) -> Callable:
+        def subtask(*args: Any, **kwargs: Any) -> Callable:
+            def task_decorator(fn: str | Path):
                 cmd = task(*args, **kwargs, group=grp)(fn)
                 return cmd
 
@@ -862,36 +874,43 @@ def group(*args, **kwargs):
     return group_decorator
 
 
-def getmtime(fn):
+def getmtime(fn: str | Path) -> float:
     """Get the modification of file `fn`.
 
     `fn` is interpolated against the configuration tree.
 
     """
-    return os.path.getmtime(interpolate1(fn))
+    return os.path.getmtime(interpolate1(fn))  # type: ignore[arg-type]
 
 
-def is_up_to_date(target, sources):
+def is_up_to_date(target: str | Path, sources: Iterable[str, Path]) -> bool:
     """Check whether `target` exists and is newer than all of the
     `sources`.
 
     """
     if not exists(target):
         return False
+    if not isinstance(sources, Iterable):
+        raise TypeError("'sources' must be type 'Iterable'")
     target_mtime = getmtime(target)
     source_mtimes = [getmtime(src) for src in sources] + [0.0]
     return target_mtime >= max(source_mtimes)
 
 
-def run_script(script, env=None):
+def run_script(script: list, env: dict | None = None) -> None:
     """Run a list of shell commands."""
+    if isinstance(script, str) or not isinstance(script, Iterable):
+        script = [str(script)]
     for line in script:
         sh(line, shell=True, env=env)
 
 
-def run_spin(script):
+def run_spin(script: list) -> None:
     """Run a list of spin commands."""
     from spin.cli import commands
+
+    if isinstance(script, str) or not isinstance(script, Iterable):
+        script = [str(script)]
 
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
@@ -903,11 +922,11 @@ def run_spin(script):
                 raise
 
 
-def get_sources(tree):
+def get_sources(tree: ConfigTree) -> list:
     sources = tree.get("sources", [])
     if not isinstance(sources, list):
         sources = [sources]
-    return sources
+    return sources  # type: ignore[no-any-return]
 
 
 def build_target(cfg, target, phony=False):
