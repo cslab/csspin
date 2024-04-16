@@ -48,7 +48,7 @@ pre-commit:
 .test_base:
   needs: []
   script:
-    - spin --debug -v --provision test -vv --coverage --cov-report term --cov-report xml:coverage-${CI_JOB_ID}.xml --junitxml=reports-${CI_JOB_ID}/pytest.xml
+    - spin --debug -v --provision -p pytest.coverage_opts="['--cov', '--cov-report', 'term', '--cov-report', 'xml:coverage-${CI_JOB_ID}.xml', '--junitxml', 'reports-${CI_JOB_ID}/pytest.xml']" test -vv --coverage
   artifacts:
     when: always
     expire_in: 24 hrs
