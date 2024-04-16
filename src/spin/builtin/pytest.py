@@ -27,7 +27,6 @@ defaults = config(
 @task(when="test")
 def pytest(
     cfg,
-    instance: option("--instance", "instance"),
     coverage: option("--coverage", "coverage", is_flag=True),
     covreport: option("--cov-report", "covreport", default="html"),
     args,

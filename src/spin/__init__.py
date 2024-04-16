@@ -987,7 +987,16 @@ def invoke(hook, *args, **kwargs):
     ctx = click.get_current_context()
     cfg = get_tree()
     for task_object in cfg.hooks.setdefault(hook, []):
-        ctx.invoke(task_object, *args, **kwargs)
+        # Filter kwargs so that plugins don't need to provide
+        # options, just for being able to get called by a workflow
+        task_opts = [
+            param.name
+            for param in task_object.params
+            if isinstance(param, click.Option)
+        ]
+        pass_opts = {k: v for k, v in kwargs.items() if k in task_opts}
+
+        ctx.invoke(task_object, *args, **pass_opts)
 
 
 def toporun(cfg, *fn_names, reverse=False):
