@@ -386,8 +386,11 @@ def cli(  # pylint: disable=too-many-arguments
     if cwd:
         cd(cwd)
     _spinfile = find_spinfile(spinfile)
-    if spinfile and not _spinfile:
-        die(f"{spinfile} not found")
+    if not _spinfile:
+        if spinfile:
+            die(f"{spinfile} not found")
+        else:
+            die("No configuration file found")
     spinfile = _spinfile
 
     cfg = load_config_tree(
