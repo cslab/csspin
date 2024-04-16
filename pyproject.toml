@@ -16,9 +16,7 @@ multi_line_output = 3
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-]
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')", "wip"]
 
 [build-system]
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]

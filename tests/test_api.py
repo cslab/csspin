@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from unittest.mock import patch
 
 import click
 import pytest
@@ -22,6 +23,7 @@ from spin import (
     mkdir,
     readtext,
     rmtree,
+    setenv,
     sh,
     writetext,
 )
@@ -33,30 +35,66 @@ def cfg():
     return get_tree()
 
 
-def test_interpolate_env():
-    assert interpolate1("'{SPIN_CACHE}'") == f"'{os.environ['SPIN_CACHE']}'"
-
-
 def test_interpolate_n():
     assert interpolate(("a", "b", "c")) == ["a", "b", "c"]
 
 
-def test_interpolate_recursion(cfg):
+def test_setenv(cfg):
+    """
+    Test that ensures that spin.setenv is able to set environment variables
+    while resolving values to interpolate as well as those which should not
+    interpolated.
+    """
+    cfg["FOO"] = "foo"
+
+    assert setenv(FOO="bar", BAR="foo") is None
+    assert os.getenv("FOO") == "bar"
+    assert os.getenv("BAR") == "foo"
+    assert setenv(FOO="{FOO}") is None
+    assert os.getenv("FOO") == "foo"
+
+
+@patch.dict(os.environ, {"FOO": "foo"})
+def test_interpolate1(cfg):
+    """
+    spin.interpolate1 is able to resolve variables from different sources while
+    respecting the escaping syntax.
+    """
+    # interpolation against the environment
+    assert interpolate1("'{FOO}'") == f"'{os.environ['FOO']}'"
+
+    # ... one step recursion
+    cfg.bad = "{bad}"
+    assert interpolate1("{bad}") == "{bad}"
+
+    # ... two step recursion
+    cfg.foo = "{bar}"
+    cfg.bar = "final"
+    assert interpolate1("{foo}") == "final"
+
+    # ... using a Path against the configuration tree
+    cfg["BAR"] = "bar"
+    result = interpolate1(Path("{BAR}"))
+    assert isinstance(result, Path)
+    assert result == Path("bar")
+
+    # ... while escaping curly braces
+    assert interpolate1("{{foo}}") == "{foo}"
+
+    # ... while escaping curly braces and resolving from the ConfigTree
+    assert (
+        interpolate1('{{"header": {{"language": "en", "cache": "{BAR}"}}}}')
+        == '{"header": {"language": "en", "cache": "bar"}}'
+    )
+    # ... while ensuring to escape closing curly braces right to the left
+    assert interpolate1("{{{{{foo}}}}}") == "{{final}}"
+
+    # ... triggering the RecursionError
     cfg.bad = config()
     cfg.bad.a = "{bad.b}"
     cfg.bad.b = "{bad.a}"
     with pytest.raises(RecursionError):
         interpolate1("{bad.a}")
-
-
-def test_interpolate_onestep_recursion(cfg):
-    cfg.bad = "{bad}"
-    assert interpolate1("{bad}") == "{bad}"
-
-
-def test_interpolate_path():
-    p = Path("{SPIN_CACHE}")
-    assert isinstance(interpolate1(p), Path)
 
 
 def test_echo(cfg, mocker):
@@ -90,12 +128,12 @@ def test_info(cfg, mocker):
 
 
 def test_cd(tmpdir):
-    with cd(tmpdir):
+    with cd(Path(tmpdir)):
         assert os.getcwd() == tmpdir
 
 
 def test_mkdir_rmdir(tmpdir):
-    xxx = tmpdir + "/xxx"
+    xxx = Path(tmpdir + "/xxx")
     mkdir(xxx)
     assert exists(xxx)
     rmtree(xxx)
