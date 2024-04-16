@@ -389,7 +389,7 @@ def venv_init(cfg):
                 "{python.venv} does not exist. You may want to provision it using"
                 " spin --provision"
             )
-        echo("activate {python.venv}", resolve=True)
+        echo("activate {python.venv}")
         exec(open(activate_this).read(), {"__file__": activate_this})
         ACTIVATED = True
 

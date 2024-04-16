@@ -74,21 +74,21 @@ __all__ = [
 ]
 
 
-def echo(*msg, resolve=False, **kwargs):
+def echo(*msg, **kwargs):
     """Print a message to the console by joining the positional arguments
     `msg` with spaces.
 
-    `echo` is meant for messages that explain to the user what spin is doing 
-    (e.g. *echoing* commands launched). It will remain silent though when ``spin`` 
-    is run with the ``--quiet`` flag. If the parameter ``resolve`` is set to 
-    ``True``, the arguments are interpolated against the configuration tree.
+    Arguments are interpolated against the configuration tree. `echo`
+    will remain silent when ``spin`` is run with the ``--quiet``
+    flag. `echo` is meant for messages that explain to the user what
+    spin is doing (e.g. *echoing* commands launched).
 
-    `echo` supports the same keyword arguments as Click's :py:func:`click.echo`.
+    `echo` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
 
     """
     if not CONFIG.quiet:
-        if resolve:
-            msg = interpolate(msg)
+        msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(click.style(" ".join(msg), bold=True), **kwargs)
 
@@ -557,48 +557,20 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 
 
 def interpolate1(literal, *extra_dicts):
-    """Interpolate a string against the configuration tree.
-
-    To avoid interpolation for literals or specific parts of a literal, curly
-    braces can be used to escape curly braces, like regular f-string
-    interpolation.
-
-    Example:
-
-    >>> interpolate1(
-            '{{"header": {{"language": "en", "cache": "{SPIN_CACHE}"}}}}'
-        )
-    '{"header": {"language": "en", "cache": "/home/bts/.cache/spin"}}'
-
-    """
+    """Interpolate a string against the configuration tree."""
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK
     )
     is_path = isinstance(literal, Path)
     seen = set()
-
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
         seen.add(literal)
-
-        # The whole literal.replace()-dance below is a *crude workaround* which
-        # is necessary to support curly brackets escapes without dropping the
-        # evaluation of nested variables. Doing this 'by the book' requires
-        # substantially higher efforts which we're not ready to pay now. So we
-        # take this shortcut consciously and will repay the TD later.
-        #
-        # *Note*: string reverting (below) is necessary to replace the outer 
-        # bracket pairs and not the inner.
-        literal = literal[::-1].replace("}}", "<DOUBLE_BRACE_CLOSE>"[::-1])
-        literal = literal[::-1].replace("{{", "<DOUBLE_BRACE_OPEN>")
-        literal = eval(rf"rf''' {literal} '''", {}, where_to_look)[1:-1]  # noqa
-        literal = literal.replace("<DOUBLE_BRACE_OPEN>", "{{")
-        literal = literal.replace("<DOUBLE_BRACE_CLOSE>", "}}")
+        literal = eval("rf''' %s '''" % literal, {}, where_to_look)  # noqa
+        literal = literal[1:-1]
         if previous == literal:
-            literal = literal.replace("{{", "{")
-            literal = literal.replace("}}", "}")
             break
         if literal in seen:
             raise RecursionError(literal)
@@ -902,7 +874,7 @@ def run_spin(script):
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
         try:
-            echo("spin", " ".join(line), resolve=True)
+            echo("spin", " ".join(line))
             commands(line)
         except SystemExit as exc:
             if exc.code:
