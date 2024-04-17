@@ -661,17 +661,9 @@ def venv_provision(cfg):
     get_abi_tag(cfg)
     fresh_virtualenv = False
     if not exists("{python.venv}"):
-        # Make sure the Python interpreter we'll use to create the
-        # virtual environment has the virtualenv package installed.
-        sh(
-            "{python.interpreter}",
-            "-mpip",
-            cfg.quietflag,
-            "install",
-            "virtualenv",
-            "packaging",
-        )
-        cmd = ["{python.interpreter}", "-mvirtualenv", cfg.quietflag]
+        # virtualenv is guaranteed to be available like this
+        # as we declared it as one of spin's dependencies
+        cmd = [sys.executable, "-mvirtualenv", cfg.quietflag]
         virtualenv = Command(*cmd)
         # do not download seeds, since we update pip later anyway
         virtualenv("-p", "{python.interpreter}", "{python.venv}")

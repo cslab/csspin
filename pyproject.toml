@@ -18,6 +18,7 @@ dependencies = [
   "ruamel.yaml",
   "svn",
   "wheel",
+  "virtualenv",
   "xdg"
 ]
 description = "spin"
