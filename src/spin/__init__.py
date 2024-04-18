@@ -575,7 +575,7 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 
 
 def interpolate1(literal, *extra_dicts):
-    """Interpolate a string or path against the configuration tree.
+    """Interpolate a string or path against the configuration tree and the environment.
 
     If literal is not a string or path, it will be converted to a string prior
     interpolating.
