@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable, Type
 
+import packaging.version
+
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator
     from spin.tree import ConfigTree
@@ -768,17 +770,16 @@ def task(*args: Any, **kwargs: Any) -> Callable:
     # Import cli here, to avoid an import cycle
     from spin import cli  # pylint: disable=cyclic-import
 
-    def task_wrapper(fn: str | Path, group=cli.commands) -> Callable:
+    def task_wrapper(fn: Callable, group=cli.commands) -> Callable:
         task_object = fn
         pass_context = False
         context_settings = config()
         sig = inspect.signature(fn)
         param_names = list(sig.parameters.keys())
-        if param_names:
-            if param_names[0] == "ctx":
-                pass_context = True
-                task_object = click.pass_context(fn)
-                param_names.pop(0)
+        if param_names and param_names[0] == "ctx":
+            pass_context = True
+            task_object = click.pass_context(fn)
+            param_names.pop(0)
         pass_config = False
         for pn in param_names:
             if pn == "cfg":
@@ -929,7 +930,7 @@ def get_sources(tree: ConfigTree) -> list:
     return sources  # type: ignore[no-any-return]
 
 
-def build_target(cfg, target, phony=False):
+def build_target(cfg: ConfigTree, target: str, phony: bool = False) -> None:
     info(f"target '{target}'{' (phony)' if phony else ''}")
     build_rules = cfg.get("build-rules", config())
     target_def = build_rules.get(target, None)
@@ -957,7 +958,7 @@ def build_target(cfg, target, phony=False):
             info(f"{target} is up to date")
 
 
-def ensure(command):
+def ensure(command: click.core.Command) -> None:
     # Check 'command_name' for dependencies declared under
     # "build-rules", and make sure to produce it. This is used
     # internally and intentionally undocumented.
@@ -966,7 +967,7 @@ def ensure(command):
     build_target(cfg, f"task {command.full_name}", phony=True)
 
 
-def invoke(hook, *args, **kwargs):
+def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
     '''``invoke()`` invokes the tasks that have the ``when`` hook
     `hook`. As an example, here is the implementation of **lint**:
 
@@ -999,7 +1000,7 @@ def invoke(hook, *args, **kwargs):
         ctx.invoke(task_object, *args, **pass_opts)
 
 
-def toporun(cfg, *fn_names, reverse=False):
+def toporun(cfg, *fn_names, reverse=False) -> None:
     """Run plugin functions named in 'fn_names' in topological order."""
     plugins = cfg.topo_plugins
     if reverse:
@@ -1014,7 +1015,7 @@ def toporun(cfg, *fn_names, reverse=False):
                 initf(cfg)
 
 
-def main(*args, **kwargs):
+def main(*args: Any, **kwargs: Any) -> None:
     from spin.cli import cli
 
     if not args:
@@ -1026,16 +1027,16 @@ def main(*args, **kwargs):
     cli.main(args, **kwargs)
 
 
-def _main(*args, **kwargs):
+def _main(*args: Any, **kwargs: Any) -> None:
     return main(*args, standalone_mode=True, **kwargs)
 
 
-def parse_version(verstr):
+def parse_version(verstr: str) -> packaging.version.Version:
     """Parse a version string."""
     return packaging.version.parse(verstr)
 
 
-def get_requires(tree, keyname):
+def get_requires(tree: ConfigTree, keyname: str) -> ConfigTree | list:
     """Access the 'requires.<keyname>' property in a subtree. Return [] if
     not there.
     """

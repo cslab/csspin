@@ -137,7 +137,7 @@ def test_basic_dict() -> None:
     with raises(KeyError):
         assert config[3] == 3
 
-    foo = config.setdefault("foo", None)
+    foo = config.setdefault("foo", None)  # pylint: disable=disallowed-name
     assert foo is None
     assert "foo" in config
     assert config["foo"] is None
