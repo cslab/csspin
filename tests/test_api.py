@@ -402,48 +402,66 @@ def test_namespace_context_manager() -> None:
     assert not spin.NSSTACK
 
 
+def test_setenv(cfg):
+    """
+    Test that ensures that spin.setenv is able to set environment variables
+    while resolving values to interpolate as well as those which should not
+    interpolated.
+    """
+    cfg["FOO"] = "foo"
+
+    assert spin.setenv(FOO="bar", BAR="foo") is None
+    assert os.getenv("FOO") == "bar"
+    assert os.getenv("BAR") == "foo"
+    assert spin.setenv(FOO="{FOO}") is None
+    assert os.getenv("FOO") == "foo"
+
+
 @patch.dict(os.environ, {"FOO": "foo"})
-def test_interpolate1_env() -> None:
-    """spin.interpolate1 interpolates environment variables as expected"""
+def test_interpolate1(cfg):
+    """
+    spin.interpolate1 is able to resolve variables from different sources while
+    respecting the escaping syntax.
+    """
+    # interpolation against the environment
     assert spin.interpolate1("'{FOO}'") == f"'{os.environ['FOO']}'"
 
+    # ... one step recursion
+    cfg.bad = "{bad}"
+    assert spin.interpolate1("{bad}") == "{bad}"
 
-def test_interpolate1_values() -> None:
-    """spin.interpolate1 casts various values into strings"""
-    assert spin.interpolate1(1) == "1"
-    assert spin.interpolate1((1,)) == "(1,)"
-    assert spin.interpolate1("foo") == "foo"
+    # ... two step recursion
+    cfg.foo = "{bar}"
+    cfg.bar = "final"
+    assert spin.interpolate1("{foo}") == "final"
 
+    # ... using a Path against the configuration tree
+    cfg["BAR"] = "bar"
+    result = spin.interpolate1(Path("{BAR}"))
+    assert isinstance(result, Path)
+    assert result == Path("bar")
 
-def test_interpolate1_not_hashable() -> None:
-    """spin.interpolate1 fails if passed arguments are not hashable"""
-    with pytest.raises(
-        click.Abort, match=".*Can't interpolate literal=.* since it's not hashable."
-    ):
-        assert spin.interpolate1(["foo", "bar"]) == '["foo", "bar"]'
+    # ... while escaping curly braces
+    assert spin.interpolate1("{{foo}}") == "{foo}"
 
+    # ... while escaping curly braces and resolving from the ConfigTree
+    assert (
+        spin.interpolate1('{{"header": {{"language": "en", "cache": "{BAR}"}}}}')
+        == '{"header": {"language": "en", "cache": "bar"}}'
+    )
+    # ... while ensuring to escape closing curly braces right to the left
+    assert spin.interpolate1("{{{{{foo}}}}}") == "{{final}}"
 
-def test_interpolate1_recursion(cfg: ConfigTree) -> None:
-    """spin.interpolate1 will raise RecursionError if necessary"""
+    # ... triggering the RecursionError
     cfg.bad = spin.config()
     cfg.bad.a = "{bad.b}"
     cfg.bad.b = "{bad.a}"
     with pytest.raises(RecursionError, match="{bad.a}"):
         spin.interpolate1("{bad.a}")
 
-
-def test_interpolate1_onestep_recursion(cfg: ConfigTree) -> None:
-    """spin.interpolate1 will stop recursion for {bad} after one step"""
-    cfg.bad = "{bad}"
-    assert spin.interpolate1("{bad}") == "{bad}"
-
-
-def test_interpolate1_path(cfg) -> None:
-    """spin.interpolate1 is resolving a Path that must be interpolated"""
-    cfg["FOO"] = Path("foo")
-    result = spin.interpolate1(Path("{FOO}"))
-    assert isinstance(result, Path)
-    assert result == Path("foo")
+    # ... allowing to pass not path and not string
+    assert spin.interpolate1(1234) == "1234"
+    assert spin.interpolate1(str) == "<class 'str'>"
 
 
 def test_interpolate_n() -> None:

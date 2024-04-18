@@ -85,21 +85,21 @@ __all__ = [
 ]
 
 
-def echo(*msg: str, **kwargs: Any) -> None:
+def echo(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
     """Print a message to the console by joining the positional arguments
     `msg` with spaces.
 
-    Arguments are interpolated against the configuration tree. `echo`
-    will remain silent when ``spin`` is run with the ``--quiet``
-    flag. `echo` is meant for messages that explain to the user what
-    spin is doing (e.g. *echoing* commands launched).
+    `echo` is meant for messages that explain to the user what spin is doing
+    (e.g. *echoing* commands launched). It will remain silent though when ``spin``
+    is run with the ``--quiet`` flag. If the parameter ``resolve`` is set to
+    ``True``, the arguments are interpolated against the configuration tree.
 
-    `echo` supports the same keyword arguments as Click's
-    :py:func:`click.echo`.
+    `echo` supports the same keyword arguments as Click's :py:func:`click.echo`.
 
     """
     if not CONFIG.quiet:
-        msg = interpolate(msg)  # type: ignore[assignment]
+        if resolve:
+            msg = interpolate(msg)
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(click.style(" ".join(msg), bold=True), **kwargs)
 
@@ -574,24 +574,55 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 )
 
 
-def interpolate1(literal: Hashable | Path, *extra_dicts: dict) -> Hashable | Path:
-    """Interpolate a string against the configuration tree."""
-    if not isinstance(literal, Hashable):
-        die(f"Can't interpolate {literal=} since it's not hashable.")  # type: ignore[unreachable]
+def interpolate1(literal, *extra_dicts):
+    """Interpolate a string or path against the configuration tree.
+
+    If literal is not a string or path, it will be converted to a string prior
+    interpolating.
+
+    To avoid interpolation for literals or specific parts of a literal, curly
+    braces can be used to escape curly braces, like regular f-string
+    interpolation.
+
+    Example:
+
+    >>> interpolate1(
+            '{{"header": {{"language": "en", "cache": "{SPIN_CACHE}"}}}}'
+        )
+    '{"header": {"language": "en", "cache": "/home/bts/.cache/spin"}}'
+
+    """
+    is_path = isinstance(literal, Path)
+    if not is_path and not isinstance(literal, str):
+        literal = str(literal)
 
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK  # type: ignore[arg-type]
     )
-    is_path = isinstance(literal, Path)
     seen = set()
+
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
         previous = literal
         seen.add(literal)
-        literal = eval(f"rf''' {literal} '''", {}, where_to_look)
-        literal = literal[1:-1]  # type: ignore[index] # literal will be indexable at this point
+
+        # The whole literal.replace()-dance below is a *crude workaround* which
+        # is necessary to support curly brackets escapes without dropping the
+        # evaluation of nested variables. Doing this 'by the book' requires
+        # substantially higher efforts which we're not ready to pay now. So we
+        # take this shortcut consciously and will repay the TD later.
+        #
+        # *Note*: string reverting (below) is necessary to replace the outer
+        # bracket pairs and not the inner.
+        literal = literal[::-1].replace("}}", "<DOUBLE_BRACE_CLOSE>"[::-1])
+        literal = literal[::-1].replace("{{", "<DOUBLE_BRACE_OPEN>")
+        literal = eval(rf"rf''' {literal} '''", {}, where_to_look)[1:-1]  # noqa
+        literal = literal.replace("<DOUBLE_BRACE_OPEN>", "{{")
+        literal = literal.replace("<DOUBLE_BRACE_CLOSE>", "}}")
         if previous == literal:
+            literal = literal.replace("{{", "{")
+            literal = literal.replace("}}", "}")
             break
         if literal in seen:
             raise RecursionError(literal)
@@ -916,7 +947,7 @@ def run_spin(script: list) -> None:
     for line in script:
         line = shlex.split(line.replace("\\", "\\\\"))
         try:
-            echo("spin", " ".join(line))
+            echo("spin", " ".join(line), resolve=True)
             commands(line)
         except SystemExit as exc:
             if exc.code:  # pylint: disable=using-constant-test

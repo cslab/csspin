@@ -104,6 +104,7 @@ defaults = config(
     nuget=config(
         url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
         exe=N("{spin.cache}/nuget.exe"),
+        source="https://api.nuget.org/v3/index.json",
     ),
     version=None,
     plat_dir=N("{spin.cache}/{platform.tag}"),
@@ -299,6 +300,8 @@ def nuget_install(cfg):
         "python",
         "-version",
         "{python.version}",
+        "-source",
+        "{python.nuget.source}",
     )
     paths = interpolate1("{python.inst_dir};" + N("{python.inst_dir}/Scripts"))
     setenv(
@@ -396,8 +399,7 @@ def venv_init(cfg):
                 "{python.venv} does not exist. You may want to provision it using"
                 " spin --provision"
             )
-        echo("activate {python.venv}")
-
+        echo("activate {python.venv}", resolve=True)
         with open(activate_this, encoding="utf-8") as file:
             exec(file.read(), {"__file__": activate_this})  # pylint: disable=exec-used
         ACTIVATED = True
