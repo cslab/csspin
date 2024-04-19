@@ -68,7 +68,6 @@ repos:
         exclude: ".eslintrc.json"
       # Check for files that contain merge conflict strings.
       - id: check-merge-conflict
-        exclude: ^docs/plugins.rst$
       # Attempts to load all YAML files to verify syntax.
       - id: check-yaml
       # Check for debugger imports and py37+ breakpoint() calls in Python source.

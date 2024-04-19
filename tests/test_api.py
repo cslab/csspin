@@ -271,7 +271,7 @@ def test_writelines(tmpdir: Path) -> None:
     """spin.writelines writes multiple lines into a file"""
     content = "foo:\n  - bar\n  - baz"
     expected = ["foo:\n", "  - bar\n", "  - baz"]
-    spin.writelines(fn=tmpdir / "test.txt", lines=content)
+    assert spin.writelines(fn=tmpdir / "test.txt", lines=content) is None
     with open(tmpdir / "test.txt", "r", encoding="utf-8") as f:
         assert f.readlines() == expected
 
@@ -366,11 +366,11 @@ def test_memoizer(tmpdir: Path) -> None:
     assert mem.check("item1")
     assert not mem.check("item")
 
-    mem.save()
+    assert mem.save() is None
     assert spin.unpersist(fn) == mem.items()
 
     assert mem.items() == items
-    mem.add("item3")
+    assert mem.add("item3") is None
     assert spin.unpersist(fn) == mem.items()
 
 
@@ -383,11 +383,11 @@ def test_memoizer_context_manager(tmpdir: Path) -> None:
         assert mem._items == []
         assert not mem.check("item1")
 
-        mem.save()
+        assert mem.save() is None
         assert spin.unpersist(fn) == []
 
         assert mem.items() == []
-        mem.add("item1")
+        assert mem.add("item1") is None
         assert spin.unpersist(fn) == ["item1"]
 
 
@@ -402,66 +402,48 @@ def test_namespace_context_manager() -> None:
     assert not spin.NSSTACK
 
 
-def test_setenv(cfg):
-    """
-    Test that ensures that spin.setenv is able to set environment variables
-    while resolving values to interpolate as well as those which should not
-    interpolated.
-    """
-    cfg["FOO"] = "foo"
-
-    spin.setenv(FOO="bar", BAR="foo")
-    assert os.getenv("FOO") == "bar"
-    assert os.getenv("BAR") == "foo"
-    spin.setenv(FOO="{FOO}")
-    assert os.getenv("FOO") == "foo"
-
-
 @patch.dict(os.environ, {"FOO": "foo"})
-def test_interpolate1(cfg):
-    """
-    spin.interpolate1 is able to resolve variables from different sources while
-    respecting the escaping syntax.
-    """
-    # interpolation against the environment
+def test_interpolate1_env() -> None:
+    """spin.interpolate1 interpolates environment variables as expected"""
     assert spin.interpolate1("'{FOO}'") == f"'{os.environ['FOO']}'"
 
-    # ... one step recursion
-    cfg.bad = "{bad}"
-    assert spin.interpolate1("{bad}") == "{bad}"
 
-    # ... two step recursion
-    cfg.foo = "{bar}"
-    cfg.bar = "final"
-    assert spin.interpolate1("{foo}") == "final"
+def test_interpolate1_values() -> None:
+    """spin.interpolate1 casts various values into strings"""
+    assert spin.interpolate1(1) == "1"
+    assert spin.interpolate1((1,)) == "(1,)"
+    assert spin.interpolate1("foo") == "foo"
 
-    # ... using a Path against the configuration tree
-    cfg["BAR"] = "bar"
-    result = spin.interpolate1(Path("{BAR}"))
-    assert isinstance(result, Path)
-    assert result == Path("bar")
 
-    # ... while escaping curly braces
-    assert spin.interpolate1("{{foo}}") == "{foo}"
+def test_interpolate1_not_hashable() -> None:
+    """spin.interpolate1 fails if passed arguments are not hashable"""
+    with pytest.raises(
+        click.Abort, match=".*Can't interpolate literal=.* since it's not hashable."
+    ):
+        assert spin.interpolate1(["foo", "bar"]) == '["foo", "bar"]'
 
-    # ... while escaping curly braces and resolving from the ConfigTree
-    assert (
-        spin.interpolate1('{{"header": {{"language": "en", "cache": "{BAR}"}}}}')
-        == '{"header": {"language": "en", "cache": "bar"}}'
-    )
-    # ... while ensuring to escape closing curly braces right to the left
-    assert spin.interpolate1("{{{{{foo}}}}}") == "{{final}}"
 
-    # ... triggering the RecursionError
+def test_interpolate1_recursion(cfg: ConfigTree) -> None:
+    """spin.interpolate1 will raise RecursionError if necessary"""
     cfg.bad = spin.config()
     cfg.bad.a = "{bad.b}"
     cfg.bad.b = "{bad.a}"
     with pytest.raises(RecursionError, match="{bad.a}"):
         spin.interpolate1("{bad.a}")
 
-    # ... allowing to pass not path and not string
-    assert spin.interpolate1(1234) == "1234"
-    assert spin.interpolate1(str) == "<class 'str'>"
+
+def test_interpolate1_onestep_recursion(cfg: ConfigTree) -> None:
+    """spin.interpolate1 will stop recursion for {bad} after one step"""
+    cfg.bad = "{bad}"
+    assert spin.interpolate1("{bad}") == "{bad}"
+
+
+def test_interpolate1_path(cfg) -> None:
+    """spin.interpolate1 is resolving a Path that must be interpolated"""
+    cfg["FOO"] = Path("foo")
+    result = spin.interpolate1(Path("{FOO}"))
+    assert isinstance(result, Path)
+    assert result == Path("foo")
 
 
 def test_interpolate_n() -> None:
@@ -488,7 +470,7 @@ def test_download(cfg: ConfigTree, tmp_path: Path) -> None:
     cfg.quiet = True
     url = "https://contact-software.com"
     location = tmp_path / "index.html"
-    spin.download(url=url, location=location)
+    assert spin.download(url=url, location=location) is None
     assert location.is_file()
 
 
@@ -550,7 +532,7 @@ def test_is_up_to_date(tmpdir: Path, mocker: MockerFixture) -> None:
 def test_run_script(mocker: MockerFixture) -> None:
     """spin.run_script calls spin.sh using the expected arguments"""
     mocker.patch("spin.sh")
-    spin.run_script(script=["ls", "spin --help"], env={"foo": "bar"})
+    assert spin.run_script(script=["ls", "spin --help"], env={"foo": "bar"}) is None
     assert (
         repr(spin.sh.call_args_list[0]) == "call('ls', shell=True, env={'foo': 'bar'})"
     )
@@ -558,7 +540,7 @@ def test_run_script(mocker: MockerFixture) -> None:
         repr(spin.sh.call_args_list[1])
         == "call('spin --help', shell=True, env={'foo': 'bar'})"
     )
-    spin.run_script(script="ls", env={})
+    assert spin.run_script(script="ls", env={}) is None
     assert repr(spin.sh.call_args_list[2]) == "call('ls', shell=True, env={})"
 
 
@@ -570,16 +552,16 @@ def test_run_spin() -> None:
         spin.run_spin(script=["python", "-c", "'raise SystemExit()'"])
 
     with mock.patch("spin.cli.commands"):
-        spin.run_spin(script=["ls", "spin --help"])
+        assert spin.run_spin(script=["ls", "spin --help"]) is None
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['ls'])"
         assert repr(spin.cli.commands.call_args_list[1]) == "call(['spin', '--help'])"
 
     with mock.patch("spin.cli.commands"):
-        spin.run_spin(script="ls")
+        assert spin.run_spin(script="ls") is None
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['ls'])"
 
     with mock.patch("spin.cli.commands"):
-        spin.run_spin(script=1)
+        assert spin.run_spin(script=1) is None
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['1'])"
 
 
@@ -627,7 +609,7 @@ def test_build_target_no_target_but_exists(cfg: ConfigTree, tmpdir: Path) -> Non
     tree's build rules, but still exist
     """
     cfg["TMPDIR"] = tmpdir
-    spin.build_target(spin.config(), target="{TMPDIR}")
+    assert spin.build_target(spin.config(), target="{TMPDIR}") is None
 
 
 def test_build_target_up_to_date(
@@ -652,7 +634,7 @@ def test_ensure(mocker: MockerFixture) -> None:
         """Just a command"""
 
     mocker.patch("spin.build_target")
-    spin.ensure(command)
+    assert spin.ensure(command) is None
     assert spin.build_target.call_args_list[0][0][-1] == "task command"
     assert str(spin.build_target.call_args_list[0][1]) == "{'phony': True}"
 

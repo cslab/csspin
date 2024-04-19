@@ -13,13 +13,13 @@ Status
 ======
 
 The up-to-date version is 0.2+, which currently lives in 'master' and
-is continuously evolving. It is therefore recommended to do an
+is continuously evolving.  It is therefore recommended to do an
 editable install using ``pipx`` or ``pip install --user`` from the
 cloned repo, and pull regularly:
 
 .. code-block:: console
 
-   $ git clone git@code.contact.de:frank/spin.git
+   $ git clone git@git.contact.de:frank/spin.git
    $ cd spin
    $ pipx install -e .
 
