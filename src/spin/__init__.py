@@ -26,6 +26,7 @@ import packaging.version
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator
     from spin.tree import ConfigTree
+    from spin.cli import GroupWithAliases
 
 import collections
 import inspect
@@ -39,6 +40,7 @@ import sys
 import time
 import urllib.request
 from contextlib import contextmanager
+from pathlib import Path as PathlibPath
 from typing import Hashable
 
 import click
@@ -163,7 +165,7 @@ class DirectoryChanger:
 
     def __init__(self: DirectoryChanger, path: str | Path) -> None:
         """Change directory."""
-        path = interpolate1(path)  # type: ignore[assignment]
+        path = interpolate1(path)
         self._cwd = os.getcwd()
         echo("cd", path)
         os.chdir(path)
@@ -204,7 +206,7 @@ def exists(path: str | Path) -> bool:
     the configuration tree.
 
     """
-    path = interpolate1(path)  # type: ignore[assignment]
+    path = interpolate1(path)
     return os.path.exists(path)
 
 
@@ -224,7 +226,7 @@ def mkdir(path: str) -> str:
     tree.
 
     """
-    path = interpolate1(path)  # type: ignore[assignment]
+    path = interpolate1(path)
     if not exists(path):
         echo("mkdir", path)
         os.makedirs(path)
@@ -238,7 +240,7 @@ def rmtree(path: str) -> None:
     Obviously, this should be used with care.
 
     """
-    path = interpolate1(path)  # type: ignore[assignment]
+    path = interpolate1(path)
     echo("rmtree", path)
     shutil.rmtree(path)
 
@@ -283,7 +285,7 @@ class Command:
         return sh(*cmd, **kwargs)
 
 
-def sh(*cmd: str, **kwargs: Any) -> subprocess.CompletedProcess | None:
+def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     """Run a program by building a command line from `cmd`.
 
     When multiple positional arguments are given, each is treated as
@@ -372,7 +374,7 @@ def backtick(*cmd: str, **kwargs: Any) -> str:
 EXPORTS: dict = {}
 
 
-def setenv(*args, **kwargs) -> None:
+def setenv(*args: Any, **kwargs: Any) -> None:
     """Set or unset one or more environment variables. The values of
     keyword arguments are interpolated against the configuration tree.
 
@@ -398,25 +400,25 @@ def setenv(*args, **kwargs) -> None:
 
 
 def _read_file(fn: str | Path, mode: str) -> str | bytes:
-    fn = interpolate1(fn)  # type: ignore[assignment]
+    fn = interpolate1(fn)
     with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
         return f.read()  # type: ignore[no-any-return]
 
 
 def readlines(fn: str | Path) -> list[str]:
-    fn = interpolate1(fn)  # type: ignore[assignment]
+    fn = interpolate1(fn)
     with open(fn, "r", encoding="utf-8") as f:
         return f.readlines()
 
 
 def writelines(fn: str | Path, lines: str) -> None:
-    fn = interpolate1(fn)  # type: ignore[assignment]
+    fn = interpolate1(fn)
     with open(fn, "w", encoding="utf-8") as f:
         return f.writelines(lines)
 
 
 def _write_file(fn: str | Path, mode: str, data: bytes | str) -> int:
-    fn = interpolate1(fn)  # type: ignore[assignment]
+    fn = interpolate1(fn)
     with open(fn, mode, encoding="utf-8" if "b" not in mode else None) as f:
         return f.write(data)
 
@@ -574,15 +576,15 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 )
 
 
-def interpolate1(literal: Hashable | Path, *extra_dicts: dict) -> Hashable | Path:
+def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
     """Interpolate a string against the configuration tree."""
     if not isinstance(literal, Hashable):
-        die(f"Can't interpolate {literal=} since it's not hashable.")  # type: ignore[unreachable]
+        die(f"Can't interpolate {literal=} since it's not hashable.")
 
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK  # type: ignore[arg-type]
     )
-    is_path = isinstance(literal, Path)
+    is_path = isinstance(literal, (Path, PathlibPath))
     seen = set()
     while True:
         # Interpolate until we reach a fixpoint -- this allows for
@@ -590,7 +592,7 @@ def interpolate1(literal: Hashable | Path, *extra_dicts: dict) -> Hashable | Pat
         previous = literal
         seen.add(literal)
         literal = eval(f"rf''' {literal} '''", {}, where_to_look)
-        literal = literal[1:-1]  # type: ignore[index] # literal will be indexable at this point
+        literal = literal[1:-1]
         if previous == literal:
             break
         if literal in seen:
@@ -600,7 +602,7 @@ def interpolate1(literal: Hashable | Path, *extra_dicts: dict) -> Hashable | Pat
     return literal
 
 
-def interpolate(literals: Iterable[Hashable], *extra_dicts: dict) -> list:
+def interpolate(literals: Iterable, *extra_dicts: dict) -> list:
     """
     Interpolate an iterable of hashable items against the configuration tree.
     """
@@ -614,7 +616,7 @@ def interpolate(literals: Iterable[Hashable], *extra_dicts: dict) -> list:
     return out
 
 
-def config(*args: Any | None, **kwargs: dict) -> ConfigTree:
+def config(*args: Any | None, **kwargs: Any) -> ConfigTree:
     """`config` creates a configuration subtree:
 
     >>> config(a="alpha", b="beta)
@@ -626,14 +628,14 @@ def config(*args: Any | None, **kwargs: dict) -> ConfigTree:
 
     from spin.tree import ConfigTree
 
-    return ConfigTree(*args, **kwargs, __ofs_frames__=1)
+    return ConfigTree(*args, **kwargs, __ofs_frames__=1)  # type: ignore[arg-type]
 
 
 def readyaml(fname: str | Path) -> ConfigTree:
     """Read a YAML file."""
     from spin.tree import tree_load
 
-    fname = interpolate1(fname)  # type: ignore[assignment]
+    fname = interpolate1(fname)
     return tree_load(fname)
 
 
@@ -770,7 +772,10 @@ def task(*args: Any, **kwargs: Any) -> Callable:
     # Import cli here, to avoid an import cycle
     from spin import cli  # pylint: disable=cyclic-import
 
-    def task_wrapper(fn: Callable, group=cli.commands) -> Callable:
+    def task_wrapper(
+        fn: Callable,
+        group: GroupWithAliases = cli.commands,  # type: ignore[assignment]
+    ) -> Callable:
         task_object = fn
         pass_context = False
         context_settings = config()
@@ -802,9 +807,9 @@ def task(*args: Any, **kwargs: Any) -> Callable:
         if noenv:
             cli.register_noenv(task_object.name)
         if group != cli.commands:  # pylint: disable=comparison-with-callable
-            task_object.full_name = " ".join((group.name, task_object.name))
+            task_object.full_name = " ".join((group.name, task_object.name))  # type: ignore[attr-defined]
         else:
-            task_object.full_name = task_object.name
+            task_object.full_name = task_object.name  # type: ignore[attr-defined]
         if hook:
             cfg = get_tree()
             hook_tree = cfg.get("hooks", config())
@@ -813,12 +818,12 @@ def task(*args: Any, **kwargs: Any) -> Callable:
         for alias in aliases:
             group.register_alias(alias, task_object)
 
-        def regular_callback(*args, **kwargs):
-            ensure(task_object)
+        def regular_callback(*args: Any, **kwargs: Any) -> Any:
+            ensure(task_object)  # type: ignore[arg-type]
             return fn(*args, **kwargs)
 
-        def alternate_callback(*args, **kwargs):
-            ensure(task_object)
+        def alternate_callback(*args: Any, **kwargs: Any) -> Any:
+            ensure(task_object)  # type: ignore[arg-type]
             return fn(get_tree(), *args, **kwargs)
 
         if pass_config:
@@ -857,20 +862,22 @@ def group(*args: Any, **kwargs: Any) -> Callable:
     from spin import cli
 
     def group_decorator(fn: str | Path) -> Callable:
-        def subtask(*args: Any, **kwargs: Any) -> Callable:
-            def task_decorator(fn: str | Path):
-                cmd = task(*args, **kwargs, group=grp)(fn)
-                return cmd
-
-            return task_decorator
 
         noenv = kwargs.pop("noenv", False)
         kwargs["cls"] = cli.GroupWithAliases
-        grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))
+        grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))  # type: ignore[attr-defined]
         if noenv:
             cli.register_noenv(grp.name)
+
+        def subtask(*args: Any, **kwargs: Any) -> Callable:
+            def task_decorator(fn: str | Path) -> click.Command:
+                cmd = task(*args, **kwargs, group=grp)(fn)
+                return cmd  # type: ignore[no-any-return]
+
+            return task_decorator
+
         grp.task = subtask
-        return grp
+        return grp  # type: ignore[no-any-return]
 
     return group_decorator
 
@@ -881,10 +888,10 @@ def getmtime(fn: str | Path) -> float:
     `fn` is interpolated against the configuration tree.
 
     """
-    return os.path.getmtime(interpolate1(fn))  # type: ignore[arg-type]
+    return os.path.getmtime(interpolate1(fn))
 
 
-def is_up_to_date(target: str | Path, sources: Iterable[str, Path]) -> bool:
+def is_up_to_date(target: str | Path, sources: Iterable[str | Path]) -> bool:
     """Check whether `target` exists and is newer than all of the
     `sources`.
 
@@ -898,7 +905,7 @@ def is_up_to_date(target: str | Path, sources: Iterable[str, Path]) -> bool:
     return target_mtime >= max(source_mtimes)
 
 
-def run_script(script: list, env: dict | None = None) -> None:
+def run_script(script: str | list, env: dict | None = None) -> None:
     """Run a list of shell commands."""
     if isinstance(script, str) or not isinstance(script, Iterable):
         script = [str(script)]
@@ -906,7 +913,7 @@ def run_script(script: list, env: dict | None = None) -> None:
         sh(line, shell=True, env=env)
 
 
-def run_spin(script: list) -> None:
+def run_spin(script: str | list) -> None:
     """Run a list of spin commands."""
     from spin.cli import commands
 
@@ -958,13 +965,13 @@ def build_target(cfg: ConfigTree, target: str, phony: bool = False) -> None:
             info(f"{target} is up to date")
 
 
-def ensure(command: click.core.Command) -> None:
+def ensure(command: click.Command) -> None:
     # Check 'command_name' for dependencies declared under
     # "build-rules", and make sure to produce it. This is used
     # internally and intentionally undocumented.
     logging.debug("checking preconditions for %s", command)
     cfg = get_tree()
-    build_target(cfg, f"task {command.full_name}", phony=True)
+    build_target(cfg, f"task {command.full_name}", phony=True)  # type: ignore[attr-defined]
 
 
 def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
@@ -1000,7 +1007,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
         ctx.invoke(task_object, *args, **pass_opts)
 
 
-def toporun(cfg, *fn_names, reverse=False) -> None:
+def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
     """Run plugin functions named in 'fn_names' in topological order."""
     plugins = cfg.topo_plugins
     if reverse:
@@ -1019,12 +1026,12 @@ def main(*args: Any, **kwargs: Any) -> None:
     from spin.cli import cli
 
     if not args:
-        args = None
+        args = None  # type: ignore[assignment]
     kwargs["auto_envvar_prefix"] = "SPIN"
     kwargs["complete_var"] = "XOKSAPOKA"
     kwargs.setdefault("standalone_mode", False)
-    cli.click_main_kwargs = kwargs
-    cli.main(args, **kwargs)
+    cli.click_main_kwargs = kwargs  # type: ignore[attr-defined]
+    cli.main(args, **kwargs)  # type: ignore[arg-type]
 
 
 def _main(*args: Any, **kwargs: Any) -> None:
@@ -1041,4 +1048,4 @@ def get_requires(tree: ConfigTree, keyname: str) -> ConfigTree | list:
     not there.
     """
     requires = tree.get("requires", config())
-    return requires.get(keyname, [])
+    return requires.get(keyname, [])  # type: ignore[no-any-return]

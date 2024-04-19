@@ -58,7 +58,7 @@ class ConfigTree(OrderedDict):
         self.__keyinfo = {}
         self.__parentinfo = None  # pylint: disable=unused-private-member
         for key, value in self.items():
-            self.__keyinfo[key] = _call_location(2 + ofsframes)
+            self.__keyinfo[key] = _call_location(2 + ofsframes)  # type: ignore[operator]
             if isinstance(value, ConfigTree):
                 # pylint: disable=protected-access,unused-private-member
                 value.__parentinfo = ParentInfo(self, key)
@@ -133,7 +133,7 @@ def tree_set_keyinfo(tree: ConfigTree, key: Hashable, ki: KeyInfo) -> None:
 
 def tree_keyinfo(tree: ConfigTree, key: Hashable) -> KeyInfo:
     if key not in tree:
-        die(f"{key=} not in configuration tree.")  # type: ignore[no-untyped-call]
+        die(f"{key=} not in configuration tree.")
 
     return tree._ConfigTree__keyinfo[key]  # type: ignore[no-any-return] # pylint: disable=protected-access
 
@@ -165,7 +165,7 @@ def tree_load(fn: str) -> ConfigTree | Any:
         try:
             data = yaml.load(f)
         except ruamel.yaml.parser.ParserError as ex:
-            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")  # type: ignore[no-untyped-call]
+            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")
     return parse_yaml(data, fn)
 
 
@@ -231,9 +231,9 @@ def tree_dump(tree: ConfigTree) -> str:
 
 def directive_append(target: ConfigTree, key: Hashable, value: Any) -> None:
     if key not in target:
-        die(f"{key=} not in passed target tree.")  # type: ignore[no-untyped-call]
+        die(f"{key=} not in passed target tree.")
     if not isinstance(target[key], list):
-        die(f"Can't append {value=} to tree since {target[key]=} is not type 'list'")  # type: ignore[no-untyped-call] # noqa: E501
+        die(f"Can't append {value=} to tree since {target[key]=} is not type 'list'")
     if isinstance(value, list):
         target[key].extend(value)
     else:
@@ -242,9 +242,9 @@ def directive_append(target: ConfigTree, key: Hashable, value: Any) -> None:
 
 def directive_prepend(target: ConfigTree, key: Hashable, value: Any) -> None:
     if key not in target:
-        die(f"{key=} not in passed target tree.")  # type: ignore[no-untyped-call]
+        die(f"{key=} not in passed target tree.")
     if not isinstance(target[key], list):
-        die(f"Can't prepend {value=} to tree since {target[key]=} is not type 'list'")  # type: ignore[no-untyped-call] # noqa: E501
+        die(f"Can't prepend {value=} to tree since {target[key]=} is not type 'list'")
     if isinstance(value, list):
         target[key][0:0] = value
     else:
@@ -252,7 +252,7 @@ def directive_prepend(target: ConfigTree, key: Hashable, value: Any) -> None:
 
 
 def directive_interpolate(target: ConfigTree, key: Hashable, value: Any) -> None:
-    tree_update_key(target, key, interpolate1(value))  # type: ignore[no-untyped-call]
+    tree_update_key(target, key, interpolate1(value))
 
 
 def rpad(seq: list, length: int, padding: int | None = None) -> list:
@@ -296,7 +296,7 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
                 target[key] = value
                 tree_set_keyinfo(target, key, tree_keyinfo(source, key))
             except Exception:  # pylint: disable=broad-exception-caught
-                die(f"Can't merge {value=} into '{target=}[{key=}]'")  # type: ignore[no-untyped-call]
+                die(f"Can't merge {value=} into '{target=}[{key=}]'")
         elif isinstance(value, ConfigTree):
             tree_merge(target[key], value)
     # Pass 2: process directives. Note that we need a list for the
@@ -329,7 +329,7 @@ def tree_update(target: ConfigTree, source: ConfigTree) -> None:
                 tree_set_keyinfo(target, key, ki)
         except (TypeError, schema.SchemaError) as exc:
             # FIXME: Is it even possible to trigger the schema.SchemaError?
-            die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")  # type: ignore[no-untyped-call] # noqa: 501
+            die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")
 
 
 # Variable references are names prefixed by '$' (like $port, $version,
@@ -361,7 +361,7 @@ class YamlParser:
         elif isinstance(data, list):
             return self.parse_list(data)
         elif isinstance(data, dict):
-            return self.parse_dict(data)  # type: ignore[arg-type]
+            return self.parse_dict(data)
         return data
 
     def parse_str(self: YamlParser, data: Any) -> str:
@@ -377,7 +377,7 @@ class YamlParser:
         self: YamlParser, data: ruamel.yaml.comments.CommentedKeyMap
     ) -> ConfigTree | None:
         if not data:
-            data = {}  # type: ignore[assignment]
+            data = {}
         config = ConfigTree(data)
         for key, value in data.items():
             key = self.parse_yaml(key)

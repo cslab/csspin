@@ -14,14 +14,17 @@ searches the path up for 'spinfile.yaml'. Subcommands are provided by
 
 """
 
+from __future__ import annotations
+
 import base64
 import glob
 import hashlib
 import importlib
 import logging
 import os
-import site
 import sys
+from site import addsitedir
+from typing import TYPE_CHECKING, Any, Generator, Iterable
 
 import click
 import entrypoints
@@ -29,10 +32,19 @@ import packaging.version
 import ruamel.yaml
 from packaging import tags
 
+if TYPE_CHECKING:
+    from pathlib import Path as PathlibPath
+    from typing import Callable
+
+    from path import Path
+
+    from spin import ConfigTree
 if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
     import importlib_metadata
 else:  # pragma: no cover (PY38+)
     import importlib.metadata as importlib_metadata
+
+from types import ModuleType
 
 from spin import (
     cd,
@@ -81,7 +93,7 @@ DEFAULTS = config(
 )
 
 
-def find_spinfile(spinfile):
+def find_spinfile(spinfile: str | None) -> str | None:
     """Find a file 'spinfile' by walking up the directory tree."""
     cwd = os.getcwd()
     if spinfile is None:
@@ -98,7 +110,12 @@ def find_spinfile(spinfile):
     return None
 
 
-def load_plugin(cfg, import_spec, package=None, indent="  "):
+def load_plugin(
+    cfg: ConfigTree,
+    import_spec: str,
+    package: str | None = None,
+    indent: str = "  ",
+) -> ModuleType | None:
     """Recursively load a plugin module.
 
     Load the plugin given by 'import_spec' and its dependencies
@@ -136,21 +153,21 @@ def load_plugin(cfg, import_spec, package=None, indent="  "):
             tree.tree_set_keyinfo(
                 cfg,
                 settings_name,
-                tree.tree_keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),
+                tree.tree_keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),  # type: ignore[arg-type]
             )
-        tree.tree_merge(plugin_config_tree, plugin_defaults)
+        tree.tree_merge(plugin_config_tree, plugin_defaults)  # type: ignore[arg-type]
         dependencies = [
-            load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")
+            load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")  # type: ignore[union-attr]
             for requirement in get_requires(plugin_config_tree, "spin")
         ]
         plugin_config_tree._requires = [  # pylint: disable=protected-access
-            dep.__name__ for dep in dependencies  # pylint: disable=protected-access
+            dep.__name__ for dep in dependencies  # type: ignore[union-attr] # pylint: disable=protected-access # noqa: E501
         ]
-        mod.defaults = plugin_config_tree
+        mod.defaults = plugin_config_tree  # type: ignore[union-attr]
     return mod
 
 
-def reverse_toposort(nodes, graph):
+def reverse_toposort(nodes: Iterable, graph: dict) -> list:
     """Topologically sort nodes according to graph, which is a dict
     mapping nodes to dependencies.
     """
@@ -159,7 +176,7 @@ def reverse_toposort(nodes, graph):
     for targets in graph.values():
         for n in targets:
             counts[n] += 1
-    result = []
+    result = []  # type: ignore[var-annotated]
     independent = {n for n in nodes if counts[n] == 0}
     while independent:
         n = independent.pop()
@@ -183,7 +200,7 @@ def reverse_toposort(nodes, graph):
 # root and plugin directory, and then loads the plugins. 'commands'
 # just has the same options, but doesn't use them except for
 # generating the help text.
-def base_options(fn):
+def base_options(fn: Callable) -> Callable:
     decorators = [
         click.option(
             "--version",
@@ -288,20 +305,20 @@ def base_options(fn):
             ),
         ),
     ]
-    for d in decorators:
-        fn = d(fn)
+    for decorator in decorators:
+        fn = decorator(fn)
     return fn
 
 
 class GroupWithAliases(click.Group):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         click.Group.__init__(self, *args, **kwargs)
-        self._aliases = {}
+        self._aliases: dict = {}
 
-    def register_alias(self, alias, cmd_object):
+    def register_alias(self, alias: str, cmd_object: click.Command) -> None:
         self._aliases[alias] = cmd_object
 
-    def get_command(self, ctx, cmd_name):
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command:
         cmd = click.Group.get_command(self, ctx, cmd_name)
         if cmd is None:
             cmd = self._aliases.get(cmd_name, None)
@@ -311,7 +328,7 @@ class GroupWithAliases(click.Group):
 NOENV_COMMANDS = set()
 
 
-def register_noenv(cmdname):
+def register_noenv(cmdname: str) -> None:
     NOENV_COMMANDS.add(cmdname)
 
 
@@ -323,7 +340,7 @@ _nested = False
 # 'commands'. Base options are processed by 'cli'.
 @base_options
 @click.pass_context
-def commands(ctx, **kwargs):
+def commands(ctx: click.Context, **kwargs: Any) -> None:
     global _nested  # pylint: disable=global-statement
     cfg = ctx.obj = get_tree()
     if not _nested:
@@ -351,19 +368,19 @@ def commands(ctx, **kwargs):
 )
 @base_options
 @click.pass_context
-def cli(  # pylint: disable=too-many-arguments
-    ctx,
-    version,
-    cwd,
-    envbase,
-    spinfile,
-    quiet,
-    verbose,
-    debug,
-    properties,
-    provision,
-    cleanup,
-):
+def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
+    ctx: click.Context,
+    version: packaging.version.Version,
+    cwd: str,
+    envbase: str,
+    spinfile: str,
+    quiet: bool,
+    verbose: bool,
+    debug: bool,
+    properties: tuple,
+    provision: bool,
+    cleanup: bool,
+) -> int | None:
     if verbose > 1:
         # Set up logging
         logging.basicConfig(level=logging.DEBUG)
@@ -391,7 +408,7 @@ def cli(  # pylint: disable=too-many-arguments
             die(f"{spinfile} not found")
         else:
             die("No configuration file found")
-    spinfile = _spinfile
+    spinfile = _spinfile  # type: ignore[assignment]
 
     cfg = load_config_tree(
         spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
@@ -404,7 +421,7 @@ def cli(  # pylint: disable=too-many-arguments
     if debug:
         print(tree.tree_dump(cfg))
         if not ctx.args:
-            return
+            return None
 
     # When we have any of the provisioning flags, do provisioning now.
     if cleanup:
@@ -415,14 +432,14 @@ def cli(  # pylint: disable=too-many-arguments
             # There is nothing we can meaningfully do after 'cleanup',
             # unless 'provision' is also given => so do not run any
             # tasks.
-            return
+            return None
     if provision:
         toporun(cfg, "provision")
         toporun(cfg, "finalize_provision")
         if not ctx.args:
             # When provisioning without a subcommand, don't run
             # into the usage.
-            return
+            return None
     # Invoke the main command group, which by now has all the
     # sub-commands from the plugins.
     kwargs = getattr(cli, "click_main_kwargs", {})
@@ -430,13 +447,13 @@ def cli(  # pylint: disable=too-many-arguments
     commands.main(args=ctx.args, **kwargs)
 
 
-def find_plugin_packages(cfg):
+def find_plugin_packages(cfg: ConfigTree) -> Generator:
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
     yield from cfg.get("plugin-packages", [])
 
 
-def yield_plugin_import_specs(cfg):
+def yield_plugin_import_specs(cfg: ConfigTree) -> Generator:
     for item in cfg.get("plugins", []):
         if isinstance(item, dict):
             for package, modules in item.items():
@@ -447,20 +464,38 @@ def yield_plugin_import_specs(cfg):
 
 
 def load_config_tree(  # pylint: disable=too-many-locals
-    spinfile,
-    cwd=False,
-    envbase=None,
-    quiet=False,
-    verbose=False,
-    cleanup=False,
-    provision=False,
-    properties=(),
-):
+    spinfile: str | Path | PathlibPath,
+    cwd: str = "",
+    envbase: str | None = None,
+    quiet: bool = False,
+    verbose: bool = False,
+    cleanup: bool = False,
+    provision: bool = False,
+    properties: tuple = (),
+) -> ConfigTree:
+    """Load the configuration and plugins from ``spinfile`` and build the tree.
+
+    The user's global spinfile is used to extend the built tree.
+
+    If ``provision`` is set, plugins will be provisioned.
+    """
     logging.info(f"Loading {spinfile}")
     spinschema = schema.schema_load(
         os.path.join(os.path.dirname(__file__), "schema.yaml")
     )
-    cfg = spinschema.get_default()
+    # overwrite defaults to align with OS path style
+    spinschema.properties.spin.properties.spin_global.default = os.path.normpath(  # type: ignore[attr-defined] # noqa: E501
+        spinschema.properties.spin.properties.spin_global.default  # type: ignore[attr-defined]
+    )
+    spinschema.properties.spin.properties.spin_global_plugins.default = (  # type: ignore[attr-defined]
+        os.path.normpath(
+            spinschema.properties.spin.properties.spin_global_plugins.default  # type: ignore[attr-defined]
+        )
+    )
+    spinschema.properties.spin.properties.plugin_dir.default = os.path.normpath(  # type: ignore[attr-defined]
+        spinschema.properties.spin.properties.plugin_dir.default  # type: ignore[attr-defined]
+    )
+    cfg = spinschema.get_default()  # type: ignore[call-arg]
     set_tree(cfg)
     cfg.schema = spinschema
     userdata = readyaml(spinfile) if spinfile else config()
@@ -469,11 +504,10 @@ def load_config_tree(  # pylint: disable=too-many-locals
 
     # Merge user-specific globals if they exist
     if exists("{spin.spin_global}"):
-        user_settings = readyaml(interpolate1("{spin.spin_global}"))
+        spin_global = interpolate1("{spin.spin_global}")
+        user_settings = readyaml(spin_global)
         if user_settings:
-            logging.debug(
-                f"Merging user settings from {interpolate1('{spin.spin_global}')}"
-            )
+            logging.debug(f"Merging user settings from {spin_global}")
             tree.tree_update(cfg, user_settings)
 
     if envbase:
@@ -505,24 +539,23 @@ def load_config_tree(  # pylint: disable=too-many-locals
         if minspin > spinversion:
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
-        cfg.spin.project_root = os.path.dirname(
-            os.path.normcase(os.path.abspath(cfg.spin.spinfile))
-        )
+        cfg.spin.project_root = os.path.dirname(N(os.path.abspath(cfg.spin.spinfile)))
         cfg.spin.launch_dir = os.path.relpath(os.getcwd(), cfg.spin.project_root)
         if not cwd:
             cd(cfg.spin.project_root)
         cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
 
-        path_hash = hashlib.sha256(
+        path_hash_bytes = hashlib.sha256(
             os.path.dirname(cfg.spin.project_root).encode()
         ).digest()
-        path_hash = base64.urlsafe_b64encode(path_hash).decode()[:8]
+        path_hash = base64.urlsafe_b64encode(path_hash_bytes).decode()[:8]
         cfg.spin.project_hash = f"{cfg.spin.project_name}-{path_hash}"
 
         if not exists("{spin.spin_dir}"):
             mkdir("{spin.spin_dir}")
             writetext(
-                "{spin.spin_dir}/.gitignore", "# Created by spin automatically\n*\n"
+                os.path.join("{spin.spin_dir}", ".gitignore"),
+                "# Created by spin automatically\n*\n",
             )
 
         # Setup plugin_dir, where spin installs plugin packages.
@@ -537,7 +570,7 @@ def load_config_tree(  # pylint: disable=too-many-locals
             install_plugin_packages(cfg)
 
     for localpath in cfg.get("plugin-path", []):
-        localabs = interpolate1("{spin.project_root}/" + localpath)
+        localabs = interpolate1(os.path.join("{spin.project_root}", localpath))
         if not exists(localabs):
             die(f"Plugin path {localabs} doesn't exist")
         sys.path.insert(0, localabs)
@@ -583,16 +616,19 @@ def load_config_tree(  # pylint: disable=too-many-locals
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
 
-    return cfg
+    return cfg  # type: ignore[no-any-return]
 
 
-def install_plugin_packages(cfg):
+def install_plugin_packages(cfg: ConfigTree) -> None:
+    """Install plugin packages which are not yet installed and extend the
+    configuration tree.
+    """
     if not exists(cfg.spin.plugin_dir):
         mkdir(cfg.spin.plugin_dir)
 
     # To be able to do editable installs to plugin dir, we have to
     # temporarily set PYTHONPATH, to let the pip subprocess
-    # believe plugindir is in sys.path. But we must be careful to
+    # believe plugin_dir is in sys.path. But we must be careful to
     # unset it before calling anything else -- see below!
     old_python_path = os.environ.get("PYTHONPATH", None)
     os.environ["PYTHONPATH"] = interpolate1(cfg.spin.plugin_dir)
@@ -613,7 +649,7 @@ def install_plugin_packages(cfg):
 
     # Install plugin packages that are not yet installed, using pip
     # with the "-t" (target) option pointing to the plugin directory.
-    with memoizer(N("{spin.plugin_dir}/packages.memo")) as m:
+    with memoizer(N(os.path.join("{spin.plugin_dir}", "packages.memo"))) as m:
         replacements = cfg.get("devpackages", {})
         for pkg in find_plugin_packages(cfg):
             pkg = replacements.get(pkg, pkg)
@@ -637,8 +673,13 @@ def install_plugin_packages(cfg):
         # plugin dir: fix it up, in case some plugin packages had been
         # installed editable.
         easy_install = []
-        for egg_link in glob.iglob(interpolate1("{spin.plugin_dir}/*.egg-link")):
+        for egg_link in glob.iglob(
+            interpolate1(os.path.join("{spin.plugin_dir}", "*.egg-link"))
+        ):
             easy_install.append(readtext(egg_link).splitlines()[0])
-        writetext("{spin.plugin_dir}/easy-install.pth", "\n".join(easy_install))
+        writetext(
+            os.path.join("{spin.plugin_dir}", "easy-install.pth"),
+            "\n".join(easy_install),
+        )
 
-    site.addsitedir(cfg.spin.plugin_dir)
+    addsitedir(cfg.spin.plugin_dir)

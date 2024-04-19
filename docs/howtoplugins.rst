@@ -51,7 +51,7 @@ Plugin Lifecycle
 ================
 
 1. When `spin` starts, it makes sure that all plugins requested by
-   ``spinfile.yaml`` are availabe by installing installable plugins that
+   ``spinfile.yaml`` are available by installing installable plugins that
    are not yet installed.
 
 2. Then, plugins are topologically sorted by their dependencies and
