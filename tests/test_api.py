@@ -11,10 +11,12 @@ implemented in src/spin/__init__.py
 
 from __future__ import annotations
 
+import logging
 import os
 import pickle
 import subprocess
 import sys
+from pathlib import Path as PathlibPath
 from typing import TYPE_CHECKING, Callable
 from unittest import mock
 from unittest.mock import patch
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
 
     from typing import Any
 
+    from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
 
 
@@ -48,6 +51,7 @@ def test_echo_quiet(cfg: ConfigTree, mocker: MockerFixture) -> None:
     """spin.echo is not echo'ing if CONFIG.quiet is True"""
     mocker.patch("click.echo")
     cfg.quiet = True
+
     spin.echo("Should not be shown")
     assert not click.echo.called  # type: ignore[attr-defined]
 
@@ -88,7 +92,7 @@ def test_echo_extended(function: Callable, message: str, mocker: MockerFixture) 
 
 
 def test_directory_changer(
-    tmpdir: Path,
+    tmp_path: PathlibPath,
     cfg: ConfigTree,
     mocker: MockerFixture,
 ) -> None:
@@ -97,9 +101,9 @@ def test_directory_changer(
     cwd = os.getcwd()
     mocker.patch("click.echo")
 
-    with spin.DirectoryChanger(path=tmpdir):
-        assert os.getcwd() == tmpdir
-        assert str(tmpdir) in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined] # noqa: E501
+    with spin.DirectoryChanger(path=tmp_path):
+        assert os.getcwd() == str(tmp_path)
+        assert str(tmp_path) in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined] # noqa: E501
     assert os.getcwd() == cwd
 
     with spin.DirectoryChanger(path=cwd):
@@ -107,20 +111,20 @@ def test_directory_changer(
         assert cwd in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined]
 
 
-def test_cd(tmpdir: Path) -> None:
+def test_cd(tmp_path: PathlibPath) -> None:
     """spin.cd is changing the current directory as expected"""
     cwd = os.getcwd()
-    with spin.cd(tmpdir):
-        assert os.getcwd() == tmpdir
+    with spin.cd(tmp_path):
+        assert os.getcwd() == str(tmp_path)
     assert cwd == os.getcwd()
 
 
-def test_exists(cfg: ConfigTree, tmpdir: Path) -> None:
+def test_exists(cfg: ConfigTree, tmp_path: PathlibPath) -> None:
     """spin.exists is able to validate the existence of directories"""
-    cfg["TMPDIR"] = tmpdir
-    assert os.path.isdir(tmpdir)
+    cfg["TMPDIR"] = tmp_path
+    assert os.path.isdir(tmp_path)
     assert spin.exists("{TMPDIR}")
-    assert spin.exists(tmpdir)
+    assert spin.exists(tmp_path)
     assert not spin.exists(r"\foo/bar\baz/biz\buz")
 
 
@@ -141,20 +145,20 @@ def test_abspath(cfg: ConfigTree) -> None:
     assert spin.abspath("{FOO}") == os.path.abspath("foo")
 
 
-def test_mkdir(tmpdir: Path) -> None:
+def test_mkdir(tmp_path: PathlibPath) -> None:
     """
     spin.mkdir is able to create directories and will not fail if the directory
     already exists
     """
-    spin.mkdir(tmpdir)
-    path = tmpdir / "foo"
+    spin.mkdir(tmp_path)
+    path = tmp_path / "foo"
     spin.mkdir(path)
     assert os.path.isdir(path)
 
 
-def test_mkdir_rmdir(tmpdir: Path) -> None:
+def test_mkdir_rmdir(tmp_path: PathlibPath) -> None:
     """spin.rmdir is able to delete directories"""
-    xxx = tmpdir + "/xxx"
+    xxx = tmp_path / "xxx"
     assert not spin.exists(xxx)
     spin.mkdir(xxx)
     assert spin.exists(xxx)
@@ -267,19 +271,19 @@ def test__read_lines(minimum_yaml_path: str) -> None:
         assert spin.readlines(fn="{TEST_MINIMUM_YAML_PATH}") == expected
 
 
-def test_writelines(tmpdir: Path) -> None:
+def test_writelines(tmp_path: PathlibPath) -> None:
     """spin.writelines writes multiple lines into a file"""
     content = "foo:\n  - bar\n  - baz"
     expected = ["foo:\n", "  - bar\n", "  - baz"]
-    assert spin.writelines(fn=tmpdir / "test.txt", lines=content) is None
-    with open(tmpdir / "test.txt", "r", encoding="utf-8") as f:
+    assert spin.writelines(fn=tmp_path / "test.txt", lines=content) is None
+    with open(tmp_path / "test.txt", "r", encoding="utf-8") as f:
         assert f.readlines() == expected
 
 
-def test_write_file(tmpdir: Path) -> None:
+def test_write_file(tmp_path: PathlibPath) -> None:
     """spin.write_file writes a string to file"""
     # pylint: disable=protected-access
-    ofile = tmpdir / "test.txt"
+    ofile = tmp_path / "test.txt"
     content = "Lone line"
     spin._write_file(ofile, mode="w", data=content)
     assert os.path.isfile(ofile)
@@ -287,45 +291,45 @@ def test_write_file(tmpdir: Path) -> None:
         assert f.readline() == content
 
 
-def test_readbytes(tmpdir: Path) -> None:
+def test_readbytes(tmp_path: PathlibPath) -> None:
     """spin.readbytes reads from a file in which was wrote bytewise"""
-    ofile = tmpdir / "test.pkl"
+    ofile = tmp_path / "test.pkl"
     content = b"Lone line"
     with open(ofile, "wb") as f:
         f.write(content)
     assert spin.readbytes(ofile) == content
 
 
-def test_writebytes(tmpdir: Path) -> None:
+def test_writebytes(tmp_path: PathlibPath) -> None:
     """spin.writebytes writes bytestrings to file"""
-    ofile = tmpdir / "test.b"
+    ofile = tmp_path / "test.b"
     content = b"Lone line"
     assert spin.writebytes(fn=ofile, data=content) == 9
     with open(ofile, "rb") as f:
         assert f.read() == content
 
 
-def test_readtext(tmpdir: Path) -> None:
+def test_readtext(tmp_path: PathlibPath) -> None:
     """spin.readtext reads and returns utf-8 encoded content from a file"""
-    ofile = tmpdir / "test.txt"
+    ofile = tmp_path / "test.txt"
     content = "Lone line"
     with open(ofile, "w", encoding="UTF-8") as f:
         f.write(content)
     assert spin.readtext(ofile) == content
 
 
-def test_writetext(tmpdir: Path) -> None:
+def test_writetext(tmp_path: PathlibPath) -> None:
     """spin.writetext writes utf-8 stirngs to file"""
-    ofile = tmpdir / "test.txt"
+    ofile = tmp_path / "test.txt"
     content = "Lone line"
     assert spin.writetext(fn=ofile, data=content) == 9
     with open(ofile, "r", encoding="UTF-8") as f:
         assert f.read() == content
 
 
-def test_appendtext(tmpdir: Path) -> None:
+def test_appendtext(tmp_path: PathlibPath) -> None:
     """spin.appendtext appends utf-8 encoded strings to a file"""
-    ofile = tmpdir / "test.txt"
+    ofile = tmp_path / "test.txt"
     content = "Lone line"
     assert spin.writetext(fn=ofile, data=content) == 9
     assert spin.appendtext(fn=ofile, data=content) == 9
@@ -333,28 +337,28 @@ def test_appendtext(tmpdir: Path) -> None:
         assert f.read() == content * 2
 
 
-def test_persist(tmpdir: Path) -> None:
+def test_persist(tmp_path: PathlibPath) -> None:
     """spin.persist writes Python object(s) to file"""
-    ofile = tmpdir / "test.pkl"
+    ofile = tmp_path / "test.pkl"
     to_persist = "content"
     assert spin.persist(fn=ofile, data=to_persist) == 22
     with open(ofile, "rb") as f:
         assert pickle.loads(f.read()) == to_persist
 
 
-def test_unpersist(tmpdir: Path) -> None:
+def test_unpersist(tmp_path: PathlibPath) -> None:
     """spin.unpersist loads Python object(s) from file"""
-    ofile = tmpdir / "test.pkl"
+    ofile = tmp_path / "test.pkl"
     to_persist = "content"
     with open(ofile, "wb") as f:
         f.write(pickle.dumps(to_persist))
-    assert spin.unpersist(fn=tmpdir / "xxx") is None
+    assert spin.unpersist(fn=tmp_path / "xxx") is None
     assert spin.unpersist(fn=ofile) == to_persist
 
 
-def test_memoizer(tmpdir: Path) -> None:
+def test_memoizer(tmp_path: PathlibPath) -> None:
     """spin.Memoizer can be instantiated and its methods perform as expected"""
-    fn = tmpdir / "file.any"
+    fn = tmp_path / "file.any"
     items = ["item1", "item2"]
     assert spin.persist(fn, items) == 32
     mem = spin.Memoizer(fn=fn)
@@ -374,9 +378,9 @@ def test_memoizer(tmpdir: Path) -> None:
     assert spin.unpersist(fn) == mem.items()
 
 
-def test_memoizer_context_manager(tmpdir: Path) -> None:
+def test_memoizer_context_manager(tmp_path: PathlibPath) -> None:
     """spin.memoizer is useable as context manager"""
-    fn = tmpdir / "file.any"
+    fn = tmp_path / "file.any"
     with spin.memoizer(fn) as mem:
         # pylint: disable=protected-access
         assert mem._fn == fn
@@ -438,10 +442,11 @@ def test_interpolate1_onestep_recursion(cfg: ConfigTree) -> None:
     assert spin.interpolate1("{bad}") == "{bad}"
 
 
-def test_interpolate1_path(cfg) -> None:
+@pytest.mark.parametrize("path", (Path, PathlibPath))
+def test_interpolate1_path(path: Path | PathlibPath, cfg: ConfigTree) -> None:
     """spin.interpolate1 is resolving a Path that must be interpolated"""
-    cfg["FOO"] = Path("foo")
-    result = spin.interpolate1(Path("{FOO}"))
+    cfg["FOO"] = path("foo")
+    result = spin.interpolate1(path("{FOO}"))
     assert isinstance(result, Path)
     assert result == Path("foo")
 
@@ -465,7 +470,7 @@ def test_read_yaml() -> None:
     assert result == spin.config(foo="bar")
 
 
-def test_download(cfg: ConfigTree, tmp_path: Path) -> None:
+def test_download(cfg: ConfigTree, tmp_path: PathlibPath) -> None:
     """spin.download is downloading the expected content to file"""
     cfg.quiet = True
     url = "https://contact-software.com"
@@ -493,23 +498,23 @@ def test_set_tree(cfg: ConfigTree) -> None:
     assert spin.get_tree() == cfg
 
 
-@mock.patch.dict(os.environ, {"TEST_CUSTOM_FILE": "text.txt"})
-def test_getmtime(tmpdir: Path) -> None:
+def test_getmtime(mocker: MockerFixture, tmp_path: PathlibPath) -> None:
     """
     spin.getmtime is returning the correct mtime for paths to be
     interpolated
     """
-    path = tmpdir / "{TEST_CUSTOM_FILE}"
+    mocker.patch.dict(os.environ, {"TEST_CUSTOM_FILE": "text.txt"})
+    path = tmp_path / "{TEST_CUSTOM_FILE}"
     spin.writelines(path, lines="some content")
-    assert spin.getmtime(path) == os.path.getmtime(tmpdir / "text.txt")
+    assert spin.getmtime(path) == os.path.getmtime(tmp_path / "text.txt")
 
 
-@mock.patch.dict(os.environ, {"TEST_CUSTOM_FILE": "text.txt"})
-def test_is_up_to_date(tmpdir: Path, mocker: MockerFixture) -> None:
+def test_is_up_to_date(tmp_path: PathlibPath, mocker: MockerFixture) -> None:
     """spin.is_up_to_date compares mtimes of files correctly"""
-    path1 = tmpdir / "{TEST_CUSTOM_FILE}"
-    path2 = tmpdir / "foo"
-    path3 = tmpdir / "baz"
+    mocker.patch.dict(os.environ, {"TEST_CUSTOM_FILE": "text.txt"})
+    path1 = tmp_path / "{TEST_CUSTOM_FILE}"
+    path2 = tmp_path / "foo"
+    path3 = tmp_path / "baz"
 
     assert not spin.is_up_to_date(path1, 1)
 
@@ -603,27 +608,29 @@ def test_build_target_no_target(cfg: ConfigTree) -> None:
         spin.build_target(spin.config(), target="NOT_EXISTING_THING")
 
 
-def test_build_target_no_target_but_exists(cfg: ConfigTree, tmpdir: Path) -> None:
+def test_build_target_no_target_but_exists(
+    cfg: ConfigTree, tmp_path: PathlibPath
+) -> None:
     """
     spin.build_target will not fail but do nothing if the target not in the
     tree's build rules, but still exist
     """
-    cfg["TMPDIR"] = tmpdir
+    cfg["TMPDIR"] = tmp_path
     assert spin.build_target(spin.config(), target="{TMPDIR}") is None
 
 
 def test_build_target_up_to_date(
     cfg: ConfigTree,
     mocker: MockerFixture,
-    tmpdir: Path,
+    tmp_path: PathlibPath,
 ) -> None:
     """spin.build_target will not build anything if the target is up-to-date"""
     mocker.patch("spin.info")
-    cfg["TMPDIR"] = tmpdir
+    cfg["TMPDIR"] = tmp_path
     cfg["build-rules"] = spin.config()
     cfg["build-rules"]["{TMPDIR}"] = spin.config(script=["mkdir", "{TMPDIR}"])
     spin.build_target(cfg, "{TMPDIR}", False)
-    assert "{TMPDIR} is up to date" in str(spin.info.call_args_list[1])  # type: ignore[attr-defined]
+    assert "{TMPDIR} is up to date" in str(spin.info.call_args_list[1])
 
 
 def test_ensure(mocker: MockerFixture) -> None:
@@ -714,7 +721,7 @@ def test_task_ctx() -> None:
     """
     wrapper = spin.task()
 
-    def test_command_ctx(ctx: dict, args: Any) -> dict:
+    def test_command_ctx(ctx: click.Context, args: Any) -> dict:
         return ctx.obj
 
     task = wrapper(test_command_ctx)
@@ -818,7 +825,7 @@ def test_parse_version() -> None:
         spin.parse_version("invalid_version")
 
 
-def test_get_requires(cfg) -> None:
+def test_get_requires(cfg: ConfigTree) -> None:
     """
     spin.requires is returning the expected 'requires' values for a +subtree
     """
@@ -826,3 +833,19 @@ def test_get_requires(cfg) -> None:
     foo_requires = spin.config(build="foo")
     cfg["requires"] = spin.config(foo=foo_requires)
     assert spin.get_requires(cfg, "foo") is foo_requires
+
+
+def test_toporun(
+    mocker: MockerFixture,
+    cfg: ConfigTree,
+    caplog: LogCaptureFixture,
+) -> None:
+    """spin.toporun executes a specific function of a loaded plugin"""
+    # TODO: Load another plugin that implements `configure` (or another function
+    #       which is implemented in spin.builtin) and test the reversed
+    #       execution.
+    mocker.patch("spin.builtin.configure", return_value=None)
+    caplog.set_level(logging.DEBUG)
+    assert spin.toporun(cfg, "configure") is None
+    assert "toporun: configure" in caplog.text
+    assert "spin.builtin.configure()" in caplog.text
