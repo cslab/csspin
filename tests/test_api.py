@@ -267,11 +267,12 @@ def test__read_lines(minimum_yaml_path: str) -> None:
         assert spin.readlines(fn="{TEST_MINIMUM_YAML_PATH}") == expected
 
 
+@pytest.mark.wip()
 def test_writelines(tmpdir: Path) -> None:
     """spin.writelines writes multiple lines into a file"""
     content = "foo:\n  - bar\n  - baz"
     expected = ["foo:\n", "  - bar\n", "  - baz"]
-    assert spin.writelines(fn=tmpdir / "test.txt", lines=content) is None
+    spin.writelines(fn=tmpdir / "test.txt", lines=content)
     with open(tmpdir / "test.txt", "r", encoding="utf-8") as f:
         assert f.readlines() == expected
 
@@ -366,11 +367,11 @@ def test_memoizer(tmpdir: Path) -> None:
     assert mem.check("item1")
     assert not mem.check("item")
 
-    assert mem.save() is None
+    mem.save()
     assert spin.unpersist(fn) == mem.items()
 
     assert mem.items() == items
-    assert mem.add("item3") is None
+    mem.add("item3")
     assert spin.unpersist(fn) == mem.items()
 
 
@@ -383,11 +384,11 @@ def test_memoizer_context_manager(tmpdir: Path) -> None:
         assert mem._items == []
         assert not mem.check("item1")
 
-        assert mem.save() is None
+        mem.save()
         assert spin.unpersist(fn) == []
 
         assert mem.items() == []
-        assert mem.add("item1") is None
+        mem.add("item1")
         assert spin.unpersist(fn) == ["item1"]
 
 
@@ -410,10 +411,10 @@ def test_setenv(cfg):
     """
     cfg["FOO"] = "foo"
 
-    assert spin.setenv(FOO="bar", BAR="foo") is None
+    spin.setenv(FOO="bar", BAR="foo")
     assert os.getenv("FOO") == "bar"
     assert os.getenv("BAR") == "foo"
-    assert spin.setenv(FOO="{FOO}") is None
+    spin.setenv(FOO="{FOO}")
     assert os.getenv("FOO") == "foo"
 
 
@@ -488,7 +489,7 @@ def test_download(cfg: ConfigTree, tmp_path: Path) -> None:
     cfg.quiet = True
     url = "https://contact-software.com"
     location = tmp_path / "index.html"
-    assert spin.download(url=url, location=location) is None
+    spin.download(url=url, location=location)
     assert location.is_file()
 
 
@@ -550,7 +551,7 @@ def test_is_up_to_date(tmpdir: Path, mocker: MockerFixture) -> None:
 def test_run_script(mocker: MockerFixture) -> None:
     """spin.run_script calls spin.sh using the expected arguments"""
     mocker.patch("spin.sh")
-    assert spin.run_script(script=["ls", "spin --help"], env={"foo": "bar"}) is None
+    spin.run_script(script=["ls", "spin --help"], env={"foo": "bar"})
     assert (
         repr(spin.sh.call_args_list[0]) == "call('ls', shell=True, env={'foo': 'bar'})"
     )
@@ -558,7 +559,7 @@ def test_run_script(mocker: MockerFixture) -> None:
         repr(spin.sh.call_args_list[1])
         == "call('spin --help', shell=True, env={'foo': 'bar'})"
     )
-    assert spin.run_script(script="ls", env={}) is None
+    spin.run_script(script="ls", env={})
     assert repr(spin.sh.call_args_list[2]) == "call('ls', shell=True, env={})"
 
 
@@ -570,16 +571,16 @@ def test_run_spin() -> None:
         spin.run_spin(script=["python", "-c", "'raise SystemExit()'"])
 
     with mock.patch("spin.cli.commands"):
-        assert spin.run_spin(script=["ls", "spin --help"]) is None
+        spin.run_spin(script=["ls", "spin --help"])
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['ls'])"
         assert repr(spin.cli.commands.call_args_list[1]) == "call(['spin', '--help'])"
 
     with mock.patch("spin.cli.commands"):
-        assert spin.run_spin(script="ls") is None
+        spin.run_spin(script="ls")
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['ls'])"
 
     with mock.patch("spin.cli.commands"):
-        assert spin.run_spin(script=1) is None
+        spin.run_spin(script=1)
         assert repr(spin.cli.commands.call_args_list[0]) == "call(['1'])"
 
 
@@ -627,7 +628,7 @@ def test_build_target_no_target_but_exists(cfg: ConfigTree, tmpdir: Path) -> Non
     tree's build rules, but still exist
     """
     cfg["TMPDIR"] = tmpdir
-    assert spin.build_target(spin.config(), target="{TMPDIR}") is None
+    spin.build_target(spin.config(), target="{TMPDIR}")
 
 
 def test_build_target_up_to_date(
@@ -652,7 +653,7 @@ def test_ensure(mocker: MockerFixture) -> None:
         """Just a command"""
 
     mocker.patch("spin.build_target")
-    assert spin.ensure(command) is None
+    spin.ensure(command)
     assert spin.build_target.call_args_list[0][0][-1] == "task command"
     assert str(spin.build_target.call_args_list[0][1]) == "{'phony': True}"
 

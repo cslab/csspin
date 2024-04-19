@@ -412,7 +412,7 @@ def readlines(fn: str | Path) -> list[str]:
 def writelines(fn: str | Path, lines: str) -> None:
     fn = interpolate1(fn)  # type: ignore[assignment]
     with open(fn, "w", encoding="utf-8") as f:
-        return f.writelines(lines)
+        f.writelines(lines)
 
 
 def _write_file(fn: str | Path, mode: str, data: bytes | str) -> int:
