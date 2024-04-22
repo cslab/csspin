@@ -218,7 +218,7 @@ and each task can define the following sub-keys:
 
 * ``script``: a list of shell commands
 * ``env``: a dictionary of environment variables, that should be set
-  when runing the shell commands
+  when running the shell commands
 * ``spin``: a list of spin commands (without ``spin``)
 * ``help``: help text to display
 
