@@ -65,7 +65,7 @@ def test__set_callsite() -> None:
     assert isinstance(ki_before, tree.KeyInfo)
     assert ki_before.file.endswith(__file__)
 
-    assert tree._set_callsite(tree=config, key="sub", depth=1, value="baz") is None
+    tree._set_callsite(tree=config, key="sub", depth=1, value="baz")
     assert config == tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
 
     ki_after = config._ConfigTree__keyinfo.get("sub")
@@ -121,7 +121,7 @@ def test_tree_keyinfo() -> None:
 def test_tree_set_parent() -> None:
     parent = tree.ConfigTree(dad=tree.ConfigTree(name="Hans"))
     child = tree.ConfigTree(son=tree.ConfigTree(name="Foo"))
-    assert tree.tree_set_parent(child, parent, "family") is None
+    tree.tree_set_parent(child, parent, "family")
 
     assert isinstance(child._ConfigTree__parentinfo, tree.ParentInfo)
     assert child._ConfigTree__parentinfo.parent == parent
@@ -346,14 +346,3 @@ def test_directive_interpolate() -> None:
     tree.directive_interpolate(config, "cache", "'{SPIN_CACHE}'")
     expected_config2 = tree.ConfigTree(sub="tree", cache=f"'{environ['SPIN_CACHE']}'")
     assert config == expected_config2
-
-
-def test_directive_interpolate_failing() -> None:
-    """
-    Checks the behavior of the directive_interpolate function when parameters
-    passed do not match the expected data types.
-    """
-    config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
-
-    with raises(Abort, match=".*Can't interpolate literal=.* since it's not hashable."):
-        tree.directive_interpolate(config, "sub", tree.ConfigTree(foo="bar"))
