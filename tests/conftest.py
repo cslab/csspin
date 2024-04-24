@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 from typing import TYPE_CHECKING
 
@@ -35,3 +36,16 @@ def cfg() -> ConfigTree:
 @fixture()
 def minimum_yaml_path() -> str:
     return os.path.join(os.path.dirname(__file__), "none.yaml")
+
+
+@contextlib.contextmanager
+def chdir(path):
+    """A contextmanager which changes the cwd and returns to
+    the original cwd on exit
+    """
+    try:
+        cwd = os.getcwd()
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(cwd)

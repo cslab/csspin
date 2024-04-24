@@ -158,22 +158,24 @@ class DirectoryChanger:
     """A simple class to change the current directory.
 
     Change directory on construction, and restore the cwd when used as
-    a context manager.
+    a context manager. Noop if we're already in the wanted directory.
     """
 
     def __init__(self: DirectoryChanger, path: str | Path) -> None:
         """Change directory."""
         path = interpolate1(path)
         self._cwd = os.getcwd()
-        echo("cd", path)
-        os.chdir(path)
+        if not os.path.samefile(path, self._cwd):
+            echo("cd", path)
+            os.chdir(path)
 
     def __enter__(self: DirectoryChanger) -> None:
         """Nop."""
 
     def __exit__(self: DirectoryChanger, *args: Any) -> None:
         """Change back to where we came from."""
-        os.chdir(self._cwd)
+        if not os.path.samefile(self._cwd, os.getcwd()):
+            os.chdir(self._cwd)
 
 
 def cd(path: str | Path) -> DirectoryChanger:

@@ -106,9 +106,10 @@ def test_directory_changer(
         assert str(tmp_path) in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined] # noqa: E501
     assert os.getcwd() == cwd
 
+    # if nothing to do, directory changer does nothing and echoes nothing
     with spin.DirectoryChanger(path=cwd):
         assert os.getcwd() == cwd
-        assert cwd in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined]
+        assert cwd not in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined]
 
 
 def test_cd(tmp_path: PathlibPath) -> None:
