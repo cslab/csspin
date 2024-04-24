@@ -424,16 +424,23 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
             return None
 
     # When we have any of the provisioning flags, do provisioning now.
+    plugin_dir_purged = False
     if cleanup:
         toporun(cfg, "cleanup", reverse=True)
         if exists(cfg.spin.plugin_dir):
             rmtree(cfg.spin.plugin_dir)
+            plugin_dir_purged = True
         if not provision:
             # There is nothing we can meaningfully do after 'cleanup',
             # unless 'provision' is also given => so do not run any
             # tasks.
             return None
     if provision:
+        # Reget the plugins and reload the tree, if cleaned up before.
+        if plugin_dir_purged:
+            cfg = load_config_tree(
+                spinfile, cwd, envbase, quiet, verbose, False, provision, properties
+            )
         toporun(cfg, "provision")
         toporun(cfg, "finalize_provision")
         if not ctx.args:
@@ -566,7 +573,10 @@ def load_config_tree(  # pylint: disable=too-many-locals
             )
         sys.path.insert(0, cfg.spin.plugin_dir)
 
-        if provision:
+        if provision and not cleanup:
+            # if cleanup == true, we're fine with whatever plugins we
+            # have right now. So no need to waste our time pulling new
+            # stuff here.
             install_plugin_packages(cfg)
 
     for localpath in cfg.get("plugin-path", []):

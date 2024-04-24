@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Callable, Generator
 
 import click
 import pytest
+from conftest import chdir
 from path import Path
 
 from spin import cli
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
     from click.testing import CliRunner
     from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
-from click import Abort
 
 
 def test_cli(cli_runner: CliRunner) -> None:
@@ -44,15 +44,12 @@ def test_find_spinfile(tmp_path: PathlibPath) -> None:
     with open(spinfile, "w", encoding="utf-8") as f:
         f.write("")
 
-    cwd = os.getcwd()
     insidetree = f"{tmp_path}/a/b/c"
     os.makedirs(insidetree)
-    os.chdir(insidetree)
-
-    assert cli.find_spinfile("spinfile.yaml") == spinfile
-    assert cli.find_spinfile("SPIN_TEST_CLI_DOESNOTEXIST") is None
-    assert cli.find_spinfile(spinfile=None) == spinfile
-    os.chdir(cwd)
+    with chdir(insidetree):
+        assert cli.find_spinfile("spinfile.yaml") == spinfile
+        assert cli.find_spinfile("SPIN_TEST_CLI_DOESNOTEXIST") is None
+        assert cli.find_spinfile(spinfile=None) == spinfile
 
 
 def test_load_plugin(cfg: ConfigTree, caplog: LogCaptureFixture) -> None:
@@ -109,7 +106,7 @@ def test_reverse_toposort(cfg: ConfigTree) -> None:
     assert result == ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"]
 
     graph = {"foo": ["bar"], "bar": ["foo"]}
-    with pytest.raises(Abort, match="dependency graph has at least one cycle"):
+    with pytest.raises(click.Abort, match="dependency graph has at least one cycle"):
         cli.reverse_toposort(nodes=graph.keys(), graph=graph)
 
 
@@ -204,53 +201,51 @@ def test_load_config_tree_basic(
     mock_toporun = mocker.patch("spin.cli.toporun")
     mock_click_echo = mocker.patch("click.echo")
     caplog.set_level(logging.DEBUG)
-    base_dir = os.getcwd()
-    os.chdir(tmp_path)
-    spinfile = tmp_path / "spinfile.yaml"
-    copy(minimum_yaml_path, spinfile)
+    with chdir(tmp_path):
+        spinfile = tmp_path / "spinfile.yaml"
+        copy(minimum_yaml_path, spinfile)
 
-    cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path, quiet=True)
+        cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path, quiet=True)
 
-    assert not cfg.verbose
-    assert not cfg.cleanup
-    assert not cfg.provision
-    assert cfg.quiet
-    assert cfg.quietflag == "-q"
-    assert cfg.spin.spinfile == Path(spinfile)
-    assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
-    assert cfg.spin.project_name == os.path.basename(tmp_path)
-    assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
-    assert cfg.spin.plugin_dir in sys.path
-    assert cfg.spin.env_base == Path(tmp_path)
+        assert not cfg.verbose
+        assert not cfg.cleanup
+        assert not cfg.provision
+        assert cfg.quiet
+        assert cfg.quietflag == "-q"
+        assert cfg.spin.spinfile == Path(spinfile)
+        assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
+        assert cfg.spin.project_name == os.path.basename(tmp_path)
+        assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
+        assert cfg.spin.plugin_dir in sys.path
+        assert cfg.spin.env_base == Path(tmp_path)
 
-    assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
-    with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
-        assert f.read() == "# Created by spin automatically\n*\n"
-    mock_click_echo.assert_not_called()
+        assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
+        with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
+            assert f.read() == "# Created by spin automatically\n*\n"
+        mock_click_echo.assert_not_called()
 
-    assert isinstance(cfg.loaded, ConfigTree)
-    assert cfg.loaded.get("spin.builtin")
-    assert cfg.loaded.get("spin.builtin.shell")
-    assert cfg.loaded.get("spin.builtin.cache")
-    assert len(cfg.loaded) == 3  # no other/global plugins loaded
-    # The order is not deterministic - due to independent .cache and .shell modules.
-    assert cfg.topo_plugins in (
-        ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"],
-        ["spin.builtin.shell", "spin.builtin.cache", "spin.builtin"],
-    )
-    mock_toporun.assert_called_once()
+        assert isinstance(cfg.loaded, ConfigTree)
+        assert cfg.loaded.get("spin.builtin")
+        assert cfg.loaded.get("spin.builtin.shell")
+        assert cfg.loaded.get("spin.builtin.cache")
+        assert len(cfg.loaded) == 3  # no other/global plugins loaded
+        # The order is not deterministic - due to independent .cache and .shell modules.
+        assert cfg.topo_plugins in (
+            ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"],
+            ["spin.builtin.shell", "spin.builtin.cache", "spin.builtin"],
+        )
+        mock_toporun.assert_called_once()
 
-    assert cfg.get("plugin-path") is None
-    assert f"Loading {spinfile}" in caplog.text
-    assert "loading project plugins:" in caplog.text
-    assert "  import plugin spin.builtin" in caplog.text
-    assert "  add subtree builtin" in caplog.text
-    assert "    import plugin .shell from spin.builtin" in caplog.text
-    assert "    add subtree shell" in caplog.text
-    assert "    import plugin .cache from spin.builtin" in caplog.text
-    assert "    add subtree cache" in caplog.text
-    assert "loading global plugins:" in caplog.text
-    os.chdir(base_dir)
+        assert cfg.get("plugin-path") is None
+        assert f"Loading {spinfile}" in caplog.text
+        assert "loading project plugins:" in caplog.text
+        assert "  import plugin spin.builtin" in caplog.text
+        assert "  add subtree builtin" in caplog.text
+        assert "    import plugin .shell from spin.builtin" in caplog.text
+        assert "    add subtree shell" in caplog.text
+        assert "    import plugin .cache from spin.builtin" in caplog.text
+        assert "    add subtree cache" in caplog.text
+        assert "loading global plugins:" in caplog.text
 
 
 def test_load_config_tree_extended(
@@ -264,64 +259,60 @@ def test_load_config_tree_extended(
     expected attributes set (quiet + provision)
     """
     mock_echo = mocker.patch("spin.echo")
-    mock_install_plugin_packages = mocker.patch("spin.cli.install_plugin_packages")
     caplog.set_level(logging.DEBUG)
-    base_dir = os.getcwd()
-    os.chdir(tmp_path)
-    spinfile = tmp_path / "spinfile.yaml"
-    copy(minimum_yaml_path, spinfile)
+    with chdir(tmp_path):
+        spinfile = tmp_path / "spinfile.yaml"
+        copy(minimum_yaml_path, spinfile)
 
-    cfg = cli.load_config_tree(
-        spinfile=spinfile,
-        envbase=tmp_path,
-        cwd=tmp_path,
-        verbose=True,
-        cleanup=True,
-        provision=True,
-        properties=("foo=bar",),
-    )
+        cfg = cli.load_config_tree(
+            spinfile=spinfile,
+            envbase=tmp_path,
+            cwd=tmp_path,
+            verbose=True,
+            cleanup=True,
+            provision=True,
+            properties=("foo=bar",),
+        )
 
-    assert not cfg.quiet
-    assert cfg.verbose
-    assert cfg.provision
-    assert cfg.foo == "bar"
-    assert cfg.cleanup
-    assert cfg.quietflag is None
-    assert cfg.spin.spinfile == Path(spinfile)
-    assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
-    assert cfg.spin.project_name == os.path.basename(tmp_path)
-    assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
-    assert cfg.spin.plugin_dir in sys.path
-    assert cfg.spin.env_base == Path(tmp_path)
+        assert not cfg.quiet
+        assert cfg.verbose
+        assert cfg.provision
+        assert cfg.foo == "bar"
+        assert cfg.cleanup
+        assert cfg.quietflag is None
+        assert cfg.spin.spinfile == Path(spinfile)
+        assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
+        assert cfg.spin.project_name == os.path.basename(tmp_path)
+        assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
+        assert cfg.spin.plugin_dir in sys.path
+        assert cfg.spin.env_base == Path(tmp_path)
 
-    assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
-    with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
-        assert f.read() == "# Created by spin automatically\n*\n"
-    mock_echo.assert_called_with("mkdir", ".spin")
+        assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
+        with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
+            assert f.read() == "# Created by spin automatically\n*\n"
+        mock_echo.assert_called_with("mkdir", ".spin")
 
-    assert isinstance(cfg.loaded, ConfigTree)
-    assert cfg.loaded.get("spin.builtin")
-    assert cfg.loaded.get("spin.builtin.shell")
-    assert cfg.loaded.get("spin.builtin.cache")
-    assert len(cfg.loaded) == 3  # no other/global plugins loaded
-    # The order is not deterministic - due to independent .cache and .shell modules.
-    assert cfg.topo_plugins in (
-        ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"],
-        ["spin.builtin.shell", "spin.builtin.cache", "spin.builtin"],
-    )
-    mock_install_plugin_packages.assert_called_once()
+        assert isinstance(cfg.loaded, ConfigTree)
+        assert cfg.loaded.get("spin.builtin")
+        assert cfg.loaded.get("spin.builtin.shell")
+        assert cfg.loaded.get("spin.builtin.cache")
+        assert len(cfg.loaded) == 3  # no other/global plugins loaded
+        # The order is not deterministic - due to independent .cache and .shell modules.
+        assert cfg.topo_plugins in (
+            ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"],
+            ["spin.builtin.shell", "spin.builtin.cache", "spin.builtin"],
+        )
 
-    assert cfg.get("plugin-path") is None
-    assert f"Loading {spinfile}" in caplog.text
-    assert "loading project plugins:" in caplog.text
-    assert "  import plugin spin.builtin" in caplog.text
-    assert "  add subtree builtin" in caplog.text
-    assert "    import plugin .shell from spin.builtin" in caplog.text
-    assert "    add subtree shell" in caplog.text
-    assert "    import plugin .cache from spin.builtin" in caplog.text
-    assert "    add subtree cache" in caplog.text
-    assert "loading global plugins:" in caplog.text
-    os.chdir(base_dir)
+        assert cfg.get("plugin-path") is None
+        assert f"Loading {spinfile}" in caplog.text
+        assert "loading project plugins:" in caplog.text
+        assert "  import plugin spin.builtin" in caplog.text
+        assert "  add subtree builtin" in caplog.text
+        assert "    import plugin .shell from spin.builtin" in caplog.text
+        assert "    add subtree shell" in caplog.text
+        assert "    import plugin .cache from spin.builtin" in caplog.text
+        assert "    add subtree cache" in caplog.text
+        assert "loading global plugins:" in caplog.text
 
 
 def test_load_config_tree_no_minimum_spin(tmp_path: PathlibPath) -> None:
