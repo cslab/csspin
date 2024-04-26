@@ -123,6 +123,7 @@ def test_base_options() -> None:
     click_options = vars(decorated_command)["__click_params__"]
     expected_options = (
         "version",
+        "help",
         "cwd",
         "envbase",
         "spinfile",
