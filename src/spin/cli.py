@@ -209,6 +209,11 @@ def base_options(fn: Callable) -> Callable:
             help="Display spin's version and exit.",
         ),
         click.option(
+            "--help",
+            is_flag=True,
+            help="Display spin's help and exit.",
+        ),
+        click.option(
             "--change-directory",
             "-C",
             "cwd",
@@ -371,6 +376,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
     ctx: click.Context,
     version: packaging.version.Version,
+    help: bool,  # pylint: disable=W0622
     cwd: str,
     envbase: str,
     spinfile: str,
@@ -404,15 +410,25 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
         cd(cwd)
     _spinfile = find_spinfile(spinfile)
     if not _spinfile:
-        if spinfile:
+        if help:
+            warn("No configuration file found")
+            commands.main(args=ctx.args)
+            return None
+        elif spinfile:
             die(f"{spinfile} not found")
         else:
             die("No configuration file found")
     spinfile = _spinfile  # type: ignore[assignment]
 
-    cfg = load_config_tree(
-        spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
-    )
+    try:
+        cfg = load_config_tree(
+            spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
+        )
+    except ModuleNotFoundError as exc:
+        if help:
+            commands.main(args=ctx.args)
+            return None
+        die(exc)
 
     mkdir("{spin.cache}")
 
@@ -435,6 +451,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
             # unless 'provision' is also given => so do not run any
             # tasks.
             return None
+
     if provision:
         # Reget the plugins and reload the tree, if cleaned up before.
         if plugin_dir_purged:
