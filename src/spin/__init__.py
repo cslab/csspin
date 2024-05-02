@@ -241,7 +241,10 @@ def rmtree(path: str) -> None:
 
     """
     path = interpolate1(path)
-    echo("rmtree", path)
+    if sys.platform == "win32":
+        echo(f"rm {path} -recurse -force")
+    else:
+        echo(f"rm -rf {path}")
     shutil.rmtree(path)
 
 

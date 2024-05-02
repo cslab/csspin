@@ -82,7 +82,7 @@ windows:
     - venv\Scripts\activate.ps1
     - pip install -e .
   script:
-    - spin --debug -v -p pytest.opts="['-k', 'not slow']" --provision test --coverage --cov-report term --cov-report xml:coverage-$env:CI_JOB_ID.xml --junitxml=reports-$env:CI_JOB_ID/pytest.xml
+    - spin --debug -v --provision -p pytest.opts="['-k', 'not slow', '--cov-report', 'term', '--cov-report', 'xml:coverage-$env:CI_JOB_ID.xml', '--junitxml', 'reports-$env:CI_JOB_ID/pytest.xml']" test -vv --coverage
 
 # ---------------------------- Deploy/Analyze stage ----------------------------
 analyze:
