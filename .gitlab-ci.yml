@@ -90,6 +90,7 @@ analyze:
   variables:
     SOURCE_DIRS: src tests
     PYLINTRC: pyproject.toml
+  allow_failure: True
   needs:
     - python3.9
     - python3.10

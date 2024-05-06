@@ -5,7 +5,6 @@
 # https://www.contact-software.com/
 
 """
-
 Plugin flake8
 =============
 
@@ -30,19 +29,17 @@ Properties
   in :py:data:`spin.project_root`.
 
 .. todo:: flake8 argument handling
-
 """
 
-import logging
 import os
 
-from spin import config, option, sh, task
+from spin import config, info, option, sh, task
 
 defaults = config(
-    cmd="flake8",
+    exe="flake8",
     opts=["--exit-zero", f"-j{os.cpu_count()}"],
     requires=config(
-        spin=[".python", ".vcs", ".preflight"],
+        spin=[".python", ".vcs"],
         # These are the flake8 plugins we want to use. Maybe this should
         # be configurable in spinfile (candidates are "flake8-spellcheck"
         # or "flake8-cognitive-complexity", "dlint", "flake8-bandit" etc.)
@@ -78,12 +75,13 @@ def flake8(
     args,
 ):
     """Run flake8 to lint Python code."""
-    files = args or cfg.vcs.modified
-    files = [f for f in files if f.endswith(".py")]
     if allsource:
         files = cfg.flake8.allsource
-    if files:
-        logging.info(f"flake8: Modified files: {files}")
-        sh("{flake8.cmd}", *cfg.flake8.opts, *files)
     else:
-        logging.info("flake8: no modified Python files.")
+        files = args or cfg.vcs.modified
+        files = [f for f in files if f.endswith(".py")]
+    if files:
+        info(f"flake8: Modified files: {files}")
+        sh("{flake8.exe}", *cfg.flake8.opts, *files)
+    else:
+        info("flake8: No modified Python files.")

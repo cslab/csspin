@@ -97,7 +97,7 @@ As for the rest:
 - `cache` (builtin): belongs into `scons`?
 - `build` (builtin): belongs `stdworkflows`
 - `pytest` (builtin): obsoleted by `pytest` (spin_plugins)
-- `buildout`: obsolete?
+- `buildout`: not working, unused, obsolete
 - `ce15`: obsolete (my 3-years old attempt)
 - `eggs`: obsolete (my 3-years old attempt)
 

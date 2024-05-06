@@ -66,16 +66,6 @@ def test_flake(tmpdir):
 
 
 @pytest.mark.slow
-def test_buildout(tmpdir):
-    out = do_test(
-        tmpdir,
-        "buildout.yaml",
-        "python -c \"import shutil; print(shutil.which('buildout'))\"",
-    )
-    assert re.match(r".*buildout(.exe)?$", out, re.IGNORECASE)
-
-
-@pytest.mark.slow
 def test_build(tmpdir):
     assert "all build tasks" in do_test(
         tmpdir,

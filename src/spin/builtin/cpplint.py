@@ -6,27 +6,23 @@
 
 import os
 
-from spin import config, sh, task
+from spin import config, echo, sh, task
 
 defaults = config(
-    cmd="cpplint",
-    opts=["--extensions=h,hh,hpp,c,cc,cpp,i"],
+    exe="cpplint",
+    opts=[],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
-    requires=config(spin=[".python", ".vcs", ".preflight"], python=["cpplint"]),
+    requires=config(spin=[".python", ".vcs"], python=["cpplint~=1.6.1"]),
 )
 
 
-@task(when="check")
+@task(when="lint")
 def cpplint(cfg, args):
     """Run the 'cpplint' command."""
-    c_files = [
-        f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cppcheck.extensions
-    ]
-    if c_files:
-        print("cpplint: Modified files: ", c_files)
-        cmd = "{cpplint.cmd}"
-        c_files_str = " ".join(c_files)
-        cmd = " ".join([cmd, " ".join(cfg.cpplint.opts), c_files_str])
-        sh(cmd)
+    if c_files := [
+        f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cpplint.extensions
+    ]:
+        exts = f"--extensions={','.join(ext[1:] for ext in cfg.cpplint.extensions)}"
+        sh("{cpplint.exe}", exts, *cfg.cpplint.opts, *c_files)
     else:
-        print("cpplint: no modified C/C++ files")
+        echo("cpplint: no modified C/C++ files")

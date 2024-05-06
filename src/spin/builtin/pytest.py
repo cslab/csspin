@@ -12,14 +12,13 @@ defaults = config(
     requires=config(
         spin=[
             ".python",
-            ".preflight",
         ],
         python=[
             "pytest",
             "pytest-cov",
         ],
     ),
-    opts=["-k", "not slow"],
+    opts=[],
     coverage_opts=[],
 )
 
