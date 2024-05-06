@@ -4,7 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from spin import config, sh, task
+from spin import config, exists, rmtree, sh, task
 
 defaults = config(
     docs="{spin.project_root}/docs",
@@ -12,8 +12,13 @@ defaults = config(
         "sphinx",
     ],
     opts="-qaE",
-    build_dir="{spin.env_base}/docs",
+    build_dir="{spin.project_root}/docs/_build",
 )
+
+
+def cleanup(cfg):
+    if exists("{sphinx.build_dir}"):
+        rmtree("{sphinx.build_dir}")
 
 
 @task()
