@@ -13,7 +13,7 @@ import urllib
 from spin import config, exists, info, interpolate1, option, setenv, sh, task, warn
 
 defaults = config(
-    cmd="mvn",
+    exe="mvn",
     goals=[],
     opts=[],
     defines={},
@@ -25,18 +25,16 @@ defaults = config(
         "https://ftp.fau.de/apache/",
         "https://dlcdn.apache.org/",
     ],
-    url=(
-        "maven/maven-3/{maven.version}/binaries/apache-maven-{maven.version}-bin.tar.gz"
-    ),
-    mavendir="{spin.cache}/apache-maven-{maven.version}",
+    url="maven/maven-3/{mvn.version}/binaries/apache-maven-{mvn.version}-bin.tar.gz",
+    mavendir="{spin.cache}/apache-maven-{mvn.version}",
 )
 
 
 def provision(cfg):
-    if not exists(cfg.maven.mavendir):
-        random.shuffle(cfg.maven.mirrors)
-        for mirror in cfg.maven.mirrors:
-            url = interpolate1(mirror + cfg.maven.url)
+    if not exists(cfg.mvn.mavendir):
+        random.shuffle(cfg.mvn.mirrors)
+        for mirror in cfg.mvn.mirrors:
+            url = interpolate1(mirror + cfg.mvn.url)
             info(f"Downloading {url}")
             try:
                 filename, _ = urllib.request.urlretrieve(url)
@@ -44,11 +42,11 @@ def provision(cfg):
                 # maven removes old version from the mirrors...
                 if e.status == 404:
                     warn(
-                        f"Maven {cfg.maven.version} not found in the mirrors... "
-                        f"Trying to retrieve version {cfg.maven.version} from archive."
+                        f"Maven {cfg.mvn.version} not found in the mirrors... "
+                        f"Trying to retrieve version {cfg.mvn.version} from archive."
                     )
                     mirror = "https://archive.apache.org/dist/"
-                    url = interpolate1(mirror + cfg.maven.url)
+                    url = interpolate1(mirror + cfg.mvn.url)
                     filename, _ = urllib.request.urlretrieve(url)
                 else:
                     raise
@@ -61,12 +59,12 @@ def provision(cfg):
                 "Currently no mirror reachable"
             )
         with tarfile.open(filename, "r:gz") as tar:
-            tar.extractall(os.path.dirname(interpolate1(cfg.maven.mavendir)))
+            tar.extractall(os.path.dirname(interpolate1(cfg.mvn.mavendir)))
     init(cfg)
 
 
 def init(cfg):
-    bindir = os.path.normpath(interpolate1(cfg.maven.mavendir + "/bin"))
+    bindir = os.path.normpath(interpolate1(f"{cfg.mvn.mavendir}/bin"))
     setenv(
         f"set PATH={bindir}{os.pathsep}$PATH",
         PATH=os.pathsep.join((f"{bindir}", "{PATH}")),
@@ -74,7 +72,7 @@ def init(cfg):
 
 
 @task(when="build")
-def maven(
+def mvn(
     cfg,
     pom_file: option(
         "-f",
@@ -95,18 +93,18 @@ def maven(
     args,
 ):
     """Run maven command"""
-    cmd = "{maven.cmd}"
+    cmd = "{mvn.exe}"
     if sys.platform.startswith("win32"):
         cmd += ".cmd"
-    opts = cfg.maven.opts
+    opts = cfg.mvn.opts
     if not cfg.verbose:
         opts.append("-q")
     # add pom file
     opts.append("-f")
-    opts.append(pom_file or cfg.maven.pom_file)
+    opts.append(pom_file or cfg.mvn.pom_file)
 
     # add defines
-    cfg_defines = cfg.maven.defines
+    cfg_defines = cfg.mvn.defines
     for d in defines:
         name, val = d.split("=")
         cfg_defines[name] = val
@@ -116,5 +114,5 @@ def maven(
 
     # do not use goals when some extra args are used
     if not args:
-        opts.extend(cfg.maven.goals)
-    sh(cmd, *opts, *args, env=os.environ)
+        opts.extend(cfg.mvn.goals)
+    sh(cmd, *opts, *args)

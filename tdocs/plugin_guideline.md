@@ -6,6 +6,14 @@ consistent user interface and behavior. To achieve it, we
 introduce some conventions to be followed when programming the spin
 plugins. The following sections cover the details.
 
+**Open points**:
+
+- Where to document the tasks? And their CLI?
+- The plugins should evaluate the `spin.verbose` flag, if the tools
+  provide some verbosity controls
+- Consider whether prefixing the info/warning/error outputs with the
+  name of the plugin is a good idea.
+
 ## General Recommendations
 
 1. The name of the plugin should be as well descriptive as short.
@@ -13,6 +21,8 @@ plugins. The following sections cover the details.
    node of the plugin-specific config-subtree, so a over-long names
    makes for unnecessarily long config-three-paths which are
    more difficult to handle on CLI etc.
+   In case you're wrapping a tool, "plugin-name == task-name ==
+   tool-name" makes for a good UX in many cases.
 
 2. Choose the name of the task such that it is easy to type. It will
    be used a lot on command line. Example:
@@ -42,6 +52,21 @@ In general:
    line calling the tool.
 4. The default-values of configuration properties shipped with the
    plugins should match the need in the majority of cases.
+5. When provisioning third-party packages, you usually want to pin the
+   major segment of their version.
+
+   **Reasoning**: we depend on the
+   behavior of the tools and especially on their CLIs. If left unpinned,
+   (major) tool updates would eventually break the plugin.
+   On the other hand, we would like to avoid the tedious "raise the
+   pinning to the next version" maintenance efforts.
+   So, the sweet spot here is a partial pin which allows the bug fixes
+   and minor changes to "flow" and avoids breaking changes. For Python dependencies,
+   the compatibility operator is appropriate in many situations:
+
+   ```
+   requires=config(python=["cpplint~=1.6.7"])
+   ```
 
 Moreover, we can differentiate between two ways of modeling the
 config-tree of a spin plugin:
@@ -136,7 +161,7 @@ according check may look as below:
 
 ```
 if dbms == "postgres" and not cfg.mkinstance.postgres.postgres_syspwd:
-    die(f"Please provide the PosgreSQL system password in the property 'mkinstance.postgres.postgres_syspwd'")
+    die(f"Please provide the PostgreSQL system password in the property 'mkinstance.postgres.postgres_syspwd'")
 ```
 
 ## Parametrizing/Configuration of the Spin Plugin or the Underlying Tool
@@ -237,12 +262,12 @@ third party libraries and such.
 
 TBC
 
-## Transparency and "ready-to-go" Command Lines
+## Transparency, Behavior Consistency and "ready-to-go" Command-Lines
 
 One of the goals of spin is to be transparent about the work it does
 and to demonstrate/learn the devs now to use the underlying tools.
 
-Herefore:
+Therefore:
 
 - The command lines used to make subprocess calls have to be printed
   on the standard out stream and highlighted consistently. For the
@@ -275,6 +300,19 @@ Herefore:
 
 When did right, the user should be able to copy the issued command
 lines, drop them into the terminal and achieve the same results.
+Moreover, to have the output layed out consistently, the plugins are
+discouraged to write to standard output stream directly via `print` &
+Co; instead, use according spin APIs (`echo`, `info`, `warning`,
+`error`, `die`).
+
+This principle applies to the rest of spin APIs too; this makes for
+`consistent behavior across the plugins. E.g. prefer `spin.rmtree`to`shutil.rmtree`.
+
+## Prefer spin APIs
+
+To offer consistent behavior, plugins should prefer using spin API to
+similar APIs from the standard libraries and packages. E.g. prefer `spin.rmtree`
+to `shutil.rmtree`.
 
 ## Performance; Memoizing
 

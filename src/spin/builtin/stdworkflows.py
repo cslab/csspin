@@ -8,14 +8,17 @@
 ``Collection of standard SD workflows``
 =======================================
 
-.. click:: spin.builtin.preflight:test
+.. click:: spin.builtin.stdworkflows:test
    :prog: spin [test|tests]
 
-.. click:: spin.builtin.preflight:cept
+.. click:: spin.builtin.stdworkflows:cept
    :prog: spin [cept|acceptance]
 
-.. click:: spin.builtin.preflight:preflight
+.. click:: spin.builtin.stdworkflows:preflight
    :prog: spin preflight
+
+.. click:: spin.builtin.stdworkflows:build
+   :prog: spin build
 """
 
 from spin import invoke, option, task
@@ -42,6 +45,12 @@ def cept(
     invoke("cept", instance=instance, coverage=coverage, args=args)
 
 
+@task(aliases=["check"])
+def lint(allsource: option("--all", "allsource", is_flag=True), args):
+    """Run all linters defined in this project."""
+    invoke("lint", allsource=allsource, args=args)
+
+
 @task()
 def preflight(ctx, instance: option("-i", "--instance")):
     """Pre-flight checks.
@@ -50,3 +59,11 @@ def preflight(ctx, instance: option("-i", "--instance")):
     """
     ctx.invoke(test, instance=instance)
     ctx.invoke(cept, instance=instance)
+
+
+@task()
+def build(cfg):
+    """
+    Workflow which triggers all build tasks.
+    """
+    invoke("build")

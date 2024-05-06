@@ -6,14 +6,15 @@
 
 import os
 
-from spin import config, sh, task
+from spin import config, echo, sh, task
 
 defaults = config(
-    cmd="cppcheck",
+    exe="cppcheck",
     opts=[f"-j{os.cpu_count()}"],
     extensions=[".c", ".cc", ".cpp", ".h", ".hh", ".hpp", ".i"],
     requires=config(
-        spin=[".python", ".vcs", ".preflight"],
+        spin=[".python", ".vcs"],
+        # Hm. Thats not available on pypi.org.
         python=["cs.cppcheck-dev"],
     ),
 )
@@ -22,14 +23,9 @@ defaults = config(
 @task(when="check")
 def cppcheck(cfg, args):
     """Run the 'cppcheck' command."""
-    c_files = [
+    if c_files := [
         f for f in cfg.vcs.modified if os.path.splitext(f)[1] in cfg.cppcheck.extensions
-    ]
-    if c_files:
-        print(c_files)
-        cmd = "{cppcheck.cmd}"
-        c_files_str = " ".join(c_files)
-        cmd = " ".join([cmd, " ".join(cfg.cppcheck.opts), c_files_str])
-        sh(cmd)
+    ]:
+        sh("{cppcheck.exe}", *cfg.cppcheck.opts, *c_files)
     else:
-        print("cppcheck: no modified C/C++ files")
+        echo("cppcheck: no modified C/C++ files")

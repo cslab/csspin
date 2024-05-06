@@ -1,6 +1,6 @@
 minimum-spin: "0.2"
 plugins:
-  - spin.builtin.build
+  - spin.builtin.stdworkflows
 
 python:
   version: 3.9.6
