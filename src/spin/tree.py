@@ -233,7 +233,7 @@ def directive_append(target: ConfigTree, key: Hashable, value: Any) -> None:
     if key not in target:
         die(f"{key=} not in passed target tree.")
     if not isinstance(target[key], list):
-        die(f"Can't append {value=} to tree since {target[key]=} is not type 'list'")
+        die("Can't append value to tree since it's target not type 'list'")
     if isinstance(value, list):
         target[key].extend(value)
     else:
@@ -244,7 +244,7 @@ def directive_prepend(target: ConfigTree, key: Hashable, value: Any) -> None:
     if key not in target:
         die(f"{key=} not in passed target tree.")
     if not isinstance(target[key], list):
-        die(f"Can't prepend {value=} to tree since {target[key]=} is not type 'list'")
+        die("Can't prepend value to tree since it's target is not type 'list'")
     if isinstance(value, list):
         target[key][0:0] = value
     else:

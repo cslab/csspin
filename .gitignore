@@ -20,3 +20,4 @@ pytest.xml
 /reports/
 .env
 venv
+.python-version
