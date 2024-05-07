@@ -297,7 +297,10 @@ def test_directive_append_failing() -> None:
     passing undesirable values.
     """
     config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
-    with raises(Abort, match=".*Can't append value='x' to tree since.*"):
+    with raises(
+        Abort,
+        match=".*Can't append value to tree since it's target not type 'list.*",
+    ):
         tree.directive_append(config, "sub", "x")
 
     with raises(Abort, match=".*key='a' not in passed target tree."):
@@ -325,7 +328,10 @@ def test_directive_prepend_failing() -> None:
     passing undesirable values.
     """
     config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
-    with raises(Abort, match=".*Can't prepend value='x' to tree since.*"):
+    with raises(
+        Abort,
+        match=".*Can't prepend value to tree since it's target is not type 'list'.*",
+    ):
         tree.directive_prepend(config, "sub", "x")
 
     with raises(Abort, match=".*key='a' not in passed target tree."):

@@ -74,6 +74,10 @@ python3.11:
   extends: [.python_base, .test_base]
   image: python:3.11
 
+python3.12:
+  extends: [.python_base, .test_base]
+  image: python:3.12
+
 windows:
   extends: [.test_base]
   tags: ["Powershell", "Python3"]
@@ -95,6 +99,7 @@ analyze:
     - python3.9
     - python3.10
     - python3.11
+    - python3.12
     - windows
 
 # ------------------------------- Release stage --------------------------------
@@ -110,6 +115,8 @@ analyze:
     - job: python3.10
       artifacts: false
     - job: python3.11
+      artifacts: false
+    - job: python3.12
       artifacts: false
     - job: windows
       artifacts: false

@@ -8,3 +8,9 @@ task definitions in Python packages and automating the provisioning of
 development sandboxes and dependencies.
 
 `Documentation <http://frank.pages.contact.de/spin/index.html>`_
+
+CPython Support Policies
+========================
+
+Our CPython support policy for cs.spin aligns with the official CPython release
+schedule, encompassing versions 3.9 through 3.12 (so far).

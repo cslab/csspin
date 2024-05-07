@@ -2,7 +2,7 @@
 Installation
 ============
 
-Spin requires Python 3.8 or later, and you can install it using any
+Spin requires Python 3.9 or later, and you can install it using any
 way you like using :program:`pip`. It is most convenient to have the
 ``spin`` command locally installed and always available on your
 ``PATH``, just like a system command.

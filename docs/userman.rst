@@ -366,7 +366,7 @@ coming from plugins used by the project):
 
    $ spin system-provision
    spin: cd /home/me/myproj
-   spin: set PYENV_VERSION=3.8.11
+   spin: set PYENV_VERSION=3.11.2
    apt-get update
    apt-get install -y git make build-essential libssl-dev zlib1g-dev \
            libbz2-dev libreadline-dev libsqlite3-dev curl
@@ -381,7 +381,7 @@ error message if provisioning is attempted on another platform:
 
    $ spin system-provision fedora
    spin: cd /home/frank/spin
-   spin: set PYENV_VERSION=3.8.11
+   spin: set PYENV_VERSION=3.11.2
    spin: error: this project does not support fedora
    Aborted!
 
