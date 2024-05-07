@@ -33,7 +33,7 @@ spin:
       type: path internal
       help: |
         Where environments are provisioned.
-      default: "{SPIN_CACHE}/{spin.project_hash}"
+      default: "{spin.project_root}/{spin.spin_dir}"
     project_root:
       type: path internal
       help: |
