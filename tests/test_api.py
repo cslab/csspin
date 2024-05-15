@@ -817,6 +817,7 @@ def test_invoke(monkeypatch: pytest.MonkeyPatch) -> None:
         """Should be invoked by 'lint'"""
         print("flake8")
 
+    @spin.task()
     def parse() -> None:  # pylint: disable=unused-variable
         """Should not be invoked by 'lint'"""
         print("parse")

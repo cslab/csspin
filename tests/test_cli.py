@@ -227,9 +227,7 @@ def test_load_config_tree_basic(
 
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
-        assert cfg.loaded.get("spin.builtin.shell")
-        assert len(cfg.loaded) == 2  # no other/global plugins loaded
-        assert cfg.topo_plugins == ["spin.builtin.shell", "spin.builtin"]
+        assert len(cfg.loaded) == 1  # no other/global plugins loaded
         mock_toporun.assert_called_once()
 
         assert cfg.get("plugin-path") is None
@@ -237,8 +235,6 @@ def test_load_config_tree_basic(
         assert "loading project plugins:" in caplog.text
         assert "  import plugin spin.builtin" in caplog.text
         assert "  add subtree builtin" in caplog.text
-        assert "    import plugin .shell from spin.builtin" in caplog.text
-        assert "    add subtree shell" in caplog.text
         assert "loading global plugins:" in caplog.text
 
 
@@ -288,16 +284,12 @@ def test_load_config_tree_extended(
 
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
-        assert cfg.loaded.get("spin.builtin.shell")
-        assert len(cfg.loaded) == 2  # no other/global plugins loaded
-        assert cfg.topo_plugins == ["spin.builtin.shell", "spin.builtin"]
+        assert len(cfg.loaded) == 1  # no other/global plugins loaded
         assert cfg.get("plugin-path") is None
         assert f"Loading {spinfile}" in caplog.text
         assert "loading project plugins:" in caplog.text
         assert "  import plugin spin.builtin" in caplog.text
         assert "  add subtree builtin" in caplog.text
-        assert "    import plugin .shell from spin.builtin" in caplog.text
-        assert "    add subtree shell" in caplog.text
         assert "loading global plugins:" in caplog.text
 
 

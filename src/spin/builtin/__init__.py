@@ -17,7 +17,6 @@ import entrypoints
 from spin import (
     EXPORTS,
     argument,
-    config,
     die,
     group,
     interpolate1,
@@ -29,12 +28,6 @@ from spin import (
     sh,
     task,
     warn,
-)
-
-defaults = config(
-    requires=config(
-        spin=[".shell"],
-    ),
 )
 
 
