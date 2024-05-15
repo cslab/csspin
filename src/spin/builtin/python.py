@@ -36,7 +36,7 @@ Tasks
    :prog: spin python
 
 .. click:: spin.builtin.python:wheel
-   :prog: spin wheel
+   :prog: spin python:wheel
 
 
 Properties
@@ -422,7 +422,12 @@ def patch_activate(schema):
                 interpolate1(f"{schema.activatescript}.bak"),
             )
         info(f"Patching {schema.activatescript}")
-        original = readtext(f"{schema.activatescript}.bak")
+        # Removing the byte order marker (BOM) ensures the absence of those in
+        # the final scripts. BOMs in executables are not fully supported in
+        # Powershell.
+        original = (
+            readtext(f"{schema.activatescript}.bak").encode("utf-8-sig").decode("utf-8")
+        )
         for repl in schema.replacements:
             original = original.replace(repl[0], repl[1])
         newscript = schema.script.format(
