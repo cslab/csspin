@@ -77,6 +77,7 @@ from spin import (
     interpolate1,
     mkdir,
     namespaces,
+    normpath,
     parse_version,
     readtext,
     rmtree,
@@ -264,6 +265,16 @@ def wheel(cfg):
         )
 
 
+@task()
+def env():
+    """Generate command to activate the virtual environment"""
+    if sys.platform == "win32":
+        # Don't care about cmd
+        print(normpath("{python.scriptdir}", "activate.ps1"))
+    else:
+        print(f". {normpath('{python.scriptdir}', 'activate')}")
+
+
 def pyenv_install(cfg):
     with namespaces(cfg.python):
         if cfg.python.user_pyenv:
@@ -426,7 +437,7 @@ def patch_activate(schema):
         # the final scripts. BOMs in executables are not fully supported in
         # Powershell.
         original = (
-            readtext(f"{schema.activatescript}.bak").encode("utf-8-sig").decode("utf-8")
+            readtext(f"{schema.activatescript}.bak").encode("utf-8").decode("utf-8-sig")
         )
         for repl in schema.replacements:
             original = original.replace(repl[0], repl[1])

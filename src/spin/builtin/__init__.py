@@ -15,11 +15,9 @@ import distro
 import entrypoints
 
 from spin import (
-    EXPORTS,
     argument,
     die,
     group,
-    interpolate1,
     memoizer,
     option,
     parse_version,
@@ -37,20 +35,6 @@ def exec_shell(args):
     if not args:
         args = ("{platform.shell}",)
     sh(*args)
-
-
-@task()
-def env(cfg):
-    """Generate commands to activate an environment"""
-    # FIXME: this is maybe better than patching virtualenv's
-    # activation scripts -- and also more appropriate for other
-    # stacks. It does not provide an easy way to "deactivate", though
-    # [= apparently, this is not true; it *does* provide deactivate
-    # via venv's activate, but that won't reset the environment
-    # variables =]. We'd need that for all kinds of shells, though.
-    for name, value in EXPORTS.items():
-        print(f'export {name}="{value}"')
-    print(interpolate1("; source {python.scriptdir}/activate"))
 
 
 def pretty_descriptor(parent, name, descriptor):
