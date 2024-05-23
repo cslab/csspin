@@ -56,6 +56,7 @@ import os
 import re
 import shutil
 import sys
+from textwrap import dedent
 
 from click.exceptions import Abort
 
@@ -456,40 +457,45 @@ class BashActivate:
     replacements = [
         ("deactivate", "origdeactivate"),
     ]
-    setpattern = """
-_OLD_SPIN_{name}="${name}"
-{name}="{value}"
-export {name}
-"""
-    resetpattern = """
-    if ! [ -z "${{_OLD_SPIN_{name}+_}}" ] ; then
-        {name}="$_OLD_SPIN_{name}"
+    setpattern = dedent(
+        """
+        _OLD_SPIN_{name}="${name}"
+        {name}="{value}"
         export {name}
-        unset _OLD_SPIN_{name}
-    fi
-"""
-    script = """
-{patchmarker}
-{original}
-deactivate () {{
-    {resetters}
-    if [ ! "${{1-}}" = "nondestructive" ] ; then
-        # Self destruct!
-        unset -f deactivate
-        origdeactivate
-    fi
-}}
+        """
+    )
+    resetpattern = dedent(
+        """
+            if ! [ -z "${{_OLD_SPIN_{name}+_}}" ] ; then
+                {name}="$_OLD_SPIN_{name}"
+                export {name}
+                unset _OLD_SPIN_{name}
+            fi
+        """
+    )
+    script = dedent(
+        """
+        {patchmarker}
+        {original}
+        deactivate () {{
+            {resetters}
+            if [ ! "${{1-}}" = "nondestructive" ] ; then
+                # Self destruct!
+                unset -f deactivate
+                origdeactivate
+            fi
+        }}
 
-deactivate nondestructive
+        deactivate nondestructive
 
-{setters}
+        {setters}
 
-# The hash command must be called to get it to forget past
-# commands. Without forgetting past commands the $PATH changes
-# we made may not be respected
-hash -r 2>/dev/null
-
-"""
+        # The hash command must be called to get it to forget past
+        # commands. Without forgetting past commands the $PATH changes
+        # we made may not be respected
+        hash -r 2>/dev/null
+        """
+    )
 
 
 class PowershellActivate:
@@ -498,53 +504,63 @@ class PowershellActivate:
     replacements = [
         ("deactivate", "origdeactivate"),
     ]
-    setpattern = """
-New-Variable -Scope global -Name _OLD_SPIN_{name} -Value $env:{name}
-$env:{name} = "{value}"
-"""
-    resetpattern = """
-    if (Test-Path variable:_OLD_SPIN_{name}) {{
-        $env:{name} = $variable:_OLD_SPIN_{name}
-        Remove-Variable "_OLD_SPIN_{name}" -Scope global
-    }}
-"""
-    script = """
-{patchmarker}
-{original}
-function global:deactivate([switch] $NonDestructive) {{
-    {resetters}
-    if (!$NonDestructive) {{
-        Remove-Item function:deactivate
-        origdeactivate
-    }}
-}}
+    setpattern = dedent(
+        """
+        New-Variable -Scope global -Name _OLD_SPIN_{name} -Value $env:{name}
+        $env:{name} = "{value}"
+        """
+    )
+    resetpattern = dedent(
+        """
+            if (Test-Path variable:_OLD_SPIN_{name}) {{
+                $env:{name} = $variable:_OLD_SPIN_{name}
+                Remove-Variable "_OLD_SPIN_{name}" -Scope global
+            }}
+        """
+    )
+    script = dedent(
+        """
+        {patchmarker}
+        {original}
+        function global:deactivate([switch] $NonDestructive) {{
+            {resetters}
+            if (!$NonDestructive) {{
+                Remove-Item function:deactivate
+                origdeactivate
+            }}
+        }}
 
-deactivate -nondestructive
+        deactivate -nondestructive
 
-{setters}
-"""
+        {setters}
+        """
+    )
 
 
 class BatchActivate:
     patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
     activatescript = "{python.scriptdir}/activate.bat"
     replacements = ()
-    setpattern = """
-if not defined _OLD_SPIN_{name} goto ENDIFSPIN{name}1
-    set "{name}=%_OLD_SPIN_{name}%"
-:ENDIFSPIN{name}1
-if defined _OLD_SPIN_{name} goto ENDIFSPIN{name}2
-    set "_OLD_SPIN_{name}=%{name}%"
-:ENDIFSPIN{name}2
-set "{name}={value}"
-"""
+    setpattern = dedent(
+        """
+        if not defined _OLD_SPIN_{name} goto ENDIFSPIN{name}1
+            set "{name}=%_OLD_SPIN_{name}%"
+        :ENDIFSPIN{name}1
+        if defined _OLD_SPIN_{name} goto ENDIFSPIN{name}2
+            set "_OLD_SPIN_{name}=%{name}%"
+        :ENDIFSPIN{name}2
+        set "{name}={value}"
+        """
+    )
     resetpattern = ""
-    script = """
-@echo off
-{patchmarker}
-{original}
-{setters}
-"""
+    script = dedent(
+        """
+        @echo off
+        {patchmarker}
+        {original}
+        {setters}
+        """
+    )
 
 
 class BatchDeactivate:
@@ -552,18 +568,37 @@ class BatchDeactivate:
     activatescript = "{python.scriptdir}/deactivate.bat"
     replacements = ()
     setpattern = ""
-    resetpattern = """
-if not defined _OLD_SPIN_{name} goto ENDIFVSPIN{name}
-    set "{name}=%_OLD_SPIN_{name}%"
-    set _OLD_SPIN_{name}=
-:ENDIFVSPIN{name}
-"""
-    script = """
-@echo off
-{patchmarker}
-{original}
-{resetters}
-"""
+    resetpattern = dedent(
+        """
+        if not defined _OLD_SPIN_{name} goto ENDIFVSPIN{name}
+            set "{name}=%_OLD_SPIN_{name}%"
+            set _OLD_SPIN_{name}=
+        :ENDIFVSPIN{name}
+        """
+    )
+    script = dedent(
+        """
+        @echo off
+        {patchmarker}
+        {original}
+        {resetters}
+        """
+    )
+
+
+class PythonActivate:
+    patchmarker = "# Patched by spin.builtin.virtualenv\n"
+    activatescript = "{python.scriptdir}/activate_this.py"
+    replacements = ()
+    setpattern = 'os.environ["{name}"] = "{value}"'
+    resetpattern = ""
+    script = dedent(
+        """
+        {patchmarker}
+        {original}
+        {setters}
+        """
+    )
 
 
 def finalize_provision(cfg):
@@ -573,6 +608,7 @@ def finalize_provision(cfg):
         BatchActivate,
         BatchDeactivate,
         PowershellActivate,
+        PythonActivate,
     ):
         patch_activate(schema)
 
