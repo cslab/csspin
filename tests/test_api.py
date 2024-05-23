@@ -167,6 +167,36 @@ def test_mkdir_rmdir(tmp_path: PathlibPath) -> None:
     assert not spin.exists(xxx)
 
 
+def test_mv(tmp_path: PathlibPath) -> None:
+    """spin.mv is able to move and rename files and directories"""
+    from tempfile import mktemp
+
+    with pytest.raises(click.Abort, match=".* does not exist!"):
+        spin.mv(mktemp(), tmp_path)
+
+    subdir_a = tmp_path / "sub_a"
+    subdir_b = tmp_path / "sub_b"
+    subdir_a.mkdir()
+    subdir_b.mkdir()
+    file_ = subdir_a / "file.txt"
+    file_.write_text("")
+
+    # move file
+    spin.mv(file_, subdir_b)
+    assert (subdir_b / "file.txt").is_file()
+    assert not file_.is_file()
+
+    # move directory
+    spin.mv(subdir_b, subdir_a)
+    assert ((file_path := subdir_a / "sub_b" / "file.txt")).is_file()
+    assert not subdir_b.is_dir()
+
+    # rename file
+    spin.mv(file_path, (new_file_path := subdir_a / "sub_b" / "file2.txt"))
+    assert not file_path.is_file()
+    assert new_file_path.is_file()
+
+
 def test_die() -> None:
     """spin.die will raise click.Abort"""
     with pytest.raises(click.Abort, match="You shall not pass!"):
