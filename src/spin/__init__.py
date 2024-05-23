@@ -3,6 +3,8 @@
 # Copyright (C) 2020 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+#
+# pylint: disable=too-many-lines
 
 """This is the plugin API of spin. It contains functions and classes
 that are necessary for plugins to register themselves with spin,
@@ -246,6 +248,23 @@ def rmtree(path: str) -> None:
     else:
         echo(f"rm -rf {path}")
     shutil.rmtree(path)
+
+
+def mv(source: str | Path, target: str | Path) -> None:
+    """Move a file or directory recursively from `source` to `target` in case
+    the `target` exists, otherwise rename `source` to `target`.
+
+    """
+    if not exists((source := str(interpolate1(source)))):
+        die(f"{source} does not exist!")
+    target = str(interpolate1(target))
+
+    if sys.platform == "win32":
+        echo(f"move-item -path {source} -destination {target}")
+    else:
+        echo(f"mv {source} {target}")
+
+    shutil.move(source, target)
 
 
 def die(*msg: Any) -> None:
