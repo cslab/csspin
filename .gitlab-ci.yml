@@ -5,40 +5,30 @@ include:
     ref: v15.9.0.3
     file:
       - ci/common.yml
-      - ci/wheel.yml
       - ci/pre-commit.yml
       - ci/release.yml
       - ci/analyze.yml
 
-.python_base:
-  image: python:3.9
-  needs: []
-  before_script:
-    - mkdir -p ~/.config/spin
-    # Little hack so GitLab won't fudge about the colons.
-    # Maybe put that as a CI variable of type "file"?
-    - >
-      cat > ~/.config/spin/global.yaml << EOF
-
-      python:
-        use: python
-      sphinx:
-        build_dir: _build
-      EOF
-    - pip install -e .
-
 # --------------------------------- Build stage --------------------------------
 wheel:
-  extends: [.build_wheel, .python_base]
+  stage: build
+  image: registry.contact.de/cetest:16.0-1.latest
+  variables:
+    # The version generation via setuptools_scm needs
+    # (potentially) the whole SCM history to work correctly
+    GIT_DEPTH: 0
+    GIT_STRATEGY: clone
   script:
-    - spin --debug -v --provision python:wheel
-    - spin --debug -v docs html
+    - pip install -e .
+    - spin -v --provision -p python.use=python python:wheel
+    - spin -v -p sphinx.build_dir=_build docs html
   artifacts:
     when: always
     expire_in: 72 hrs
     paths:
       - dist/*.whl
       - docs/_build/html
+  interruptible: true
 
 # --------------------------------- Test stage ---------------------------------
 pre-commit:
@@ -48,7 +38,8 @@ pre-commit:
 .test_base:
   needs: []
   script:
-    - spin --debug -v --provision -p pytest.coverage_opts="['--cov', '--cov-report', 'term', '--cov-report', 'xml:coverage-${CI_JOB_ID}.xml', '--junitxml', 'reports-${CI_JOB_ID}/pytest.xml']" test -vv --coverage
+    - pip install -e .
+    - spin --provision -p python.use=python -p pytest.opts="['--cov-report', 'term', '--cov-report', 'xml:coverage-${CI_JOB_ID}.xml', '--junitxml', 'reports-${CI_JOB_ID}/pytest.xml']" test -vv --coverage
   artifacts:
     when: always
     expire_in: 24 hrs
@@ -63,30 +54,30 @@ pre-commit:
   interruptible: true
 
 python3.9:
-  extends: [.python_base, .test_base]
+  extends: [.test_base]
   image: python:3.9
 
 python3.10:
-  extends: [.python_base, .test_base]
+  extends: [.test_base]
   image: python:3.10
 
 python3.11:
-  extends: [.python_base, .test_base]
+  extends: [.test_base]
   image: python:3.11
 
 python3.12:
-  extends: [.python_base, .test_base]
+  extends: [.test_base]
   image: python:3.12
 
 windows:
   extends: [.test_base]
   tags: ["Powershell", "Python3"]
   before_script:
-    - "& 'c:\\program files\\Python311\\python.exe' -m venv venv"
+    - "& python.exe -m venv venv"
     - venv\Scripts\activate.ps1
     - pip install -e .
   script:
-    - spin --debug -v --provision -p pytest.opts="['-k', 'not slow', '--cov-report', 'term', '--cov-report', 'xml:coverage-$env:CI_JOB_ID.xml', '--junitxml', 'reports-$env:CI_JOB_ID/pytest.xml']" test -vv --coverage
+    - spin --provision -p pytest.opts="['--cov-report', 'term', '--cov-report', 'xml:coverage-$env:CI_JOB_ID.xml', '--junitxml', 'reports-$env:CI_JOB_ID/pytest.xml']" test -vv --coverage
 
 # ---------------------------- Deploy/Analyze stage ----------------------------
 analyze:
@@ -94,7 +85,6 @@ analyze:
   variables:
     SOURCE_DIRS: src tests
     PYLINTRC: pyproject.toml
-  allow_failure: True
   needs:
     - python3.9
     - python3.10
@@ -103,22 +93,10 @@ analyze:
     - windows
 
 # ------------------------------- Release stage --------------------------------
-
 .release_deps:
   needs:
-    - job: wheel
-      artifacts: true
+    - wheel
     - job: analyze
-      artifacts: false
-    - job: python3.9
-      artifacts: false
-    - job: python3.10
-      artifacts: false
-    - job: python3.11
-      artifacts: false
-    - job: python3.12
-      artifacts: false
-    - job: windows
       artifacts: false
 
 conpi:

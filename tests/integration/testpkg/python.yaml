@@ -3,3 +3,7 @@ plugins:
   - spin.builtin.python
 python:
   version: "3.9.6"
+  requirements:
+    - mock
+  devpackages:
+    - -e ../devpkg

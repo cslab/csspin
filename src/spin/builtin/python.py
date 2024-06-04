@@ -141,6 +141,7 @@ defaults = config(
     abitag=None,
     provisioner=None,
     extras=[],
+    devpackages=[],
 )
 
 
@@ -650,8 +651,8 @@ class ProvisionerProtocol:
     def lock(self, cfg):
         """Lock the project's dependencies."""
 
-    def add(self, req):
-        """Add an extra dependency (development dependencies)."""
+    def add(self, req, devpackage=False):
+        """Add an extra dependency (incl. development ones)."""
 
     def lock_extras(self, cfg):
         """Lock the extra dependencies."""
@@ -671,9 +672,8 @@ class SimpleProvisioner(ProvisionerProtocol):
     """
 
     def __init__(self):
-        # Note that self.requirements is effectively a set, since we
-        # record requirements in the memoizer
-        self.requirements = []
+        self.requirements = set()
+        self.devpackages = set()
         self.m = Memoizer("{python.memo}")
 
     def prerequisites(self, cfg):
@@ -683,19 +683,24 @@ class SimpleProvisioner(ProvisionerProtocol):
     def lock(self, cfg):
         """Noop"""
 
-    def add(self, req):
-        # Add the requirement if it's not already there.
+    def add(self, req, devpackage=False):
+        # Add the requirement or devpackage if not already there.
         if not self.m.check(req):
-            self.requirements.extend(req.split())
+            lst = self.devpackages if devpackage else self.requirements
+            lst.add(req)
             self.m.add(req)
 
     def sync(self, cfg):
         # Install missing requirements.
         if self.requirements:
-            sh("pip", "install", cfg.quietflag, *self.requirements)
-        self.m.save()
+            sh("pip", "install", cfg.quietflag, *self._split(self.requirements))
+            self.m.save()
 
     def install(self, cfg):
+        if self.devpackages:
+            sh("pip", "install", cfg.quietflag, *self._split(self.devpackages))
+            self.m.save()
+
         # If there is a setup.py, make an editable install (which
         # transitively also installs runtime dependencies of the project).
         if any((exists("setup.py"), exists("setup.cfg"), exists("pyproject.toml"))):
@@ -705,6 +710,13 @@ class SimpleProvisioner(ProvisionerProtocol):
             else:
                 cmd.append(".")
             sh(*cmd)
+
+    def _split(self, reqset):
+        """to pass whitespace-less args to sh()"""
+        reqlist = []
+        for req in reqset:
+            reqlist.extend(req.split())
+        return reqlist
 
 
 def install_to_venv(cfg, *args):
@@ -721,15 +733,6 @@ def venv_provision(cfg):
         virtualenv = Command(*cmd)
         # do not download seeds, since we update pip later anyway
         virtualenv("-p", "{python.interpreter}", "{python.venv}")
-        # Make sure pip is up to date
-        sh(
-            cfg.python.python,
-            "-mpip",
-            cfg.quietflag,
-            "install",
-            "-U",
-            "pip",
-        )
         fresh_virtualenv = True
 
     # This sets PATH to the venv
@@ -755,7 +758,7 @@ def venv_provision(cfg):
         pipconf = "{python.venv}/pip.conf"
     writetext(pipconf, "\n".join(text))
 
-    # Update pip in the venv
+    # Establish the prerequisites
     if fresh_virtualenv:
         cfg.python.provisioner.prerequisites(cfg)
 
@@ -773,22 +776,20 @@ def venv_provision(cfg):
 
     cfg.python.provisioner.lock(cfg)
 
-    replacements = cfg.get("devpackages", {})
-
-    def addreq(req):
-        req = replacements.get(req, req)
-        cfg.python.provisioner.add(interpolate1(req))
-
     # Install packages required by the project ('requirements')
     for req in cfg.python.get("requirements", []):
-        addreq(req)
+        cfg.python.provisioner.add(interpolate1(req))
+
+    # Install development packages required by the project ('devpackages')
+    for pkgspec in cfg.python.get("devpackages", []):
+        cfg.python.provisioner.add(interpolate1(pkgspec), True)
 
     # Install packages required by plugins used
     # ('<plugin>.requires.python')
     for plugin in cfg.topo_plugins:
         plugin_module = cfg.loaded[plugin]
         for req in get_requires(plugin_module.defaults, "python"):
-            addreq(req)
+            cfg.python.provisioner.add(interpolate1(req))
 
     cfg.python.provisioner.lock_extras(cfg)
     cfg.python.provisioner.sync(cfg)

@@ -4,3 +4,4 @@ plugins:
 
 python:
   version: 3.9.6
+  use: python
