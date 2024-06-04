@@ -326,26 +326,22 @@ def test_install_plugin_packages(
     plugin and dev packages
     """
     mocker.patch.dict(os.environ, {"PYTHONPATH": os.path.sep + "python"})
-    mocker.patch(
-        "spin.cli.glob.iglob", return_value=("foo.dev.egg-link", "bar.egg-link")
-    )
+    mocker.patch("spin.cli.glob.iglob", return_value=("foo.egg-link", "bar.egg-link"))
     mocker.patch(
         "spin.cli.readtext",
-        side_effect=("foo.dev.egg-link-content", "bar.egg-link-content"),
+        side_effect=("foo.egg-link-content", "bar.egg-link-content"),
     )
     mock_sh = mocker.patch("spin.cli.sh")
 
     cfg.spin.plugin_dir = Path(tmp_path / "plugins")
     cfg.spin.extra_index = "https://packages.contact.de/apps/16.0"
     cfg["plugin-packages"] = ["foo", "bar"]
-    cfg["devpackages"] = {"foo": "foo.dev"}
 
     assert not os.path.isdir(Path(tmp_path / "plugins"))
     cli.install_plugin_packages(cfg)
     assert os.path.isdir(Path(tmp_path / "plugins"))
-    assert (
-        "'--extra-index-url', 'https://packages.contact.de/apps/16.0', 'foo.dev'"
-        in str(mock_sh.call_args_list[0])
+    assert "'--extra-index-url', 'https://packages.contact.de/apps/16.0', 'foo'" in str(
+        mock_sh.call_args_list[0]
     )
     assert "'--extra-index-url', 'https://packages.contact.de/apps/16.0', 'bar'" in str(
         mock_sh.call_args_list[1]
@@ -356,9 +352,7 @@ def test_install_plugin_packages(
     assert os.getenv("PYTHONPATH") == os.path.sep + "python"
 
     with open(tmp_path / "plugins" / "easy-install.pth", "r", encoding="utf-8") as f:
-        assert f.read() == "foo.dev.egg-link-content\nbar.egg-link-content"
-
-    assert sys.path[-1] == cfg.spin.plugin_dir
+        assert f.read() == "foo.egg-link-content\nbar.egg-link-content"
 
     # also check if the the path was removed in case it did not exist before
     del os.environ["PYTHONPATH"]

@@ -111,7 +111,7 @@ class PiptoolsProvisioner(ProvisionerProtocol):
             pip_compile(cfg, *extra_args, "-o", cfg.piptools.requirements)
             self.locks_updated = True
 
-    def add(self, req):
+    def add(self, req, devpackage=False):
         if req.startswith("-e") and self.cfg.piptools.hashes:
             die("Hashed dependencies are incompatible with editable installs.")
         self.spinreqs.add(req)

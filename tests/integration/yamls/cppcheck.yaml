@@ -9,6 +9,7 @@ devpi:
 
 python:
   version: 3.9.6
+  use: python
   pipconf:
     global:
       index-url: "{devpi.url}/+simple/"

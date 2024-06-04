@@ -417,14 +417,13 @@ user/machine specific settings like in the example below.
    python:
      pipconf:
        global:
-	 extra-index-url: "{devpi.stage}/+simple/"
+         extra-index-url: "{devpi.stage}/+simple/"
 
-   # The 'devpackages' key defines mappings from dependency names to
-   # actual pip specs. This can be used like below to install certain
-   # packages from local sandboxes or elsewhere instead from the package
-   # server used.
-   devpackages:
-     cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
+     # Packages whose sources are expected to be available locally
+     # and potentially require additional tools (e.g. Node) to be
+     # built and installed.
+     devpackages:
+       cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
 
 
 .. hyperlinks

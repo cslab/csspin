@@ -16,26 +16,33 @@ def cfg():
     cli.load_config_tree(None)
 
 
-def do_test(tmpdir, what, cmd):
+def do_test(tmpdir, what, cmd, path="tests/integration/yamls", props=""):
     output = backtick(
-        f"spin -q -C tests/integration --env {tmpdir} -f {what} --provision {cmd}"
+        f"spin -p spin.cache={tmpdir} {props} -q -C {path} --env {tmpdir} -f"
+        f" {what} --cleanup --provision {cmd}"
     )
     output = output.strip()
-    print(output)
     return output
 
 
 @pytest.mark.slow
 def test_python(tmpdir):
-    pytest.skip("Think about the usefulness of this test.")  # TODO
     assert do_test(
-        tmpdir,
-        "python.yaml",
-        "python --version",
+        tmpdir, "python.yaml", "python --version", "tests/integration/testpkg"
     ).endswith("Python 3.9.6")
 
 
-@pytest.mark.slow
+def test_python_use(tmpdir):
+    output = do_test(
+        tmpdir,
+        "python.yaml",
+        "python --version",
+        "tests/integration/testpkg",
+        "-p python.use=python",
+    )
+    assert "Python 3." in output
+
+
 def test_cppcheck(tmpdir):
     out = do_test(
         tmpdir,
@@ -45,7 +52,6 @@ def test_cppcheck(tmpdir):
     assert re.match(r".*cppcheck(.exe)?$", out, re.IGNORECASE)
 
 
-@pytest.mark.slow
 def test_cpplint(tmpdir):
     out = do_test(
         tmpdir,
@@ -55,7 +61,6 @@ def test_cpplint(tmpdir):
     assert re.match(r".*cpplint(.exe)?$", out, re.IGNORECASE)
 
 
-@pytest.mark.slow
 def test_flake(tmpdir):
     out = do_test(
         tmpdir,
@@ -66,6 +71,24 @@ def test_flake(tmpdir):
 
 
 @pytest.mark.slow
+def test_node(tmpdir):
+    assert do_test(
+        tmpdir,
+        "node.yaml",
+        "run node --version",
+    ).endswith("v18.17.1")
+
+
+@pytest.mark.slow
+def test_java(tmpdir):
+    output = do_test(
+        tmpdir,
+        "java.yaml",
+        "run java --version",
+    )
+    assert "openjdk 19." in output
+
+
 def test_build(tmpdir):
     assert "all build tasks" in do_test(
         tmpdir,

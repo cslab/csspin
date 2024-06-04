@@ -4,7 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from cdb.comparch.pkgtools import setup
+from setuptools import setup
 
 setup(
     name="cs.something",

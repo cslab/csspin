@@ -135,8 +135,8 @@ def load_plugin(
         full_name = mod.__name__
     except ModuleNotFoundError as ex:
         warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
-        # We tolerate this only when --cleanup and not --provision
-        if not cfg.cleanup or cfg.provision:
+        # We tolerate this only in context of cleanup
+        if not cfg.cleanup:
             raise ex
 
     if full_name and full_name not in cfg.loaded:
@@ -439,7 +439,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
         if not ctx.args:
             return None
 
-    # When we have any of the provisioning flags, do provisioning now.
+    # Cleanup. Will also try to load plugins and call their cleanup hooks.
     plugin_dir_purged = False
     if cleanup:
         toporun(cfg, "cleanup", reverse=True)
@@ -452,6 +452,8 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
             # tasks.
             return None
 
+    # Provision. Will reload the tree, if the plugins have been
+    # deleted before.
     if provision:
         # Reget the plugins and reload the tree, if cleaned up before.
         if plugin_dir_purged:
@@ -607,6 +609,7 @@ def load_config_tree(  # pylint: disable=too-many-locals
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
+    addsitedir(cfg.spin.plugin_dir)
     logging.debug("loading project plugins:")
     load_plugin(cfg, "spin.builtin")
     for import_spec in yield_plugin_import_specs(cfg):
@@ -677,9 +680,7 @@ def install_plugin_packages(cfg: ConfigTree) -> None:
     # Install plugin packages that are not yet installed, using pip
     # with the "-t" (target) option pointing to the plugin directory.
     with memoizer(N(os.path.join("{spin.plugin_dir}", "packages.memo"))) as m:
-        replacements = cfg.get("devpackages", {})
         for pkg in find_plugin_packages(cfg):
-            pkg = replacements.get(pkg, pkg)
             if not m.check(pkg):
                 something_was_installed = True
                 args = list(cmd)
@@ -708,5 +709,3 @@ def install_plugin_packages(cfg: ConfigTree) -> None:
             os.path.join("{spin.plugin_dir}", "easy-install.pth"),
             "\n".join(easy_install),
         )
-
-    addsitedir(cfg.spin.plugin_dir)

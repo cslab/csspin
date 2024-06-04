@@ -1,0 +1,9 @@
+minimum-spin: "0.2"
+plugins:
+  - spin.builtin.node
+python:
+  version: "3.11.1"
+  use: python
+node:
+  version: "18.17.1"
+  mirror: https://nodejs-proxy.ops.contact.de/dist/

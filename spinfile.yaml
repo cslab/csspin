@@ -2,6 +2,11 @@
 # 'minimum-spin' is absent or larger than the release of spin used.
 minimum-spin: "0.2"
 
+# To develop plugins comfortably, install the packages editable as
+# follows and add the relevant plugins to the list 'plugis' below
+# plugin-packages:
+#    - -e file:///home/wen/src/qs/tooling/spin-plugins/dummy
+
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
 plugin-path:
@@ -27,6 +32,7 @@ python:
     - build # TODO: Maybe move into spin.builtin.python
 
 pytest:
+  opts: [-m, "not slow"]
   coverage_opts: [--cov]
 
 # extra-tasks: # TODO: Decide if useful
