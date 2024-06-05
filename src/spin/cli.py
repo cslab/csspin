@@ -20,10 +20,12 @@ import base64
 import glob
 import hashlib
 import importlib
+import importlib.metadata as importlib_metadata
 import logging
 import os
 import sys
 from site import addsitedir
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, Generator, Iterable
 
 import click
@@ -31,20 +33,7 @@ import entrypoints
 import packaging.version
 import ruamel.yaml
 from packaging import tags
-
-if TYPE_CHECKING:
-    from pathlib import Path as PathlibPath
-    from typing import Callable
-
-    from path import Path
-
-    from spin import ConfigTree
-if sys.version_info < (3, 8):  # pragma: no cover (<PY38)
-    import importlib_metadata
-else:  # pragma: no cover (PY38+)
-    import importlib.metadata as importlib_metadata
-
-from types import ModuleType
+from path import Path
 
 from spin import (
     cd,
@@ -68,6 +57,10 @@ from spin import (
     writetext,
 )
 
+if TYPE_CHECKING:
+    from typing import Callable
+
+
 N = os.path.normcase
 
 
@@ -86,7 +79,7 @@ DEFAULTS = config(
     verbose=0,
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
-        shell="{SHELL}",
+        shell=os.getenv("SHELL"),
         tag=next(tags.sys_tags()).platform,
         kind=sys.platform,
     ),
@@ -111,7 +104,7 @@ def find_spinfile(spinfile: str | None) -> str | None:
 
 
 def load_plugin(
-    cfg: ConfigTree,
+    cfg: tree.ConfigTree,
     import_spec: str,
     package: str | None = None,
     indent: str = "  ",
@@ -128,8 +121,7 @@ def load_plugin(
     else:
         logging.debug(f"{indent}import plugin {import_spec}")
 
-    mod = None
-    full_name = None
+    mod = full_name = None
     try:
         mod = importlib.import_module(import_spec, package)
         full_name = mod.__name__
@@ -142,20 +134,45 @@ def load_plugin(
     if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
         # initialize it and recursively load dependencies
-        cfg.loaded[full_name] = mod
+
         plugin_defaults = getattr(mod, "defaults", config())
         # The subtree is either the module name for the plugin
         # (excluding the package prefix), or __name__, if that is set.
         settings_name = plugin_defaults.get("__name__", full_name.split(".")[-1])
         logging.debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
-        if plugin_defaults:
-            tree.tree_set_keyinfo(
-                cfg,
-                settings_name,
-                tree.tree_keyinfo(plugin_defaults, list(plugin_defaults.keys())[0]),  # type: ignore[arg-type]
-            )
-        tree.tree_merge(plugin_config_tree, plugin_defaults)  # type: ignore[arg-type]
+
+        if all("spin" not in pkg for pkg in (import_spec, package if package else "")):
+            try:
+                # Load the plugin specific schema for non-builtin plugins
+                plugin_schema = schema.schema_load(  # type: ignore[attr-defined]
+                    os.path.join(
+                        os.path.dirname(mod.__file__),  # type: ignore[union-attr,arg-type]
+                        f"{import_spec}_schema.yaml",
+                    )
+                ).properties[import_spec]
+                schema_defaults = plugin_schema.get_default()
+                plugin_config_tree.schema = plugin_schema
+                tree.tree_merge(plugin_config_tree, schema_defaults)
+
+                # tree.tree_merge does not take the _ConfigTree__schema into
+                # account, thus we need to add the schema manually.
+                plugin_config_tree._ConfigTree__schema = (  # pylint: disable=protected-access
+                    plugin_schema
+                )
+            except (FileNotFoundError, KeyError):
+                warn(f"Plugin {import_spec} does not provide a valid schema.")
+
+            if plugin_defaults:
+                tree.tree_update(
+                    plugin_config_tree,
+                    plugin_defaults,  # type: ignore[arg-type]
+                    keep=interpolate1("{spin.spinfile}"),
+                )
+        elif plugin_defaults:
+            tree.tree_merge(plugin_config_tree, plugin_defaults)  # type: ignore[arg-type]
+
+        cfg.loaded[full_name] = mod
         dependencies = [
             load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")  # type: ignore[union-attr]
             for requirement in get_requires(plugin_config_tree, "spin")
@@ -373,7 +390,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 )
 @base_options
 @click.pass_context
-def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
+def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-return-statements
     ctx: click.Context,
     version: packaging.version.Version,
     help: bool,  # pylint: disable=W0622
@@ -436,7 +453,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
     # is requested ... that's it!
     if debug:
         print(tree.tree_dump(cfg))
-        if not ctx.args:
+        if not ctx.args and not provision:
             return None
 
     # Cleanup. Will also try to load plugins and call their cleanup hooks.
@@ -466,6 +483,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
             # When provisioning without a subcommand, don't run
             # into the usage.
             return None
+
     # Invoke the main command group, which by now has all the
     # sub-commands from the plugins.
     kwargs = getattr(cli, "click_main_kwargs", {})
@@ -473,13 +491,13 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments
     commands.main(args=ctx.args, **kwargs)
 
 
-def find_plugin_packages(cfg: ConfigTree) -> Generator:
+def find_plugin_packages(cfg: tree.ConfigTree) -> Generator:
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
     yield from cfg.get("plugin-packages", [])
 
 
-def yield_plugin_import_specs(cfg: ConfigTree) -> Generator:
+def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
     for item in cfg.get("plugins", []):
         if isinstance(item, dict):
             for package, modules in item.items():
@@ -490,7 +508,7 @@ def yield_plugin_import_specs(cfg: ConfigTree) -> Generator:
 
 
 def load_config_tree(  # pylint: disable=too-many-locals
-    spinfile: str | Path | PathlibPath,
+    spinfile: str | Path,
     cwd: str = "",
     envbase: str | None = None,
     quiet: bool = False,
@@ -498,7 +516,7 @@ def load_config_tree(  # pylint: disable=too-many-locals
     cleanup: bool = False,
     provision: bool = False,
     properties: tuple = (),
-) -> ConfigTree:
+) -> tree.ConfigTree:
     """Load the configuration and plugins from ``spinfile`` and build the tree.
 
     The user's global spinfile is used to extend the built tree.
@@ -509,18 +527,7 @@ def load_config_tree(  # pylint: disable=too-many-locals
     spinschema = schema.schema_load(
         os.path.join(os.path.dirname(__file__), "schema.yaml")
     )
-    # overwrite defaults to align with OS path style
-    spinschema.properties.spin.properties.spin_global.default = os.path.normpath(  # type: ignore[attr-defined] # noqa: E501
-        spinschema.properties.spin.properties.spin_global.default  # type: ignore[attr-defined]
-    )
-    spinschema.properties.spin.properties.spin_global_plugins.default = (  # type: ignore[attr-defined]
-        os.path.normpath(
-            spinschema.properties.spin.properties.spin_global_plugins.default  # type: ignore[attr-defined]
-        )
-    )
-    spinschema.properties.spin.properties.plugin_dir.default = os.path.normpath(  # type: ignore[attr-defined]
-        spinschema.properties.spin.properties.plugin_dir.default  # type: ignore[attr-defined]
-    )
+
     cfg = spinschema.get_default()  # type: ignore[call-arg]
     set_tree(cfg)
     cfg.schema = spinschema
@@ -529,15 +536,16 @@ def load_config_tree(  # pylint: disable=too-many-locals
     tree.tree_merge(cfg, DEFAULTS)
 
     # Merge user-specific globals if they exist
-    if exists("{spin.spin_global}"):
-        spin_global = interpolate1("{spin.spin_global}")
+    if (spin_global := interpolate1("{SPIN_CONFIG}/global.yaml")) and exists(
+        spin_global
+    ):
         user_settings = readyaml(spin_global)
         if user_settings:
-            logging.debug(f"Merging user settings from {spin_global}")
+            logging.debug(f"Merging user settings from {os.path.normpath(spin_global)}")
             tree.tree_update(cfg, user_settings)
 
     if envbase:
-        cfg.spin.env_base = envbase
+        cfg.spin.env_base = Path(envbase)
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
@@ -548,7 +556,7 @@ def load_config_tree(  # pylint: disable=too-many-locals
     # out by spin.interpolate)
     cfg.quietflag = None if cfg.verbose else "-q"
 
-    cfg.spin.spinfile = spinfile
+    cfg.spin.spinfile = Path(spinfile) if spinfile else spinfile
     cfg.cleanup = cleanup
     cfg.provision = provision
 
@@ -560,13 +568,13 @@ def load_config_tree(  # pylint: disable=too-many-locals
         minspin = cfg.get("minimum-spin")
         if not minspin:
             die("spin requires 'minimum-spin' to be set")
-        minspin = packaging.version.parse(minspin)
+        minspin = packaging.version.parse(str(minspin))
         spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
         if minspin > spinversion:
             die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
         cfg.spin.project_root = os.path.dirname(N(os.path.abspath(cfg.spin.spinfile)))
-        cfg.spin.launch_dir = os.path.relpath(os.getcwd(), cfg.spin.project_root)
+        cfg.spin.launch_dir = N(os.path.relpath(os.getcwd(), cfg.spin.project_root))
         if not cwd:
             cd(cfg.spin.project_root)
         cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
@@ -642,14 +650,19 @@ def load_config_tree(  # pylint: disable=too-many-locals
         yaml = ruamel.yaml.YAML()
         data = yaml.load(v)
         setattr(scope, path[0], data)
+        # Set the value source to "command-line"
+        tree.tree_set_keyinfo(scope, path[0], tree.KeyInfo("command-line", "0"))
 
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
 
+    # Interpolate values of the configuration tree and enforce their types
+    tree.tree_sanitize(cfg)
+
     return cfg  # type: ignore[no-any-return]
 
 
-def install_plugin_packages(cfg: ConfigTree) -> None:
+def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     """Install plugin packages which are not yet installed and extend the
     configuration tree.
     """

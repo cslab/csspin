@@ -89,59 +89,26 @@ from spin import (
     writetext,
 )
 
-N = Path
-
-
 WHEELHOUSE_MARKER = object()
 
 
 defaults = config(
-    pyenv=config(
-        url="https://github.com/pyenv/pyenv.git",
-        path=N("{spin.cache}/pyenv"),
-        cache=N("{spin.cache}/cache"),
-        python_build=(N("{python.pyenv.path}/plugins/python-build/bin/python-build")),
-    ),
-    user_pyenv=False,
-    nuget=config(
-        url="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
-        exe=N("{spin.cache}/nuget.exe"),
-        source="https://api.nuget.org/v3/index.json",
-    ),
-    version=None,
-    plat_dir=N("{spin.cache}/{platform.tag}"),
     inst_dir=(
-        N("{python.plat_dir}/python/{python.version}")
+        "{python.plat_dir}/python/{python.version}"
         if sys.platform != "win32"
-        else N("{python.plat_dir}/python.{python.version}/tools")
+        else "{python.plat_dir}/python.{python.version}/tools"
     ),
-    interpreter=N(
+    interpreter=(
         "{python.inst_dir}/bin/python{platform.exe}"
         if sys.platform != "win32"
         else "{python.inst_dir}/python{platform.exe}"
     ),
-    use=None,
-    venv=N("{spin.env_base}/{python.abitag}-{platform.tag}"),
-    memo=N("{python.venv}/spininfo.memo"),
-    bindir=(N("{python.venv}/bin") if sys.platform != "win32" else "{python.venv}"),
+    bindir="{python.venv}/bin" if sys.platform != "win32" else "{python.venv}",
     scriptdir=(
-        N("{python.venv}/bin")
-        if sys.platform != "win32"
-        else N("{python.venv}/Scripts")
+        "{python.venv}/bin" if sys.platform != "win32" else "{python.venv}/Scripts"
     ),
-    python=N("{python.scriptdir}/python"),
-    wheelhouse="{spin.env_base}/wheelhouse",
-    pipconf=config(
-        {
-            "global": config(
-                {"find-links": WHEELHOUSE_MARKER},
-            ),
-        },
-    ),
-    abitag=None,
+    pipconf=config({"global": config({"find-links": WHEELHOUSE_MARKER})}),
     provisioner=None,
-    extras=[],
-    devpackages=[],
 )
 
 
@@ -281,7 +248,7 @@ def pyenv_install(cfg):
     with namespaces(cfg.python):
         if cfg.python.user_pyenv:
             info("Using your existing pyenv installation ...")
-            sh("pyenv install --skip-existing {version}")
+            sh(f"pyenv install --skip-existing {cfg.python.version}")
             cfg.python.interpreter = backtick("pyenv which python --nosystem").strip()
         else:
             info("Installing Python {version} to {inst_dir}")
@@ -289,41 +256,43 @@ def pyenv_install(cfg):
             # pyenv is by far the most robust way to install a
             # version of Python.
             if not exists("{pyenv.path}"):
-                sh("git clone {pyenv.url} {pyenv.path}")
+                sh(f"git clone {cfg.python.pyenv.url} {cfg.python.pyenv.path}")
             else:
-                with cd("{pyenv.path}"):
+                with cd(cfg.python.pyenv.path):
                     sh("git pull")
             # we should set
-            setenv(PYTHON_BUILD_CACHE_PATH=mkdir("{pyenv.cache}"))
+            setenv(PYTHON_BUILD_CACHE_PATH=mkdir(cfg.python.pyenv.cache))
             setenv(PYTHON_CFLAGS="-DOPENSSL_NO_COMP")
-            sh("{pyenv.python_build} {version} {inst_dir}")
+            sh(
+                f"{cfg.python.pyenv.python_build} {cfg.python.version} {cfg.python.inst_dir}"
+            )
 
 
 def nuget_install(cfg):
-    if not exists("{python.nuget.exe}"):
-        download("{python.nuget.url}", "{python.nuget.exe}")
-    setenv(NUGET_HTTP_CACHE_PATH=N("{spin.cache}/nugetcache"))
+    if not exists(cfg.python.nuget.exe):
+        download(cfg.python.nuget.url, cfg.python.nuget.exe)
+    setenv(NUGET_HTTP_CACHE_PATH=cfg.spin.cache / "nugetcache")
     sh(
-        "{python.nuget.exe}",
+        cfg.python.nuget.exe,
         "install",
         "-verbosity",
         "quiet",
         "-o",
-        N("{spin.cache}/{platform.tag}"),
+        cfg.spin.cache / cfg.platform.tag,
         "python",
         "-version",
-        "{python.version}",
+        cfg.python.version,
         "-source",
-        "{python.nuget.source}",
+        cfg.python.nuget.source,
     )
-    paths = interpolate1("{python.inst_dir};" + N("{python.inst_dir}/Scripts"))
+    paths = os.pathsep.join([cfg.python.inst_dir, cfg.python.inst_dir / "Scripts"])
     setenv(
         f"set PATH={paths}{os.pathsep}$PATH",
-        PATH=os.pathsep.join((f"{paths}", os.environ["PATH"])),
+        PATH=os.pathsep.join((paths, os.environ["PATH"])),
     )
     sh("{python.interpreter} -m ensurepip --upgrade")
     sh(
-        "{python.interpreter}",
+        cfg.python.interpreter,
         "-mpip",
         "install",
         cfg.quietflag,
@@ -335,8 +304,8 @@ def nuget_install(cfg):
 
 
 def provision(cfg):
-    info("Checking {python.interpreter}")
-    if not shutil.which(interpolate1(cfg.python.interpreter)):
+    info(f"Checking {cfg.python.interpreter}")
+    if not shutil.which(cfg.python.interpreter):
         if sys.platform == "win32":
             nuget_install(cfg)
         else:
@@ -369,33 +338,14 @@ def configure(cfg):
 
 def init(cfg):
     if not cfg.python.use:
-        logging.debug("Checking for %s", interpolate1("{python.interpreter}"))
-        if not exists("{python.interpreter}"):
+        logging.debug("Checking for %s", cfg.python.interpreter)
+        if not exists(cfg.python.interpreter):
             die(
-                "Python {python.version} has not been provisioned for this project. "
-                "You might want to run spin with the'--provision' flag."
+                f"Python {cfg.python.version} has not been provisioned for this"
+                "project. You might want to run spin with the'--provision'"
+                " flag."
             )
     venv_init(cfg)
-
-
-def get_abi_tag(cfg, cleanup=False):
-    # To get the ABI tag, we've to call into the target interpreter,
-    # which is not the one running the spin program. Not super cool,
-    # firing up the interpreter just for that is slow.  ABI detection
-    # has been moved to file which is then called by the interpreter.
-    #
-    # In cleanup mode, we don't abort but let the exception from
-    # `sh()` propagate to be handled elsewhere.
-    if not cfg.python.abitag:
-        from spin import get_abi_tag
-
-        abitag = backtick(
-            "{python.interpreter}",
-            get_abi_tag.__file__,
-            may_fail=cleanup,
-            silent=True,
-        )
-        cfg.python.abitag = abitag.strip()
 
 
 # We won't activate more than once.
@@ -404,15 +354,14 @@ ACTIVATED = False
 
 def venv_init(cfg):
     global ACTIVATED  # pylint: disable=global-statement
-    get_abi_tag(cfg)
     if os.environ.get("VIRTUAL_ENV", "") != cfg.python.venv and not ACTIVATED:
-        activate_this = interpolate1("{python.scriptdir}/activate_this.py")
+        activate_this = cfg.python.scriptdir / "activate_this.py"
         if not exists(activate_this):
             die(
-                "{python.venv} does not exist. You may want to provision it using"
-                " spin --provision"
+                f"{cfg.python.venv} does not exist. You may want to provision"
+                " it using spin --provision"
             )
-        echo("activate {python.venv}", resolve=True)
+        echo(f"activate {cfg.python.venv}", resolve=True)
         with open(activate_this, encoding="utf-8") as file:
             exec(file.read(), {"__file__": activate_this})  # pylint: disable=exec-used
         ACTIVATED = True
@@ -454,7 +403,7 @@ def patch_activate(schema):
 
 class BashActivate:
     patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
-    activatescript = "{python.scriptdir}/activate"
+    activatescript = Path("{python.scriptdir}") / "activate"
     replacements = [
         ("deactivate", "origdeactivate"),
     ]
@@ -501,7 +450,7 @@ class BashActivate:
 
 class PowershellActivate:
     patchmarker = "\n## PATCHED BY spin.builtin.virtualenv\n"
-    activatescript = "{python.scriptdir}/activate.ps1"
+    activatescript = Path("{python.scriptdir}") / "activate.ps1"
     replacements = [
         ("deactivate", "origdeactivate"),
     ]
@@ -540,7 +489,7 @@ class PowershellActivate:
 
 class BatchActivate:
     patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
-    activatescript = "{python.scriptdir}/activate.bat"
+    activatescript = Path("{python.scriptdir}") / "activate.bat"
     replacements = ()
     setpattern = dedent(
         """
@@ -566,7 +515,7 @@ class BatchActivate:
 
 class BatchDeactivate:
     patchmarker = "\nREM Patched by spin.builtin.virtualenv\n"
-    activatescript = "{python.scriptdir}/deactivate.bat"
+    activatescript = Path("{python.scriptdir}") / "deactivate.bat"
     replacements = ()
     setpattern = ""
     resetpattern = dedent(
@@ -614,7 +563,7 @@ def finalize_provision(cfg):
         patch_activate(schema)
 
     # TODO: this should be exported via the property tree
-    site_packages = (
+    site_packages = Path(
         sh(
             "python",
             "-c",
@@ -625,7 +574,7 @@ def finalize_provision(cfg):
         .stdout.decode()
         .strip()
     )
-    info(f"Create {site_packages}/_set_env.pth")
+    info(f"Create {(setenv_path := str(site_packages / '_set_env.pth'))}")
     pthline = interpolate1(
         "import os; "
         "bindir=r'{python.bindir}'; "
@@ -633,7 +582,7 @@ def finalize_provision(cfg):
         "os.environ['PATH'] if bindir in os.environ['PATH'] "
         "else os.pathsep.join((bindir, os.environ['PATH']))\n"
     )
-    writetext(f"{site_packages}/_set_env.pth", pthline)
+    writetext(setenv_path, pthline)
 
 
 class ProvisionerProtocol:
@@ -724,15 +673,14 @@ def install_to_venv(cfg, *args):
 
 
 def venv_provision(cfg):
-    get_abi_tag(cfg)
     fresh_virtualenv = False
-    if not exists("{python.venv}"):
+    if not exists(cfg.python.venv):
         # virtualenv is guaranteed to be available like this
         # as we declared it as one of spin's dependencies
         cmd = [sys.executable, "-mvirtualenv", cfg.quietflag]
         virtualenv = Command(*cmd)
         # do not download seeds, since we update pip later anyway
-        virtualenv("-p", "{python.interpreter}", "{python.venv}")
+        virtualenv("-p", cfg.python.interpreter, cfg.python.venv)
         fresh_virtualenv = True
 
     # This sets PATH to the venv
@@ -753,9 +701,9 @@ def venv_provision(cfg):
                     continue
             text.append(f"{key} = {interpolate1(value)}")
     if sys.platform == "win32":
-        pipconf = "{python.venv}/pip.ini"
+        pipconf = cfg.python.venv / "pip.ini"
     else:
-        pipconf = "{python.venv}/pip.conf"
+        pipconf = cfg.python.venv / "pip.conf"
     writetext(pipconf, "\n".join(text))
 
     # Establish the prerequisites
@@ -797,9 +745,8 @@ def venv_provision(cfg):
 
 def cleanup(cfg):
     try:
-        get_abi_tag(cfg, cleanup)
-        if exists("{python.venv}"):
-            rmtree("{python.venv}")
+        if exists(cfg.python.venv):
+            rmtree(cfg.python.venv)
     except Exception:  # pylint: disable=broad-exception-caught
         warn("cleanup: no Python interpreter installed")
         pass

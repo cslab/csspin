@@ -18,7 +18,7 @@ N = os.path.normcase
 
 
 def set_java_home(cfg):
-    setenv(JAVA_HOME=N(cfg.java.java_home))
+    setenv(JAVA_HOME=cfg.java.java_home)
     setenv(
         N(f"set PATH=$JAVA_HOME/bin{os.pathsep}$PATH"),
         PATH=os.pathsep.join((N("{JAVA_HOME}/bin"), "{PATH}")),
@@ -26,8 +26,8 @@ def set_java_home(cfg):
 
 
 def check_java(cfg):
-    mkdir("{java.installdir}")
-    with memoizer("{java.installdir}/java.pickle") as m:
+    mkdir(cfg.java.installdir)
+    with memoizer(cfg.java.installdir / "java.pickle") as m:
         version = None
         for version, java_home in m.items():
             if version == cfg.java.version:
@@ -52,7 +52,7 @@ def provision(cfg):
 
     jdk.get_download_url = monkey_get_download_url
 
-    with memoizer("{java.installdir}/java.pickle") as m:
+    with memoizer(cfg.java.installdir / "java.pickle") as m:
         # In case there already is a JDK installation, but it is not
         # yet memoized, unpacking the freshly downloaded new
         # distribution into the same directory will fail, since the

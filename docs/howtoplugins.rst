@@ -25,7 +25,8 @@ Local plugins can then by used adding their name prefixed with a
    .
    ├── spinfile.yaml
    ├── spinplugins
-   │   └── myplugin.py
+   │   ├── myplugin.py
+   │   └── myplugin_schema.yaml
    └── ...
 
 ``myplugin`` can be used like so:
@@ -58,9 +59,22 @@ Plugin Lifecycle
    are imported in that order: if plugin ``B`` requires plugin ``A``
    to be present, the import order is ``A`` first, then ``B`` etc.
 
-3. When a plugin has a module-level ``defaults`` variable, its content
-   is added to the configuration tree under the name of the
-   plugin. E.g. for a plugin called ``myplugin``:
+3. All non-builtin plugins ship a ``<plugin_name>_schema.yaml`` that defines the
+   plugins' schema including the structure, types and help strings. This schema
+   is loaded into the configuration tree under the name of the plugin. E.g. for
+   a plugin called ``myplugin``.
+
+   The plugin settings would end up in the configuration three as:
+
+   .. code-block:: yaml
+
+      myplugin:
+        setting1: ...
+	     setting2: ...
+
+4. When a plugin has a module-level ``defaults`` variable, the existing plugin
+   configuration in the configuration tree is updated by the content defined by
+   ``defaults``.
 
    .. code-block:: python
 
@@ -69,50 +83,43 @@ Plugin Lifecycle
 
       defaults = config(setting1="...", setting2="...")
 
-   The plugin settings would end up in the configuration three as:
-
-   .. code-block:: yaml
-
-      myplugin:
-        setting1: ...
-	setting2: ...
-
-4. `spin` then starts to invoke callbacks provided by the plugins. All
+5. `spin` then starts to invoke callbacks provided by the plugins. All
    callback functions are optional. Callbacks are invoked in
    topological dependency order.
 
-5. The ``configure(cfg)`` functions of all plugins are called in
+6. The ``configure(cfg)`` functions of all plugins are called in
    topological order. ``configure`` is meant to manipulate the
    configuration tree by modifying or adding settings. For example,
    the `python` plugin sets ``PYENV_VERSION`` here when using `pyenv`,
    to select the Python version requested by the project.
 
-6. If `spin` is in cleanup mode via the :option:`--cleanup <spin
+7. If `spin` is in cleanup mode via the :option:`--cleanup <spin
    --cleanup>` command line option, each plugins' ``cleanup(cfg)``
    function is called. ``cleanup`` is meant to remove stuff from the
    filesystem that has been provisioned by the plugin before.
 
-7. If `spin` is in provisioning mode via the :option:`--provision
+8. If `spin` is in provisioning mode via the :option:`--provision
    <spin --provision>` option, each plugins' ``provision(cfg)``
    callback is called. This is meant to create stuff in the
    filesystem, e.g. the `virtualenv` plugin creates a Python virtual
    environment here.
 
-8. After all provisioning callbacks have been processed, each plugins'
+9. After all provisioning callbacks have been processed, each plugins'
    ``finalize_provision(cfg)`` callback is invoked. This is meant to
    post-process the provisioned resources. E.g. the `virtualenv`
    plugin patches the activation scripts here.
 
-9. Each plugin's ``init(cfg)`` callback is invoked. This is meant to
+10. Each plugin's ``init(cfg)`` callback is invoked. This is meant to
    prepare the environment for using the resources provisioned by the
    plugin. For example, the `virtualenv` plugin activates the virtual
    environment here.
 
-Note,that the cleanup and provisioning steps 6, 7 and 8, will *only*
+Note, that the cleanup and provisioning steps 7, 8 and 9, will *only*
 be called when the provisioning options :option:`--cleanup <spin
 --cleanup>` or :option:`--provision <spin --provision>` have been
 used.
 
+.. FIXME: Check if that is correct:
 Using the command line option :option:`--debug <spin --debug>`, `spin`
 can output a detailed log of callback invocations.
 
@@ -165,7 +172,6 @@ The API of plugins consists of the following:
 Callbacks are called in "dependency" order, i.e. the plugin dependency
 graph (as given by ``requires``) is topologically sorted.
 
-
 Further, importing a plugin can have side-effects like adding
 subcommands to ``spin`` by using the decorators ``@task`` and
 ``@group``.
@@ -186,6 +192,22 @@ Here is an example for a simple plugin:
    def example(cfg):
        """Example plugin"""
        echo(cfg.example.msg)
+
+Furthermore, every non-builtin plugin should provide a
+``<plugin_name>_schema.yaml`` that defines the structure, types and help strings
+of the plugin.
+
+.. code-block:: yaml
+
+   example: # plugin name
+     type: object
+     help: This is an example plugin
+     properties:
+       msg:
+         type: str
+         help: |
+           This message will be echo'ed when the plugins' "example"-task is
+           executed.
 
 To activate this plugin, it has to be declared in ``spinfile.yaml``:
 
@@ -209,7 +231,94 @@ to print our message:
    $ spin example
    spin: This project lives in .
 
+Plugin Schema
+=============
 
+All Plugins should provide a valid schema, as spin itself. This is done for spin
+and its built-ins in spins internal ``schema.yaml``. Schemas provide further
+information about a plugin/part of the configuration tree, enabling path
+normalization, type validation as well as enforcing of types.
+
+.. code-block:: yaml
+   :linenos:
+   :caption: Example: Excerpt from spins built-in ``schema.yaml``
+
+   spin:
+     type: object
+     help: cs.spin's schema
+     properties:
+       spinfile:
+         type: path
+         help: Path to spinfile
+         default: spinfile.yaml
+       ...
+       version:
+         type: str
+         help: The version of cs.spin that is being used.
+         # No default value set, since the default is None anyways.
+
+For an external plugin, e.g. ``pytest``, the plugin should ship
+``pytest_schema.yaml``. Please note that no default values are set here.
+
+.. code-block:: yaml
+   :linenos:
+   :caption: Example: Excerpt of a non-builtin plugin schema
+
+   # pytest_schema.yaml
+   pytest: # name of the plugin
+     type: object
+     help: This is the pytest plugin for cs.spin
+     properties:
+       requires:
+         type: object
+         help: |
+            The pytest plugin requires several other plugins and packages to be
+            installed.
+         properties:
+           spin:
+             type: list
+             help: The list of spin plugins that the pytest plugin depends on.
+           python:
+             type: list
+             help: |
+               The list of Python packages that the pytest plugin depends on.
+       coverage:
+         type: boolean
+         help: Run the pytest plugin in coverage mode.
+       opts:
+         type: list
+         help: |
+            Optional options to pass to the pytest call when running the pytest
+            task.
+      ...
+
+There are some more constraints:
+
+- All values assigned to "default" regardless of their type definition can also
+  be ``callable``. If they are callable, they must be evaluated while
+  ``configure(cfg)`` of the respective plugin is called.
+- Values that won't have a valid YAML type (valid types: object/dict, list, str,
+  int, float), during runtime can't be represented in the schema. These must be
+  defined in the plugins module using ``defaults = spin.config(...)``.
+- ``type: object``-configured entries don't have a default value.
+- All mappable properties must have the following keys: ``type`` and ``help``.
+
+- For built-in plugins only:
+  - Default values of built-in plugins should be defined in ``schema.yaml`` of
+    cs.spin. This is only possible, if a value is not bound to a condition or
+    evaluated during runtime. In this case, the built-in plugin must make use of
+    :py:func:`spin.config` and assign it to the plugins' defaults.
+  - Default values that are initially ``None`` and will have a valid YAML type
+    (object/dict, list, str, int, float) during runtime must not set a default
+    value in schema.yaml.
+
+- For non-builtin plugins only:
+  - Default values for non-builtin plugins should be defined in the Python
+    module of the plugin.
+  - Default values that are initially ``None`` and will have a valid YAML type
+    during runtime must set a default value of "" in
+    ``<plugin_name>_schema.yaml`` in addition to ``defaults =
+    config(key=None,...)`` in the plugins module.
 
 Plugin API
 ==========

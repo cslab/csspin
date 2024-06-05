@@ -1,14 +1,18 @@
 # Schema definitions for spin.
-
-# 'path' --> values will be converted to py.path objects
-
-# 'internal' --> settings must not come from a configuration file, can
-# only be set internally
-
-# 'usersetting' --> can only(?) be set via a configuration file; it
-# would be a bug, if the code does it
-
-# 'list' --> a literal list *or* simply a string that is space-split
+#
+# 'internal'     --> Settings must not come from a configuration file, can only
+#                    be set internally. FIXME: That is not implemented.
+#
+# Attributes with the following types will be converted to specific Python types
+# and assigned to the global configuration tree.
+#
+# 'object'       --> dict/ConfigTree that contains key-values pairs
+# 'path'         --> values will be converted Path objects from the path package
+# 'list'         --> literal list, i.e. list containing only strings
+# 'str'          --> literal/string
+# 'float'        --> floating point number
+# 'int'          --> integer value
+#
 
 minimum-spin:
   type: str internal
@@ -45,31 +49,278 @@ spin:
         The relative path from <project_root> to spin's project
         related data.
       default: .spin
-    spin_global:
+    launch_dir:
       type: path internal
-      help: |
-        User settings that will apply to all projects are read from
-        this file.
-      default: "{SPIN_CONFIG}/global.yaml"
+      help: TODO
+      # default is set during runtime
     spin_global_plugins:
       type: path internal
       default: "{SPIN_CACHE}/plugins"
     plugin_dir:
       type: path internal
       default: "{spin.env_base}/plugins"
-
-  # disallow plugins or user setting to write to the 'spin' context to
-  # keep sanity
+      help: Path that contains all installed plugins
+    cache:
+      type: path internal
+      default: "{SPIN_CACHE}"
+      help: Path that points to spins cache
+    config:
+      type: path internal
+      default: "{SPIN_CONFIG}"
+      help: Path where to store global configuration for spin
+    version:
+      type: str internal
+      help: The version of cs.spin that is being used.
+    project_name:
+      type: str internal
+      help: The project that is spin running on
+    project_hash:
+      type: str internal
+      help: The hash of the project that is spin running on
+  # FIXME: That was never implemented. Do we want that?
+  # Disallow plugins or user setting to write to the 'spin' context to
+  # keep sanity.
   unknown-properties: false
 
 python:
   requirements:
-    type: list usersetting
+    type: list
     help: |
       The list of this project's external Python requirements, that
       have to be installed into the project's virtual
       environment. This excludes requirements stated as
       'install_requires' in setup.py/setup.cfg.
+  properties:
+    pyenv:
+      type: object
+      help: TODO
+      properties:
+        url:
+          type: str
+          default: "https://github.com/pyenv/pyenv.git"
+          help: TODO
+        path:
+          type: path
+          default: "{spin.cache}/pyenv"
+          help: TODO
+        cache:
+          type: path
+          default: "{spin.cache}/cache"
+          help: TODO
+        python_build:
+          type: path
+          default: "{python.pyenv.path}/plugins/python-build/bin/python-build"
+          help: TODO
+    user_pyenv:
+      type: bool
+      default: false
+      help: TODO
+    nuget:
+      type: object
+      help: TODO
+      properties:
+        url:
+          type: str
+          default: "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
+          help: TODO
+        exe:
+          type: path
+          default: "{spin.cache}/nuget.exe"
+          help: TODO
+        source:
+          type: str
+          default: "https://api.nuget.org/v3/index.json"
+          help: TODO
+    version:
+      type: str
+      help: |
+        The Python version to use for the whole project when using in the
+        context of cs.spin
+    use:
+      type: str
+      help: |
+        The use property can be used to specify an alternative Python source to
+        use. This is useful to rather use the system Python than the one defined
+        in spinfile.yaml
+      default: ""
+    plat_dir:
+      type: path
+      default: "{spin.cache}/{platform.tag}"
+      help: TODO
+    inst_dir:
+      type: path
+      help: inst_dir can be used to point to a CE instance.
+      # No default value given, since it is evaluated during runtime.
+    interpreter:
+      type: path
+      help: The path to the Python interpreter of the instance to use.
+      # No default value given, since it is evaluated during runtime.
+    venv:
+      type: path
+      default: "{spin.env_base}/py{python.version}-{platform.tag}"
+      help: |
+        Path to the virtual environment which is used exclusively for the
+        project spin is running on
+    memo:
+      type: path
+      default: "{python.venv}/spininfo.memo"
+      help: TODO
+    bindir:
+      type: path
+      help: TODO
+      # No default value given, since it is evaluated during runtime.
+    scriptdir:
+      type: path
+      help: TODO
+      # No default value given, since it is evaluated during runtime.
+    python:
+      type: path
+      default: "{python.scriptdir}/python"
+      help: |
+        The python property defines the path to the Python interpreter to use.
+    wheelhouse:
+      type: path
+      default: "{spin.env_base}/wheelhouse"
+      help: TODO
+    # NOTE: pipconf can't be defined in the schema here, since its data types
+    #       are to complex and can't be represented in YAML.
+    # pipconf:
+    #   type: object
+    #   help: TODO
+    #   properties:
+    #     global:
+    #       type: object
+    #       help: TODO
+    #       properties:
+    #         find-links:
+    #           type: object
+    #           help: TODO
+    #           # properties
+    # The provisioner type is evaluated during runtime and to complex to
+    # represent it in the schema.
+    # provisioner:
+    #   type:
+    #   help: TODO
+    extras:
+      type: list
+      help: TODO
+      default: []
+    devpackages:
+      type: list
+      help: TODO
+      default: []
+
+# FIXME: Add this after piptools was refactored
+# piptools:
+#   type: object
+#   help: TODO
+#   properties:
+#     requires:
+#       type: object
+#       help: Dependencies of the piptools plugin
+#       properties:
+#         spin:
+#           type: list
+#           default: [.python]
+#           help: Spin dependencies of the piptools plugin
+#         python:
+#           type: list
+#           default: [setuptools, pip-tools]
+#           help: Python dependencies of the piptools plugin
+
+# FIXME: Move to the plugins sources as soon as non-builtin
+# node:
+#   type: object
+#   help: TODO
+#   properties:
+#     version:
+#       type: str
+#       default: ""
+#       help: NodeJS version
+#     mirror:
+#       type: str
+#       default: ""
+#       help: Define an optional mirror to get NodeJS from
+#     ignore_ssl_certs:
+#       type: bool
+#       help: TODO
+#     memo:
+#       type: str
+#       help: TODO
+#     requires:
+#       type: object
+#       help: Dependencies of the node plugin
+#       properties:
+#         spin:
+#           type: list
+#           help: Spin dependencies of the node plugin
+#         python:
+#           type: list
+#           help: Python dependencies of the node plugin
+#         npm:
+#           type: list
+#           help: npm dependencies of the node plugin
+
+# FIXME: Move to the plugins sources as soon as non-builtin
+java:
+  type: object
+  help: Configuration regarding the java plugin for cs.spin
+  properties:
+    version:
+      type: str
+      default: ""
+      help: Java version
+    installdir: # FIXME: Rename to install_dir if possible.
+      type: path
+      help: The directory in which JAVA should be installed
+    java_home:
+      type: path
+      default: ""
+      help: The path to the JAVA installation path
+
+# FIXME: Move to the plugins sources as soon as non-builtin
+# mvn:
+#   type: object
+#   help: TODO
+#   properties:
+#     exe:
+#       type: str
+#       help: The executable command to run maven
+#     goals:
+#       type: list
+#       help: TODO
+#     opts:
+#       type: list
+#       help: Options that will be passed to the mvn command
+#     defines:
+#       type: object
+#       help: TODO
+#     pom_file:
+#       type: str
+#       default: pom.xml
+#       help: TODO
+#     requires:
+#       type: object
+#       help: Dependencies of the mvn plugin
+#       properties:
+#         spin:
+#           type: list
+#           help: spin dependencies of the mvn plugin
+#     packages:
+#       type: list
+#       help: TODO
+#     version:
+#       type: str
+#       help: The mvn version
+#     mirrors:
+#       type: list
+#       help: A list of mirrors
+#     url:
+#       type: str
+#       help: The URL to get the maven binaries from
+#     mavendir:
+#       type: path
+#       help: The path to installed maven
 
 extra-tasks:
   type: object
@@ -78,7 +329,7 @@ extra-tasks:
     definitions support ``env`` and ``script`` keys.
 
 quiet:
-  type: boolean
+  type: bool
   default: false
   help: |
     Spin normally echos the verbatim commands it runs. When `quiet` is
@@ -86,7 +337,7 @@ quiet:
     `quiet` to suppress more output of the tools they run.
 
 verbose:
-  type: boolean
+  type: bool
   default: false
   help: |
     When `verbose` is on, spin outputs additional information, like
@@ -114,8 +365,11 @@ plugin-packages:
 
 platform:
   type: object
+  help: TDB
   properties:
     exe:
       type: path
+      help: TDB
     shell:
       type: path
+      help: TDB

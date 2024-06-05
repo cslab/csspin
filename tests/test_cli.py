@@ -57,7 +57,7 @@ def test_load_plugin(cfg: ConfigTree, caplog: LogCaptureFixture) -> None:
     spin.cli.load_plugin loads valid plugins into the tree if they're not
     already present
     """
-    # TODO: Maybe test to add a package that ships unloaded requirements.
+    # TODO: Test to add a package that ships unloaded requirements.
 
     from types import ModuleType
 
@@ -70,14 +70,13 @@ def test_load_plugin(cfg: ConfigTree, caplog: LogCaptureFixture) -> None:
     assert "add subtree" not in caplog.text
 
     # load plugin that is not present in the tree
-    assert not cfg.loaded.get("pytest")
-    plugin = cli.load_plugin(cfg=cfg, import_spec="pytest")
+    assert not cfg.loaded.get("python")
+    plugin = cli.load_plugin(cfg=cfg, import_spec="spin.builtin.python")
     assert isinstance(plugin, ModuleType)
-    assert "import plugin pytest" in caplog.text
-    assert "add subtree pytest" in caplog.text
-    assert cfg.loaded.get("pytest")
+    assert "import plugin spin.builtin.python" in caplog.text
+    assert "add subtree python" in caplog.text
+    assert cfg.loaded.get("spin.builtin.python")
     assert isinstance(plugin.defaults, ConfigTree)
-    assert plugin.defaults == ConfigTree({"_requires": []})
 
     # load plugin that does not exist
     with pytest.raises(ModuleNotFoundError, match="No module named 'foo"):
@@ -214,7 +213,9 @@ def test_load_config_tree_basic(
         assert cfg.quiet
         assert cfg.quietflag == "-q"
         assert cfg.spin.spinfile == Path(spinfile)
-        assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
+        assert cfg.spin.project_root == Path(
+            os.path.normcase(os.path.dirname(spinfile))
+        )
         assert cfg.spin.project_name == os.path.basename(tmp_path)
         assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
         assert cfg.spin.plugin_dir in sys.path
