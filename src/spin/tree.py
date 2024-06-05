@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 import ruamel.yaml
 import ruamel.yaml.comments
+from path import Path
 
 from spin import die, interpolate1  # pylint: disable=cyclic-import
 
@@ -39,7 +40,7 @@ class ConfigTree(OrderedDict):
     its parent, to enable the computation of full names:
 
     >>> tree_keyname(parent.subtree, "prop")
-    'parent.subtree.prop'
+    'parent->subtree->prop'
 
     Third, we keep track of the locations settings came from. This is
     done automatically, i.e for each update operation we inspect the
@@ -64,12 +65,10 @@ class ConfigTree(OrderedDict):
                 value.__parentinfo = ParentInfo(self, key)
 
     def __setitem__(self: ConfigTree, key: Hashable, value: Any) -> None:
-        value = tree_typecheck(self, key, value)
         super().__setitem__(key, value)
         _set_callsite(self, key, 3, value)
 
     def setdefault(self: ConfigTree, key: Hashable, default: Any = None) -> Any:
-        default = tree_typecheck(self, key, default)
         val = super().setdefault(key, default)
         _set_callsite(self, key, 3, default)
         return val
@@ -85,7 +84,6 @@ class ConfigTree(OrderedDict):
             # dictionary, obviously.
             object.__setattr__(self, name, value)
         else:
-            value = tree_typecheck(self, name, value)
             self[name] = value
             _set_callsite(self, name, 3, value)
 
@@ -97,11 +95,55 @@ class ConfigTree(OrderedDict):
 
 def tree_typecheck(tree: ConfigTree, key: Hashable, value: Any) -> Any:
     schema = getattr(tree, "_ConfigTree__schema", None)
-    if schema:
-        desc = schema.properties.get(key, None)
-        if desc:
-            value = desc.coerce(value)
+    if schema and (desc := schema.properties.get(key, None)):
+        return desc.coerce(value)
     return value
+
+
+def tree_sanitize(cfg: ConfigTree) -> None:
+    """Walk through the tree recursively to interpolate all str and Path
+    values while enforcing types.
+
+    Enforcing types after interpolation enables defining values that can be
+    interpolated to non-string and non-path objects.
+
+    FIXME: This implementation doesn't work for lists containing objects. So
+           far there is no use-case for having config trees within lists.
+    """
+
+    def enforce_typecheck(
+        cfg_: ConfigTree,
+        keys: list,
+        value: str | Path,
+        ki: KeyInfo,
+    ) -> None:
+        if len(keys) == 1:
+            cfg_[keys[0]] = tree_typecheck(cfg_, keys[0], value)
+            tree_set_keyinfo(cfg_, keys[0], ki)
+        else:
+            enforce_typecheck(cfg_[keys[0]], keys[1:], value, ki)
+
+    interpolateable = (str, Path)
+    for _, value, fullname, ki, _ in tree_walk(cfg):
+        if (
+            isinstance(value, interpolateable)
+            and (value := interpolate1(value))
+            or (
+                isinstance(value, list)
+                and (
+                    value := [
+                        interpolate1(val) if isinstance(val, interpolateable) else val
+                        for val in value
+                    ]
+                )
+            )
+        ):
+            enforce_typecheck(
+                cfg_=cfg,
+                keys=fullname.split("->"),
+                value=value,
+                ki=ki,
+            )
 
 
 def tree_update_key(tree: ConfigTree, key: Hashable, value: Any) -> None:
@@ -156,7 +198,7 @@ def tree_keyname(tree: ConfigTree, key: str) -> str:
         parentinfo = (
             parentinfo.parent._ConfigTree__parentinfo  # pylint: disable=protected-access
         )
-    return ".".join(path)
+    return "->".join(path)
 
 
 def tree_load(fn: str) -> ConfigTree | Any:
@@ -309,10 +351,30 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
             del target[clause]
 
 
-def tree_update(target: ConfigTree, source: ConfigTree) -> None:
-    # This will *overwrite*, not fill up, like tree_merge.
+def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) -> None:
+    """This will *overwrite*, not fill up, like tree_merge.
+
+    Key-Value pairs with origin global.yaml will not be updated.
+
+    :param target: The target tree which is to be modified
+    :type target: ConfigTree
+    :param source: The tree containing the files to insert into the target tree
+    :type source: ConfigTree
+    :param keep: Ignore keys with KeyInfo.file equals values in ``keep``,
+        defaults to ()
+    :type keep: str | tuple, optional
+    """
+
+    if not isinstance(keep, (str, tuple)):
+        raise TypeError("keep must be type 'str' or 'tuple'.")
+
     # (import here to avoid cyclic import)
     from spin import schema  # pylint: disable=cyclic-import
+
+    if (
+        isinstance(keep, str) and (keep := (keep,))
+    ) or "global.yaml" not in keep:  # pylint: disable=condition-evals-to-constant
+        keep += ("global.yaml",)
 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
@@ -320,11 +382,14 @@ def tree_update(target: ConfigTree, source: ConfigTree) -> None:
             if isinstance(value, dict):
                 if key not in target:
                     target[key] = ConfigTree()
-                    tree_update(target[key], value)  # type: ignore[arg-type]
+                    tree_update(target[key], value, keep=keep)  # type: ignore[arg-type]
                     tree_set_keyinfo(target, key, ki)
                 else:
-                    tree_update(target[key], value)  # type: ignore[arg-type]
-            else:
+                    tree_update(target[key], value, keep=keep)  # type: ignore[arg-type]
+            elif key not in target or (
+                (ki_file := tree_keyinfo(target, key).file)
+                and all(pattern not in ki_file for pattern in keep)
+            ):
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
         except (TypeError, schema.SchemaError) as exc:

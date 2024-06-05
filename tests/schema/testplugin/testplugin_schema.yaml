@@ -1,0 +1,50 @@
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2024 CONTACT Software GmbH
+# All rights reserved.
+# https://www.contact-software.com/
+
+# This Plugin Schema is used for testing the schema and type checking using the
+# testplugin plugin.
+
+testplugin:
+  type: object
+  help: Test Plugin
+  properties:
+    nested_property:
+      type: object
+      help: Testing the object type
+      properties:
+        foo:
+          type: str
+          help: dummy value
+    bool_property:
+      type: bool
+      help: Testing the boolean type
+    integer_property:
+      type: int
+      help: Testing the integer type
+    float_property:
+      type: float
+      help: Testing the float type
+    string_property:
+      type: str
+      help: Testing the string type
+    path_property:
+      type: path
+      help: Testing the path type
+    list_property:
+      type: list
+      help: Testing the list type
+    bool_to_interpolate:
+      type: bool
+      help: Testing the boolean property while interpolating
+    int_to_interpolate:
+      type: int
+      help: Testing to assigning a string to int to interpolate to int
+    path_to_interpolate:
+      type: path
+      help: Testing the path type while interpolating
+    list_to_interpolate:
+      type: list
+      help: Testing to interpolate values within a list

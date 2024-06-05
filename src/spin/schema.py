@@ -17,6 +17,7 @@ values for specific data types.
 
 from __future__ import annotations
 
+from os.path import normpath
 from typing import TYPE_CHECKING
 
 from path import Path
@@ -68,9 +69,11 @@ def descriptor(tag: str) -> Callable:
 class PathDescriptor(BaseDescriptor):
     """Descriptor for handling file paths, coercing values to Path objects."""
 
-    def coerce(self: PathDescriptor, value: str | None) -> Path | None:
-        if value is not None:
-            return Path(value)
+    def coerce(
+        self: PathDescriptor, value: str | Callable | None
+    ) -> str | Path | Callable | None:
+        if value not in (None, "") and not callable(value):
+            return Path(normpath(value))  # type: ignore[type-var]
         return value
 
 
@@ -78,16 +81,32 @@ class PathDescriptor(BaseDescriptor):
 class StringDescriptor(BaseDescriptor):
     """Descriptor for handling string values."""
 
-    def coerce(self: StringDescriptor, value: str) -> str:
-        return str(value)
+    def coerce(self: StringDescriptor, value: str | Callable) -> str | Callable:
+        return str(value) if not callable(value) else value
 
 
-@descriptor("boolean")
+@descriptor("int")
+class IntDescriptor(BaseDescriptor):
+    """Descriptor for handling integer values."""
+
+    def coerce(self: IntDescriptor, value: int | Callable) -> int | Callable:
+        return int(value) if not callable(value) else value
+
+
+@descriptor("float")
+class FloatDescriptor(BaseDescriptor):
+    """Descriptor for handling float values."""
+
+    def coerce(self: FloatDescriptor, value: float | Callable) -> float | Callable:
+        return float(value) if not callable(value) else value
+
+
+@descriptor("bool")
 class BoolDescriptor(BaseDescriptor):
     """Descriptor for handling boolean values."""
 
-    def coerce(self: BoolDescriptor, value: Any) -> bool:
-        return bool(value)
+    def coerce(self: BoolDescriptor, value: bool | str | Callable) -> bool | Callable:
+        return bool(value) if not callable(value) else value
 
     def get_default(self: BoolDescriptor) -> bool:  # pylint: disable=arguments-differ
         return super().get_default(False)  # type: ignore[no-any-return]
@@ -100,9 +119,11 @@ class ListDescriptor(BaseDescriptor):
     lists.
     """
 
-    def coerce(self: ListDescriptor, value: Iterable) -> list:
+    def coerce(self: ListDescriptor, value: Iterable | Callable) -> list | Callable:
         if isinstance(value, str):
-            value = value.split()
+            return list(value.split())
+        if callable(value):
+            return value
         return list(value)
 
     def get_default(self: ListDescriptor) -> list:  # pylint: disable=arguments-differ

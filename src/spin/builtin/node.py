@@ -4,7 +4,6 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-import os
 import sys
 
 from spin import config, die, get_requires, memoizer, sh
@@ -50,7 +49,7 @@ def provision(cfg, *args):
             plugin_module = cfg.loaded[plugin]
             for req in get_requires(plugin_module.defaults, "npm"):
                 if not m.check(req):
-                    npm = os.path.join(cfg.python.scriptdir, "npm")
+                    npm = cfg.python.scriptdir / "npm"
                     if sys.platform == "win32":
                         npm += ".cmd"
                     sh(npm, "install", "-g", req)

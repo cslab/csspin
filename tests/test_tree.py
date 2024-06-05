@@ -162,14 +162,14 @@ def test_tree_keyname() -> None:
     assert config.subtree4.foo == {"bar": "baz"}
     assert config.subtree5.foo == {}
 
-    assert tree.tree_keyname(config.subtree1, "foo") == "subtree1.foo"
-    assert tree.tree_keyname(config.subtree5, "foo") == "subtree5.foo"
+    assert tree.tree_keyname(config.subtree1, "foo") == "subtree1->foo"
+    assert tree.tree_keyname(config.subtree5, "foo") == "subtree5->foo"
 
     with raises(
         AttributeError,
         match="key='bar' not in tree=ConfigTree([('foo', 'bar')])",
     ):
-        assert tree.tree_keyname(config.subtree1, "bar") == "subtree1.bar"
+        assert tree.tree_keyname(config.subtree1, "bar") == "subtree1->bar"
 
     lines = tree.tree_dump(config).splitlines()
     assert lines[0].endswith("subtree1:")
@@ -218,35 +218,6 @@ def test_update() -> None:
     b = tree.ConfigTree(sub=tree.ConfigTree(a="b"))
     tree.tree_update(a, b)
     assert a.sub.a == "b"
-
-
-def test_update_failing() -> None:
-    """
-    Ensures that updating the tree fails if the the type of source values don't
-    match those of the target tree.
-    """
-    from spin import config, schema
-
-    test_schema = schema.build_schema(
-        config(
-            sub=config(
-                type="object",
-                properties=config(a=config(type="list")),
-            )
-        )
-    )
-    a = test_schema.get_default()
-    a.sub.a = ["a"]
-    b = tree.ConfigTree(sub=tree.ConfigTree(a=1))
-
-    with raises(
-        Abort,
-        match=(
-            f".*:{tree.tree_keyinfo(b.sub, 'a').line}: cannot assign '1' to 'a': 'int'"
-            " object is not iterable"
-        ),
-    ):
-        tree.tree_update(a, b)
 
 
 def test_merge() -> None:

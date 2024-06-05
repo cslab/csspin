@@ -1,0 +1,64 @@
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 2024 CONTACT Software GmbH
+# All rights reserved.
+# https://www.contact-software.com/
+
+"""A Plugin used for testing the schema and type checking"""
+
+import os
+
+from path import Path
+
+from spin import config, interpolate1, setenv, task
+
+defaults = config(
+    nested_property=config(foo="foo"),
+    integer_property=1,
+    float_property=1.0,
+    string_property="string",
+    path_property=Path(os.getcwd()),
+    list_property=["item1", "item2", "item3"],
+    int_to_interpolate="{testplugin.integer_property}",
+    path_to_interpolate=Path("{testplugin.path_property}"),
+    list_to_interpolate=[
+        "{testplugin.path_to_interpolate}",
+        "{testplugin.integer_property}",
+        "{testplugin.float_property}",
+        "static",
+    ],
+    bool_property=True,
+    bool_to_interpolate="{SPIN_TESTING_SCHEMA_VALIDATION_TOGGLE}",
+)
+
+
+def configure(cfg) -> None:
+    setenv(SPIN_TESTING_SCHEMA_VALIDATION_TOGGLE=True)
+
+
+@task()
+def testplugin(cfg) -> None:
+    cwd = Path(os.getcwd())
+
+    assert cfg.testplugin.bool_property is True
+    assert cfg.testplugin.bool_to_interpolate is True
+    assert cfg.testplugin.integer_property == cfg.testplugin.int_to_interpolate == 1
+    assert cfg.testplugin.float_property == 1.0
+    assert (
+        cfg.testplugin.string_property
+        == interpolate1("{testplugin.string_property}")
+        == "string"
+    )
+    assert (
+        cfg.testplugin.path_property
+        == Path(interpolate1("{testplugin.path_property}"))
+        == cwd
+    )
+    assert cfg.testplugin.list_property == ["item1", "item2", "item3"]
+    assert (
+        cfg.testplugin.path_to_interpolate
+        == Path(interpolate1("{testplugin.path_to_interpolate}"))
+        == cfg.testplugin.path_property
+        == cwd
+    )
+    assert cfg.testplugin.list_to_interpolate == [str(cwd), "1", "1.0", "static"]

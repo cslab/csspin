@@ -1,0 +1,7 @@
+minimum-spin: "0.2"
+
+plugin-path:
+  - testplugin
+
+plugins:
+  - testplugin

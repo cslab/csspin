@@ -242,7 +242,8 @@ def rmtree(path: str) -> None:
     Obviously, this should be used with care.
 
     """
-    path = interpolate1(path)
+    if (path := interpolate1(path)) and not exists(path):
+        return
     if sys.platform == "win32":
         echo(f"rm {path} -recurse -force")
     else:
@@ -651,7 +652,7 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
         if literal in seen:
             raise RecursionError(literal)
     if is_path:
-        literal = Path(literal)
+        literal = Path(normpath(literal) if literal else "")
     return literal
 
 
