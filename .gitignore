@@ -2,7 +2,7 @@
 __pycache__/
 *.egg-info/
 *.memo
-.coverage
+.coverage*
 /htmlcov/
 /dist/
 /build/

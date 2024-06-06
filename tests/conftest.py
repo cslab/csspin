@@ -49,3 +49,9 @@ def chdir(path):
         yield
     finally:
         os.chdir(cwd)
+
+
+@fixture(scope="session", autouse=True)
+def disable_global_yaml():
+    if not os.environ.get("CI"):
+        os.environ["SPIN_DISABLE_GLOBAL_YAML"] = "True"

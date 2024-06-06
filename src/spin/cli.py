@@ -536,8 +536,10 @@ def load_config_tree(  # pylint: disable=too-many-locals
     tree.tree_merge(cfg, DEFAULTS)
 
     # Merge user-specific globals if they exist
-    if (spin_global := interpolate1("{SPIN_CONFIG}/global.yaml")) and exists(
-        spin_global
+    if (
+        not os.getenv("SPIN_DISABLE_GLOBAL_YAML")
+        and (spin_global := interpolate1("{SPIN_CONFIG}/global.yaml"))
+        and exists(spin_global)
     ):
         user_settings = readyaml(spin_global)
         if user_settings:
