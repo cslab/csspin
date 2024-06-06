@@ -61,6 +61,8 @@ tree is built from (in this order):
   ``$XDG_CONFIG_HOME/spin/global.yaml`` and complement the project
   configuration tree; an example for a user-specific setting is
   ``devpi.host``, the host name of a devpi package server.
+  This behavior can be disabled by setting the environment variable
+  ``SPIN_DISABLE_GLOBAL_YAML`` to ``True``.
 * Command line settings given by :option:`-p prop=value <spin -p>`
   override all other settings; a typical use case is to override the
   version of the Python interpreter using ``spin -p
