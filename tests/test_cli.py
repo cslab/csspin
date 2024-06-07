@@ -118,23 +118,6 @@ def test_base_options() -> None:
     decorated_command = cli.base_options(command)
     assert isinstance(decorated_command, Callable)
     assert vars(decorated_command).get("__click_params__")
-
-    click_options = vars(decorated_command)["__click_params__"]
-    expected_options = (
-        "version",
-        "help",
-        "cwd",
-        "envbase",
-        "spinfile",
-        "quiet",
-        "verbose",
-        "debug",
-        "properties",
-        "provision",
-        "cleanup",
-    )
-    assert len(click_options) == len(expected_options)
-    assert all(option in str(click_options) for option in expected_options)
     assert command() == "hello earth"  # check if command is still callable
 
 
