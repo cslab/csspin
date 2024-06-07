@@ -24,7 +24,7 @@ from path import Path
 from spin import die, interpolate1  # pylint: disable=cyclic-import
 
 if TYPE_CHECKING:
-    from typing import Any, Generator, Hashable, Iterable
+    from typing import Any, Callable, Generator, Hashable, Iterable
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -395,6 +395,37 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
         except (TypeError, schema.SchemaError) as exc:
             # FIXME: Is it even possible to trigger the schema.SchemaError?
             die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")
+
+
+def tree_update_properties(
+    cfg: ConfigTree,
+    override_properties: tuple = (),
+    prepend_properties: tuple = (),
+    append_properties: tuple = (),
+) -> None:
+    """Modify the configuration tree, by overriding, prepending and
+    appending settings to existing properties.
+
+    Properties must be a tuple of strings in the format "some.key=new_value".
+    """
+
+    def modify_property(prop: str, func: Callable) -> None:
+        """Modify a config tree value using given func"""
+        fullname, value = prop.split("=")
+        path = list(fullname.split("."))
+        scope = cfg
+        while len(path) > 1:
+            scope = getattr(scope, path.pop(0))
+        func(scope, path[0], ruamel.yaml.YAML().load(interpolate1(value)))
+        # Set the value source to "command-line"
+        tree_set_keyinfo(scope, path[0], KeyInfo("command-line", "0"))
+
+    for prop in override_properties:
+        modify_property(prop, setattr)
+    for prop in prepend_properties:
+        modify_property(prop, directive_prepend)
+    for prop in append_properties:
+        modify_property(prop, directive_append)
 
 
 # Variable references are names prefixed by '$' (like $port, $version,

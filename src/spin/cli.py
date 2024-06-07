@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING, Any, Generator, Iterable
 import click
 import entrypoints
 import packaging.version
-import ruamel.yaml
 from packaging import tags
 from path import Path
 
@@ -294,6 +293,26 @@ def base_options(fn: Callable) -> Callable:
             ),
         ),
         click.option(
+            "--prepend-properties",
+            "--pp",
+            multiple=True,
+            help=(
+                "Prepend to a setting in spin's configuration tree, using"
+                " 'property=value'. This only works for prepending to lists."
+                " Example: spin --pp pytest.opts=\"-m 'not slow'\""
+            ),
+        ),
+        click.option(
+            "--append-properties",
+            "--ap",
+            multiple=True,
+            help=(
+                "Append to a setting in spin's configuration tree, using"
+                " 'property=value'. This only works for appending to lists."
+                " Example: spin --ap pytest.opts=['-vv', '']"
+            ),
+        ),
+        click.option(
             "-p",
             "properties",
             multiple=True,
@@ -401,6 +420,8 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     verbose: bool,
     debug: bool,
     properties: tuple,
+    prepend_properties: tuple,
+    append_properties: tuple,
     provision: bool,
     cleanup: bool,
 ) -> int | None:
@@ -439,7 +460,16 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
 
     try:
         cfg = load_config_tree(
-            spinfile, cwd, envbase, quiet, verbose, cleanup, provision, properties
+            spinfile,
+            cwd,
+            envbase,
+            quiet,
+            verbose,
+            cleanup,
+            provision,
+            properties,
+            prepend_properties,
+            append_properties,
         )
     except ModuleNotFoundError as exc:
         if help:
@@ -475,7 +505,16 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         # Reget the plugins and reload the tree, if cleaned up before.
         if plugin_dir_purged:
             cfg = load_config_tree(
-                spinfile, cwd, envbase, quiet, verbose, False, provision, properties
+                spinfile,
+                cwd,
+                envbase,
+                quiet,
+                verbose,
+                False,
+                provision,
+                properties,
+                prepend_properties,
+                append_properties,
             )
         toporun(cfg, "provision")
         toporun(cfg, "finalize_provision")
@@ -507,7 +546,7 @@ def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
             yield item
 
 
-def load_config_tree(  # pylint: disable=too-many-locals
+def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     spinfile: str | Path,
     cwd: str = "",
     envbase: str | None = None,
@@ -516,6 +555,8 @@ def load_config_tree(  # pylint: disable=too-many-locals
     cleanup: bool = False,
     provision: bool = False,
     properties: tuple = (),
+    prepend_properties: tuple = (),
+    append_properties: tuple = (),
 ) -> tree.ConfigTree:
     """Load the configuration and plugins from ``spinfile`` and build the tree.
 
@@ -642,18 +683,8 @@ def load_config_tree(  # pylint: disable=too-many-locals
     graph = {n: getattr(mod.defaults, "_requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
-    # Add command line settings.
-    for prop in properties:
-        k, v = prop.split("=")
-        path = list(k.split("."))
-        scope = cfg
-        while len(path) > 1:
-            scope = getattr(scope, path.pop(0))
-        yaml = ruamel.yaml.YAML()
-        data = yaml.load(v)
-        setattr(scope, path[0], data)
-        # Set the value source to "command-line"
-        tree.tree_set_keyinfo(scope, path[0], tree.KeyInfo("command-line", "0"))
+    # Update properties modified via: -p, --pp, --ap
+    tree.tree_update_properties(cfg, properties, prepend_properties, append_properties)
 
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
