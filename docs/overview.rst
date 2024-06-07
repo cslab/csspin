@@ -256,6 +256,10 @@ However, YAML is a complex beast. You can do all kinds of mischievous
 tricks with YAML, and if you mess up the tree, the ``spin`` command
 will most likely fail to run.
 
+We also concluded that the standard python config files :file:`setup.cfg` or
+:file:`pyproject.toml` aren't quite fitting, as spin's configuration tree
+paradigm is by far better visually recognizable in the :file:`spinfile.yaml`.
+
 
 A lib is missing on my system, e.g python can't be provisioned
 --------------------------------------------------------------
