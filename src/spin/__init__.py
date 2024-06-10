@@ -778,8 +778,8 @@ def task(*args: Any, **kwargs: Any) -> Callable:
     * a string keyword argument ``when`` adds the task to the list of
       commands to run using :py:func:`invoke`
 
-    * `aliases` is a list of aliases for the command (e.g. "check" is
-      an alias for "lint")
+    * `aliases` is a list of aliases for the command (e.g. "tests" is
+      an alias for "test")
 
     * ``noenv=True`` registers the command as a global command, that
       can run without a provisioned environment
@@ -1034,17 +1034,16 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
 
     .. code-block:: python
 
-       @task(aliases=["check"])
-       def lint(allsource: option("--all", "allsource", is_flag=True)):
-           """Run all linters defined in this project"""
-           invoke("lint", allsource=allsource)
+       @task(aliases=["tests"])
+       def test(coverage: option("--coverage", "coverage", is_flag=True)):
+           """Run all tests defined in this project"""
+           invoke("test", coverage=coverage)
 
-    Note that in this case, all linters are required to support the
-    ``allsource`` argument, i.e. the way a task that uses `invoke` is
-    invoking other tasks is part of the call interface contract for
-    linters: *all* linter tasks *must* support the ``allsource``
-    argument as part of their Python function signature (albeit not
-    necessarily the same command line flag ``--all``).
+    The way a task that uses `invoke` is invoking other tasks is part of the
+    call interface contract: *all* tasks initialized like ``@task(when="test")``
+    *must* support the ``coverage`` argument as part of their Python function
+    signature (albeit not necessarily the same command line flag
+    ``--coverage``).
     '''
     ctx = click.get_current_context()
     cfg = get_tree()

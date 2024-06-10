@@ -20,24 +20,28 @@ have to be refactored.
 
 ## Linters
 
-- `cppcheck`:
+- `cppcheck` (**removed**):
 
   - foremost: how to integrate this with pre-commit?
   - dependency on package from ConPI, have to deal with that somehow.
 
-- `cpplint`:
+- `cpplint` (**removed**):
 
   - TODO: test on the platform
   - foremost: same as above: how to integrate this with pre-commit?
 
-- flake8:
+- `flake8` (**removed**):
 
   - determination of the changeset is wrong, when there are deleted files,
     files in the index etc.
   - pre-commit integration
 
-**Summary**: first, we have to develop a concept of how to integrate
-the linter plugins with the pre-commit stuff.
+**Summary**:
+
+- [x] first, we have to develop a concept of how to integrate
+      the linter plugins with the pre-commit stuff.
+- [x] we decided to not maintain linting plugins, workflows or tasks. See
+      tdocs/plugin_distribution.md
 
 ## Provisioning-heavy stuff
 
@@ -56,15 +60,15 @@ the linter plugins with the pre-commit stuff.
 
 ## The Rest
 
-- `portwheel`:
+- `portwheel` (**removed**):
 
   - unused, not important, removed. Can be regained later if necessary.
 
-- `pre-commit`:
+- `pre-commit` (**removed**):
 
   - the name is inconsistent with the tool name
 
-- `preflight`:
+- `preflight` (**removed**):
 
   - obsolete, removed
 
@@ -88,7 +92,7 @@ the linter plugins with the pre-commit stuff.
   - the task cache is obsolete. It only made sense for the 15.x platform.
   - not sure whether this all actually works
 
-- `shell`:
+- `shell` (**removed**):
 
   - move to builtin? Its very basic and not tech-stack specific
   - not sure what it should do and whats the difference to env

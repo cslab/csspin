@@ -232,19 +232,17 @@ spin:
    extra-tasks:
      pipx-install:
        env:
-	 USE_EMOJI: no
+	       USE_EMOJI: no
        script:
-	 - pipx install --force --editable .
-       help: |
-	 This installs spin via pipx
-
+	       - pipx install --force --editable .
+       help: This installs spin via pipx
      all:
        spin:
-	 - build
-	 - tests
-	 - docs
-	 - package
-	 - upload
+        - build
+        - tests
+        - docs
+        - package
+        - upload
 
 
 Build Rules

@@ -20,7 +20,7 @@ defaults = config(
 
 
 # TODO(wen): is this actually linting? Not sure
-@task(when="lint")
+@task()
 def radon(cfg, allsource: option("--all", "allsource", is_flag=True), args):
     """Run radon to measure code complexity."""
     files = args or cfg.vcs.modified

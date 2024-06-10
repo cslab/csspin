@@ -1,7 +1,0 @@
-minimum-spin: "0.2"
-plugins:
-  - spin.builtin.cpplint
-
-python:
-  version: 3.9.6
-  use: python
