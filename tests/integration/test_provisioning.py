@@ -4,8 +4,6 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-import re
-
 import pytest
 
 from spin import backtick, cli
@@ -41,33 +39,6 @@ def test_python_use(tmpdir):
         "-p python.use=python",
     )
     assert "Python 3." in output
-
-
-def test_cppcheck(tmpdir):
-    out = do_test(
-        tmpdir,
-        "cppcheck.yaml",
-        "python -c \"import shutil; print(shutil.which('cppcheck'))\"",
-    )
-    assert re.match(r".*cppcheck(.exe)?$", out, re.IGNORECASE)
-
-
-def test_cpplint(tmpdir):
-    out = do_test(
-        tmpdir,
-        "cpplint.yaml",
-        "python -c \"import shutil; print(shutil.which('cpplint'))\"",
-    )
-    assert re.match(r".*cpplint(.exe)?$", out, re.IGNORECASE)
-
-
-def test_flake(tmpdir):
-    out = do_test(
-        tmpdir,
-        "flake.yaml",
-        "python -c \"import shutil; print(shutil.which('flake8'))\"",
-    )
-    assert re.match(r".*flake8(.exe)?$", out, re.IGNORECASE)
 
 
 @pytest.mark.slow

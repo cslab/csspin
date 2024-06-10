@@ -15,7 +15,7 @@ efficient.
 
 ## The Proposal
 
-Core idea: we cluster the plugins by tech-stack they're dealing with,
+Core idea: We cluster the plugins by tech-stack they're dealing with,
 in the first place. We put every cluster in its own repository,
 maintain and distribute them together.
 
@@ -29,13 +29,14 @@ the plugins):
 - `behave` (spin-plugins)
 - `python` (builtin)
 - `nosetest` (builtin)
-- `flake8` (builtin)
 - `devpi` (builtin)
 - `piptools` (builtin)
 - `radon` (builtin)
 - task `run` (builtin/**init**.py)
 - task `env` (builtin/**init**.py)
-- task `shell` (builtin/**init**.py)
+- **removed:**
+  - `flake8` (builtin)
+  - task `shell` (builtin/**init**.py)
 
 **spin-ce**:
 
@@ -53,16 +54,18 @@ the plugins):
 
 **spin-cpp**:
 
-- `cpp_check` (builtin)
-- `cpp_lint` (builtin)
 - `scons` (builtin. For cs.threed and cs.workspaces)
+- **removed:**
+  - `cpp_check` (builtin)
+  - `cpp_lint` (builtin)
 
 **spin-vcs**:
 
-- `vcs` (builtin)
-- `pre-commit` (builtin)
-- `git` (builtin)
 - `gitlab` (builtin)
+- `vcs` (builtin)
+- **removed:**
+  - `git` (builtin)
+  - `pre-commit` (builtin)
 
 _Note_: `pre-commit` and `gitlab` may not fit perfectly here, but
 surely better than in other clusters.
@@ -84,9 +87,8 @@ tools usage. Based on this criterion, we define the following cluster:
 We expect as well the first as the second set of 'clusters' to grow.
 
 Then there is another group of tasks which are neither tech-stack nor
-org-unit-specific. Moreover, at least part of them (`run`, `env`,
-`shell`?) doesn't even feel as optional. Therefore, I propose to leave
-them builtin into the core:
+org-unit-specific. Moreover, at least part of them (`run`, `env`) doesn't even
+feel as optional. Therefore, I propose to leave them builtin into the core:
 
 - task `system-provision`
 - task `distro` (do we need this at all?)
@@ -97,9 +99,10 @@ As for the rest:
 - `cache` (builtin): belongs into `scons`?
 - `build` (builtin): belongs `stdworkflows`
 - `pytest` (builtin): obsoleted by `pytest` (spin_plugins)
-- `buildout`: not working, unused, obsolete
-- `ce15`: obsolete (my 3-years old attempt)
-- `eggs`: obsolete (my 3-years old attempt)
+- **removed:**
+  - `ce15`: obsolete (my 3-years old attempt)
+  - `eggs`: obsolete (my 3-years old attempt)
+  - `buildout`: not working, unused, obsolete
 
 That way, we would get ~10 repositories each hosting a set of related
 plugins. Of course, that will cause some redundancy in their
@@ -111,9 +114,9 @@ one package from those repositories.
 The packages should be uploaded on and consumed from ConPI. Index candidates are:
 
 - https://packages.contact.de/tools/misc: here we put such stuff, mostly.
-  It isnt interited by the app-indices though
+  It isn't inherited by the app-indices though
 - https://packages.contact.de/tools/stable: this one is.
-  But it has another purpuse, at least originally (namely pinning some
+  But it has another purpose, at least originally (namely pinning some
   TP versions if we had trouble with new ones)
 - A completely new one?
 

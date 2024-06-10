@@ -97,3 +97,35 @@ Path({cfg.python.interpreter}) / dir / file
 
 That isn't a big benefit however; and we might revise this decision on
 further findings.
+
+## 4. On removing linting plugins
+
+Originally, we planned the linting plugins (flake8, pylint, ...) not
+only to wrap the linters but also to ship the standard configuration for
+those, and to reuse them from the IDEs etc. Shipping the linters
+configurations would then reduce the boilerplate, make sure everybody
+uses they same configuration settings etc.
+
+This doesn't feel right anymore for multiple reasons.
+
+There are at least two major context for linting: pre-commit and
+IDEs. Both are widely adopted @C. In both 'the setup' is expected to
+be standard and the configuration be in standard locations. We could
+try to bend things for both cases, but it doesn't feel very smart;
+rather, it feels like swimming against the flow.
+
+Which would leave the possibility to provision the configuration files into
+those standard locations, or to modify setup.cfg/pyproject.toml.
+Which is also weird, and would stand in the way of component-
+specific changes etc. So no happy end here, too.
+
+Calling pre-commit from spin or vice versa doesn't feel good either.
+
+At the end, we probably will leave all those contexts and
+implementations -- i.e. pre-commit, IDE-addons, spin -- separate, let
+them call the tools independently, and make sure to push the relevant
+configuration into setup.cfg/pyproject.toml to behave them the same in
+all contexts.
+
+Or not; we'll see. To bother moving them around we'll remove them for now
+and re-add later if necessary.
