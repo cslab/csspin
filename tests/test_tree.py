@@ -325,12 +325,12 @@ def test_directive_interpolate() -> None:
     assert config == expected_config2
 
 
-def test_update_properties() -> None:
+def test_tree_update_properties() -> None:
     """Ensuring that spin.tree.update_properties is updating the config tree
     correctly.
     """
+    os.environ["SPIN_TREE_SUB__X"] = "[1, 2]"
     cfg = tree.ConfigTree(sub=tree.ConfigTree(opts=["none"]))
-
     tree.tree_update_properties(
         cfg,
         override_properties=("sub.opts=['second', 'third']",),
@@ -338,3 +338,5 @@ def test_update_properties() -> None:
         append_properties=("sub.opts=['second last', 'last']",),
     )
     assert cfg.sub.opts == ["new first", "second", "third", "second last", "last"]
+    assert cfg.sub.x == [1, 2]
+    del os.environ["SPIN_TREE_SUB__X"]

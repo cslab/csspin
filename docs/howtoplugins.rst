@@ -70,7 +70,7 @@ Plugin Lifecycle
 
       myplugin:
         setting1: ...
-	     setting2: ...
+	      setting2: ...
 
 4. When a plugin has a module-level ``defaults`` variable, the existing plugin
    configuration in the configuration tree is updated by the content defined by
@@ -147,7 +147,7 @@ following three ways:
 The API of plugins consists of the following:
 
 * an optional module-level variable ``defaults`` holding a
-  configuration subtree created by `config()`; this configuration
+  configuration subtree created by ``config()``; this configuration
   tree will be merged with project and global settings and become the
   configuration subtree named like the plugin
 
@@ -302,6 +302,13 @@ There are some more constraints:
   defined in the plugins module using ``defaults = spin.config(...)``.
 - ``type: object``-configured entries don't have a default value.
 - All mappable properties must have the following keys: ``type`` and ``help``.
+- Property-key names should be representable as environment variables, allowing
+  letters, digits and single underscores where underscores should not be leading
+  or trailing. Constrains are not enforced, since these special cases do occur
+  in practice, as plugins define their part of the config tree within the
+  ``config()``-call whereas the Python syntax permits assignments like
+  ``config(foo.bar="value")`` and ``config(1foo="value")``. Otherwise,
+  properties can't be overridden by environment variables.
 
 - For built-in plugins only:
   - Default values of built-in plugins should be defined in ``schema.yaml`` of

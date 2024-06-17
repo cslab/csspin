@@ -377,6 +377,8 @@ _nested = False
 
 
 @click.command(cls=GroupWithAliases, help=__doc__)
+# FIXME: Investigate: Do we really need @base_options here? Probably not, if
+#        options are ignored anyways. Help is also provided by the plugin/func.
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options
@@ -683,8 +685,13 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     graph = {n: getattr(mod.defaults, "_requires", []) for n, mod in cfg.loaded.items()}
     cfg.topo_plugins = reverse_toposort(nodes, graph)
 
-    # Update properties modified via: -p, --pp, --ap
-    tree.tree_update_properties(cfg, properties, prepend_properties, append_properties)
+    # Update properties modified via: -p, --pp, --ap and the environment
+    tree.tree_update_properties(
+        cfg,
+        properties,
+        prepend_properties,
+        append_properties,
+    )
 
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")

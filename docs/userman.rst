@@ -288,9 +288,7 @@ is updated whenever :program:`spin docs` is executed, and
      docs/schemaref.rst:
        sources: [src/spin/schema.yaml]
        spin:
-	 - schemadoc -o docs/schemaref.rst
-
-
+         - schemadoc -o docs/schemaref.rst
 
 Plugins
 -------
@@ -425,6 +423,93 @@ user/machine specific settings like in the example below.
      devpackages:
        cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
 
+The Environment as Input Channel
+================================
+
+cs.spin provides a command-line interface as documented in
+:file:`docs/cliref.rst`. Besides that, modifying the configuration tree via the
+environment is a crucial feature which which is implemented using different
+approaches:
+
+- **`SPIN_`-prefix**:
+  - Used to modify the options directly passed to cs.spin itself.
+  - Is subject of the natural limitation of assigning values to a property,
+    which could be assigned by multiple values at once, i.e., `SPIN_P` can
+    only used once: `SPIN_P="pytest.opts=-vv"`.
+- **`SPIN_TREE_`-prefix**
+  - Dedicated to defining and modifying configuration tree entries via
+    environment variables (i.e. affecting how tasks calling tools). This method
+    mirrors the effect of passing configuration parameters using the ``-p``
+    option directly via CLI.
+  - Accessing nested elements, e.g. ``pytest.opts`` is possible via double
+    underscores: ``SPIN_TREE_PYTEST__OPTS="[-m, not slow]"``.
+  - Limitations are given by the circumstance that due to accessing nested
+    properties via double underscore, configuration tree keys, with leading or
+    trailing underscores as well as those that include multiple underscores in
+    order can't be accessed like this. Same counts for keys that can't be
+    represented as environment variable.
+
+Order of Property Overriding
+----------------------------
+
+Nevertheless, the CLI always wins, i.e. values passed via the environment will
+be overridden, in case the same keys were modified via CLI.
+
+.. code-block:: bash
+  :caption: Overriding Values of the Configuration Tree
+
+  # SPIN_P will be overridden by values passed via "-p"
+  SPIN_P="pytest.opts=[-vv]" spin -p pytest.opts="[-m, wip]" pytest
+
+  # SPIN_TREE_PYTEST__OPS will be overridden by values passed via
+  #   "-p pytest.opts"
+  SPIN_TREE_PYTEST__OPS="[-m, 'not slow']" spin \
+    -p pytest.opts="[-m, wip]" pytest
+
+  # SPIN_P will be overridden by SPIN_TREE_PYTEST__OPTS
+  #   AND: SPIN_TREE_PYTEST__OPTS will be overridden by values passed via
+  #   "-p pytest.opts"
+  SPIN_P="pytest.opts=[-vv]" SPIN_TREE_PYTEST__OPTS="[-m, 'not slow']" spin \
+    -p pytest.opts="[-m, wip]" pytest
+
+One source of error to avoid is: assigning values to be interpolated to
+environment variables, that will be overridden:
+
+.. code-block:: bash
+  :caption: Negative Examples: How environment variables should not be used.
+
+  # The python.version passed via CLI is not used in coverage.opts, since
+  # pytest.coverage_opts is set to the default python.version=3.9.8, before
+  # python.version was overridden via CLI.
+  SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
+    -p python.version="3.11.7" \
+    -p pytest.opts="[{python.version}]" --debug | grep -A4 "|pytest:"
+  src/spin/cli.py:142:            |pytest:
+  command-line:0:                 |  opts:
+                                  |    - '3.11.7'
+  command-line:0:                 |  coverage_opts:
+                                  |    - '3.9.8'
+
+  # The order of -p calls makes a difference too.
+  SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
+    -p pytest.opts="[{python.version}]" \
+    -p python.version="3.11.7" --debug | grep -A4 "|pytest:"
+  src/spin/cli.py:142:            |pytest:
+  command-line:0:                 |  opts:
+                                  |    - '3.9.8'
+  command-line:0:                 |  coverage_opts:
+                                  |    - '3.9.8'
+
+  # The correct way in both cases would be to first override python.version via
+  # the environment:
+  SPIN_TREE_PYTHON__VERSION="3.11" \
+  SPIN_TREE_pytest__coverage_opts="[{python.version}]" \
+    spin -p pytest.opts="[{python.version}]" --debug | grep -A4 "|pytest:"
+  src/spin/cli.py:142:            |pytest:
+  command-line:0:                 |  opts:
+                                  |    - 3.11
+  command-line:0:                 |  coverage_opts:
+                                  |    - 3.11
 
 .. hyperlinks
 
