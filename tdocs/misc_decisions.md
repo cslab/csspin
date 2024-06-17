@@ -129,3 +129,42 @@ all contexts.
 
 Or not; we'll see. To bother moving them around we'll remove them for now
 and re-add later if necessary.
+
+## 5. The Environment as Input Channel for cs.spin
+
+> Draft and ideas; mostly copied from docs/userman.rst
+
+cs.spin provides a command-line interface as documented in
+`docs/cliref.rst`. Besides that, passing options to spin, called
+tasks/plugins as well as modifying the configuration tree via the environment is
+a crucial feature which is implemented using different approaches:
+
+- **`SPIN_`-prefix**:
+  - Used to modify the options directly passed to cs.spin itself.
+  - Utilizes click's `auto_envvar_prefix` feature, which allows integration
+    and adjustment of cs.spin's command-line interface (CLI) options via
+    environment variables.
+  - Is subject of the natural limitation of assigning values to a property,
+    which could be assigned by multiple values at once, i.e., `SPIN_P` can
+    only used once: `SPIN_P="pytest.opts=-vv"`.
+- **`SPIN_TREE_`-prefix**
+  - Dedicated to defining and modifying configuration tree entries via
+    environment variables (i.e. affecting how tasks calling tools). This method
+    mirrors the effect of passing configuration parameters using the `-p`
+    option directly via CLI.
+  - Accessing nested elements, e.g. `pytest.opts` is possible via double
+    underscores: `SPIN_TREE_PYTEST__OPTS="[-m, not slow]"`.
+  - Limitations are given by the circumstance that due to accessing nested
+    properties via double underscore, configuration tree keys, that begin or end
+    with single or multiple underscores as well as those that include multiple
+    underscores in order can't be modified like this. Same counts for keys that
+    can't be represented as environment variable.
+- **`SPIN_<plugin-name>_`-prefix** (idea):
+  - Similar to the `SPIN_`-prefix, but designed to affect options passed to a
+    called task/plugin. `SPIN_MKINSTANCE_REBUILD=True spin mkinstance` equals
+    `spin mkinstance --rebuild`.
+
+Constrains for property-key naming are not enforced, since most special cases
+do not occur in practice, as plugins define their part of the config tree using
+`config()` whereas the Python syntax permits assignments like
+`config(foo.bar="value")` and `config(1foo="value")`.

@@ -403,6 +403,9 @@ def setenv(*args: Any, **kwargs: Any) -> None:
 
     Passing ``None`` as a value removes the environment variable.
 
+    Variables that have been set during or before ``configure()`` will be
+    patched into the activation scripts of the Python virtual environment.
+
     >>> setenv(FOO="{spin.foo}", BAR="{bar.options}")
 
     """

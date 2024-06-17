@@ -420,6 +420,15 @@ def tree_update_properties(
         # Set the value source to "command-line"
         tree_set_keyinfo(scope, path[0], KeyInfo("command-line", "0"))
 
+    # Update the configuration tree based on environment variables
+    for prop in (
+        f"{key.replace('SPIN_TREE_', '').replace('__', '.').lower()}={value}"
+        for (key, value) in os.environ.items()
+        if "SPIN_TREE_" in key
+    ):
+        modify_property(prop, setattr)
+
+    # Update the configuration tree based on passed -p, --pp and --ap
     for prop in override_properties:
         modify_property(prop, setattr)
     for prop in prepend_properties:
