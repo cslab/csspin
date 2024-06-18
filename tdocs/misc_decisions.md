@@ -168,3 +168,15 @@ Constrains for property-key naming are not enforced, since most special cases
 do not occur in practice, as plugins define their part of the config tree using
 `config()` whereas the Python syntax permits assignments like
 `config(foo.bar="value")` and `config(1foo="value")`.
+
+## 6. Node Provisioning using with and without nodeenv
+
+Thy nodeenv Python package is used to provision NodeJS from sources, while the
+version to use must be defined by `node.version`. The node plugin additionally
+provides the usage of a local NodeJS installation, via the `node.use` property.
+For this we don't rely on nodeenv, since it does not support using a local
+NodeJS installation on Windows. To be consistent on our main OS systems, we copy
+the Node executable in both cases, while creating a symlink to the npm
+executable on non-Windows. On Windows however, symlinks require higher
+permissions, so we instead decided to let the node plugin create a CMD script
+that calls npm.cmd of the existing installation.

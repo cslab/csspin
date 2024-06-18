@@ -3,7 +3,7 @@
 minimum-spin: "0.2"
 
 # To develop plugins comfortably, install the packages editable as
-# follows and add the relevant plugins to the list 'plugis' below
+# follows and add the relevant plugins to the list 'plugins' below
 # plugin-packages:
 #    - -e file:///home/wen/src/qs/tooling/spin-plugins/dummy
 
@@ -34,17 +34,6 @@ python:
 pytest:
   opts: [-m, "not slow"]
   coverage_opts: [--cov]
-
-# extra-tasks: # TODO: Decide if useful
-#   # This is the recommended way of installing spin locally as long as
-#   # it is under development.
-#   pipx-install:
-#     env:
-#       USE_EMOJI: no
-#     script:
-#       - pipx install --force --editable .
-#     help: |
-#       This installs spin via pipx
 
 build-rules:
   task docs:

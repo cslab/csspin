@@ -54,6 +54,7 @@ __all__ = [
     "warn",
     "error",
     "cd",
+    "copy",
     "exists",
     "mkdir",
     "rmtree",
@@ -266,6 +267,32 @@ def mv(source: str | Path, target: str | Path) -> None:
         echo(f"mv {source} {target}")
 
     shutil.move(source, target)
+
+
+def copy(source: str | Path, target: str | Path) -> None:
+    """Copy a file or directory recursively from `source` to `target` in case
+    the `target` exists.
+
+    """
+    if not exists((source := Path(interpolate1(source)).absolute())):
+        die(f"{source} does not exist!")
+    target = Path(interpolate1(target)).absolute()
+
+    source_is_dir = source.is_dir()
+    if sys.platform == "win32":
+        opts = "-recurse" if source_is_dir else ""
+        echo(f"copy-item -path {source} -destination {target} {opts}")
+    else:
+        opts = "-r " if source_is_dir else ""
+        echo(f"cp {opts}{source} {target}")
+
+    if source_is_dir:
+        source.copytree(
+            (target / source.basename()).mkdir_p(),
+            dirs_exist_ok=True,
+        )
+    else:
+        source.copy2(target)
 
 
 def die(*msg: Any) -> None:
