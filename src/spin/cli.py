@@ -129,7 +129,6 @@ def load_plugin(
         # We tolerate this only in context of cleanup
         if not cfg.cleanup:
             raise ex
-
     if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
         # initialize it and recursively load dependencies
@@ -169,7 +168,11 @@ def load_plugin(
                     keep=interpolate1("{spin.spinfile}"),
                 )
         elif plugin_defaults:
-            tree.tree_merge(plugin_config_tree, plugin_defaults)  # type: ignore[arg-type]
+            tree.tree_update(
+                plugin_config_tree,
+                plugin_defaults,  # type: ignore[arg-type]
+                keep=interpolate1("{spin.spinfile}"),
+            )
 
         cfg.loaded[full_name] = mod
         dependencies = [

@@ -197,6 +197,27 @@ def test_mv(tmp_path: PathlibPath) -> None:
     assert new_file_path.is_file()
 
 
+def test_copy(tmp_path: PathlibPath) -> None:
+    """spin.copy is able to copy files and directories to the desired
+    locations
+    """
+    source_dir = tmp_path / "directory"
+    source_dir.mkdir()
+    file_ = source_dir / "file.txt"
+    file_.write_text("foo")
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+
+    # copy file
+    spin.copy(file_, target_dir)
+    assert file_.is_file()
+    assert (target_dir / "file.txt").is_file()
+
+    # copy directory
+    spin.copy(source_dir, target_dir)
+    assert (target_dir / "directory" / "file.txt").is_file()
+
+
 def test_die() -> None:
     """spin.die will raise click.Abort"""
     with pytest.raises(click.Abort, match="You shall not pass!"):

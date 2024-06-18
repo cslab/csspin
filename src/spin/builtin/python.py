@@ -290,7 +290,7 @@ def nuget_install(cfg):
         f"set PATH={paths}{os.pathsep}$PATH",
         PATH=os.pathsep.join((paths, os.environ["PATH"])),
     )
-    sh("{python.interpreter} -m ensurepip --upgrade")
+    sh(f"{cfg.python.interpreter} -m ensurepip --upgrade")
     sh(
         cfg.python.interpreter,
         "-mpip",
@@ -540,7 +540,7 @@ class PythonActivate:
     patchmarker = "# Patched by spin.builtin.virtualenv\n"
     activatescript = "{python.scriptdir}/activate_this.py"
     replacements = ()
-    setpattern = 'os.environ["{name}"] = "{value}"'
+    setpattern = 'os.environ["{name}"] = r"{value}"'
     resetpattern = ""
     script = dedent(
         """

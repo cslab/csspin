@@ -229,37 +229,43 @@ python:
 #           help: Python dependencies of the piptools plugin
 
 # FIXME: Move to the plugins sources as soon as non-builtin
-# node:
-#   type: object
-#   help: TODO
-#   properties:
-#     version:
-#       type: str
-#       default: ""
-#       help: NodeJS version
-#     mirror:
-#       type: str
-#       default: ""
-#       help: Define an optional mirror to get NodeJS from
-#     ignore_ssl_certs:
-#       type: bool
-#       help: TODO
-#     memo:
-#       type: str
-#       help: TODO
-#     requires:
-#       type: object
-#       help: Dependencies of the node plugin
-#       properties:
-#         spin:
-#           type: list
-#           help: Spin dependencies of the node plugin
-#         python:
-#           type: list
-#           help: Python dependencies of the node plugin
-#         npm:
-#           type: list
-#           help: npm dependencies of the node plugin
+node:
+  type: object
+  help: Configuration of the Node built-in plugin.
+  properties:
+    version:
+      type: str
+      help: NodeJS version
+    use:
+      type: path
+      help: Alternative path to a local NodeJS executable
+    mirror:
+      type: str
+      help: Proxy to get NodeJS sources from
+    ignore_ssl_certs:
+      type: bool
+      help: If enabled, ignoring SSL certificate validation checks.
+      default: False
+    memo:
+      type: path
+      help: TODO
+      default: "{python.venv}/nodeversions.memo"
+    requires:
+      type: object
+      help: Dependencies of the node plugin
+      properties:
+        spin:
+          type: list
+          help: Spin dependencies of the node plugin
+          default: [.python]
+        python:
+          type: list
+          help: Python dependencies of the node plugin
+          default: [nodeenv]
+        npm:
+          type: list
+          help: npm dependencies of the node plugin
+          default: [saas, yarn]
 
 # FIXME: Move to the plugins sources as soon as non-builtin
 java:
@@ -268,14 +274,12 @@ java:
   properties:
     version:
       type: str
-      default: ""
       help: Java version
     installdir: # FIXME: Rename to install_dir if possible.
       type: path
       help: The directory in which JAVA should be installed
     java_home:
       type: path
-      default: ""
       help: The path to the JAVA installation path
 
 # FIXME: Move to the plugins sources as soon as non-builtin
