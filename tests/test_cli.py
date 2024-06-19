@@ -20,7 +20,7 @@ import pytest
 from conftest import chdir
 from path import Path
 
-from spin import cli
+from spin import cli, memoizer
 from spin.tree import ConfigTree
 
 if TYPE_CHECKING:
@@ -304,41 +304,19 @@ def test_install_plugin_packages(
     mocker: MockerFixture,
     cfg: ConfigTree,
     tmp_path: PathlibPath,
+    trivial_plugin_path: Path,
 ) -> None:
     """
-    spin.cli.install_plugin_packages executes the required commands to install
-    plugin and dev packages
+    spin.cli.install_plugin_packages executes is able to install plugin packages
     """
-    mocker.patch.dict(os.environ, {"PYTHONPATH": os.path.sep + "python"})
-    mocker.patch("spin.cli.glob.iglob", return_value=("foo.egg-link", "bar.egg-link"))
+    cfg.spin.plugin_dir = tmp_path
     mocker.patch(
-        "spin.cli.readtext",
-        side_effect=("foo.egg-link-content", "bar.egg-link-content"),
+        "spin.cli.find_plugin_packages", return_value=(str(trivial_plugin_path),)
     )
-    mock_sh = mocker.patch("spin.cli.sh")
-
-    cfg.spin.plugin_dir = Path(tmp_path / "plugins")
-    cfg.spin.extra_index = "https://packages.contact.de/apps/16.0"
-    cfg["plugin-packages"] = ["foo", "bar"]
-
-    assert not os.path.isdir(Path(tmp_path / "plugins"))
     cli.install_plugin_packages(cfg)
-    assert os.path.isdir(Path(tmp_path / "plugins"))
-    assert "'--extra-index-url', 'https://packages.contact.de/apps/16.0', 'foo'" in str(
-        mock_sh.call_args_list[0]
-    )
-    assert "'--extra-index-url', 'https://packages.contact.de/apps/16.0', 'bar'" in str(
-        mock_sh.call_args_list[1]
-    )
-    assert len(mock_sh.call_args_list) == 2
 
-    # check if the path was reset
-    assert os.getenv("PYTHONPATH") == os.path.sep + "python"
-
-    with open(tmp_path / "plugins" / "easy-install.pth", "r", encoding="utf-8") as f:
-        assert f.read() == "foo.egg-link-content\nbar.egg-link-content"
-
-    # also check if the the path was removed in case it did not exist before
-    del os.environ["PYTHONPATH"]
-    cli.install_plugin_packages(cfg)
-    assert not os.getenv("PYTHONPATH")
+    assert (cfg.spin.plugin_dir / "trivial-1.0.0.dist-info").is_dir()
+    assert (cfg.spin.plugin_dir / "easy-install.pth").is_file()
+    assert (cfg.spin.plugin_dir / "packages.memo").is_file()
+    with memoizer(cfg.spin.plugin_dir / "packages.memo") as m:
+        assert m.check(trivial_plugin_path)

@@ -660,6 +660,11 @@ class SimpleProvisioner(ProvisionerProtocol):
                 cmd.append(".")
             sh(*cmd)
 
+        # Verify dependency compatibility of installed packages
+        pip_check = sh("pip", "check", may_fail=True, capture_output=True)
+        if pip_check.returncode:
+            die(pip_check.stdout)
+
     def _split(self, reqset):
         """to pass whitespace-less args to sh()"""
         reqlist = []

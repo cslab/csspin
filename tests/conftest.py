@@ -21,6 +21,8 @@ from spin.cli import load_config_tree
 if TYPE_CHECKING:
     from spin.tree import ConfigTree
 
+from path import Path
+
 
 @fixture()
 def cli_runner() -> CliRunner:
@@ -55,3 +57,8 @@ def chdir(path):
 def disable_global_yaml():
     if not os.environ.get("CI"):
         os.environ["SPIN_DISABLE_GLOBAL_YAML"] = "True"
+
+
+@fixture()
+def trivial_plugin_path() -> Path:
+    return Path(os.path.dirname(__file__)) / "data" / "trivial"

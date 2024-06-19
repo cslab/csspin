@@ -709,15 +709,15 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     """Install plugin packages which are not yet installed and extend the
     configuration tree.
     """
-    if not exists(cfg.spin.plugin_dir):
-        mkdir(cfg.spin.plugin_dir)
+    if not exists((plugin_dir := interpolate1(Path("{spin.plugin_dir}")))):
+        mkdir(plugin_dir)
 
     # To be able to do editable installs to plugin dir, we have to
     # temporarily set PYTHONPATH, to let the pip subprocess
     # believe plugin_dir is in sys.path. But we must be careful to
     # unset it before calling anything else -- see below!
     old_python_path = os.environ.get("PYTHONPATH", None)
-    os.environ["PYTHONPATH"] = interpolate1(cfg.spin.plugin_dir)
+    os.environ["PYTHONPATH"] = plugin_dir
 
     cmd = [
         f"{sys.executable}",
@@ -725,7 +725,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         "install",
         "-q" if not cfg.verbose else None,
         "-t",
-        "{spin.plugin_dir}",
+        os.environ["PYTHONPATH"],
     ]
 
     if cfg.spin.extra_index:
@@ -733,15 +733,21 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
 
     something_was_installed = False
 
-    # Install plugin packages that are not yet installed, using pip
-    # with the "-t" (target) option pointing to the plugin directory.
-    with memoizer(N(os.path.join("{spin.plugin_dir}", "packages.memo"))) as m:
+    # Install all plugin packages at once to avoid pip's dependency resolver to
+    # fail without exit-zero, while using the "-t" (target) option pointing to
+    # the plugin directory.
+    with memoizer(N(plugin_dir / "packages.memo")) as m:  # type: ignore[operator]
+        to_be_installed = set()
         for pkg in find_plugin_packages(cfg):
-            if not m.check(pkg):
-                something_was_installed = True
-                args = list(cmd)
+            to_be_installed.add(pkg)
+
+        if to_be_installed:
+            something_was_installed = True
+            args = list(cmd)
+            for pkg in to_be_installed:
                 args.extend(pkg.split())
-                sh(*args)
+            sh(*args)
+            for pkg in to_be_installed:
                 m.add(pkg)
 
     # Now remove PYTHONPATH and make plugin a pth-enabled part of
@@ -757,11 +763,6 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         # plugin dir: fix it up, in case some plugin packages had been
         # installed editable.
         easy_install = []
-        for egg_link in glob.iglob(
-            interpolate1(os.path.join("{spin.plugin_dir}", "*.egg-link"))
-        ):
+        for egg_link in glob.iglob(plugin_dir / "*.egg-link"):  # type: ignore[operator]
             easy_install.append(readtext(egg_link).splitlines()[0])
-        writetext(
-            os.path.join("{spin.plugin_dir}", "easy-install.pth"),
-            "\n".join(easy_install),
-        )
+        writetext(plugin_dir / "easy-install.pth", "\n".join(easy_install))  # type: ignore[operator]
