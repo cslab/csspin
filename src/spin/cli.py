@@ -140,15 +140,20 @@ def load_plugin(
         logging.debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
 
-        if all("spin" not in pkg for pkg in (import_spec, package if package else "")):
+        if all(
+            not pkg.startswith("spin.")
+            for pkg in (import_spec, package if package else "")
+        ):
             try:
                 # Load the plugin specific schema for non-builtin plugins
+                plugin_name = import_spec.split(".")[-1]
+                logging.debug(f"{indent}Loading {plugin_name}_schema.yaml")
                 plugin_schema = schema.schema_load(  # type: ignore[attr-defined]
                     os.path.join(
                         os.path.dirname(mod.__file__),  # type: ignore[union-attr,arg-type]
-                        f"{import_spec}_schema.yaml",
+                        f"{plugin_name}_schema.yaml",
                     )
-                ).properties[import_spec]
+                ).properties[plugin_name]
                 schema_defaults = plugin_schema.get_default()
                 plugin_config_tree.schema = plugin_schema
                 tree.tree_merge(plugin_config_tree, schema_defaults)
@@ -158,7 +163,9 @@ def load_plugin(
                 plugin_config_tree._ConfigTree__schema = (  # pylint: disable=protected-access
                     plugin_schema
                 )
-            except (FileNotFoundError, KeyError):
+            except FileNotFoundError:
+                warn(f"Plugin {import_spec} does not provide a schema.")
+            except KeyError:
                 warn(f"Plugin {import_spec} does not provide a valid schema.")
 
             if plugin_defaults:
