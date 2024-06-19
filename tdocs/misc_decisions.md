@@ -86,13 +86,13 @@ Things aren't equal though; we have the benefit of directly using the
 Path-Methods like:
 
 ```
-{spin.cache} / dir / file
+cfg.spin.cache / dir / file
 ```
 
 instead of
 
 ```
-Path({cfg.python.interpreter}) / dir / file
+Path(cfg.python.cache) / dir / file
 ```
 
 That isn't a big benefit however; and we might revise this decision on
