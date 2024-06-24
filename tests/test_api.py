@@ -535,7 +535,9 @@ def test_config() -> None:
 
 def test_read_yaml() -> None:
     """spin.readyaml reads a yaml file to build the expected spin.ConfigTree"""
-    result = spin.readyaml(os.path.join(os.path.dirname(__file__), "sample.yaml"))
+    result = spin.readyaml(
+        os.path.join(os.path.dirname(__file__), "yamls", "sample.yaml")
+    )
     assert result == spin.config(foo="bar")
 
 
@@ -553,11 +555,11 @@ def test_get_tree(cfg: ConfigTree) -> None:
     assert spin.get_tree() == cfg
 
 
-def test_set_tree(cfg: ConfigTree) -> None:
+def test_set_tree(cfg: ConfigTree, minimum_yaml_path: str) -> None:
     """spin.set_tree overwrites the current instance of spin.ConfigTree"""
     assert spin.get_tree() == cfg
 
-    spin.cli.load_config_tree("tests/none.yaml", cwd=os.getcwd())
+    spin.cli.load_config_tree(minimum_yaml_path, cwd=os.getcwd())
     new_tree = spin.get_tree()
     assert new_tree != cfg
 

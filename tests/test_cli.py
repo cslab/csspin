@@ -52,7 +52,8 @@ def test_find_spinfile(tmp_path: PathlibPath) -> None:
         assert cli.find_spinfile(spinfile=None) == spinfile
 
 
-def test_load_plugin(cfg: ConfigTree, caplog: LogCaptureFixture) -> None:
+@pytest.mark.wip()
+def test_load_plugin(cfg_spin_dummy: ConfigTree, caplog: LogCaptureFixture) -> None:
     """
     spin.cli.load_plugin loads valid plugins into the tree if they're not
     already present
@@ -64,23 +65,22 @@ def test_load_plugin(cfg: ConfigTree, caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
 
     # load plugin that is already present in the tree
-    plugin = cli.load_plugin(cfg, "spin.builtin")
+    plugin = cli.load_plugin(cfg_spin_dummy, "spin.builtin")
     assert isinstance(plugin, ModuleType)
     assert "import plugin spin.builtin" in caplog.text
     assert "add subtree" not in caplog.text
 
     # load plugin that is not present in the tree
-    assert not cfg.loaded.get("python")
-    plugin = cli.load_plugin(cfg=cfg, import_spec="spin.builtin.python")
+    assert not cfg_spin_dummy.loaded.get("dummy")
+    plugin = cli.load_plugin(cfg=cfg_spin_dummy, import_spec="spin_dummy.dummy")
     assert isinstance(plugin, ModuleType)
-    assert "import plugin spin.builtin.python" in caplog.text
-    assert "add subtree python" in caplog.text
-    assert cfg.loaded.get("spin.builtin.python")
+    assert "import plugin spin_dummy.dummy" in caplog.text
+    assert cfg_spin_dummy.loaded.get("spin_dummy.dummy")
     assert isinstance(plugin.defaults, ConfigTree)
 
     # load plugin that does not exist
     with pytest.raises(ModuleNotFoundError, match="No module named 'foo"):
-        cli.load_plugin(cfg, import_spec="foo")
+        cli.load_plugin(cfg_spin_dummy, import_spec="foo")
 
 
 def test_reverse_toposort(cfg: ConfigTree) -> None:

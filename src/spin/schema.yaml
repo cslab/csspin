@@ -82,152 +82,6 @@ spin:
   # keep sanity.
   unknown-properties: false
 
-python:
-  requirements:
-    type: list
-    help: |
-      The list of this project's external Python requirements, that
-      have to be installed into the project's virtual
-      environment. This excludes requirements stated as
-      'install_requires' in setup.py/setup.cfg.
-  properties:
-    pyenv:
-      type: object
-      help: TODO
-      properties:
-        url:
-          type: str
-          default: "https://github.com/pyenv/pyenv.git"
-          help: TODO
-        path:
-          type: path
-          default: "{spin.cache}/pyenv"
-          help: TODO
-        cache:
-          type: path
-          default: "{spin.cache}/cache"
-          help: TODO
-        python_build:
-          type: path
-          default: "{python.pyenv.path}/plugins/python-build/bin/python-build"
-          help: TODO
-    user_pyenv:
-      type: bool
-      default: false
-      help: TODO
-    nuget:
-      type: object
-      help: TODO
-      properties:
-        url:
-          type: str
-          default: "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-          help: TODO
-        exe:
-          type: path
-          default: "{spin.cache}/nuget.exe"
-          help: TODO
-        source:
-          type: str
-          default: "https://api.nuget.org/v3/index.json"
-          help: TODO
-    version:
-      type: str
-      help: |
-        The Python version to use for the whole project when using in the
-        context of cs.spin
-    use:
-      type: str
-      help: |
-        The use property can be used to specify an alternative Python source to
-        use. This is useful to rather use the system Python than the one defined
-        in spinfile.yaml
-      default: ""
-    plat_dir:
-      type: path
-      default: "{spin.cache}/{platform.tag}"
-      help: TODO
-    inst_dir:
-      type: path
-      help: inst_dir can be used to point to a CE instance.
-      # No default value given, since it is evaluated during runtime.
-    interpreter:
-      type: path
-      help: The path to the Python interpreter of the instance to use.
-      # No default value given, since it is evaluated during runtime.
-    venv:
-      type: path
-      default: "{spin.env_base}/py{python.version}-{platform.tag}"
-      help: |
-        Path to the virtual environment which is used exclusively for the
-        project spin is running on
-    memo:
-      type: path
-      default: "{python.venv}/spininfo.memo"
-      help: TODO
-    bindir:
-      type: path
-      help: TODO
-      # No default value given, since it is evaluated during runtime.
-    scriptdir:
-      type: path
-      help: TODO
-      # No default value given, since it is evaluated during runtime.
-    python:
-      type: path
-      default: "{python.scriptdir}/python"
-      help: |
-        The python property defines the path to the Python interpreter to use.
-    wheelhouse:
-      type: path
-      default: "{spin.env_base}/wheelhouse"
-      help: TODO
-    # NOTE: pipconf can't be defined in the schema here, since its data types
-    #       are to complex and can't be represented in YAML.
-    # pipconf:
-    #   type: object
-    #   help: TODO
-    #   properties:
-    #     global:
-    #       type: object
-    #       help: TODO
-    #       properties:
-    #         find-links:
-    #           type: object
-    #           help: TODO
-    #           # properties
-    # The provisioner type is evaluated during runtime and to complex to
-    # represent it in the schema.
-    # provisioner:
-    #   type:
-    #   help: TODO
-    extras:
-      type: list
-      help: TODO
-      default: []
-    devpackages:
-      type: list
-      help: TODO
-      default: []
-
-# FIXME: Add this after piptools was refactored
-# piptools:
-#   type: object
-#   help: TODO
-#   properties:
-#     requires:
-#       type: object
-#       help: Dependencies of the piptools plugin
-#       properties:
-#         spin:
-#           type: list
-#           default: [.python]
-#           help: Spin dependencies of the piptools plugin
-#         python:
-#           type: list
-#           default: [setuptools, pip-tools]
-#           help: Python dependencies of the piptools plugin
-
 # FIXME: Move to the plugins sources as soon as non-builtin
 node:
   type: object
@@ -249,7 +103,9 @@ node:
     memo:
       type: path
       help: TODO
-      default: "{python.venv}/nodeversions.memo"
+      # The default here must be defined in the module as long as node is
+      # built-in, since builtin plugins can't rely on external plugins.
+      # default: "{python.venv}/nodeversions.memo"
     requires:
       type: object
       help: Dependencies of the node plugin
@@ -257,7 +113,7 @@ node:
         spin:
           type: list
           help: Spin dependencies of the node plugin
-          default: [.python]
+          default: [spin_python.python]
         python:
           type: list
           help: Python dependencies of the node plugin

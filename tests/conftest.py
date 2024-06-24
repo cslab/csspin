@@ -31,13 +31,19 @@ def cli_runner() -> CliRunner:
 
 @fixture()
 def cfg() -> ConfigTree:
-    load_config_tree("tests/none.yaml", cwd=os.getcwd())
+    load_config_tree("tests/yamls/none.yaml", cwd=os.getcwd())
+    return get_tree()
+
+
+@fixture()
+def cfg_spin_dummy() -> ConfigTree:
+    load_config_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
     return get_tree()
 
 
 @fixture()
 def minimum_yaml_path() -> str:
-    return os.path.join(os.path.dirname(__file__), "none.yaml")
+    return os.path.join(os.path.dirname(__file__), "yamls", "none.yaml")
 
 
 @contextlib.contextmanager

@@ -105,7 +105,6 @@ def find_spinfile(spinfile: str | None) -> str | None:
 def load_plugin(
     cfg: tree.ConfigTree,
     import_spec: str,
-    package: str | None = None,
     indent: str = "  ",
 ) -> ModuleType | None:
     """Recursively load a plugin module.
@@ -115,20 +114,21 @@ def load_plugin(
     of absolute or relative import specs).
 
     """
-    if package:
-        logging.debug(f"{indent}import plugin {import_spec} from {package}")
-    else:
-        logging.debug(f"{indent}import plugin {import_spec}")
+    logging.debug(f"{indent}import plugin {import_spec}")
 
     mod = full_name = None
     try:
-        mod = importlib.import_module(import_spec, package)
+        # Invalidate the caches before dynamically importing modules that were
+        # created after the interpreter was started.
+        importlib.invalidate_caches()
+        mod = importlib.import_module(import_spec)
         full_name = mod.__name__
     except ModuleNotFoundError as ex:
         warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
         # We tolerate this only in context of cleanup
         if not cfg.cleanup:
             raise ex
+
     if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
         # initialize it and recursively load dependencies
@@ -140,14 +140,11 @@ def load_plugin(
         logging.debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
 
-        if all(
-            not pkg.startswith("spin.")
-            for pkg in (import_spec, package if package else "")
-        ):
+        if not import_spec.startswith("spin."):
             try:
                 # Load the plugin specific schema for non-builtin plugins
                 plugin_name = import_spec.split(".")[-1]
-                logging.debug(f"{indent}Loading {plugin_name}_schema.yaml")
+                logging.debug(f"{indent}loading {plugin_name}_schema.yaml")
                 plugin_schema = schema.schema_load(  # type: ignore[attr-defined]
                     os.path.join(
                         os.path.dirname(mod.__file__),  # type: ignore[union-attr,arg-type]
@@ -182,12 +179,16 @@ def load_plugin(
             )
 
         cfg.loaded[full_name] = mod
-        dependencies = [
-            load_plugin(cfg, requirement, mod.__package__, indent=indent + "  ")  # type: ignore[union-attr]
-            for requirement in get_requires(plugin_config_tree, "spin")
-        ]
+        dependencies = set()
+        for requirement in get_requires(plugin_config_tree, "spin"):
+            if plugin := load_plugin(cfg, requirement, indent=indent + "  "):
+                # Only depend on installed plugins; This is sufficient here,
+                # since a plugin can only be absent if cfg.cleanup.
+                dependencies.add(plugin)
+
         plugin_config_tree._requires = [  # pylint: disable=protected-access
-            dep.__name__ for dep in dependencies  # type: ignore[union-attr] # pylint: disable=protected-access # noqa: E501
+            dep.__name__
+            for dep in dependencies  # pylint: disable=protected-access # noqa: E501
         ]
         mod.defaults = plugin_config_tree  # type: ignore[union-attr]
     return mod
@@ -499,12 +500,9 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
             return None
 
     # Cleanup. Will also try to load plugins and call their cleanup hooks.
-    plugin_dir_purged = False
     if cleanup:
         toporun(cfg, "cleanup", reverse=True)
-        if exists(cfg.spin.plugin_dir):
-            rmtree(cfg.spin.plugin_dir)
-            plugin_dir_purged = True
+        rmtree(cfg.spin.plugin_dir)
         if not provision:
             # There is nothing we can meaningfully do after 'cleanup',
             # unless 'provision' is also given => so do not run any
@@ -515,7 +513,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     # deleted before.
     if provision:
         # Reget the plugins and reload the tree, if cleaned up before.
-        if plugin_dir_purged:
+        if cleanup:
             cfg = load_config_tree(
                 spinfile,
                 cwd,
@@ -653,7 +651,8 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
             cfg.spin.plugin_dir = os.path.abspath(
                 os.path.join(cfg.spin.project_root, cfg.spin.plugin_dir)
             )
-        sys.path.insert(0, cfg.spin.plugin_dir)
+
+        sys.path.insert(0, str(cfg.spin.plugin_dir))
 
         if provision and not cleanup:
             # if cleanup == true, we're fine with whatever plugins we
@@ -703,11 +702,17 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
         append_properties,
     )
 
-    # Run 'configure' hooks of plugins
-    toporun(cfg, "configure")
+    if not cleanup:
+        # Do not configure and sanitize in case of cleanup, since plugin
+        # packages may not be installed, causing AttributeErrors in case of
+        # accessing not-initialized plugins via "cfg." as well as failures due
+        # to interpolation against property tree keys that does not exist.
 
-    # Interpolate values of the configuration tree and enforce their types
-    tree.tree_sanitize(cfg)
+        # Run 'configure' hooks of plugins
+        toporun(cfg, "configure")
+
+        # Interpolate values of the configuration tree and enforce their types
+        tree.tree_sanitize(cfg)
 
     return cfg  # type: ignore[no-any-return]
 

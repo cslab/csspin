@@ -13,7 +13,13 @@ from spin import tree
 
 class TestYaml:
     def setup_method(self: TestYaml) -> None:
-        self.config = tree.tree_load(os.path.join("tests", "test_yaml.yaml"))
+        self.config = tree.tree_load(
+            os.path.join(
+                "tests",
+                "yamls",
+                "test_yaml.yaml",
+            )
+        )
 
     def test_empty(self: TestYaml) -> None:
         cfg = self.config["test_empty"]

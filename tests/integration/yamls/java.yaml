@@ -2,8 +2,5 @@ minimum-spin: "0.2"
 plugins:
   - spin.builtin.java
   - spin.builtin.mvn
-python:
-  version: "3.11.1"
-  use: python
 java:
   version: "19"

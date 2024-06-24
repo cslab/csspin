@@ -28,13 +28,12 @@ the plugins):
 - `pytest` (spin-plugins)
 - `behave` (spin-plugins)
 - `python` (builtin)
-- `nosetest` (builtin)
 - `devpi` (builtin)
 - `piptools` (builtin)
 - `radon` (builtin)
-- task `run` (builtin/**init**.py)
 - task `env` (builtin/**init**.py)
 - **removed:**
+  - `nosetest` (builtin)
   - `flake8` (builtin)
   - task `shell` (builtin/**init**.py)
 
