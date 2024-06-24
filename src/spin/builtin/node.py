@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from spin import (
     Path,
+    config,
     copy,
     die,
     exists,
@@ -30,6 +31,8 @@ from spin import (
 
 if TYPE_CHECKING:
     from spin.tree import ConfigTree
+
+defaults = config(memo="{python.venv}/nodeversions.memo")
 
 
 def configure(cfg: ConfigTree) -> None:

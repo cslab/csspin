@@ -12,7 +12,7 @@ defaults = config(
     cmd="scons",
     opts=[f"-j{os.cpu_count()}"],
     requires=config(
-        spin=[".python"],
+        spin=["spin_python.python"],
         python=["scons"],
     ),
     cache_vcvars=False,

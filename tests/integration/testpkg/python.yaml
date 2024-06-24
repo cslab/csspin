@@ -1,9 +1,9 @@
 minimum-spin: "0.2"
+plugin-packages:
+  - git+https://code.contact.de/qs/spin/spin_python.git#egg=spin_python # TODO: pull from package index
 plugins:
-  - spin.builtin.python
+  - spin_python.python
 python:
   version: "3.9.6"
   requirements:
     - mock
-  devpackages:
-    - -e ../devpkg

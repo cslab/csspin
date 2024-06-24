@@ -1,0 +1,10 @@
+# YAML used in unit tests to load a config tree that loads the
+# spin_dummy.dummy plugin.
+#
+minimum-spin: "0.2"
+plugin-packages:
+  - ../data/spin_dummy
+plugin-path:
+  - ../data/spin_dummy
+plugins:
+  - spin_dummy.dummy

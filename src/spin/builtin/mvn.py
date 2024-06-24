@@ -18,7 +18,7 @@ defaults = config(
     opts=[],
     defines={},
     pom_file="pom.xml",
-    requires=config(spin=[".java"]),
+    requires=config(spin=["spin.builtin.java"]),
     packages=[],
     version="3.8.3",
     mirrors=[

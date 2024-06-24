@@ -206,7 +206,7 @@ def test_keyinfo_callsite() -> None:
 
 def test_tree_load() -> None:
     """Function validating the source of assignment for a loaded config file."""
-    config = tree.tree_load(os.path.join("tests", "sample.yaml"))
+    config = tree.tree_load(os.path.join("tests", "yamls", "sample.yaml"))
     ki = tree.tree_keyinfo(config, "foo")
     assert ki.file.endswith("sample.yaml")
     assert ki.line == 1

@@ -1,7 +1,2 @@
 # This is the spinfile.yaml of spin.
 minimum-spin: "0.2"
-plugins:
-  - spin.builtin:
-      - pytest
-      - devpi
-      - radon

@@ -4,8 +4,8 @@ minimum-spin: "0.2"
 
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
-# plugin-packages:
-#    - -e file:///home/wen/src/qs/tooling/spin-plugins/dummy
+plugin-packages:
+  - git+https://code.contact.de/qs/spin/spin_python.git#egg=spin_python # TODO: pull from package index
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
@@ -14,12 +14,10 @@ plugin-path:
 
 # The list of plugins to be used for this project.
 plugins:
-  # Nested entries like these save some typing for
-  # 'spin.builtin.flake8', 'spin.builtin.pytest' etc. ...
   - spin.builtin:
-      - pytest
       - sphinx
       - stdworkflows
+  - spin_python.pytest
   - demo_plugin
 
 python:
@@ -29,11 +27,11 @@ python:
   requirements:
     - sphinx-click
     - pytest-mock
-    - build # TODO: Maybe move into spin.builtin.python
+    - build # TODO: Maybe move into spin_python.python
 
 pytest:
   opts: [-m, "not slow"]
-  coverage_opts: [--cov]
+  tests: [tests]
 
 build-rules:
   task docs:

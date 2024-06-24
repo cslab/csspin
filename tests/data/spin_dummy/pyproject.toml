@@ -1,0 +1,10 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+
+[project]
+dependencies = []
+description = "Dummy plugin package for testing cs.spin"
+dynamic = ["version"]
+name = "spin_dummy"
+requires-python = ">=3.9"
