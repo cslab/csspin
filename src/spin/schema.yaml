@@ -123,65 +123,6 @@ node:
           help: npm dependencies of the node plugin
           default: [saas, yarn]
 
-# FIXME: Move to the plugins sources as soon as non-builtin
-java:
-  type: object
-  help: Configuration regarding the java plugin for cs.spin
-  properties:
-    version:
-      type: str
-      help: Java version
-    installdir: # FIXME: Rename to install_dir if possible.
-      type: path
-      help: The directory in which JAVA should be installed
-    java_home:
-      type: path
-      help: The path to the JAVA installation path
-
-# FIXME: Move to the plugins sources as soon as non-builtin
-# mvn:
-#   type: object
-#   help: TODO
-#   properties:
-#     exe:
-#       type: str
-#       help: The executable command to run maven
-#     goals:
-#       type: list
-#       help: TODO
-#     opts:
-#       type: list
-#       help: Options that will be passed to the mvn command
-#     defines:
-#       type: object
-#       help: TODO
-#     pom_file:
-#       type: str
-#       default: pom.xml
-#       help: TODO
-#     requires:
-#       type: object
-#       help: Dependencies of the mvn plugin
-#       properties:
-#         spin:
-#           type: list
-#           help: spin dependencies of the mvn plugin
-#     packages:
-#       type: list
-#       help: TODO
-#     version:
-#       type: str
-#       help: The mvn version
-#     mirrors:
-#       type: list
-#       help: A list of mirrors
-#     url:
-#       type: str
-#       help: The URL to get the maven binaries from
-#     mavendir:
-#       type: path
-#       help: The path to installed maven
-
 extra-tasks:
   type: object
   help: |

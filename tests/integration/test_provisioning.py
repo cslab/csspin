@@ -50,16 +50,6 @@ def test_node(tmpdir):
     ).endswith("v18.17.1")
 
 
-@pytest.mark.slow
-def test_java(tmpdir):
-    output = do_test(
-        tmpdir,
-        "java.yaml",
-        "run java --version",
-    )
-    assert "openjdk 19." in output
-
-
 def test_build(tmpdir):
     assert "all build tasks" in do_test(
         tmpdir,
