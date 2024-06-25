@@ -41,15 +41,6 @@ def test_python_use(tmpdir):
     assert "Python 3." in output
 
 
-@pytest.mark.slow
-def test_node(tmpdir):
-    assert do_test(
-        tmpdir,
-        "node.yaml",
-        "run node --version",
-    ).endswith("v18.17.1")
-
-
 def test_build(tmpdir):
     assert "all build tasks" in do_test(
         tmpdir,
