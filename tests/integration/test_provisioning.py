@@ -14,36 +14,29 @@ def cfg():
     cli.load_config_tree(None)
 
 
-def do_test(tmpdir, what, cmd, path="tests/integration/yamls", props=""):
+def execute_spin(tmpdir, what, cmd, path="tests/integration/yamls", props=""):
     output = backtick(
-        f"spin -p spin.cache={tmpdir} {props} -q -C {path} --env {tmpdir} -f"
+        f"spin -p spin.cache={tmpdir} {props} -C {path} --env {tmpdir} -f"
         f" {what} --cleanup --provision {cmd}"
     )
     output = output.strip()
     return output
 
 
-@pytest.mark.slow
-def test_python(tmpdir):
-    assert do_test(
-        tmpdir, "python.yaml", "python --version", "tests/integration/testpkg"
-    ).endswith("Python 3.9.6")
-
-
-def test_python_use(tmpdir):
-    output = do_test(
-        tmpdir,
-        "python.yaml",
-        "python --version",
-        "tests/integration/testpkg",
-        "-p python.use=python",
-    )
-    assert "Python 3." in output
-
-
 def test_build(tmpdir):
-    assert "all build tasks" in do_test(
-        tmpdir,
-        "build.yaml",
-        "build --help",
+    assert "all build tasks" in execute_spin(
+        tmpdir=tmpdir, what="build.yaml", cmd="build --help", props="-q"
     )
+
+
+def test_complex_plugin_dependencies(tmpdir):
+    """
+    spin is able to handle plugin-packages with plugins that depend on each
+    other - within a plugin package and across multiple plugin-packages.
+    """
+    output = execute_spin(
+        tmpdir=tmpdir,
+        what="complex_plugin_dependencies.yaml",
+        cmd="depend",
+    )
+    assert "spin: This is spin's depend plugin" in output

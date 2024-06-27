@@ -5,7 +5,7 @@ minimum-spin: "0.2"
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin-packages:
-  - git+https://code.contact.de/qs/spin/spin_python.git#egg=spin_python # TODO: pull from package index
+  - git+https://code.contact.de/qs/spin/spin_python.git # TODO: pull from package index
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
