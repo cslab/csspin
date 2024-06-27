@@ -1,25 +1,60 @@
-*~
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+wheels/
 *.egg-info/
+/reports/
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Sphinx documentation
+docs/_build/
+/tdocs/*.pdf
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+
+# Misc
 *.memo
-.coverage*
-/htmlcov/
-/dist/
-/build/
-/docs/_build/
 .DS_Store
 /_phix/
 *.org_rst
-/pip/
-/_minted-*/
-*.py,cover
-/.cov2emacs.log
 *.log
-coverage*.xml
-pytest.xml
-/reports/
-.env
-venv
-.python-version
-dist
-/tdocs/*.pdf

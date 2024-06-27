@@ -36,9 +36,9 @@ requires-python = ">=3.9"
 spin = "spin:_main"
 
 [project.urls]
-Documentation = "http://qs.pages.contact.de/tooling/cs.spin/"
-Issues = "https://code.contact.de/qs/tooling/cs.spin/-/issues"
-Repository = "https://code.contact.de/qs/tooling/cs.spin"
+Documentation = "http://qs.pages.contact.de/spin/cs.spin/"
+Issues = "https://code.contact.de/qs/spin/cs.spin/-/issues"
+Repository = "https://code.contact.de/qs/spin/cs.spin"
 
 [tool.black]
 enable-unstable-feature = ["string_processing"]

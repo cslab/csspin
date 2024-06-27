@@ -29,7 +29,7 @@ plugins. The following sections cover the details.
 
    ```bash
    $ spin pytest
-   spin: cd /home/wen/src/qs/tooling/cs.spin
+   spin: cd /home/wen/src/qs/spin/cs.spin
    spin: activate /home/wen/.cache/spin/cs.spin-e8JDblce/cp39-manylinux_2_38_x86_64
    spin: pytest -k 'not slow' ./tests
    ...

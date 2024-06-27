@@ -1,0 +1,7 @@
+dummy:
+  type: object
+  help: Dummy plugin
+  properties:
+    dummy:
+      type: str
+      help: Dummy property

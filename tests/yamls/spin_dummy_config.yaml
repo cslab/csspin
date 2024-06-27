@@ -2,9 +2,7 @@
 # spin_dummy.dummy plugin.
 #
 minimum-spin: "0.2"
-plugin-packages:
-  - ../data/spin_dummy
 plugin-path:
-  - ../data/spin_dummy
+  - ../data/spin_dummy/src
 plugins:
   - spin_dummy.dummy

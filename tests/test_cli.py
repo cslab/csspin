@@ -52,7 +52,6 @@ def test_find_spinfile(tmp_path: PathlibPath) -> None:
         assert cli.find_spinfile(spinfile=None) == spinfile
 
 
-@pytest.mark.wip()
 def test_load_plugin(cfg_spin_dummy: ConfigTree, caplog: LogCaptureFixture) -> None:
     """
     spin.cli.load_plugin loads valid plugins into the tree if they're not
