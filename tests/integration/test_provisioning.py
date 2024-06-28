@@ -23,12 +23,6 @@ def execute_spin(tmpdir, what, cmd, path="tests/integration/yamls", props=""):
     return output
 
 
-def test_build(tmpdir):
-    assert "all build tasks" in execute_spin(
-        tmpdir=tmpdir, what="build.yaml", cmd="build --help", props="-q"
-    )
-
-
 def test_complex_plugin_dependencies(tmpdir):
     """
     spin is able to handle plugin-packages with plugins that depend on each

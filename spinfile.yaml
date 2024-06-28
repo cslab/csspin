@@ -6,6 +6,8 @@ minimum-spin: "0.2"
 # follows and add the relevant plugins to the list 'plugins' below
 plugin-packages:
   - git+https://code.contact.de/qs/spin/spin_python.git # TODO: pull from package index
+  - git+https://code.contact.de/qs/spin/spin_docs.git # TODO: pull from package index
+  - git+https://code.contact.de/qs/spin/spin_consd.git # TODO: pull from package index
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
@@ -14,10 +16,9 @@ plugin-path:
 
 # The list of plugins to be used for this project.
 plugins:
-  - spin.builtin:
-      - sphinx
-      - stdworkflows
+  - spin_consd.stdworkflows
   - spin_python.pytest
+  - spin_docs.sphinx
   - demo_plugin
 
 python:

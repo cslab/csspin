@@ -138,6 +138,16 @@ test_spin_vcs_integration:
     TRIGGER_PROJECT: qs/spin/spin_vcs
   extends: .external_integration_base
 
+test_spin_docs_integration:
+  variables:
+    TRIGGER_PROJECT: qs/spin/spin_docs
+  extends: .external_integration_base
+
+test_spin_consd_integration:
+  variables:
+    TRIGGER_PROJECT: qs/spin/spin_docs
+  extends: .external_integration_base
+
 # ---------------------------- Deploy/Analyze stage ----------------------------
 analyze:
   extends: .analyze
@@ -168,6 +178,10 @@ analyze:
     - job: test_spin_python_integration
       artifacts: false
     - job: test_spin_vcs_integration
+      artifacts: false
+    - job: test_spin_docs_integration
+      artifacts: false
+    - job: test_spin_consd_integration
       artifacts: false
 
 conpi:
