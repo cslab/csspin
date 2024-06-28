@@ -58,7 +58,7 @@ def pretty_descriptor(parent, name, descriptor):
 @task(hidden=True)
 def schemadoc(
     cfg,
-    outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa
+    outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa: F722
     args,
 ):
     """Print the schema definitions for spin."""
