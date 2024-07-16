@@ -93,11 +93,27 @@ class ConfigTree(OrderedDict):
         raise AttributeError(f"No property '{name}'")
 
 
+def tree_get_descriptor(tree: ConfigTree, key: Hashable) -> Any:
+    """
+    Retrieve the descriptor of a key within the configuration tree or ``None``
+    if there is no schema available for this key.
+    """
+    if schema := getattr(tree, "_ConfigTree__schema", None):
+        return schema.properties.get(key, None)
+    return None
+
+
 def tree_typecheck(tree: ConfigTree, key: Hashable, value: Any) -> Any:
-    schema = getattr(tree, "_ConfigTree__schema", None)
-    if schema and (desc := schema.properties.get(key, None)):
+    if desc := tree_get_descriptor(tree, key):
         return desc.coerce(value)
     return value
+
+
+def tree_types(tree: ConfigTree, key: Hashable) -> list:
+    """Retrieve the types of a specific key within the configuration tree."""
+    if desc := tree_get_descriptor(tree, key):
+        return desc.type  # type: ignore[no-any-return]
+    return []
 
 
 def tree_sanitize(cfg: ConfigTree) -> None:
@@ -124,7 +140,7 @@ def tree_sanitize(cfg: ConfigTree) -> None:
             enforce_typecheck(cfg_[keys[0]], keys[1:], value, ki)
 
     interpolateable = (str, Path)
-    for _, value, fullname, ki, _ in tree_walk(cfg):
+    for _, value, fullname, ki, _, _ in tree_walk(cfg):
         if (
             isinstance(value, interpolateable)
             and (value := interpolate1(value))
@@ -214,15 +230,18 @@ def tree_load(fn: str) -> ConfigTree | Any:
 def tree_walk(config: ConfigTree, indent: str = "") -> Generator:
     """Walk configuration tree depth-first, yielding the key, its value,
     the full name of the key, the tracking information and an
-    indentation string that increases by ``" "`` for each level.
+    indentation string that increases by ``"  "`` for each level.
     """
-    for key, value in config.items():
-        yield key, value, tree_keyname(config, key), tree_keyinfo(config, key), indent
+    # TODO: Consider improving the return value(s)
+    for key, value in sorted(config.items()):
+        yield key, value, tree_keyname(config, key), tree_keyinfo(
+            config, key
+        ), tree_types(config, key), indent
         if isinstance(value, ConfigTree):
-            for key, value, fullname, info, subindent in tree_walk(
+            for key, value, fullname, info, types, subindent in tree_walk(
                 value, indent + "  "
             ):
-                yield key, value, fullname, info, subindent
+                yield key, value, fullname, info, types, subindent
 
 
 def tree_dump(tree: ConfigTree) -> str:
@@ -244,12 +263,15 @@ def tree_dump(tree: ConfigTree) -> str:
     tagcolumn = max(
         (
             len(f"{shorten_filename(info.file)}:{info.line}:")
-            for _, _, _, info, _ in tree_walk(tree)
+            for _, _, _, info, _, _ in tree_walk(tree)
         ),
         default=0,
     )
     separator = "|"
-    for key, value, _fullname, info, indent in tree_walk(tree):
+    for key, value, _, info, types, indent in tree_walk(tree):
+        if "internal" in types and not tree.verbose > 0:
+            continue
+
         tag = f"{shorten_filename(info.file)}:{info.line}:"
         space = (tagcolumn - len(tag) + 1) * " "
         if isinstance(value, list):
