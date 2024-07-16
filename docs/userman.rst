@@ -98,10 +98,9 @@ out):
    spinfile.yaml:1:                       |minimum-spin: '0.2.dev'
    ~/spin/src/spin/schema.yaml:19:        |spin:
    ~/spin/src/spin/cli.py:528:            |  spinfile: Path('/home/me/myproj/spinfile.yaml')
-   ~/spin/src/spin/schema.yaml:36:        |  env_base: '{spin.userprofile}/{spin.project_hash}'
    ... more lines ...
    spinfile.yaml:3:                       |plugins:
-					  |  - 'spin.builtin.python'
+					                                |  - 'spin.builtin.python'
    ~/spin/src/spin/builtin/python.py:91:  |python:
    spinfile.yaml:7:                       |  version: '3.9.6'
    ... even more lines ...
@@ -181,8 +180,8 @@ dependency specifiers:
      - someones-spin-plugins~=2.0
      - git+https://git.example.com/projstds#egg=projstds
 
-Spin will install plugin packages into :file:`{spin.env_base}/plugins`
-(where *spin.env_base* is a setting from the configuration tree).
+Spin will install plugin packages into :file:`{spin.spin_dir}/plugins`
+(where *spin.spin_dir* is a setting from the configuration tree).
 
 
 Interpolation

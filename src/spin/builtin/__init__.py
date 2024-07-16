@@ -13,11 +13,13 @@ import sys
 import click
 import distro
 import entrypoints
+from path import Path
 
 from spin import (
     argument,
     die,
     group,
+    interpolate1,
     memoizer,
     option,
     parse_version,
@@ -85,15 +87,14 @@ def globalgroup(ctx):
 @globalgroup.task("add")
 def global_add(packages: argument(nargs=-1)):
     cmd = [
-        f"{sys.executable}",
+        sys.executable,
         "-m",
         "pip",
         "install",
-        # "-q",
         "-t",
-        "{spin.plugin_dir}",
+        interpolate1(Path("{spin.spin_dir}")) / "plugins",
     ]
-    with memoizer("{spin.spin_global_plugins}/packages.memo") as m:
+    with memoizer("{spin.cache}/plugins/packages.memo") as m:
         for pkg in packages:
             sh(*cmd, f"{pkg}")
             if not m.check(pkg):
@@ -181,7 +182,7 @@ def do_system_provisioning(
         distroversion = parse_version(dinfo["version"])
 
     out = {}
-    for pi in cfg.topo_plugins:
+    for pi in cfg.spin.topo_plugins:
         supported = True
         fn = getattr(cfg.loaded[pi], "system_requirements", None)
         if fn is not None:

@@ -44,8 +44,7 @@ Local plugins can then by used adding their name prefixed with a
      - myplugin
 
 **Installable plugins** are declared in ``plugin-packages``. `spin`
-will install installable plugins into ``{spin.plugin_dir}``, which is
-``{spin.env_base}/plugins``.
+will install installable plugins into ``{spin.spin_dir}/plugins``.
 
 
 Plugin Lifecycle

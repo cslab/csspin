@@ -279,6 +279,7 @@ def tree_dump(tree: ConfigTree) -> str:
                 write(f"{tag}{space}{separator}{indent}{key}:")
                 blank_location = len(f"{tag}{space}") * " "
                 for item in value:
+                    # FIXME: That does not work if the value is a dict/object
                     write(f"{blank_location}{separator}{indent}  - {repr(item)}")
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: []")

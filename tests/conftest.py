@@ -19,6 +19,7 @@ from spin import get_tree
 from spin.cli import load_config_tree
 
 if TYPE_CHECKING:
+    import pathlib
     from spin.tree import ConfigTree
 
 from path import Path
@@ -44,6 +45,15 @@ def cfg_spin_dummy() -> ConfigTree:
 @fixture()
 def minimum_yaml_path() -> str:
     return os.path.join(os.path.dirname(__file__), "yamls", "none.yaml")
+
+
+@fixture()
+def tmp_path(tmp_path: pathlib.Path):
+    """
+    Using the custom Path provides simplifies tests, since cs.spin is using this
+    type a lot.
+    """
+    return Path(tmp_path)
 
 
 @contextlib.contextmanager

@@ -4,15 +4,14 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from spin import backtick, cli
+from spin import backtick
 
 
-def test_testplugin(tmpdir) -> None:
+def test_testplugin(cfg, tmpdir) -> None:
     """
     Using a test plugin named "testplugin" that uses lots of data types and
     interpolation to validate the enforcement of the schema.
     """
-    cli.load_config_tree(None)
     output = backtick(
         f"spin -q -C tests/schema --env {tmpdir} -f test_schema.yaml "
         "--provision testplugin"

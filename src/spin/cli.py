@@ -16,9 +16,7 @@ searches the path up for 'spinfile.yaml'. Subcommands are provided by
 
 from __future__ import annotations
 
-import base64
 import glob
-import hashlib
 import importlib
 import importlib.metadata as importlib_metadata
 import logging
@@ -60,17 +58,14 @@ if TYPE_CHECKING:
     from typing import Callable
 
 
-N = os.path.normcase
-
-
 # These are the basic defaults for the top-level configuration
 # tree. Sections and values will be added by loading plugins and
 # reading the project configuration file (spinfile.yaml).
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
-        cache=N("{SPIN_CACHE}"),
-        config=N("{SPIN_CONFIG}"),
+        cache=Path("{SPIN_CACHE}"),
+        config=Path("{SPIN_CONFIG}"),
         extra_index=None,
         version=importlib_metadata.version("cs.spin"),
     ),
@@ -105,6 +100,7 @@ def find_spinfile(spinfile: str | None) -> str | None:
 def load_plugin(
     cfg: tree.ConfigTree,
     import_spec: str,
+    may_fail: bool = False,
     indent: str = "  ",
 ) -> ModuleType | None:
     """Recursively load a plugin module.
@@ -125,8 +121,9 @@ def load_plugin(
         full_name = mod.__name__
     except ModuleNotFoundError as ex:
         warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
-        # We tolerate this only in context of cleanup
-        if not cfg.cleanup:
+        # We tolerate this only in context of cleanup, where imports may not
+        # succeed.
+        if not may_fail:
             raise ex
 
     if full_name and full_name not in cfg.loaded:
@@ -181,9 +178,11 @@ def load_plugin(
         cfg.loaded[full_name] = mod
         dependencies = set()
         for requirement in get_requires(plugin_config_tree, "spin"):
-            if plugin := load_plugin(cfg, requirement, indent=indent + "  "):
+            if plugin := load_plugin(
+                cfg, requirement, may_fail=may_fail, indent=indent + "  "
+            ):
                 # Only depend on installed plugins; This is sufficient here,
-                # since a plugin can only be absent if cfg.cleanup.
+                # since a plugin can only be absent if may_fail is set.
                 dependencies.add(plugin)
 
         plugin_config_tree._requires = [  # pylint: disable=protected-access
@@ -399,7 +398,10 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
     cfg = ctx.obj = get_tree()
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
-            if "project_hash" in cfg.spin and not exists(cfg.spin.env_base):
+            if not exists(cfg.spin.spin_dir):
+                # FIXME: Can this branch be triggered? The .spin directory will
+                #        be created during load_config_tree, so it will be
+                #        present in *any case* at this point - or not?
                 die(
                     "This project has not yet been provisioned. You "
                     "may want to run spin with the --provision flag."
@@ -502,7 +504,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     # Cleanup. Will also try to load plugins and call their cleanup hooks.
     if cleanup:
         toporun(cfg, "cleanup", reverse=True)
-        rmtree(cfg.spin.plugin_dir)
+        rmtree(cfg.spin.spin_dir / "plugins")
         if not provision:
             # There is nothing we can meaningfully do after 'cleanup',
             # unless 'provision' is also given => so do not run any
@@ -598,7 +600,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
             tree.tree_update(cfg, user_settings)
 
     if envbase:
-        cfg.spin.env_base = Path(envbase)
+        cfg.spin.spin_dir = Path(envbase).absolute() / ".spin"
 
     # Reflect certain command line options in the config tree.
     cfg.quiet = quiet
@@ -609,59 +611,43 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     # out by spin.interpolate)
     cfg.quietflag = None if cfg.verbose else "-q"
 
-    cfg.spin.spinfile = Path(spinfile) if spinfile else spinfile
-    cfg.cleanup = cleanup
-    cfg.provision = provision
+    cfg.spin.spinfile = Path(spinfile)
 
-    # We have a proper config tree now in 'cfg'; cd to project root
-    # and proceed.
-    if spinfile:
+    # Check spin version requested by this spinfile
+    minspin = cfg.get("minimum-spin")
+    if not minspin:
+        die("spin requires 'minimum-spin' to be set")
 
-        # Check spin version requested by this spinfile
-        minspin = cfg.get("minimum-spin")
-        if not minspin:
-            die("spin requires 'minimum-spin' to be set")
-        minspin = packaging.version.parse(str(minspin))
-        spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
-        if minspin > spinversion:
-            die(f"this project requires spin>={minspin} (spin version {spinversion})")
+    minspin = packaging.version.parse(str(minspin))
+    spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
+    if minspin > spinversion:
+        die(f"this project requires spin>={minspin} (spin version {spinversion})")
 
-        cfg.spin.project_root = os.path.dirname(N(os.path.abspath(cfg.spin.spinfile)))
-        cfg.spin.launch_dir = N(os.path.relpath(os.getcwd(), cfg.spin.project_root))
-        if not cwd:
-            cd(cfg.spin.project_root)
-        cfg.spin.project_name = os.path.basename(cfg.spin.project_root)
+    cfg.spin.project_root = Path(cfg.spin.spinfile).absolute().normpath().dirname()
+    cfg.spin.project_name = cfg.spin.project_root.basename()
+    cfg.spin.launch_dir = Path().cwd().relpath(cfg.spin.project_root)
+    cfg.spin.spin_dir = interpolate1(Path(cfg.spin.spin_dir)).absolute()  # type: ignore[union-attr]
 
-        path_hash_bytes = hashlib.sha256(
-            os.path.dirname(cfg.spin.project_root).encode()
-        ).digest()
-        path_hash = base64.urlsafe_b64encode(path_hash_bytes).decode()[:8]
-        cfg.spin.project_hash = f"{cfg.spin.project_name}-{path_hash}"
+    if not cwd:
+        cd(cfg.spin.project_root)
 
-        if not exists("{spin.spin_dir}"):
-            mkdir("{spin.spin_dir}")
-            writetext(
-                os.path.join("{spin.spin_dir}", ".gitignore"),
-                "# Created by spin automatically\n*\n",
-            )
+    if not exists(cfg.spin.spin_dir):
+        mkdir(cfg.spin.spin_dir)
+        writetext(
+            cfg.spin.spin_dir / ".gitignore",
+            "# Created by spin automatically\n*\n",
+        )
 
-        # Setup plugin_dir, where spin installs plugin packages.
-        cfg.spin.plugin_dir = interpolate1(cfg.spin.plugin_dir)
-        if not os.path.isabs(cfg.spin.plugin_dir):
-            cfg.spin.plugin_dir = os.path.abspath(
-                os.path.join(cfg.spin.project_root, cfg.spin.plugin_dir)
-            )
+    sys.path.insert(0, str(interpolate1(cfg.spin.spin_dir / "plugins")))
 
-        sys.path.insert(0, str(cfg.spin.plugin_dir))
-
-        if provision and not cleanup:
-            # if cleanup == true, we're fine with whatever plugins we
-            # have right now. So no need to waste our time pulling new
-            # stuff here.
-            install_plugin_packages(cfg)
+    if provision and not cleanup:
+        # if cleanup == true, we're fine with whatever plugins we
+        # have right now. So no need to waste our time pulling new
+        # stuff here.
+        install_plugin_packages(cfg)
 
     for localpath in cfg.get("plugin-path", []):
-        localabs = interpolate1(os.path.join("{spin.project_root}", localpath))
+        localabs = interpolate1(cfg.spin.project_root / localpath)
         if not exists(localabs):
             die(f"Plugin path {localabs} doesn't exist")
         sys.path.insert(0, localabs)
@@ -671,17 +657,20 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     cfg.loaded = config()
-    addsitedir(cfg.spin.plugin_dir)
+    addsitedir(cfg.spin.spin_dir / "plugins")
     logging.debug("loading project plugins:")
-    load_plugin(cfg, "spin.builtin")
+    load_plugin(cfg, "spin.builtin", may_fail=cleanup)
     for import_spec in yield_plugin_import_specs(cfg):
-        load_plugin(cfg, import_spec)
+        load_plugin(cfg, import_spec, may_fail=cleanup)
 
     # Also load global plugins
-    sys.path.insert(0, os.path.abspath(interpolate1(cfg.spin.spin_global_plugins)))
+    sys.path.insert(
+        0,
+        str(interpolate1(Path(cfg.spin.cache)).absolute() / "plugins"),  # type: ignore[union-attr]
+    )
     logging.debug("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):
-        load_plugin(cfg, ep.module_name)
+        load_plugin(cfg, ep.module_name, may_fail=cleanup)
 
     # Create a topologically sorted list of the plugins by their
     # dependencies, which have been stored in "_requires" by
@@ -692,7 +681,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     # 'python', which provides a Python installation).
     nodes = cfg.loaded.keys()
     graph = {n: getattr(mod.defaults, "_requires", []) for n, mod in cfg.loaded.items()}
-    cfg.topo_plugins = reverse_toposort(nodes, graph)
+    cfg.spin.topo_plugins = reverse_toposort(nodes, graph)
 
     # Update properties modified via: -p, --pp, --ap and the environment
     tree.tree_update_properties(
@@ -721,8 +710,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     """Install plugin packages which are not yet installed and extend the
     configuration tree.
     """
-    if not exists((plugin_dir := interpolate1(Path("{spin.plugin_dir}")))):
-        mkdir(plugin_dir)
+    mkdir(plugin_dir := interpolate1(Path("{spin.spin_dir}") / "plugins"))
 
     # To be able to do editable installs to plugin dir, we have to
     # temporarily set PYTHONPATH, to let the pip subprocess
@@ -748,7 +736,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     # Install all plugin packages at once to avoid pip's dependency resolver to
     # fail without exit-zero, while using the "-t" (target) option pointing to
     # the plugin directory.
-    with memoizer(N(plugin_dir / "packages.memo")) as m:  # type: ignore[operator]
+    with memoizer(plugin_dir / "packages.memo") as m:  # type: ignore[operator]
         to_be_installed = set()
         for pkg in find_plugin_packages(cfg):
             to_be_installed.add(pkg)

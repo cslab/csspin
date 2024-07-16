@@ -183,6 +183,7 @@ def test_load_config_tree_basic(
     mock_toporun = mocker.patch("spin.cli.toporun")
     mock_click_echo = mocker.patch("click.echo")
     caplog.set_level(logging.DEBUG)
+
     with chdir(tmp_path):
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
@@ -190,20 +191,15 @@ def test_load_config_tree_basic(
         cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path, quiet=True)
 
         assert not cfg.verbose
-        assert not cfg.cleanup
-        assert not cfg.provision
         assert cfg.quiet
         assert cfg.quietflag == "-q"
-        assert cfg.spin.spinfile == Path(spinfile)
-        assert cfg.spin.project_root == Path(
-            os.path.normcase(os.path.dirname(spinfile))
-        )
-        assert cfg.spin.project_name == os.path.basename(tmp_path)
-        assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
-        assert cfg.spin.plugin_dir in sys.path
-        assert cfg.spin.env_base == Path(tmp_path)
+        assert cfg.spin.spinfile == spinfile
+        assert cfg.spin.project_root == spinfile.dirname()
+        assert cfg.spin.project_name == tmp_path.basename()
+        assert cfg.spin.spin_dir == tmp_path / ".spin"
+        assert cfg.spin.spin_dir / "plugins" in sys.path
 
-        assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
+        assert (tmp_path / ".spin" / ".gitignore").is_file()
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
             assert f.read() == "# Created by spin automatically\n*\n"
         mock_click_echo.assert_not_called()
@@ -214,7 +210,7 @@ def test_load_config_tree_basic(
         mock_toporun.assert_called_once()
 
         assert cfg.get("plugin-path") is None
-        assert f"Loading {spinfile}" in caplog.text
+        assert f"Loading {str(spinfile)}" in caplog.text
         assert "loading project plugins:" in caplog.text
         assert "  import plugin spin.builtin" in caplog.text
         assert "  add subtree builtin" in caplog.text
@@ -249,27 +245,24 @@ def test_load_config_tree_extended(
 
         assert not cfg.quiet
         assert cfg.verbose
-        assert cfg.provision
         assert cfg.foo == "bar"
-        assert cfg.cleanup
         assert cfg.quietflag is None
-        assert cfg.spin.spinfile == Path(spinfile)
-        assert cfg.spin.project_root == os.path.normcase(os.path.dirname(spinfile))
-        assert cfg.spin.project_name == os.path.basename(tmp_path)
-        assert cfg.spin.plugin_dir == Path(tmp_path / "plugins")
-        assert cfg.spin.plugin_dir in sys.path
-        assert cfg.spin.env_base == Path(tmp_path)
+        assert cfg.spin.spinfile == spinfile
+        assert cfg.spin.project_root == spinfile.dirname()
+        assert cfg.spin.project_name == tmp_path.basename()
+        assert cfg.spin.spin_dir == tmp_path / ".spin"
+        assert cfg.spin.spin_dir / "plugins" in sys.path
 
         assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
             assert f.read() == "# Created by spin automatically\n*\n"
-        mock_echo.assert_called_with("mkdir", ".spin")
+        mock_echo.assert_called_with("mkdir", tmp_path.absolute() / ".spin")
 
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
         assert cfg.get("plugin-path") is None
-        assert f"Loading {spinfile}" in caplog.text
+        assert f"Loading {str(spinfile)}" in caplog.text
         assert "loading project plugins:" in caplog.text
         assert "  import plugin spin.builtin" in caplog.text
         assert "  add subtree builtin" in caplog.text
@@ -308,14 +301,15 @@ def test_install_plugin_packages(
     """
     spin.cli.install_plugin_packages executes is able to install plugin packages
     """
-    cfg.spin.plugin_dir = tmp_path
+    cfg.spin.spin_dir = tmp_path
+    plugin_dir = cfg.spin.spin_dir / "plugins"
     mocker.patch(
         "spin.cli.find_plugin_packages", return_value=(str(trivial_plugin_path),)
     )
     cli.install_plugin_packages(cfg)
 
-    assert (cfg.spin.plugin_dir / "trivial-1.0.0.dist-info").is_dir()
-    assert (cfg.spin.plugin_dir / "easy-install.pth").is_file()
-    assert (cfg.spin.plugin_dir / "packages.memo").is_file()
-    with memoizer(cfg.spin.plugin_dir / "packages.memo") as m:
+    assert (plugin_dir / "trivial-1.0.0.dist-info").is_dir()
+    assert (plugin_dir / "easy-install.pth").is_file()
+    assert (plugin_dir / "packages.memo").is_file()
+    with memoizer(plugin_dir / "packages.memo") as m:
         assert m.check(trivial_plugin_path)

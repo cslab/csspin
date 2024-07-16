@@ -6,12 +6,12 @@
 
 import pytest
 
-from spin import backtick, cli
+from spin import backtick
 
 
 @pytest.fixture(autouse=True)
-def cfg():
-    cli.load_config_tree(None)
+def cfg(cfg):
+    """Using the minimal configuration tree"""
 
 
 def execute_spin(tmpdir, what, cmd, path="tests/integration/yamls", props=""):
