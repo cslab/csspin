@@ -229,8 +229,7 @@ def mkdir(path: str) -> str:
     tree.
 
     """
-    path = interpolate1(path)
-    if not exists(path):
+    if not exists(path := interpolate1(Path(path))):
         echo("mkdir", path)
         os.makedirs(path)
     return path
@@ -896,7 +895,7 @@ def task(*args: Any, **kwargs: Any) -> Callable:
             task_object.full_name = task_object.name  # type: ignore[attr-defined]
         if hook:
             cfg = get_tree()
-            hook_tree = cfg.get("hooks", config())
+            hook_tree = cfg.spin.get("hooks", config())
             hooks = hook_tree.setdefault(hook, [])
             hooks.append(task_object)
         for alias in aliases:
@@ -1077,7 +1076,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
     '''
     ctx = click.get_current_context()
     cfg = get_tree()
-    for task_object in cfg.hooks.setdefault(hook, []):
+    for task_object in cfg.spin.hooks.setdefault(hook, []):
         # Filter kwargs so that plugins don't need to provide
         # options, just for being able to get called by a workflow
         task_opts = [
@@ -1092,7 +1091,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
 
 def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
     """Run plugin functions named in 'fn_names' in topological order."""
-    plugins = cfg.topo_plugins
+    plugins = cfg.spin.topo_plugins
     if reverse:
         plugins = reversed(plugins)
     for func_name in fn_names:

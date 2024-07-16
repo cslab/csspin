@@ -821,7 +821,7 @@ def test_task_cfg(cfg: ConfigTree) -> None:
     assert "alternate_callback" in str(task.callback)
     assert task.callback(cfg) == "foo"
     assert "test-command-cfg" in cli.NOENV_COMMANDS
-    assert "dummy-hook" in cfg.hooks
+    assert "dummy-hook" in cfg.spin.hooks
 
 
 def test_group(cfg: ConfigTree) -> None:

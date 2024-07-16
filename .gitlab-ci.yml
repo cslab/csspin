@@ -145,7 +145,7 @@ test_spin_docs_integration:
 
 test_spin_consd_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_docs
+    TRIGGER_PROJECT: qs/spin/spin_consd
   extends: .external_integration_base
 
 # ---------------------------- Deploy/Analyze stage ----------------------------

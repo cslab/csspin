@@ -25,7 +25,7 @@ spin:
   help: |
     Settings required for running spin. Many of these cannot be set
     via a spinfile or via the command line, but are computed by spin.
-  noindex:
+  noindex: # FIXME: Used in schemadoc task, consider removing from schema.
   properties:
     spinfile:
       type: path
@@ -33,33 +33,20 @@ spin:
         The name of the configuration file for the project. This can
         be overridden via 'spin -f <filename>'.
       default: spinfile.yaml
-    env_base:
-      type: path internal
-      help: |
-        Where environments are provisioned.
-      default: "{spin.project_root}/{spin.spin_dir}"
     project_root:
       type: path internal
-      help: |
-        The absolute path to the project directory.
-      default: .spin
+      help: The path to the project directory.
+      # value is set during runtime
     spin_dir:
       type: path internal
       help: |
-        The relative path from <project_root> to spin's project
-        related data.
-      default: .spin
+        The absolute path to spin's project related data. This is also the place
+        environments are provisioned.
+      default: "{spin.project_root}/.spin"
     launch_dir:
       type: path internal
-      help: TODO
-      # default is set during runtime
-    spin_global_plugins:
-      type: path internal
-      default: "{SPIN_CACHE}/plugins"
-    plugin_dir:
-      type: path internal
-      default: "{spin.env_base}/plugins"
-      help: Path that contains all installed plugins
+      help: The directory in which spin was called.
+      # value is set during runtime
     cache:
       type: path internal
       default: "{SPIN_CACHE}"
@@ -74,9 +61,14 @@ spin:
     project_name:
       type: str internal
       help: The project that is spin running on
-    project_hash:
-      type: str internal
-      help: The hash of the project that is spin running on
+    topo_plugins:
+      type: list internal
+      help: Topological ordered list of initialized plugins
+    hooks:
+      type: object
+      help: |
+        A dictionary mapping workflow names to lists of commands. This is
+        automatically set up by the `when` argument to :py:func:`spin.task`.
   # FIXME: That was never implemented. Do we want that?
   # Disallow plugins or user setting to write to the 'spin' context to
   # keep sanity.
@@ -104,13 +96,6 @@ verbose:
     the time spent running tasks. Some plugins use `verbose` to make
     tools more chatty.
 
-hooks:
-  type: object
-  help: |
-    A dictionary mapping workflow names to lists of commands. This is
-    automatically set up by the `when` argument to
-    :py:func:`spin.task`.
-
 plugins:
   type: list
   help: The list of plugins to import.
@@ -132,3 +117,11 @@ platform:
     shell:
       type: path
       help: TDB
+
+loaded:
+  type: object internal
+  help: Mapping between plugin names and their module objects
+
+schema:
+  type: object internal
+  help: The schema shipped by cs.spin.
