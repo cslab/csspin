@@ -295,7 +295,7 @@ def base_options(fn: Callable) -> Callable:
             ),
         ),
         click.option(
-            "--debug",
+            "--dump",
             is_flag=True,
             default=False,
             help=(
@@ -431,7 +431,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     spinfile: str,
     quiet: bool,
     verbose: bool,
-    debug: bool,
+    dump: bool,
     properties: tuple,
     prepend_properties: tuple,
     append_properties: tuple,
@@ -492,9 +492,9 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
 
     mkdir("{spin.cache}")
 
-    # Debug aid: dump config tree when given --debug; if nothing else
-    # is requested ... that's it!
-    if debug:
+    # dump config tree when given --dump; if nothing else is requested ...
+    # that's it!
+    if dump:
         print(tree.tree_dump(cfg))
         if not ctx.args and not provision:
             return None

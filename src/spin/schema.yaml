@@ -113,8 +113,7 @@ hooks:
 
 plugins:
   type: list
-  help: |
-    The list of plugins to import.
+  help: The list of plugins to import.
 
 plugin-packages:
   type: list

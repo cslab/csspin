@@ -28,6 +28,11 @@ def test_tree_typecheck() -> None:
     assert result2 == "baz"
 
 
+def test_tree_types() -> None:
+    config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
+    assert tree.tree_types(config, "sub") == []
+
+
 def test_tree_update_key() -> None:
     """Checks if the tree_update_key function is able to update config trees."""
     config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))
@@ -53,10 +58,6 @@ def test__set_callsite() -> None:
     """
     Test checking that the KeyInfo is updated in case _set_callsite is
     called.
-
-    FIXME: This test may be changed, since calling _set_callsite sets the file
-    and line always to the location where this function is executed in
-    'spin.tree.py'.
     """
 
     config = tree.ConfigTree(sub=tree.ConfigTree(foo="bar"))

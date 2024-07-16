@@ -40,6 +40,7 @@ class BaseDescriptor:
 
     def __init__(self: BaseDescriptor, description: dict | tree.ConfigTree) -> None:
         self._keyinfo = None
+        self.type: list = []
         for key, value in description.items():
             setattr(self, key, value)
             if key == "default":
