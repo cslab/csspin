@@ -58,3 +58,4 @@ venv.bak/
 /_phix/
 *.org_rst
 *.log
+docs/_build/

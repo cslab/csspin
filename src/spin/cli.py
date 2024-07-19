@@ -726,6 +726,8 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         "-q" if not cfg.verbose else None,
         "-t",
         os.environ["PYTHONPATH"],
+        "--index-url",
+        "{spin.index_url}",
     ]
 
     if cfg.spin.extra_index:

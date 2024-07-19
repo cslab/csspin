@@ -64,6 +64,13 @@ spin:
     topo_plugins:
       type: list internal
       help: Topological ordered list of initialized plugins
+    index_url:
+      type: str
+      help: The default Python package index url.
+      default: https://packages.contact.de/tools/stable
+    extra_index:
+      type: str
+      help: Additional index to install plugin-packages from.
     hooks:
       type: object
       help: |
