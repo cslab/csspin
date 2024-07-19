@@ -530,7 +530,6 @@ def load_config_tree(
     # We have a proper config tree now in 'cfg'; cd to project root
     # and proceed.
     if spinfile:
-
         # Check spin version requested by this spinfile
         minspin = cfg.get("minimum-spin")
         if not minspin:
@@ -641,6 +640,8 @@ def install_plugin_packages(cfg):
         "-q" if not cfg.verbose else None,
         "-t",
         "{spin.plugin_dir}",
+        "--index-url",
+        "{spin.index_url}",
     ]
 
     if cfg.spin.extra_index:

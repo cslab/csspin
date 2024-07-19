@@ -60,6 +60,13 @@ spin:
     cruise_spin:
       type: path
       default: spin
+    index_url:
+      type: str
+      help: The default Python package index url.
+      default: https://packages.contact.de/tools/stable
+    extra_index:
+      type: str
+      help: Additional index to install plugin-packages from.
 
   # disallow plugins or user setting to write to the 'spin' context to
   # keep sanity
