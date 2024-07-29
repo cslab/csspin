@@ -187,7 +187,7 @@ analyze:
 conpi:
   extends: [.upload_conpi_prod, .release_deps]
   variables:
-    PYPI_INDEX: tools/stable
+    PYPI_INDEX: tools/misc
 
 pages:
   extends: [.release_deps]
