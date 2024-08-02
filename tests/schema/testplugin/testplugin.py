@@ -13,7 +13,10 @@ from path import Path
 from spin import config, interpolate1, setenv, task
 
 defaults = config(
-    nested_property=config(foo="foo"),
+    nested_properties=config(
+        iam_a_path="path1",
+        iam_another_path="path2",
+    ),
     integer_property=1,
     float_property=1.0,
     string_property="string",
@@ -62,3 +65,7 @@ def testplugin(cfg) -> None:
         == cwd
     )
     assert cfg.testplugin.list_to_interpolate == [str(cwd), "1", "1.0", "static"]
+    assert isinstance(cfg.testplugin.nested_properties.iam_another_path, Path)
+    assert cfg.testplugin.nested_properties.iam_another_path == Path("iam_another_path")
+    assert isinstance(cfg.testplugin.nested_properties.iam_a_path, Path)
+    assert cfg.testplugin.nested_properties.iam_a_path == Path("path1")

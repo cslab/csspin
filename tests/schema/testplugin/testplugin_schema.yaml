@@ -11,13 +11,20 @@ testplugin:
   type: object
   help: Test Plugin
   properties:
-    nested_property:
+    nested_properties:
       type: object
       help: Testing the object type
       properties:
-        foo:
-          type: str
-          help: dummy value
+        iam_a_path:
+          type: path
+          help: |
+            Used for testing tree_merge - schema merge, must not be set in
+            spinfile.yaml
+        iam_another_path:
+          type: path
+          help: |
+            Used for testing tree_merge - schema merge, must be overridden in
+            spinfile.yaml
     bool_property:
       type: bool
       help: Testing the boolean type

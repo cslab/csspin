@@ -355,6 +355,15 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
     if not isinstance(source, ConfigTree):
         die("Can't merge tree's since 'source' is not type 'spin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
 
+    if not hasattr(target, "_ConfigTree__schema") and hasattr(
+        source, "_ConfigTree__schema"
+    ):
+        setattr(
+            target,
+            "_ConfigTree__schema",
+            source._ConfigTree__schema,  # pylint: disable=protected-access
+        )
+
     for key, value in source.items():
         if target.get(key, None) is None:
             try:
