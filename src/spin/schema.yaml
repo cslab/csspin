@@ -115,14 +115,14 @@ plugin-packages:
 
 platform:
   type: object
-  help: TDB
+  help: Providing OS/platform-specific properties
   properties:
     exe:
       type: path
-      help: TDB
+      help: The file type of executables, "exe" on Windows and "" on non-Windows
     shell:
       type: path
-      help: TDB
+      help: Reflects the `SHELL` environment variable at cs.spins startup
 
 loaded:
   type: object internal
