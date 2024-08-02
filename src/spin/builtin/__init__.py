@@ -48,7 +48,7 @@ def pretty_descriptor(parent, name, descriptor):
         decl = f".. py:data:: {name}\n   :type: '{typename}'\n"
         if default:
             decl += f"   :value: '{default}'\n"
-        if hasattr(descriptor, "noindex"):
+        if hasattr(descriptor, "noindex") or "object" in typename:
             decl += "   :noindex:\n"
         helptext = getattr(descriptor, "help", "")
         decl += f"\n{helptext}\n"
@@ -61,21 +61,41 @@ def pretty_descriptor(parent, name, descriptor):
 def schemadoc(
     cfg,
     outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa: F722
-    args,
+    full: option("--full", default=True, type=click.BOOL),  # noqa: F722
+    select: argument(  # noqa: F722
+        type=click.STRING,
+        default="",  # noqa: F722
+        callback=lambda ctx, param, value: value.split(".") if value else "",
+    ),
 ):
-    """Print the schema definitions for spin."""
-    schema = cfg.schema
-    arg = ""
-    for arg in args:
-        schema = schema.properties.get(arg)
+    """Print the schema definitions for cs.spin."""
 
     def do_docwrite(parent, name, desc):
         outfile.write(pretty_descriptor(parent, name, desc))
         properties = getattr(desc, "properties", {})
+        if parent:
+            name = f"{parent}.{name}"
         for prop, descr in properties.items():
             do_docwrite(name, prop, descr)
 
-    do_docwrite("", arg, schema)
+    schema = cfg.schema
+
+    if full:
+        for import_spec in cfg.loaded:
+            if "spin." in import_spec:
+                continue
+
+            import_spec = tuple(import_spec.split("."))
+            plugin_name = import_spec[-1]
+
+            if hasattr(cfg, plugin_name) and hasattr(cfg[plugin_name], "schema"):
+                schema.properties.update({plugin_name: cfg[plugin_name].schema})
+
+    arg = ""
+    for arg in select:
+        schema = schema.properties.get(arg)
+    parent = "" if len(select) < 2 else ".".join(select[:-1])
+    do_docwrite(parent, arg, schema)
 
 
 @group("global", noenv=True)

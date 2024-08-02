@@ -25,7 +25,6 @@ spin:
   help: |
     Settings required for running spin. Many of these cannot be set
     via a spinfile or via the command line, but are computed by spin.
-  noindex: # FIXME: Used in schemadoc task, consider removing from schema.
   properties:
     spinfile:
       type: path

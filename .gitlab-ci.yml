@@ -107,6 +107,7 @@ windows:
     - if: "$CI_OPEN_MERGE_REQUESTS"
       when: manual
     - if: "$CI_COMMIT_REF_PROTECTED"
+    - when: never
 
 test_spin_ce_integration:
   variables:

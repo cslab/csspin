@@ -391,7 +391,7 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
     if not isinstance(keep, (str, tuple)):
         raise TypeError("keep must be type 'str' or 'tuple'.")
 
-    # (import here to avoid cyclic import)
+    # import spin.schema here to avoid cyclic import
     from spin import schema  # pylint: disable=cyclic-import
 
     if (
