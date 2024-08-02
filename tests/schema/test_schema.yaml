@@ -5,3 +5,11 @@ plugin-path:
 
 plugins:
   - testplugin
+
+testplugin:
+  # The "nested_properties"-property is used for:
+  # - (A) testing that nested properties are even possible
+  # - (B) for checking that the schema gets applied to nested properties as
+  #   well, in case they're partly defined in the spinfile.
+  nested_properties:
+    iam_another_path: "iam_another_path"
