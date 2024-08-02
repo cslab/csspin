@@ -4,6 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
+
 import pytest
 
 from spin import backtick
@@ -34,3 +35,44 @@ def test_complex_plugin_dependencies(tmpdir):
         cmd="depend",
     )
     assert "spin: This is spin's depend plugin" in output
+
+
+def test_schemadoc_spin_only(tmpdir):
+    """Ensuring that the schemadoc task is able to only document spins schema"""
+    output = execute_spin(
+        tmpdir=tmpdir,
+        path="tests/yamls",
+        what="none.yaml",
+        cmd="-q schemadoc --full=False",
+    )
+    # just to name a few:
+    assert ".. py:data:: minimum-spin" in output
+    assert ".. py:data:: spin.spinfile" in output
+    assert ".. py:data:: spin.project_root" in output
+    assert output.endswith("The schema shipped by cs.spin.")
+
+
+def test_schemadoc_selection_single(tmpdir):
+    """Check that an individual property without a parent can be accessed"""
+    output = execute_spin(
+        tmpdir=tmpdir,
+        path="tests/yamls",
+        what="none.yaml",
+        cmd="-q schemadoc --full=False 'minimum-spin'",
+    )
+    assert output.startswith(".. py:data:: minimum-spin")
+    assert output.endswith("property is required.")
+
+
+def test_schemadoc_selection_nested(tmpdir):
+    """
+    Validating that nested properties can be accessed using the schemadoc task.
+    """
+    output = execute_spin(
+        tmpdir=tmpdir,
+        path="tests/yamls",
+        what="none.yaml",
+        cmd="-q schemadoc --full=False spin.spinfile",
+    )
+    assert output.startswith(".. py:data:: spin.spinfile")
+    assert output.endswith("be overridden via 'spin -f <filename>'.")

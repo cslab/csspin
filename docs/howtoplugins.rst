@@ -109,9 +109,10 @@ Plugin Lifecycle
    plugin patches the activation scripts here.
 
 10. Each plugin's ``init(cfg)`` callback is invoked. This is meant to
-   prepare the environment for using the resources provisioned by the
-   plugin. For example, the `virtualenv` plugin activates the virtual
-   environment here.
+    prepare the environment for using the resources provisioned by the
+    plugin. For example, the `virtualenv` plugin activates the virtual
+    environment here.
+
 
 Note, that the cleanup and provisioning steps 7, 8 and 9, will *only*
 be called when the provisioning options :option:`--cleanup <spin
@@ -119,7 +120,8 @@ be called when the provisioning options :option:`--cleanup <spin
 used.
 
 .. FIXME: Check if that is correct:
-Using the command line option :option:`--debug <spin --debug>`, `spin`
+
+Using the command line option :option:`--dump <spin --dump>`, `spin`
 can output a detailed log of callback invocations.
 
 
@@ -310,21 +312,21 @@ There are some more constraints:
   properties can't be overridden by environment variables.
 
 - For built-in plugins only:
-  - Default values of built-in plugins should be defined in ``schema.yaml`` of
-    cs.spin. This is only possible, if a value is not bound to a condition or
-    evaluated during runtime. In this case, the built-in plugin must make use of
-    :py:func:`spin.config` and assign it to the plugins' defaults.
-  - Default values that are initially ``None`` and will have a valid YAML type
-    (object/dict, list, str, int, float) during runtime must not set a default
-    value in schema.yaml.
+   - Default values of built-in plugins should be defined in ``schema.yaml`` of
+     cs.spin. This is only possible, if a value is not bound to a condition or
+     evaluated during runtime. In this case, the built-in plugin must make use of
+     :py:func:`spin.config` and assign it to the plugins' defaults.
+   - Default values that are initially ``None`` and will have a valid YAML type
+     (object/dict, list, str, int, float) during runtime must not set a default
+     value in schema.yaml.
 
 - For non-builtin plugins only:
-  - Default values for non-builtin plugins should be defined in the Python
-    module of the plugin.
-  - Default values that are initially ``None`` and will have a valid YAML type
-    during runtime must set a default value of "" in
-    ``<plugin_name>_schema.yaml`` in addition to ``defaults =
-    config(key=None,...)`` in the plugins module.
+   - Default values for non-builtin plugins should be defined in the Python
+     module of the plugin.
+   - Default values that are initially ``None`` and will have a valid YAML type
+     during runtime must set a default value of "" in
+     ``<plugin_name>_schema.yaml`` in addition to ``defaults =
+     config(key=None,...)`` in the plugins module.
 
 Plugin API
 ==========

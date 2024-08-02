@@ -15,11 +15,9 @@ Welcome to spin's documentation!
    userman
    relnotes
    howtoplugins
-   plugins
    cliref
    apiref
    schemaref
-   todo
 
 Indices and tables
 ==================

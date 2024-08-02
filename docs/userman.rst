@@ -86,13 +86,13 @@ plugin, that also requires a version.
      version: 3.9.6
 
 You can visualize the configuration tree for this minimal example by
-using the :option:`--debug <spin --debug>` option (many lines left
+using the :option:`--dump <spin --dump>` option (many lines left
 out):
 
 .. code-block:: console
    :emphasize-lines: 4,9,10,12
 
-   $ spin --debug
+   $ spin --dump
    spin: cd /home/me/myproj
    spin: set PYENV_VERSION=3.9.6
    spinfile.yaml:1:                       |minimum-spin: '0.2.dev'
@@ -105,7 +105,7 @@ out):
    spinfile.yaml:7:                       |  version: '3.9.6'
    ... even more lines ...
 
-:option:`--debug <spin --debug>` shows the complete configuration
+:option:`--dump <spin --dump>` shows the complete configuration
 tree, and for each setting, where it came from. The highlighted lines
 are from the project spinfile, while the rest are spin's default
 settings.
@@ -431,22 +431,22 @@ environment is a crucial feature which which is implemented using different
 approaches:
 
 - **`SPIN_`-prefix**:
-  - Used to modify the options directly passed to cs.spin itself.
-  - Is subject of the natural limitation of assigning values to a property,
-    which could be assigned by multiple values at once, i.e., `SPIN_P` can
-    only used once: `SPIN_P="pytest.opts=-vv"`.
+   - Used to modify the options directly passed to cs.spin itself.
+   - Is subject of the natural limitation of assigning values to a property,
+     which could be assigned by multiple values at once, i.e., `SPIN_P` can
+     only used once: `SPIN_P="pytest.opts=-vv"`.
 - **`SPIN_TREE_`-prefix**
-  - Dedicated to defining and modifying configuration tree entries via
-    environment variables (i.e. affecting how tasks calling tools). This method
-    mirrors the effect of passing configuration parameters using the ``-p``
-    option directly via CLI.
-  - Accessing nested elements, e.g. ``pytest.opts`` is possible via double
-    underscores: ``SPIN_TREE_PYTEST__OPTS="[-m, not slow]"``.
-  - Limitations are given by the circumstance that due to accessing nested
-    properties via double underscore, configuration tree keys, with leading or
-    trailing underscores as well as those that include multiple underscores in
-    order can't be accessed like this. Same counts for keys that can't be
-    represented as environment variable.
+   - Dedicated to defining and modifying configuration tree entries via
+     environment variables (i.e. affecting how tasks calling tools). This method
+     mirrors the effect of passing configuration parameters using the ``-p``
+     option directly via CLI.
+   - Accessing nested elements, e.g. ``pytest.opts`` is possible via double
+     underscores: ``SPIN_TREE_PYTEST__OPTS="[-m, not slow]"``.
+   - Limitations are given by the circumstance that due to accessing nested
+     properties via double underscore, configuration tree keys, with leading or
+     trailing underscores as well as those that include multiple underscores in
+     order can't be accessed like this. Same counts for keys that can't be
+     represented as environment variable.
 
 Order of Property Overriding
 ----------------------------
@@ -482,7 +482,7 @@ environment variables, that will be overridden:
   # python.version was overridden via CLI.
   SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
     -p python.version="3.11.7" \
-    -p pytest.opts="[{python.version}]" --debug | grep -A4 "|pytest:"
+    -p pytest.opts="[{python.version}]" --dump | grep -A4 "|pytest:"
   src/spin/cli.py:142:            |pytest:
   command-line:0:                 |  opts:
                                   |    - '3.11.7'
@@ -492,7 +492,7 @@ environment variables, that will be overridden:
   # The order of -p calls makes a difference too.
   SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
     -p pytest.opts="[{python.version}]" \
-    -p python.version="3.11.7" --debug | grep -A4 "|pytest:"
+    -p python.version="3.11.7" --dump | grep -A4 "|pytest:"
   src/spin/cli.py:142:            |pytest:
   command-line:0:                 |  opts:
                                   |    - '3.9.8'
@@ -503,7 +503,7 @@ environment variables, that will be overridden:
   # the environment:
   SPIN_TREE_PYTHON__VERSION="3.11" \
   SPIN_TREE_pytest__coverage_opts="[{python.version}]" \
-    spin -p pytest.opts="[{python.version}]" --debug | grep -A4 "|pytest:"
+    spin -p pytest.opts="[{python.version}]" --dump | grep -A4 "|pytest:"
   src/spin/cli.py:142:            |pytest:
   command-line:0:                 |  opts:
                                   |    - 3.11
