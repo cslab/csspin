@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Any, Generator, Iterable
 import click
 import entrypoints
 import packaging.version
-from packaging import tags
 from path import Path
 
 from spin import (
@@ -74,7 +73,6 @@ DEFAULTS = config(
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
         shell=os.getenv("SHELL"),
-        tag=next(tags.sys_tags()).platform,
         kind=sys.platform,
     ),
 )

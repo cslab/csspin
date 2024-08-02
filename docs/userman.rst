@@ -420,7 +420,7 @@ user/machine specific settings like in the example below.
      # and potentially require additional tools (e.g. Node) to be
      # built and installed.
      devpackages:
-       cpytoolchain: "-e {HOME}/Projects/cpytoolchain"
+       - -e {HOME}/Projects/cpytoolchain
 
 The Environment as Input Channel
 ================================
