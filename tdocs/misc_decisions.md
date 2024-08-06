@@ -180,3 +180,81 @@ the Node executable in both cases, while creating a symlink to the npm
 executable on non-Windows. On Windows however, symlinks require higher
 permissions, so we instead decided to let the node plugin create a CMD script
 that calls npm.cmd of the existing installation.
+
+## 7. Verbosity levels
+
+Currently, there are two configuration properties which control the
+verbosity level of spin and its plugins:
+
+`/quiet={True, False}` and `/verbose={0|1|2}`
+
+`/quiet` is set via CL option '-q, --quiet' and `/verbose` via CL
+option `-v, --verbose`. Some code places use the one, some the other
+setting. Also, there is `/quietflag` which is either `''` or `-q`
+depending on the value of `/quiet`.
+
+The proposal is to unify these similar concepts as follows:
+
+1. There is one property `verbosity` which has the following values:
+
+   - `-1`: means `quiet`
+   - `0`: means `normal`
+   - `1`: means `verbose`
+   - `2`: means `more verbose` or `debug`
+
+   Side note: To have the code more readable, we probably should use an
+   `enum` here. Hereby:
+
+   - `quiet` means "no output at all". This mode is
+     e.g. necessary/handy if you want to pass the output to some
+     other tool which expects which is picky about the input (e.g. it
+     expects a parsable JSON). That in turn means that everything
+     as well the core as the plugins have to evaluate
+     `verbosity` in routines printing to stdout/err, which is most
+     easily done via usage the function `spin.echo`. We cannot make
+     every tool silent without doing more complex things like
+     capturing all the output, so in the usage case above just
+     separate the provision and the task-run spin calls.
+   - `normal` is just the normal amount of verbosity: The CL-calls are
+     echoed to stdout, warning and errors (if any) are printed to
+     stderr. Which means that `spin.echo()`, `spin.warn()` and
+     `spin.error()` are all enabled.
+   - `verbose`: as normal, but `spin.info()` is enabled, too.
+   - `more verbose` or `debug`: same as `verbose`, but `spin.debug()` is
+     enabled, too.
+
+2. We implement `spin.debug()` mentioned above and replace
+   logging.debug()-usages with calls to this API. This is a more
+   simpler and consistent model as the current one, where we use two
+   different mechanisms to generate output.
+
+3. We leave the CLI as is, but make `-q` and `-v` mutually exclusive.
+
+4. We throw `/quietflag` away: tools have different CLI and its for
+   the according task to evaluate `verbosity` and control its tool in
+   the proper way.
+
+5. As well the core as the plugins use the same verbosity
+   level. Moreover, the plugins have to evaluate the verbosity level
+   and map it in a suitable way to the verbosity level of the
+   according tools they call.
+
+6. If the user wants different verbosity for different spin
+   activities, she should make different calls. As an example,
+   if you want just the task to run in very verbose mode but not
+   the provisioning, instead of:
+
+   ```
+   spin -vv --provision pytest
+   ```
+
+   you call:
+
+   ```
+   spin -q --provision
+   spin -vv pytest
+   ```
+
+   It this isn't doable for technical reasons: well, bad luck.
+
+7. We move the property `verbosity` to the `/spin`-subtree?
