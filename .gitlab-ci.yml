@@ -21,7 +21,7 @@ wheel:
   script:
     - pip install -e .
     - spin -v --provision -p python.use=python python:wheel
-    - spin -v -p sphinx.build_dir=_build docs html
+    - spin -v docs html
   artifacts:
     when: always
     expire_in: 72 hrs
