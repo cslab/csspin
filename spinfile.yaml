@@ -46,6 +46,9 @@ build-rules:
     script:
       - pip-compile --generate-hashes --no-build-isolation --reuse-hashes
 
+sphinx:
+  build_dir: _build
+
 # Host system requirements
 system-requirements:
   distro=="debian":

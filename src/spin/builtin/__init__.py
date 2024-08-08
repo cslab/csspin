@@ -51,6 +51,8 @@ def pretty_descriptor(parent, name, descriptor):
         if hasattr(descriptor, "noindex") or "object" in typename:
             decl += "   :noindex:\n"
         helptext = getattr(descriptor, "help", "")
+        if not helptext.endswith("\n"):
+            helptext += "\n"
         decl += f"\n{helptext}\n"
     else:
         decl = "================\nSchema Reference\n================\n\n"

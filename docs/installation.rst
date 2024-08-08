@@ -32,6 +32,4 @@ Git repository:
 
 .. code-block:: console
 
-   $ git clone git@git.contact.de:frank/spin.git
-   $ cd spin
-   $ pipx install --editable .
+   $ pipx install --index-url https://packages.contact.de/tools/stable cs.spin
