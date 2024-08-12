@@ -410,6 +410,8 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
+        if "internal" in tree_types(target, key):
+            raise ValueError(f"Can't override internal property {key}")
         try:
             if isinstance(value, dict):
                 if key not in target:
@@ -448,6 +450,8 @@ def tree_update_properties(
         scope = cfg
         while len(path) > 1:
             scope = getattr(scope, path.pop(0))
+        if "internal" in tree_types(scope, path[0]):
+            raise ValueError(f"Can't override internal property {prop}")
         func(scope, path[0], ruamel.yaml.YAML().load(interpolate1(value)))
         # Set the value source to "command-line"
         tree_set_keyinfo(scope, path[0], KeyInfo("command-line", "0"))

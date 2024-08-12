@@ -55,3 +55,6 @@ testplugin:
     list_to_interpolate:
       type: list
       help: Testing to interpolate values within a list
+    internal_property:
+      type: str internal
+      help: Used for testing that internal properties can't be modified by input

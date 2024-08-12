@@ -15,7 +15,7 @@
 #
 
 minimum-spin:
-  type: str internal
+  type: str
   help: |
     The minimal version of spin, that can process this spinfile. This
     property is required.
@@ -47,7 +47,7 @@ spin:
       help: The directory in which spin was called.
       # value is set during runtime
     cache:
-      type: path internal
+      type: path
       default: "{SPIN_CACHE}"
       help: Path that points to spins cache
     config:
