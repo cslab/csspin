@@ -150,6 +150,7 @@ def load_plugin(
                 plugin_config_tree.schema = plugin_schema
                 tree.tree_merge(plugin_config_tree, schema_defaults)
 
+                # FIXME: check if that is true and still required:
                 # tree.tree_merge does not take the _ConfigTree__schema into
                 # account, thus we need to add the schema manually.
                 plugin_config_tree._ConfigTree__schema = (  # pylint: disable=protected-access
@@ -575,9 +576,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     If ``provision`` is set, plugins will be provisioned.
     """
     logging.info(f"Loading {spinfile}")
-    spinschema = schema.schema_load(
-        os.path.join(os.path.dirname(__file__), "schema.yaml")
-    )
+    spinschema = schema.schema_load(Path(__file__).dirname() / "schema.yaml")
 
     cfg = spinschema.get_default()  # type: ignore[call-arg]
     set_tree(cfg)

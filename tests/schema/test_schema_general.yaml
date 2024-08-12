@@ -1,11 +1,8 @@
 minimum-spin: "0.2"
-
 plugin-path:
   - testplugin
-
 plugins:
   - testplugin
-
 testplugin:
   # The "nested_properties"-property is used for:
   # - (A) testing that nested properties are even possible
