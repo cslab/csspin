@@ -307,7 +307,7 @@ def test_backtick(mocker: MockerFixture) -> None:
 def test__read_file(minimum_yaml_path: str) -> None:
     """spin._read_file reads from file and returns the content"""
     # pylint: disable=protected-access
-    expected = 'minimum-spin: "0.2"\n'
+    expected = "foo: bar\n"
     assert spin._read_file(fn=minimum_yaml_path, mode="r") == expected
 
     with mock.patch.dict(os.environ, {"TEST_MINIMUM_YAML_PATH": minimum_yaml_path}):
@@ -317,7 +317,7 @@ def test__read_file(minimum_yaml_path: str) -> None:
 def test__read_lines(minimum_yaml_path: str) -> None:
     """spin._read_lines is able to read and return multiple lines from a file"""
     # pylint: disable=protected-access
-    expected = ['minimum-spin: "0.2"\n']
+    expected = ["foo: bar\n"]
     assert spin.readlines(fn=minimum_yaml_path) == expected
     with mock.patch.dict(os.environ, {"TEST_MINIMUM_YAML_PATH": minimum_yaml_path}):
         assert spin.readlines(fn="{TEST_MINIMUM_YAML_PATH}") == expected

@@ -42,11 +42,10 @@ def test_schemadoc_spin_only(tmpdir):
     output = execute_spin(
         tmpdir=tmpdir,
         path="tests/yamls",
-        what="none.yaml",
+        what="sample.yaml",
         cmd="-q schemadoc --full=False",
     )
     # just to name a few:
-    assert ".. py:data:: minimum-spin" in output
     assert ".. py:data:: spin.spinfile" in output
     assert ".. py:data:: spin.project_root" in output
     assert output.endswith("The schema shipped by cs.spin.")
@@ -57,11 +56,11 @@ def test_schemadoc_selection_single(tmpdir):
     output = execute_spin(
         tmpdir=tmpdir,
         path="tests/yamls",
-        what="none.yaml",
-        cmd="-q schemadoc --full=False 'minimum-spin'",
+        what="sample.yaml",
+        cmd="-q schemadoc --full=False plugins",
     )
-    assert output.startswith(".. py:data:: minimum-spin")
-    assert output.endswith("property is required.")
+    assert output.startswith(".. py:data:: plugins")
+    assert output.endswith("The list of plugins to import.")
 
 
 def test_schemadoc_selection_nested(tmpdir):
@@ -71,7 +70,7 @@ def test_schemadoc_selection_nested(tmpdir):
     output = execute_spin(
         tmpdir=tmpdir,
         path="tests/yamls",
-        what="none.yaml",
+        what="sample.yaml",
         cmd="-q schemadoc --full=False spin.spinfile",
     )
     assert output.startswith(".. py:data:: spin.spinfile")

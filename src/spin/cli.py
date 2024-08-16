@@ -609,17 +609,6 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     cfg.quietflag = None if cfg.verbose else "-q"
 
     cfg.spin.spinfile = Path(spinfile)
-
-    # Check spin version requested by this spinfile
-    minspin = cfg.get("minimum-spin")
-    if not minspin:
-        die("spin requires 'minimum-spin' to be set")
-
-    minspin = packaging.version.parse(str(minspin))
-    spinversion = packaging.version.parse(importlib_metadata.version("cs.spin"))
-    if minspin > spinversion:
-        die(f"this project requires spin>={minspin} (spin version {spinversion})")
-
     cfg.spin.project_root = Path(cfg.spin.spinfile).absolute().normpath().dirname()
     cfg.spin.project_name = cfg.spin.project_root.basename()
     cfg.spin.launch_dir = Path().cwd().relpath(cfg.spin.project_root)

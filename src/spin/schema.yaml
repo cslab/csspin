@@ -14,12 +14,6 @@
 # 'int'          --> integer value
 #
 
-minimum-spin:
-  type: str
-  help: |
-    The minimal version of spin, that can process this spinfile. This
-    property is required.
-
 spin:
   type: object
   help: |

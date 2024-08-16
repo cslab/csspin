@@ -1,4 +1,3 @@
-minimum-spin: "0.2"
 plugin-packages:
   - ../../data/spin_dummy
 plugins:

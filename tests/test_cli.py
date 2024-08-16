@@ -269,29 +269,6 @@ def test_load_config_tree_extended(
         assert "loading global plugins:" in caplog.text
 
 
-def test_load_config_tree_no_minimum_spin(tmp_path: PathlibPath) -> None:
-    """spin.cli.load_config_tree will fail if no minimum-spin is set"""
-    spinfile = tmp_path / "spinfile.yaml"
-    with open(spinfile, "w", encoding="utf-8") as f:
-        f.write("\nspin:\n spin_global: ")
-
-    with pytest.raises(click.Abort, match=".*spin requires 'minimum-spin' to be set"):
-        cli.load_config_tree(spinfile=spinfile, envbase=tmp_path)
-
-
-def test_load_config_tree_incompatible_spin_version(tmp_path: PathlibPath) -> None:
-    """
-    spin.cli.load_config_tree will fail if the spin version required by the
-    spinfile is not being used to build the tree
-    """
-    spinfile = tmp_path / "spinfile.yaml"
-    with open(spinfile, "w", encoding="utf-8") as f:
-        f.write("minimum-spin: 9999\nspin:\n spin_global: ")
-
-    with pytest.raises(click.Abort, match=".*this project requires spin>=9999"):
-        cli.load_config_tree(spinfile=spinfile, envbase=tmp_path)
-
-
 def test_install_plugin_packages(
     mocker: MockerFixture,
     cfg: ConfigTree,
