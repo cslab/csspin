@@ -31,8 +31,8 @@ def cli_runner() -> CliRunner:
 
 
 @fixture()
-def cfg() -> ConfigTree:
-    load_config_tree("tests/yamls/none.yaml", cwd=os.getcwd())
+def cfg(minimum_yaml_path) -> ConfigTree:
+    load_config_tree(minimum_yaml_path, cwd=os.getcwd())
     return get_tree()
 
 
@@ -44,7 +44,7 @@ def cfg_spin_dummy() -> ConfigTree:
 
 @fixture()
 def minimum_yaml_path() -> str:
-    return os.path.join(os.path.dirname(__file__), "yamls", "none.yaml")
+    return os.path.join(os.path.dirname(__file__), "yamls", "sample.yaml")
 
 
 @fixture()

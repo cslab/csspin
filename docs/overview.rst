@@ -74,19 +74,16 @@ directory. As an example, the most simple Python project would have a
 
 .. code-block:: yaml
 
-   minimum-spin: 0.2
    plugins:
      - spin.builtin.python
    python:
      version: 3.9.6
 
-``minimum-spin`` is required for all spinfiles, and indicates the
-oldest version of spin, that can process that spinfile. ``plugins`` is
-a list of Python modules, that are imported by spin and implement spin
-plugins. In this case, ``spin.builtin.python`` is the built-in plugin,
-that provides Python to a project. The ``python`` section is read by
-the Python plugin, and ``version`` specifies the release of the Python
-interpreter that this project wants to use.
+``plugins`` is a list of Python modules, that are imported by spin and implement
+spin plugins. In this case, ``spin.builtin.python`` is the built-in plugin, that
+provides Python to a project. The ``python`` section is read by the Python
+plugin, and ``version`` specifies the release of the Python interpreter that
+this project wants to use.
 
 Provisioning this project would install Python 3.9.6 and create a
 virtual environment for working with the project:
@@ -118,7 +115,6 @@ necessary (besides writing the tests), is to add the
 .. code-block:: yaml
    :emphasize-lines: 4
 
-   minimum-spin: 0.2
    plugins:
      - spin.builtin.python
      - spin.builtin.pytest
@@ -159,9 +155,7 @@ that comes with all the tools and settings required. You can simply
 add that plugin to your :file:`spinfile.yaml`:
 
 .. code-block:: yaml
-   :emphasize-lines: 3-4,9
-
-   minimum-spin: 0.2
+   :emphasize-lines: 1-2,7
 
    plugin-packages:
      - git+https://git.example.com/projstds#egg=projstds

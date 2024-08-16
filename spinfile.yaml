@@ -1,7 +1,3 @@
-# Each spinfile must have this. Spin will refuse to run if
-# 'minimum-spin' is absent or larger than the release of spin used.
-minimum-spin: "0.2"
-
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin-packages:

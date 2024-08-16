@@ -70,14 +70,10 @@ tree is built from (in this order):
   interpreter on each run.
 
 
-Each spinfile must have at least :py:data:`minimum-spin`, to state the
-oldest version of spin that can process the file. To do anything
-useful, at least one plugin must be included. Here, we use the Python
-plugin, that also requires a version.
+To do anything useful, at least one plugin must be included. Here, we use the
+Python plugin, that also requires a version.
 
 .. code-block:: yaml
-
-   minimum-spin: 0.2.dev
 
    plugins:
      - spin.builtin.python
@@ -95,7 +91,6 @@ out):
    $ spin --dump
    spin: cd /home/me/myproj
    spin: set PYENV_VERSION=3.9.6
-   spinfile.yaml:1:                       |minimum-spin: '0.2.dev'
    ~/spin/src/spin/schema.yaml:19:        |spin:
    ~/spin/src/spin/cli.py:528:            |  spinfile: Path('/home/me/myproj/spinfile.yaml')
    ... more lines ...
