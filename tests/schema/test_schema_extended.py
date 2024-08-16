@@ -25,7 +25,6 @@ def test_testplugin_general(cfg, tmpdir) -> None:
     print(output)
 
 
-@pytest.mark.wip()
 @pytest.mark.parametrize(
     "property_value",
     [
@@ -64,7 +63,6 @@ def test_schema_failure_override_internal_via_cli(
         pytest.fail("Failing since internal property was overridden.")
 
 
-@pytest.mark.wip()
 @pytest.mark.parametrize(
     "envvar,property,envvar_value",
     [

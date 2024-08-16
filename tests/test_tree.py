@@ -331,7 +331,7 @@ def test_tree_update_properties() -> None:
     correctly.
     """
     os.environ["SPIN_TREE_SUB__X"] = "[1, 2]"
-    cfg = tree.ConfigTree(sub=tree.ConfigTree(opts=["none"]))
+    cfg = tree.ConfigTree(sub=tree.ConfigTree(opts=["none"], x=[]))
     tree.tree_update_properties(
         cfg,
         override_properties=("sub.opts=['second', 'third']",),
@@ -341,3 +341,23 @@ def test_tree_update_properties() -> None:
     assert cfg.sub.opts == ["new first", "second", "third", "second last", "last"]
     assert cfg.sub.x == [1, 2]
     del os.environ["SPIN_TREE_SUB__X"]
+
+
+def test_tree_update_properties_skip_not_existing_property(capfd) -> None:
+    """
+    Ensuring that values cannot be set to properties that does not exist in the
+    configuration tree.
+    """
+    cfg = tree.ConfigTree(foo="bar")
+    tree.tree_update_properties(
+        cfg,
+        override_properties=("bar=baz",),
+        prepend_properties=("foo.baz=bar",),
+    )
+
+    assert not hasattr(cfg, "bar")
+    assert not hasattr(cfg.foo, "baz")
+
+    _, err = capfd.readouterr()
+    assert "Can't set unknown property 'bar'" in err
+    assert "Can't set unknown property 'foo.baz'" in err
