@@ -21,7 +21,7 @@ import ruamel.yaml
 import ruamel.yaml.comments
 from path import Path
 
-from spin import die, interpolate1  # pylint: disable=cyclic-import
+from spin import die, interpolate1, warn  # pylint: disable=cyclic-import
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator, Hashable, Iterable
@@ -449,7 +449,15 @@ def tree_update_properties(
         path = list(fullname.split("."))
         scope = cfg
         while len(path) > 1:
-            scope = getattr(scope, path.pop(0))
+            try:
+                scope = getattr(scope, path.pop(0))
+            except AttributeError:
+                warn(f"Can't set unknown property '{fullname}' - skipping!")
+                return
+        if path[0] not in scope:
+            warn(f"Can't set unknown property '{fullname}' - skipping!")
+            return
+
         if "internal" in tree_types(scope, path[0]):
             raise ValueError(f"Can't override internal property {prop}")
         func(scope, path[0], ruamel.yaml.YAML().load(interpolate1(value)))
