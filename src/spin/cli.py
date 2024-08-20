@@ -46,6 +46,7 @@ from spin import (
     rmtree,
     schema,
     set_tree,
+    setenv,
     sh,
     toporun,
     tree,
@@ -625,6 +626,8 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
         )
 
     sys.path.insert(0, str(interpolate1(cfg.spin.spin_dir / "plugins")))
+
+    setenv(**cfg.environment)
 
     if provision and not cleanup:
         # if cleanup == true, we're fine with whatever plugins we
