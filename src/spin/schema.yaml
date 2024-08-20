@@ -74,6 +74,12 @@ spin:
   # keep sanity.
   unknown-properties: false
 
+environment:
+  type: object
+  help: |
+    `environment` maps additional environment variables and their values which
+    will added to the environment when running cs.spin.
+
 extra-tasks:
   type: object
   help: |
