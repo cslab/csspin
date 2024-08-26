@@ -468,7 +468,7 @@ def tree_update_properties(
     for prop in (
         f"{key.replace('SPIN_TREE_', '').replace('__', '.').lower()}={value}"
         for (key, value) in os.environ.items()
-        if "SPIN_TREE_" in key
+        if key.startswith("SPIN_TREE_")
     ):
         modify_property(prop, setattr)
 
