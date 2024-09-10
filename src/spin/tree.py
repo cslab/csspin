@@ -24,7 +24,8 @@ from path import Path
 from spin import die, interpolate1, warn  # pylint: disable=cyclic-import
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Generator, Hashable, Iterable
+    from collections.abc import Hashable
+    from typing import Any, Callable, Generator, Iterable
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -123,8 +124,8 @@ def tree_sanitize(cfg: ConfigTree) -> None:
     Enforcing types after interpolation enables defining values that can be
     interpolated to non-string and non-path objects.
 
-    FIXME: This implementation doesn't work for lists containing objects. So
-           far there is no use-case for having config trees within lists.
+    NOTE: This implementation doesn't work for lists containing objects. So far
+          there is no use-case for having config trees within lists.
     """
 
     def enforce_typecheck(
@@ -175,18 +176,13 @@ def _call_location(depth: int) -> KeyInfo:
 
 def _set_callsite(tree: ConfigTree, key: Hashable, depth: int, value: Any) -> None:
     if hasattr(tree, "_ConfigTree__keyinfo"):
-        # FIXME: Is that correct? The call location will always be this file and
-        #        the following lines.
         # pylint: disable=protected-access
         tree._ConfigTree__keyinfo[key] = _call_location(depth)
     tree_set_parent(value, tree, key)  # type: ignore[arg-type]
 
 
 def tree_set_keyinfo(tree: ConfigTree, key: Hashable, ki: KeyInfo) -> None:
-    # FIXME: Do we need a warning or exception in case the following if
-    #        statement does not pass?
-    if hasattr(tree, "_ConfigTree__keyinfo"):
-        tree._ConfigTree__keyinfo[key] = ki  # pylint: disable=protected-access
+    tree._ConfigTree__keyinfo[key] = ki  # pylint: disable=protected-access
 
 
 def tree_keyinfo(tree: ConfigTree, key: Hashable) -> KeyInfo:
@@ -223,7 +219,7 @@ def tree_load(fn: str) -> ConfigTree | Any:
         try:
             data = yaml.load(f)
         except ruamel.yaml.parser.ParserError as ex:
-            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line+1}: {ex}")
+            die(f"\n{ex.problem_mark.name}:{ex.problem_mark.line + 1}: {ex}")
     return parse_yaml(data, fn)
 
 
@@ -232,7 +228,6 @@ def tree_walk(config: ConfigTree, indent: str = "") -> Generator:
     the full name of the key, the tracking information and an
     indentation string that increases by ``"  "`` for each level.
     """
-    # TODO: Consider improving the return value(s)
     for key, value in sorted(config.items()):
         yield key, value, tree_keyname(config, key), tree_keyinfo(
             config, key
@@ -279,13 +274,15 @@ def tree_dump(tree: ConfigTree) -> str:
                 write(f"{tag}{space}{separator}{indent}{key}:")
                 blank_location = len(f"{tag}{space}") * " "
                 for item in value:
-                    # FIXME: That does not work if the value is a dict/object
+                    # That does not work if the value is a dict/object
+                    # https://code.contact.de/qs/spin/cs.spin/-/issues/58
                     write(f"{blank_location}{separator}{indent}  - {repr(item)}")
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: []")
         elif isinstance(value, dict):
             if value:
-                # FIXME: Shouldn't the value be shown like for lists?
+                # Shouldn't the value be shown like for lists?
+                # https://code.contact.de/qs/spin/cs.spin/-/issues/58
                 write(f"{tag}{space}{separator}{indent}{key}:")
             else:
                 write(f"{tag}{space}{separator}{indent}{key}: {{}}")
@@ -427,7 +424,6 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
         except (TypeError, schema.SchemaError) as exc:
-            # FIXME: Is it even possible to trigger the schema.SchemaError?
             die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")
 
 
