@@ -191,7 +191,8 @@ conpi:
     PYPI_INDEX: tools/misc
 
 pages:
-  extends: [.release_deps]
+  extends: .release_deps
+  needs: [wheel, analyze]
   image: alpine
   stage: release
   script:

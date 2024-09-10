@@ -1,3 +1,8 @@
+.. -*- coding: utf-8 -*-
+   Copyright (C) 2024 CONTACT Software GmbH
+   All rights reserved.
+   https://www.contact-software.com/
+
 ====================
 Plugin API Reference
 ====================
@@ -18,6 +23,7 @@ Interacting with spin
 
 .. autofunction:: config
 .. autofunction:: invoke
+.. autofunction:: get_tree
 .. autofunction:: interpolate1
 .. autofunction:: interpolate
 .. autofunction:: namespaces
@@ -27,6 +33,7 @@ Communication with the user
 ===========================
 
 .. autofunction:: echo
+.. autofunction:: info
 .. autofunction:: warn
 .. autofunction:: error
 .. autofunction:: die
@@ -48,18 +55,25 @@ Files and Path handling
 =======================
 
 .. autofunction:: cd
+.. autofunction:: copy
 .. autofunction:: exists
 .. autofunction:: mkdir
+.. autofunction:: mv
 .. autofunction:: rmtree
 
 .. autofunction:: download
 
-.. autofunction:: readtext
-.. autofunction:: readlines
-.. autofunction:: writetext
-.. autofunction:: writelines
+.. autofunction:: abspath
+.. autofunction:: normpath
+
 .. autofunction:: appendtext
-.. autofunction:: readbytes
-.. autofunction:: writebytes
+.. autofunction:: getmtime
 .. autofunction:: persist
+.. autofunction:: readbytes
+.. autofunction:: readlines
+.. autofunction:: readtext
+.. autofunction:: readyaml
 .. autofunction:: unpersist
+.. autofunction:: writebytes
+.. autofunction:: writelines
+.. autofunction:: writetext

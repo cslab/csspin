@@ -1,202 +1,300 @@
+
+.. -*- coding: utf-8 -*-
+   Copyright (C) 2024 CONTACT Software GmbH
+   All rights reserved.
+   https://www.contact-software.com/
+
 ==========
 About spin
 ==========
 
-Spin is a task runner that aims so solve the problems of
-**provisioning development environments** and **standardizing
-workflows**.
-
-Spin automates the provisioning of tools and other development
-requirements (including language stacks like Python,
-Javascript/Node). As an example, for a project that uses Python and
-Javascript, `spin` would:
+Spin is a task runner that aims so solve the problems of *provisioning
+development environments* and *standardizing workflows*. Spin also automates the
+provisioning of tools and other development requirements (including language
+stacks like Python, Javascript/Node). As an example, for a project that uses
+Python and Javascript, `spin` would:
 
 * provision the requested version of Python
 * provision the requested version of Node
-* create a virtual development environment, where the required
-  versions of Python and Node can be used
-* install tools for linting and testing etc.
-* install pre-commit and install its hooks
+* create a virtual development environment, in which the required versions of
+  Python and Node can be used
+* install tools and dependencies for development, testing, etc.
 
 All with a single command: ``spin --provision``!
 
-Second, `spin` standardizes workflows, best practices and how
-development tools are used, especially in a development group with
-many similar projects that share practices and tools. For a typical
-Python project the command ``spin preflight`` would:
+Second, `spin` standardizes workflows, best practices and how development tools
+are used, especially in a development group with many similar projects that
+share practices and tools. It's plugin-based architecture allows to define
+workflows executing multiple task in sequence using a single command.
 
-* automatically run installed linters like :program:`flake8`
-* run tests using :program:`pytest`
-
-By default, `spin` will automatically generate the right options and
-arguments for the tools it runs, and show the user the precise
-commands.
-
-Built-in workflows include ``build``, ``lint`` and ``tests`` (all
-three will be run by ``preflight``), as well as ``bump-version``,
-``package``, ``upload``, ``deploy`` etc. -- workflows are also
-extensible by plugins.
-
-As a result, *anyone* will be able to check out *any project*, run
-``spin --provision`` and will be all set. Running a project's test
-suite becomes as simple as doing ``spin test`` etc.
+By default, `spins` will automatically generate the right options and arguments
+for the tools it runs, and show the user the precise commands. As a result,
+*anyone* will be able to check out *any project*, run ``spin --provision`` and
+will be all set - Running a project's test suite becomes as simple as doing
+``spin test`` etc.
 
 
-Spin's Plugin System
+Spin's plugin system
 ====================
 
-The knowledge of how to do all this comes from two places: reusable
-plugins and project-specific settings. `spin` has a plugin system,
-where reusable bits are encapsulated in plugins like
-`spin.builtin.python`, `spin.builtin.node`, `spin.builtin.pytest`
-etc. Plugins automatically provision the tools they need, come with
-meaningful default settings, provide new subcommands to `spin`
-(e.g. ``spin pytest`` will launch :program:`pytest` in the development
-environment), and hook into generic workflows. For example, the
-`spin.builtin.pytest` plugin automatically hooks into the generic
-``spin test`` command.  If your project one day decides to replace
-`pytest` with something else, ``spin test`` will still do the right
-thing.
+The knowledge of how to do all this comes from two places: *reusable plugins*
+and *project-specific settings*. `spin` has a plugin system, where reusable bits
+are encapsulated in plugins like `spin_python.python`_, `spin_python.pytest`_,
+`spin_frontend.node`_ etc.
 
-`spin` has a library of built-in plugins for Python, Node, Java, C/C++
-and common tools in those stacks. It's also easy to add plugins local
-to a project, or create shared plugins that live as Python packages on
-some Python package server or in a Git repository.
+Plugins automatically provision the tools they need, come with meaningful
+default settings, provide new subcommands to `spin` (e.g. ``spin pytest`` will
+launch `pytest`_ in the development environment), and hook into generic
+workflows. For example, the `spin_python.pytest`_ plugin automatically hooks
+into the generic ``spin test`` command in case `spin_consd.stdworkflows`_ is
+loaded. If your project one day decides to replace `pytest` with something else,
+``spin test`` will still do the right thing.
+
+`spin` has a small set of built-in plugins for example to run a shell command
+in the project context. It's also easy to add local plugins to a project, or
+create shared plugins that live as Python plugin-packages on some Python package
+server or in a Git repository. A few of those addressing individual topics are
+listed below.
+
+.. list-table:: Selection of available plugin-packages
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Package name
+     - Description
+   * - `spin_ce`_
+     - required for CE16 development
+   * - `spin_consd`_
+     - collection of workflows and CON/SD related plugins
+   * - `spin_cpp`_
+     - ideal for C++ development
+   * - `spin_docs`_
+     - building documentation was never easier
+   * - `spin_java`_
+     - Java ist auch eine Insel
+   * - `spin_python`_
+     - a must for Python development
+   * - `spin_vcs`_
+     - enhancing version control system actions
+
+.. _configuration-tree-system-label:
+
+Spin's configuration tree system
+================================
+
+Spins configuration tree system manages project-specific and user-global
+settings in a neat, hierarchical structure in form of a supercharged
+``OrderedDict`` which enables *dot notation access* from within plugins, *parent
+linking* as well as *location tracking* useful for debugging project
+configurations.
+
+Spin ships its own part of the configuration tree of which mosts it's properties
+are directly assigned below ``spin``:
+
+  .. code-block:: yaml
+    :caption: Excerpt of spins builtin configuration tree
+    :emphasize-lines: 1
+
+    spin:
+      cache: Path('/home/bts/.cache/spin')
+      extra_index: None
+      index_url: 'https://packages.contact.de/tools/stable'
+      spinfile: Path('/home/bts/src/qs/spin/cs.spin/spinfile.yaml')
+      ...
+
+Plugins configured in project and user settings ship their own configuration
+and thus extend the configuration tree.
+
+  .. code-block:: yaml
+    :caption: A plugin extending the configuration tree
+    :emphasize-lines: 3
+
+    spin:
+      ...
+    myplugin:
+      setting1: ...
+      setting2: ...
 
 
-Project Settings and :file:`spinfile.yaml`
-==========================================
+Spin is *building the configuration tree* during its execution by using the
+following sources:
 
-The choice of plugins to use, and other project-specific settings, go
+#. **Default configuration** that spin ships
+
+#. **User specific configuration** in form of a ``global.yaml``
+   (optional, see :ref:`writing-global-label`)
+
+#. **Project configuration** provided by ``spinfile.yaml`` (see
+   :ref:`writing-spinfile-label`)
+
+#. **Environment variables** that updates or extends the configuration
+
+#. **Command-line arguments and options** to update or extend the configuration
+
+Provisioning a project using spin
+=================================
+
+The choice of plugins to use, and other project-specific settings go
 into a file called :file:`spinfile.yaml` in your project's root
-directory. As an example, the most simple Python project would have a
-:file:`spinfile.yaml` looking like so:
+directory. Spin is just a task-runner, so lets take a most simple Python project
+as an example to perform the provisioning.
 
 .. code-block:: yaml
+   :caption: Minimal :file:`spinfile.yaml` for a Python project
 
+   plugin-packages:
+     - spin_python
    plugins:
-     - spin.builtin.python
+     - spin_python.python
    python:
-     version: 3.9.6
+     version: 3.9.8
 
-``plugins`` is a list of Python modules, that are imported by spin and implement
-spin plugins. In this case, ``spin.builtin.python`` is the built-in plugin, that
+The ``plugin-packages`` key lists plugin-packages that are installed using
+:program:`pip` into a project-specific plugin directory (which notably is
+different from the project's virtual environment, in case it is a Python
+project).
+
+``plugins`` is a list of Python modules of plugin-packages or local modules,
+that are imported by spin and implement spin plugins. In this case,
+`spin_python.python`_ is a plugin from the ``spin_python`` plugin-package, that
 provides Python to a project. The ``python`` section is read by the Python
 plugin, and ``version`` specifies the release of the Python interpreter that
 this project wants to use.
 
-Provisioning this project would install Python 3.9.6 and create a
-virtual environment for working with the project:
+Provisioning this project would download the `spin_python`_ plugin-package and
+its dependencies, install Python 3.9.8 and create a virtual environment from it
+to then add the current project as editable install:
 
 .. code-block:: console
+   :caption: Provision a Python project using cs.spin
+   :emphasize-lines: 1,3,6,11,14
 
    $ spin --provision
-   spin: cd /home/me/myproj
-   spin: set PYENV_VERSION=3.9.6
-   spin: python --version
-   Python 3.9.6
-   spin: python -mpip -q install -U virtualenv packaging
-   spin: activate /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64
-   spin: pip -q install -e .
+   spin: mkdir /home/bts/src/qs/spin/cs.spin/.spin/plugins
+   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q -t /home/bts/src/qs/spin/cs.spin/.spin/plugins --index-url https://packages.contact.de/tools/stable spin_python
+   spin: set PYTHON_BUILD_CACHE_PATH=/home/bts/.cache/spin/pyenv_cache
+   spin: set PYTHON_CFLAGS=-DOPENSSL_NO_COMP
+   spin: /home/bts/.cache/spin/pyenv/plugins/python-build/bin/python-build 3.9.8 /home/bts/.cache/spin/python/3.9.8
+   Downloading Python-3.9.8.tar.xz...
+   -> https://www.python.org/ftp/python/3.9.8/Python-3.9.8.tar.xz
+   Installing Python-3.9.8...
+   Installed Python-3.9.8 to /home/bts/.cache/spin/python/3.9.8
+   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mvirtualenv -q -p /home/bts/.cache/spin/python/3.9.8/bin/python /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: python -mpip -q install -U pip
+   spin: pip install -q -e .
 
 In this case, Python was provisioned using `pyenv
-<https://github.com/pyenv/pyenv>`_, which happened to be already
-installed by the user in her home directory. This is not a
-requirement, though. Depending on the platform -- and without a
-suitable Python environment management tool -- `spin` would have
-downloaded a source or binary distribution of Python, and install that
-into a cache directory that is reused between different projects. In
-the same vein, `spin` handles other stacks like Java and Node.
+<https://github.com/pyenv/pyenv>`_ by downloading, caching and compiling the
+distribution to create a Python virtual environment in which the current package
+under development is installed. `spin` can handle other stacks like Java and
+Node within the same venv, depending on their implementation.
 
-Now you want to test your project using `pytest`. All that is
-necessary (besides writing the tests), is to add the
-`spin.builtin.pytest` plugin to :file:`spinfile.yaml`:
+Now you want to test your project using `pytest`_. All that is necessary
+(besides writing the tests), is to add the `spin_python.pytest`_ plugin to
+:file:`spinfile.yaml`:
 
 .. code-block:: yaml
+   :caption: Minimal :file:`spinfile.yaml` to run the pytest plugin
    :emphasize-lines: 4
 
+   plugin-packages:
+     - spin_python
    plugins:
-     - spin.builtin.python
-     - spin.builtin.pytest
+     - spin_python.pytest
    python:
      version: 3.9.6
 
-Provisioning again will automatically install the `pytest` package
-from PyPI:
+Spin will resolve the dependency from ``spin_python.pytest`` to
+``spin_python.python`` without the need to define both plugins within
+:file:`spinfile.yaml`.
+
+Provisioning again will automatically install ``pytest`` and other packages
+that ``spin_python.pytest`` depends on from PyPI:
 
 .. code-block:: console
-   :emphasize-lines: 9
+   :caption: Provision the ``spin_python.pytest`` plugin as well as its dependencies
+   :emphasize-lines: 7
 
    $ spin --provision
-   spin: cd /home/me/myproj
-   spin: set PYENV_VERSION=3.9.6
-   spin: python --version
-   Python 3.9.6
-   spin: python -mpip -q install -U virtualenv packaging
-   spin: activate /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64
-   spin: pip -q install -e .
-   spin: pip -q install pytest
+   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
+       -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
+       --index-url https://packages.contact.de/tools/stable \
+       spin_python
+   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: pip install -q pytest-cov pytest
+   spin: pip install -q -e .
 
-Also, `spin` gained a new subcommand ``spin pytest``:
+After provisioning, `spin` gained a new subcommand ``pytest``:
 
 .. code-block:: console
+   :caption: Execute the pytest subcommand
+   :emphasize-lines: 1
 
    $ spin pytest
-   spin: cd /home/me/myproj
-   spin: set PYENV_VERSION=3.9.6
-   spin: activate /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64
-   spin: /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64/bin/pytest  ./tests
-   ....E.......
+   spin -p pytest.tests=tests pytest
+   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: pytest tests
+   ======================= test session starts =================================
+   platform linux -- Python 3.9.8, pytest-8.3.2, pluggy-1.5.0
+   rootdir: /home/bts/src/qs/spin/cs.spin
+   configfile: pyproject.toml
+   plugins: cov-5.0.0
+   collected 113 items
+   tests/integration/test_provisioning.py ....
+   ...
 
-After a while your project has been promoted to become a company-wide
-standard, and thus it is required to follow your group's best
-practices. Luckily, your team already has created a custom spin plugin
-that comes with all the tools and settings required. You can simply
-add that plugin to your :file:`spinfile.yaml`:
+After a while your project has been promoted to become a company-wide standard,
+and thus it is required to follow your group's best practices. Luckily, your
+team already has created a custom spin plugin-package that comes with all the
+tools and settings required. You can simply add that plugin to your
+:file:`spinfile.yaml`:
 
 .. code-block:: yaml
-   :emphasize-lines: 1-2,7
+   :caption: :file:`spinfile.yaml` defining a plugin-package from a git-repository
+   :emphasize-lines: 2,6,9-10
+   :linenos:
 
    plugin-packages:
      - git+https://git.example.com/projstds#egg=projstds
-
+     - spin_python
    plugins:
-     - spin.builtin.python
-     - spin.builtin.pytest
+     - spin_python.pytest
      - mycompany.projstds
    python:
      version: 3.9.6
+   projstds:
+     # Plugin settings goes here
 
-The ``plugin-packages`` key lists plugin packages that are installed
-using :program:`pip` into a project specific plugin directory (which
-notably is different from the project's virtual environment, in case
-it is a Python project). The line reading "``- mycompany.projstds``"
-makes spin import and use the plugin module ``mycompany.projstds``
-that has been installed from the Git URL.
+The ``plugin-packages`` key lists plugin-packages that are installed using
+:program:`pip` into a project specific plugin directory (which notably is
+different from the project's virtual environment, in case it is a Python
+project). Line 6 makes spin import and use the plugin module
+``mycompany.projstds`` that has been installed from the Git URL defined in line
+2.
 
-Your team's :program:`projstds` plugin comes with lots of tools and
-predefined settings, among them :program:`pre-commit`: note how `spin`
-automatically installs all the tools and sets up the
-:program:`pre-commit` hooks.
+Your team's :program:`projstds` plugin comes with lots of tools and predefined
+settings, among them :program:`pre-commit`: note how `spin` automatically
+installs all the tools and sets up the :program:`pre-commit` hooks.
 
 .. code-block:: console
-   :emphasize-lines: 9-11
+   :caption: Provisioning a plugin-package from a git-repository
+   :emphasize-lines: 8-10
 
    $ spin --provision
-   spin: cd /home/me/myproj
-   spin: set PYENV_VERSION=3.9.6
-   spin: python --version
-   Python 3.9.6
-   spin: python -mpip -q install -U virtualenv packaging
-   spin: activate /home/me/.spin/env/myproj/cp38-manylinux_2_28_x86_64
-   spin: pip -q install -e .
+   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
+       -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
+       --index-url https://packages.contact.de/tools/stable \
+       spin_python \
+       git+https://git.example.com/projstds#egg=projstds
+   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
    spin: pip -q install pytest pre-commit flake8 black flake8-isort ...
    spin: pre-commit install
    pre-commit installed at .git/hooks/pre-commit
 
-This is a basic pattern when working with spin: you modify your
-environment by editing :file:`spinfile.yaml` and let spin re-provision
-the environment.
+This is a basic pattern when working with *spin*: you **modify your
+environment** by editing :file:`spinfile.yaml` and let spin **re-provision the
+environment**.
 
 
 Most Frequently Asked Questions
@@ -205,61 +303,47 @@ Most Frequently Asked Questions
 Why not ...?
 ------------
 
-There are *many* tools that do things similar to `spin`, e.g. it is
-customary to have standardized targets like ``clean``, ``all``,
-``dist`` etc. for Unix Makefiles. Alas, we were not aware of tools
-that at the same time:
+There are *many* tools that do things similar to *spin*, e.g. it is customary to
+have standardized targets like ``clean``, ``all``, ``dist`` etc. for Unix
+Makefiles. Alas, we were not aware of tools that at the same time:
 
-* Are platform and technology stack independent: spin works with
-  Python, Java, Node and C/C++ projects. Other stacks can be added by
-  creating plugins.
+* Are platform and technology stack independent: spin works with Python, Java,
+  Node and C/C++ projects. Other stacks can be added by creating plugins.
 * Can provision other software.
-* Allow for re-usable definitions, that can be shared between many
-  projects.
+* Allow for re-usable definitions, that can be shared between many projects.
 * Don't suck ;-)
 
-Spin explicitly does *not* aim to be a build tool like GNU Make, CMake
-or SCons, nor does it try to replace or improve other tools or tech
-stacks: it is just a unpretentious way to store and re-use the
-knowledge and conventions for installing and running development
-tools.
+Spin explicitly does *not* aim to be a build tool like GNU Make, CMake or SCons,
+nor does it try to replace or improve other tools or tech stacks: it is just a
+unpretentious way to store and re-use the knowledge and conventions for
+installing and running development tools.
 
 Is it necessary to run everything via spin?
 -------------------------------------------
 
-Absolutely not! `spin` intentionally echoes the verbatim commands it
-runs, to make users understand what is going on. It also provides
-activation commands for development environments, to enable users to
-"switch" to an environment provisioned by spin, and run arbitrary
-commands themselves. Spin plugins try to be well-behaved in this
-regard, and do not silently modify the process environment, to make
-everything that is going on transparent to the user.
+Absolutely not! *spin* intentionally echoes the verbatim commands it runs, to
+make users understand what is going on. It also provides activation commands for
+development environments, to enable users to "switch" to an environment
+provisioned by spin, and run arbitrary commands themselves. Spin plugins try to
+be well-behaved in this regard, and do not silently modify the process
+environment, to make everything that is going on transparent to the user.
 
 
 Why YAML?
 ---------
 
-Good question. I wasn't inclined to write a parser for this project,
-and YAML seemed like the choice that sucked least: it has comments, it
-is well supported by text editors, and its data model blends naturally
-with the configuration tree paradigm of spin. YAML has the same
-information model as JSON: supported data types include dictionaries,
-lists and literals (mostly strings).
+Good question. The original author Frank Patz-Brockmann wasn't inclined to write
+a parser for this project, and YAML seemed like the choice that sucked least: it
+has comments, it is well supported by text editors, and its data model blends
+naturally with the configuration tree paradigm of spin. YAML has the same
+information model as JSON: supported data types include dictionaries, lists and
+literals (mostly strings).
 
-However, YAML is a complex beast. You can do all kinds of mischievous
-tricks with YAML, and if you mess up the tree, the ``spin`` command
-will most likely fail to run.
+However, YAML is a complex beast. You can do all kinds of mischievous tricks
+with YAML, and if you mess up the tree, the ``spin`` command will most likely
+fail to run.
 
-We also concluded that the standard python config files :file:`setup.cfg` or
-:file:`pyproject.toml` aren't quite fitting, as spin's configuration tree
-paradigm is by far better visually recognizable in the :file:`spinfile.yaml`.
-
-
-A lib is missing on my system, e.g python can't be provisioned
---------------------------------------------------------------
-
-System provisiong is an extra step done with `spin system-provision`.
-
-.. code-block:: console
-
-   $ spin system-provision | sudo sh
+We also concluded that the standard python config files ``setup.cfg`` or
+``pyproject.toml`` aren't quite fitting, as spin's :ref:`configuration tree
+paradigm <configuration-tree-system-label>` is by far better visually
+recognizable in the ``spinfile.yaml``.

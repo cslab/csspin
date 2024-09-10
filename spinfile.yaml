@@ -23,6 +23,7 @@ python:
   # environments (additional development dependencies, Python)
   requirements:
     - sphinx-click
+    - sphinx-rtd-theme
     - pytest-mock
     - build # TODO: Maybe move into spin_python.python
 

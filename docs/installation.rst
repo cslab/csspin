@@ -1,35 +1,40 @@
+.. -*- coding: utf-8 -*-
+   Copyright (C) 2024 CONTACT Software GmbH
+   All rights reserved.
+   https://www.contact-software.com/
+
 ============
 Installation
 ============
 
 Spin requires Python 3.9 or later, and you can install it using any
-way you like using :program:`pip`. It is most convenient to have the
-``spin`` command locally installed and always available on your
-``PATH``, just like a system command.
+way you like using :program:`pip`. It is most convenient to have the ``spin``
+command locally installed and always available on your ``PATH``, just like a
+system command.
 
-One easy way of installing `spin` privately in your home directory is
-by using :program:`pipx`, as described in the next section.
+One easy way of installing `spin` privately in your home directory is by using
+:program:`pipx`, as described in the next section.
 
 
-Installing with Pipx
+Installing with pipx
 ====================
 
-``pipx`` is a tool that installs Python packages into a user-specific
-location in a user's ``HOME`` directory. You can install it like so:
+`pipx`_ is a tool that installs Python packages into a user-specific location
+in a user's ``HOME`` directory. You can install it like so:
 
 .. code-block:: console
+   :caption: Installation of pipx
 
-   $ python -m pip install --user pipx
-   $ python -m pipx ensurepath
+   python -m pip install --user pipx
+   python -m pipx ensurepath
 
-``ensurepath`` adds ``$HOME/.local/bin`` to your shell's
-configuration, so commands from packages installed by ``pipx`` are
-available in ``PATH``. Make sure to restart your shell to make the
-setting effective.
+``ensurepath`` adds ``$HOME/.local/bin`` to your shell's configuration, so
+commands from packages installed by ``pipx`` are available in ``PATH``. Make
+sure to restart your shell to make the setting effective.
 
-It is currently recommended to make an editable install from spin's
-Git repository:
+Installing cs.spin is as easy as follows:
 
 .. code-block:: console
+   :caption: Installation of cs.spin using pipx
 
-   $ pipx install --index-url https://packages.contact.de/tools/stable cs.spin
+   pipx install --index-url https://packages.contact.de/tools/stable cs.spin
