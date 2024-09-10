@@ -1,18 +1,6 @@
-# Schema definitions for spin.
+# -*- mode: yaml; coding: utf-8 -*-
 #
-# 'internal'     --> Settings must not come from a configuration file, can only
-#                    be set internally. FIXME: That is not implemented.
-#
-# Attributes with the following types will be converted to specific Python types
-# and assigned to the global configuration tree.
-#
-# 'object'       --> dict/ConfigTree that contains key-values pairs
-# 'path'         --> values will be converted Path objects from the path package
-# 'list'         --> literal list, i.e. list containing only strings
-# 'str'          --> literal/string
-# 'float'        --> floating point number
-# 'int'          --> integer value
-#
+# Schema definitions for cs.spin
 
 spin:
   type: object
@@ -69,10 +57,6 @@ spin:
       help: |
         A dictionary mapping workflow names to lists of commands. This is
         automatically set up by the `when` argument to :py:func:`spin.task`.
-  # FIXME: That was never implemented. Do we want that?
-  # Disallow plugins or user setting to write to the 'spin' context to
-  # keep sanity.
-  unknown-properties: false
 
 environment:
   type: object

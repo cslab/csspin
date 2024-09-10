@@ -150,13 +150,6 @@ def load_plugin(
                 schema_defaults = plugin_schema.get_default()
                 plugin_config_tree.schema = plugin_schema
                 tree.tree_merge(plugin_config_tree, schema_defaults)
-
-                # FIXME: check if that is true and still required:
-                # tree.tree_merge does not take the _ConfigTree__schema into
-                # account, thus we need to add the schema manually.
-                plugin_config_tree._ConfigTree__schema = (  # pylint: disable=protected-access
-                    plugin_schema
-                )
             except FileNotFoundError:
                 warn(f"Plugin {import_spec} does not provide a schema.")
             except KeyError:
@@ -387,8 +380,6 @@ _nested = False
 
 
 @click.command(cls=GroupWithAliases, help=__doc__)
-# FIXME: Investigate: Do we really need @base_options here? Probably not, if
-#        options are ignored anyways. Help is also provided by the plugin/func.
 # Note that the base_options here are not actually used and ignore by
 # 'commands'. Base options are processed by 'cli'.
 @base_options
@@ -399,9 +390,6 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
             if not exists(cfg.spin.spin_dir):
-                # FIXME: Can this branch be triggered? The .spin directory will
-                #        be created during load_config_tree, so it will be
-                #        present in *any case* at this point - or not?
                 die(
                     "This project has not yet been provisioned. You "
                     "may want to run spin with the --provision flag."
