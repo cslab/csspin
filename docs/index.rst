@@ -1,23 +1,23 @@
-.. spin documentation master file, created by
-   sphinx-quickstart on Fri Sep  3 18:02:12 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. -*- coding: utf-8 -*-
+   Copyright (C) 2024 CONTACT Software GmbH
+   All rights reserved.
+   https://www.contact-software.com/
 
-Welcome to spin's documentation!
-================================
+Welcome to cs.spin's documentation!
+===================================
 
 .. toctree::
    :maxdepth: 3
    :caption: Contents
 
-   overview
-   installation
-   userman
-   relnotes
-   howtoplugins
-   cliref
-   apiref
-   schemaref
+   overview.rst
+   installation.rst
+   userman.rst
+   howtoplugins.rst
+   cliref.rst
+   apiref.rst
+   schemaref.rst
+   relnotes.rst
 
 Indices and tables
 ==================

@@ -7,11 +7,14 @@
 """Spin automates the provisioning of tools and other development
 requirements and provides shrink-wrapped project workflows.
 
-Spin requires a 'spinfile.yaml' in the project's top-level
-directory. It can be started from anywhere in the project tree, and
-searches the path up for 'spinfile.yaml'. Subcommands are provided by
-"plugins" declared in spinfile.yaml.
+Spin requires a ``spinfile.yaml`` in the project's top-level directory. It can
+be started from anywhere in the project tree, and searches the path up for
+``spinfile.yaml``. Subcommands are provided by "plugins" declared in
+``spinfile.yaml``.
 
+Spin also leverages `click's <https://click.palletsprojects.com/en/8.0.x/>`_
+feature set, enabling the usage of environment variables instead of CLI flags
+and options (see :ref:`environment-as-input-channel-label`).
 """
 
 from __future__ import annotations

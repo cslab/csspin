@@ -27,11 +27,6 @@ release = importlib.metadata.version("cs.spin")
 
 # -- General configuration ---------------------------------------------------
 
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", ("python.inv", None)),
-    "click": ("https://click.palletsprojects.com/en/8.0.x/", ("click.inv", None)),
-}
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -51,25 +46,31 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "links.rst"]
+
+rst_epilog = ""
+# Read link all targets from file
+with open("links.rst", encoding="utf-8") as f:
+    rst_epilog += f.read()
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", ("python.inv", None)),
+    "click": (
+        "https://click.palletsprojects.com/en/8.0.x/",
+        (
+            "click.inv",
+            None,
+        ),
+    ),
+    # could not find inventory file for the path package
+    "path": ("https://path.readthedocs.io/en/latest/", (None,)),
+}
+
+# The theme to use for HTML and HTML Help pages. See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
-html_css_files = ["custom.css"]
-
-# -- Options LaTeX
-
-latex_elements = {
-    "papersize": "a4paper",
-    "pointsize": "12pt",
-}
+html_theme = "sphinx_rtd_theme"
+html_favicon = "static/favicon.ico"

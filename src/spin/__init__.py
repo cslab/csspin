@@ -198,7 +198,7 @@ def cd(path: str | Path) -> DirectoryChanger:
     ... or that:
 
     >>> with cd("{spin.project_root}"):
-    ...    <do something in this directory>
+        <do something in this directory>
 
     """
     return DirectoryChanger(path)
@@ -214,10 +214,12 @@ def exists(path: str | Path) -> bool:
 
 
 def normpath(*args: str | Path) -> str:
+    """Interpolate and return a normalized path as str"""
     return os.path.normpath(os.path.join(*interpolate(args)))  # type: ignore[no-any-return]
 
 
 def abspath(*args: str | Path) -> str:
+    """Interpolate and return an absolute path as str"""
     return os.path.abspath(normpath(*args))
 
 
@@ -629,7 +631,14 @@ os.environ["SPIN_CACHE"] = os.environ.get(
 
 
 def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
-    """Interpolate a string or path against the configuration tree and the environment.
+    """
+    Interpolate a string or path against the configuration tree and the
+    environment.
+
+    Example:
+
+    >>> interpolate1("{SHELL}")
+    '/usr/bin/zsh'
 
     If literal is not a string or path, it will be converted to a string prior
     interpolating.
@@ -641,9 +650,22 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
     Example:
 
     >>> interpolate1(
-            '{{"header": {{"language": "en", "cache": "{SPIN_CACHE}"}}}}'
-        )
+    ...     '{{"header": {{"language": "en", "cache": "{SPIN_CACHE}"}}}}'
+    ... )
     '{"header": {"language": "en", "cache": "/home/bts/.cache/spin"}}'
+
+    .. Attention:: **Do not use** :py:func:`spin.interpolate1` **in a plugins'
+       top-level**, as the one can't rely on the configuration tree at import time
+       of the module.
+
+       .. code-block:: python
+          :caption: Negative example: How not to use :py:func:`spin.interpolate1`
+          :linenos:
+
+          from spin import config, interpolate1
+
+          defaults = config(key=interpolate1("{some.property}"))
+
 
     """
     is_path = isinstance(literal, Path)
@@ -723,7 +745,7 @@ def readyaml(fname: str | Path) -> ConfigTree:
 
 
 def download(url: str, location: str | Path) -> None:
-    """Download data from `url` to `location`."""
+    """Download data from ``url`` to ``location``."""
     url, location = interpolate((url, location))
     dirname = os.path.dirname(location)
     mkdir(dirname)
