@@ -299,6 +299,28 @@ is updated whenever :program:`spin docs` is executed, and
          - schemadoc -o docs/schemaref.rst
 
 
+Directives
+----------
+
+Similar to :option:`--pp <spin --prepend-properties>` and
+:option:`--ap <spin --append-properties>`, lists can also be extended by
+definitions within the `spinfile.yaml`
+
+.. code-block:: yaml
+   :caption: Extending lists via ``spinfile.yaml``
+
+   myplugin:
+     # assuming default values for 'opts' provided by the plugin is:
+     # opts: [--option=value]
+     append opts: [music]
+     prepend opts: --quiet
+
+   ---
+   # The myplugins subtree will by transformed by spin into:
+   myplugin:
+     opts: [--quiet, --option=value, music]
+
+
 .. _writing-global-label:
 
 Writing ``global.yaml``

@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from click.testing import CliRunner
 from pytest import fixture
 
-from spin import get_tree
 from spin.cli import load_config_tree
 
 if TYPE_CHECKING:
@@ -32,19 +31,17 @@ def cli_runner() -> CliRunner:
 
 @fixture()
 def cfg(minimum_yaml_path) -> ConfigTree:
-    load_config_tree(minimum_yaml_path, cwd=os.getcwd())
-    return get_tree()
+    return load_config_tree(minimum_yaml_path, cwd=os.getcwd())
 
 
 @fixture()
 def cfg_spin_dummy() -> ConfigTree:
-    load_config_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
-    return get_tree()
+    return load_config_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
 
 
 @fixture()
 def minimum_yaml_path() -> str:
-    return os.path.join(os.path.dirname(__file__), "yamls", "sample.yaml")
+    return Path(__file__).dirname() / "yamls" / "sample.yaml"
 
 
 @fixture()
@@ -61,8 +58,8 @@ def chdir(path):
     """A contextmanager which changes the cwd and returns to
     the original cwd on exit
     """
+    cwd = os.getcwd()
     try:
-        cwd = os.getcwd()
         os.chdir(path)
         yield
     finally:
@@ -77,4 +74,16 @@ def disable_global_yaml():
 
 @fixture()
 def trivial_plugin_path() -> Path:
-    return Path(os.path.dirname(__file__)) / "data" / "trivial"
+    return Path(__file__).dirname() / "data" / "trivial"
+
+
+@fixture(scope="session")
+def directive_spinfile() -> Path:
+    return load_config_tree(
+        Path(__file__).dirname()
+        / "integration"
+        / "directives"
+        / "fixtures"
+        / "spinfile.yaml",
+        cwd=os.getcwd(),
+    )

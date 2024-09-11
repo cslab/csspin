@@ -370,14 +370,22 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
                 die(f"Can't merge {value=} into '{target=}[{key=}]'")
         elif isinstance(value, ConfigTree):
             tree_merge(target[key], value)
-    # Pass 2: process directives. Note that we need a list for the
-    # iteration, as we remove directive keys on the fly.
-    for clause, value in list(target.items()):
+
+
+def tree_apply_directives(tree: ConfigTree) -> None:
+    """Recursively walking through the tree and processing directives"""
+
+    # Note that we need a list for the iteration, as we remove directive keys on
+    # the fly.
+    for clause, value in list(tree.items()):
         directive, key = rpad(clause.split(maxsplit=1), 2)
-        fn = globals().get(f"directive_{directive}", None)
-        if fn:
-            fn(target, key, value)
-            del target[clause]
+        if fn := globals().get(f"directive_{directive}", None):
+            fn(tree, key, value)
+            del tree[clause]
+
+    for key, value, _, _, types, _ in tree_walk(tree):
+        if isinstance(value, ConfigTree) and "internal" not in types:
+            tree_apply_directives(value)
 
 
 def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) -> None:

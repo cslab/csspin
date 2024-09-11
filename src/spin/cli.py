@@ -170,6 +170,7 @@ def load_plugin(
                 plugin_defaults,  # type: ignore[arg-type]
                 keep=interpolate1("{spin.spinfile}"),
             )
+        tree.tree_apply_directives(plugin_config_tree)
 
         cfg.loaded[full_name] = mod
         dependencies = set()
@@ -417,7 +418,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 @click.pass_context
 def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-return-statements
     ctx: click.Context,
-    version: packaging.version.Version,
+    version: packaging.version.Version | None,
     help: bool,  # pylint: disable=W0622
     cwd: str,
     envbase: str,
