@@ -1,0 +1,32 @@
+# Spinfile used for testing the directives
+plugin-path:
+  - plugins
+plugins:
+  - directives
+
+directives:
+  # Testing plugin-level and nested application of directives
+  test_append:
+    opts: ["a", "b", "c"]
+    append opts: ["d"]
+    nested_append:
+      opts: ["w", "x", "y"]
+      append opts: ["z"]
+  test_prepend:
+    opts: ["a", "b", "c"]
+    prepend opts: ["d"]
+    nested_prepend:
+      opts: ["w", "x", "y"]
+      prepend opts: ["z"]
+  test_interpolate:
+    opts: "abcd"
+    interpolate opts: "{spin.cache}"
+    nested_interpolate:
+      opts: "abcd"
+      interpolate opts: "{spin.cache}"
+
+  # Following tests the behavior if test_setting is not defined/overridden
+  # individually in this spinfile.yaml
+  append test_setting_1: "a"
+  prepend test_setting_1: "b"
+  interpolate test_setting_2: "{spin.cache}"
