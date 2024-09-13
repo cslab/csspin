@@ -12,15 +12,10 @@ import sys
 
 import click
 import distro
-import entrypoints
-from path import Path
 
 from spin import (
     argument,
     die,
-    group,
-    interpolate1,
-    memoizer,
     option,
     parse_version,
     run_script,
@@ -98,40 +93,6 @@ def schemadoc(
         schema = schema.properties.get(arg)
     parent = "" if len(select) < 2 else ".".join(select[:-1])
     do_docwrite(parent, arg, schema)
-
-
-@group("global", noenv=True)
-def globalgroup(ctx):
-    """Subcommands for managing globally available plugins."""
-    pass
-
-
-@globalgroup.task("add")
-def global_add(packages: argument(nargs=-1)):
-    cmd = [
-        sys.executable,
-        "-m",
-        "pip",
-        "install",
-        "-t",
-        interpolate1(Path("{spin.spin_dir}")) / "plugins",
-    ]
-    with memoizer("{spin.cache}/plugins/packages.memo") as m:
-        for pkg in packages:
-            sh(*cmd, f"{pkg}")
-            if not m.check(pkg):
-                m.add(pkg)
-
-
-@globalgroup.task("ls")
-def global_ls():
-    for ep in entrypoints.get_group_all("spin.plugin"):
-        print(ep.__dict__)
-
-
-@globalgroup.task("rm")
-def global_rm():
-    pass
 
 
 class TaskDefinition:
