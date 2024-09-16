@@ -57,6 +57,7 @@ from spin import (
     warn,
     writetext,
 )
+from spin.tree import ConfigTree
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -137,6 +138,12 @@ def load_plugin(
         settings_name = plugin_defaults.get("__name__", full_name.split(".")[-1])
         debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
+        if not isinstance(plugin_config_tree, ConfigTree):
+            die(
+                f"The configuration of {import_spec} is invalid."
+                " Please check its configuration in spinfile.yaml"
+                " and global.yaml."
+            )
 
         if not import_spec.startswith("spin."):
             try:
@@ -404,7 +411,6 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 @click.command(
     context_settings={
         "allow_extra_args": True,
-        "ignore_unknown_options": True,
         # Override the default help option name -- we want click to
         # use the help of the main command group 'commands', not from
         # this boilerplate entry point.
@@ -533,11 +539,18 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
 def find_plugin_packages(cfg: tree.ConfigTree) -> Generator:
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
-    yield from cfg.get("plugin-packages", [])
+    plugin_packages = cfg.get("plugin-packages", [])
+    if not isinstance(plugin_packages, list):
+        die("'plugin-packages' configuration is invalid!")
+    yield from plugin_packages
 
 
 def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
-    for item in cfg.get("plugins", []):
+    plugins = cfg.get("plugins", [])
+    if not isinstance(plugins, list):
+        die("'plugins' configuration is invalid!")
+
+    for item in plugins:
         if isinstance(item, dict):
             for package, modules in item.items():
                 for module in modules:
@@ -572,6 +585,8 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     cfg.verbosity = verbosity
     cfg.schema = spinschema
     userdata = readyaml(spinfile) if spinfile else config()
+    if not userdata:
+        die("The spinfile seems to be invalid!")
     tree.tree_update(cfg, userdata)
     tree.tree_merge(cfg, DEFAULTS)
 
@@ -618,7 +633,11 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
         # stuff here.
         install_plugin_packages(cfg)
 
-    for localpath in cfg.get("plugin-path", []):
+    plugin_path = cfg.get("plugin-path", [])
+    if not isinstance(plugin_path, list):
+        die("'plugin-path' configuration is invalid!")
+
+    for localpath in plugin_path:
         localabs = interpolate1(cfg.spin.project_root / localpath)
         if not exists(localabs):
             die(f"Plugin path {localabs} doesn't exist")

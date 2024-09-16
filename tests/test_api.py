@@ -531,7 +531,9 @@ def test_interpolate1(cfg):
     cfg.bad = spin.config()
     cfg.bad.a = "{bad.b}"
     cfg.bad.b = "{bad.a}"
-    with pytest.raises(RecursionError, match="{bad.a}"):
+    with pytest.raises(
+        click.Abort, match="Could not interpolate '{bad.a}' due to RecursionError."
+    ):
         spin.interpolate1("{bad.a}")
 
     # ... allowing to pass not path and not string
@@ -609,7 +611,7 @@ def test_is_up_to_date(tmp_path: PathlibPath, mocker: MockerFixture) -> None:
     assert not spin.is_up_to_date(path1, 1)
 
     spin.writelines(path1, lines="some content")
-    with pytest.raises(TypeError, match="'sources' must be type 'Iterable'"):
+    with pytest.raises(click.Abort, match=r".* since 'sources' is not iterable.*"):
         spin.is_up_to_date(path1, 1)
 
     from time import sleep
