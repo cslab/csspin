@@ -6,11 +6,9 @@
 
 """Module implementing tests related to directive support"""
 
-import pytest
 from path import Path
 
 
-@pytest.mark.wip()
 def test_directive_append(directive_spinfile: Path) -> None:
     """
     Ensuring that directive_append works for plugins without schemas and
@@ -23,7 +21,6 @@ def test_directive_append(directive_spinfile: Path) -> None:
     assert not hasattr(cfg.directives.test_append.nested_append, "append opts")
 
 
-@pytest.mark.wip()
 def test_directive_prepend(directive_spinfile: Path) -> None:
     """
     Ensuring that directive_prepend works for plugins without schemas and
@@ -36,7 +33,6 @@ def test_directive_prepend(directive_spinfile: Path) -> None:
     assert not hasattr(cfg.directives.test_prepend.nested_prepend, "prepend opts")
 
 
-@pytest.mark.wip()
 def test_directive_interpolate(directive_spinfile: Path) -> None:
     """
     Ensuring that directive_interpolate works for plugins without schemas and
@@ -51,7 +47,6 @@ def test_directive_interpolate(directive_spinfile: Path) -> None:
     )
 
 
-@pytest.mark.wip()
 def test_directives_without_default_defined_in_spinfile(
     directive_spinfile: Path,
 ) -> None:

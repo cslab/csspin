@@ -22,7 +22,6 @@ from __future__ import annotations
 import glob
 import importlib
 import importlib.metadata as importlib_metadata
-import logging
 import os
 import sys
 from site import addsitedir
@@ -35,8 +34,10 @@ import packaging.version
 from path import Path
 
 from spin import (
+    Verbosity,
     cd,
     config,
+    debug,
     die,
     exists,
     get_requires,
@@ -72,8 +73,6 @@ DEFAULTS = config(
         extra_index=None,
         version=importlib_metadata.version("cs.spin"),
     ),
-    quiet=False,
-    verbose=0,
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
         shell=os.getenv("SHELL"),
@@ -112,7 +111,7 @@ def load_plugin(
     of absolute or relative import specs).
 
     """
-    logging.debug(f"{indent}import plugin {import_spec}")
+    debug(f"{indent}import plugin {import_spec}")
 
     mod = full_name = None
     try:
@@ -136,14 +135,14 @@ def load_plugin(
         # The subtree is either the module name for the plugin
         # (excluding the package prefix), or __name__, if that is set.
         settings_name = plugin_defaults.get("__name__", full_name.split(".")[-1])
-        logging.debug(f"{indent}add subtree {settings_name}")
+        debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
 
         if not import_spec.startswith("spin."):
             try:
                 # Load the plugin specific schema for non-builtin plugins
                 plugin_name = import_spec.split(".")[-1]
-                logging.debug(f"{indent}loading {plugin_name}_schema.yaml")
+                debug(f"{indent}loading {plugin_name}_schema.yaml")
                 plugin_schema = schema.schema_load(  # type: ignore[attr-defined]
                     os.path.join(
                         os.path.dirname(mod.__file__),  # type: ignore[union-attr,arg-type]
@@ -272,7 +271,7 @@ def base_options(fn: Callable) -> Callable:
             "--quiet",
             "-q",
             is_flag=True,
-            default=DEFAULTS.quiet,
+            default=False,
             help=(
                 "Be more quiet. By default, spin will echo commands as they are"
                 " executed. With -q, no commands will be shown. The quiet option is"
@@ -284,7 +283,7 @@ def base_options(fn: Callable) -> Callable:
             "--verbose",
             "-v",
             count=True,
-            default=DEFAULTS.verbose,
+            default=0,
             help=(
                 "Be more verbose. By default, spin will generate no output, except the"
                 " commands it executes. Using -v, the verbosity is increased."
@@ -424,7 +423,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     envbase: str,
     spinfile: str,
     quiet: bool,
-    verbose: bool,
+    verbose: int,
     dump: bool,
     properties: tuple,
     prepend_properties: tuple,
@@ -432,23 +431,22 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     provision: bool,
     cleanup: bool,
 ) -> int | None:
-    if verbose > 1:
-        # Set up logging
-        logging.basicConfig(level=logging.DEBUG)
-
-    # We want to honor the 'quiet' and 'verbose' flags early, even if
-    # the configuration tree has not yet been created, as subsequent
-    # code uses 'echo' and/or 'log'.
-    get_tree().quiet = quiet
-    get_tree().verbose = verbose
-
-    # Special case for 'env' and 'system-provision:
-    if ctx.args and ctx.args[0] in ("env", "system-provision"):
-        quiet = get_tree().quiet = True
-
     if version:
         print(importlib_metadata.version("cs.spin"))
         return 0
+
+    if quiet:
+        verbose = -1
+    elif ctx.args and ctx.args[0] in ("env", "system-provision"):
+        # Special case for 'env' and 'system-provision:
+        quiet = True
+        verbose = -1
+
+    verbosity = Verbosity(verbose)
+    # We want to honor the 'quiet' and 'verbose' flags early, even if
+    # the configuration tree has not yet been created, as subsequent
+    # code uses 'echo' and/or 'log'.
+    get_tree().verbosity = verbosity
 
     # Find a project file and load it.
     if cwd:
@@ -470,8 +468,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
             spinfile,
             cwd,
             envbase,
-            quiet,
-            verbose,
+            verbosity,
             cleanup,
             provision,
             properties,
@@ -512,8 +509,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
                 spinfile,
                 cwd,
                 envbase,
-                quiet,
-                verbose,
+                verbosity,
                 False,
                 provision,
                 properties,
@@ -554,8 +550,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     spinfile: str | Path,
     cwd: str = "",
     envbase: str | None = None,
-    quiet: bool = False,
-    verbose: bool = False,
+    verbosity: Verbosity = Verbosity.NORMAL,
     cleanup: bool = False,
     provision: bool = False,
     properties: tuple = (),
@@ -568,11 +563,13 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
 
     If ``provision`` is set, plugins will be provisioned.
     """
-    logging.info(f"Loading {spinfile}")
+    get_tree().verbosity = verbosity
+    debug(f"Loading {spinfile}")
     spinschema = schema.schema_load(Path(__file__).dirname() / "schema.yaml")
 
     cfg = spinschema.get_default()  # type: ignore[call-arg]
     set_tree(cfg)
+    cfg.verbosity = verbosity
     cfg.schema = spinschema
     userdata = readyaml(spinfile) if spinfile else config()
     tree.tree_update(cfg, userdata)
@@ -586,20 +583,14 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     ):
         user_settings = readyaml(spin_global)
         if user_settings:
-            logging.debug(f"Merging user settings from {os.path.normpath(spin_global)}")
+            debug(f"Merging user settings from {os.path.normpath(spin_global)}")
             tree.tree_update(cfg, user_settings)
 
     if envbase:
         cfg.spin.spin_dir = Path(envbase).absolute() / ".spin"
 
-    # Reflect certain command line options in the config tree.
-    cfg.quiet = quiet
-    cfg.verbose = verbose
-    # This is meant for tools that support -q; instead of
-    # conditionally passing -q on the command line, plugins can simply
-    # build the command using cfg.quietflag (the None will be filtered
-    # out by spin.interpolate)
-    cfg.quietflag = None if cfg.verbose else "-q"
+    if verbosity > Verbosity.DEBUG:
+        cfg.quietflag = None
 
     cfg.spin.spinfile = Path(spinfile)
     cfg.spin.project_root = Path(cfg.spin.spinfile).absolute().normpath().dirname()
@@ -639,7 +630,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     # objects.
     cfg.loaded = config()
     addsitedir(cfg.spin.spin_dir / "plugins")
-    logging.debug("loading project plugins:")
+    debug("loading project plugins:")
     load_plugin(cfg, "spin.builtin", may_fail=cleanup)
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec, may_fail=cleanup)
@@ -649,7 +640,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
         0,
         str(interpolate1(Path(cfg.spin.cache)).absolute() / "plugins"),  # type: ignore[union-attr]
     )
-    logging.debug("loading global plugins:")
+    debug("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):
         load_plugin(cfg, ep.module_name, may_fail=cleanup)
 
@@ -704,7 +695,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         f"{sys.executable}",
         "-mpip",
         "install",
-        "-q" if cfg.quiet or not cfg.verbose else None,
+        "-q" if cfg.verbosity < Verbosity.INFO else None,
         "--disable-pip-version-check",
         "-t",
         os.environ["PYTHONPATH"],

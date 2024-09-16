@@ -21,6 +21,7 @@ yourself comfortable with click's documentation.
 
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, Type
 
 import packaging.version
@@ -32,7 +33,6 @@ if TYPE_CHECKING:
 
 import collections
 import inspect
-import logging
 import os
 import pickle
 import shlex
@@ -49,6 +49,7 @@ import xdg
 from path import Path
 
 __all__ = [
+    "debug",
     "echo",
     "info",
     "warn",
@@ -100,7 +101,7 @@ def echo(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
     `echo` supports the same keyword arguments as Click's :py:func:`click.echo`.
 
     """
-    if not CONFIG.quiet:
+    if CONFIG.verbosity > Verbosity.QUIET:
         if resolve:
             msg = interpolate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
@@ -119,9 +120,29 @@ def info(*msg: str, **kwargs: Any) -> None:
     :py:func:`click.echo`.
 
     """
-    if CONFIG.verbose:
+    if CONFIG.verbosity > Verbosity.NORMAL:
         msg = interpolate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
+        click.echo(" ".join(msg), **kwargs)
+
+
+def debug(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
+    """Print a message to the console by joining the positional arguments
+    `msg` with spaces.
+
+    Arguments are interpolated against the configuration tree if ``resolve``
+    evaluates to ``True``. `debug` will remain silent unless ``spin`` is run
+    with the ``-vv`` flag. `debug` is meant for messages that provide internal
+    details.
+
+    `debug` supports the same keyword arguments as Click's
+    :py:func:`click.echo`.
+
+    """
+    if CONFIG.verbosity > Verbosity.INFO:
+        if resolve:
+            msg = interpolate(msg)  # type: ignore[assignment]
+        click.echo(click.style("spin: debug: ", fg="white", dim=True), nl=False)
         click.echo(" ".join(msg), **kwargs)
 
 
@@ -155,6 +176,25 @@ def error(*msg: str, **kwargs: Any) -> None:
     msg = interpolate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
+
+
+class Verbosity(IntEnum):
+    """
+    :py:class:`enum.IntEnum` defining four verbosity levels:
+
+    * ``QUIET``: Outputs only warnings and errors via :py:func:`spin.warn()` and
+      :py:func:`spin.error()`.
+    * ``NORMAL``: Outputs the normal amount of verbosity, extending the quiet
+      level by enabling :py:func:`spin.echo()`.
+    * ``INFO``: Extends normal verbosity to enable :py:func:`spin.info()`.
+    * ``DEBUG``: Extends info verbosity to enable debug messages via
+      :py:func:`spin.debug()`.
+    """
+
+    QUIET = -1
+    NORMAL = 0
+    INFO = 1
+    DEBUG = 2
 
 
 class DirectoryChanger:
@@ -387,14 +427,9 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     cpi = None
     try:
         t0 = time.monotonic()
-        logging.debug(
-            "subprocess.run(%s, shell=%s, check=%s, env=%s, executable=%s, kwargs=%s",
-            cmd,
-            shell,
-            check,
-            argenv,
-            executable,
-            kwargs,
+        debug(
+            f"subprocess.run({cmd}, shell={shell}, check={check}, env={argenv},"
+            f" executable={executable}, kwargs={kwargs}",
         )
         cpi = subprocess.run(
             cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
@@ -1074,7 +1109,7 @@ def ensure(command: click.Command) -> None:
     # Check 'command_name' for dependencies declared under
     # "build-rules", and make sure to produce it. This is used
     # internally and intentionally undocumented.
-    logging.debug("checking preconditions for %s", command)
+    debug(f"checking preconditions for {command}")
     cfg = get_tree()
     build_target(cfg, f"task {command.full_name}", phony=True)  # type: ignore[attr-defined]
 
@@ -1117,12 +1152,12 @@ def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
     if reverse:
         plugins = reversed(plugins)
     for func_name in fn_names:
-        logging.debug(f"toporun: {func_name}")
+        debug(f"toporun: {func_name}")
         for pi_name in plugins:
             pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
-                logging.debug(f"  {pi_name}.{func_name}()")
+                debug(f"  {pi_name}.{func_name}()")
                 initf(cfg)
 
 
