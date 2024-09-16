@@ -70,21 +70,34 @@ extra-tasks:
     `extra-tasks` maps task names to task definitions, where task
     definitions support ``env`` and ``script`` keys.
 
+verbosity:
+  type: str
+  default: NORMAL
+  help: |
+    `verbosity` defines the level of which spin will print messages to stdout.
+    Levels are: QUIET, NORMAL, INFO, DEBUG
+
+verbose:
+  type: int
+  default: 0
+  help: |
+    DEPRECATED: When `verbose` is on, spin outputs additional information, like
+    the time spent running tasks. Some plugins use `verbose` to make tools more
+    chatty.
+
 quiet:
   type: bool
   default: false
   help: |
-    Spin normally echos the verbatim commands it runs. When `quiet` is
-    set, this output is suppressed. Additionally, some plugins use
+    DEPRECATED: Spin normally echos the verbatim commands it runs. When `quiet`
+    is set, this output is suppressed. Additionally, some plugins use
     `quiet` to suppress more output of the tools they run.
 
-verbose:
-  type: bool
-  default: false
+quietflag:
+  type: str
+  default: -q
   help: |
-    When `verbose` is on, spin outputs additional information, like
-    the time spent running tasks. Some plugins use `verbose` to make
-    tools more chatty.
+    DEPRECATED: Default quietflag used by plugins
 
 plugins:
   type: list

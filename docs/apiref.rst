@@ -32,8 +32,10 @@ Interacting with spin
 Communication with the user
 ===========================
 
+.. autoclass:: Verbosity
 .. autofunction:: echo
 .. autofunction:: info
+.. autofunction:: debug
 .. autofunction:: warn
 .. autofunction:: error
 .. autofunction:: die

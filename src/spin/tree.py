@@ -21,7 +21,7 @@ import ruamel.yaml
 import ruamel.yaml.comments
 from path import Path
 
-from spin import die, interpolate1, warn  # pylint: disable=cyclic-import
+from spin import Verbosity, die, interpolate1, warn  # pylint: disable=cyclic-import
 
 if TYPE_CHECKING:
     from collections.abc import Hashable
@@ -264,7 +264,7 @@ def tree_dump(tree: ConfigTree) -> str:
     )
     separator = "|"
     for key, value, _, info, types, indent in tree_walk(tree):
-        if "internal" in types and not tree.verbose > 0:
+        if "internal" in types and not tree.verbosity > Verbosity.NORMAL:
             continue
 
         tag = f"{shorten_filename(info.file)}:{info.line}:"

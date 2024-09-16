@@ -102,7 +102,7 @@ repos:
           - --format=pylint
           - --max-line-length=110
           - --ignore=F821,W503
-          # - --copyright-check # FIXME
+          - --copyright-check
         types: [file] # override `types: [python]`
         files: \.(pyi?|ue)$
         additional_dependencies: [flake8-copyright]

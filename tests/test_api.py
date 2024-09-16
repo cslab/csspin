@@ -11,7 +11,6 @@ implemented in src/spin/__init__.py
 
 from __future__ import annotations
 
-import logging
 import os
 import pickle
 import subprocess
@@ -26,18 +25,18 @@ import pytest
 from path import Path
 
 import spin
+from spin import Verbosity
 from spin.tree import ConfigTree
 
 if TYPE_CHECKING:
 
     from typing import Any
 
-    from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
 
 
 def test_echo(cfg: ConfigTree, mocker: MockerFixture) -> None:
-    """spin.echo is echo'ing when CONFIG.quiet is False"""
+    """spin.echo is echo'ing when CONFIG.verbosity is not QUIET"""
     mocker.patch("click.echo")
     marker = "ZIOhddu"
     spin.echo(marker)
@@ -48,16 +47,15 @@ def test_echo(cfg: ConfigTree, mocker: MockerFixture) -> None:
 
 
 def test_echo_quiet(cfg: ConfigTree, mocker: MockerFixture) -> None:
-    """spin.echo is not echo'ing if CONFIG.quiet is True"""
+    """spin.echo is not echo'ing if CONFIG.verbosity is QUIET"""
     mocker.patch("click.echo")
-    cfg.quiet = True
-
+    cfg.verbosity = Verbosity.QUIET
     spin.echo("Should not be shown")
     assert not click.echo.called  # type: ignore[attr-defined]
 
 
-def test_info(mocker: MockerFixture) -> None:
-    """spin.info is info'ing if CONFIG.verbose is False"""
+def test_info_quiet(cfg: ConfigTree, mocker: MockerFixture) -> None:
+    """spin.info is not info'ing if CONFIG.verbosity < INFO"""
     mocker.patch("click.echo")
     marker = "ZIOhddu"
     spin.info(marker)
@@ -65,11 +63,32 @@ def test_info(mocker: MockerFixture) -> None:
 
 
 def test_info_verbose(cfg: ConfigTree, mocker: MockerFixture) -> None:
-    """spin.info is info'ing if CONFIG.verbose is True"""
+    """spin.info is info'ing if CONFIG.verbosity is set to INFO"""
     mocker.patch("click.echo")
     marker = "ZIOhddu"
-    cfg.verbose = True
+    cfg.verbosity = Verbosity.INFO
     spin.info(marker)
+    for call in click.echo.call_args_list:  # type: ignore[attr-defined]
+        assert any(
+            expected in call.args[0] for expected in ("spin: ", marker)
+        ), f"None of the expected values found in {call.args[0]=}"
+
+
+def test_debug_quiet(cfg: ConfigTree, mocker: MockerFixture) -> None:
+    """spin.debug is not debugging if CONFIG.verbosity < DEBUG"""
+    mocker.patch("click.echo")
+    marker = "ZIOhddu"
+    cfg.verbosity = Verbosity.INFO
+    spin.debug(marker)
+    assert not click.echo.called  # type: ignore[attr-defined]
+
+
+def test_debug(cfg: ConfigTree, mocker: MockerFixture) -> None:
+    """spin.debug is not debugging if CONFIG.verbosity < DEBUG"""
+    mocker.patch("click.echo")
+    marker = "ZIOhddu"
+    cfg.verbosity = Verbosity.DEBUG
+    spin.debug(marker)
     for call in click.echo.call_args_list:  # type: ignore[attr-defined]
         assert any(
             expected in call.args[0] for expected in ("spin: ", marker)
@@ -112,7 +131,7 @@ def test_directory_changer(
         assert cwd not in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined]
 
 
-def test_cd(tmp_path: PathlibPath) -> None:
+def test_cd(cfg, tmp_path: PathlibPath) -> None:
     """spin.cd is changing the current directory as expected"""
     cwd = os.getcwd()
     with spin.cd(tmp_path):
@@ -908,16 +927,19 @@ def test_get_requires(cfg: ConfigTree) -> None:
 
 
 def test_toporun(
-    mocker: MockerFixture,
     cfg: ConfigTree,
-    caplog: LogCaptureFixture,
+    mocker: MockerFixture,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """spin.toporun executes a specific function of a loaded plugin"""
     # TODO: Load another plugin that implements `configure` (or another function
     #       which is implemented in spin.builtin) and test the reversed
     #       execution.
     mocker.patch("spin.builtin.configure", return_value=None)
-    caplog.set_level(logging.DEBUG)
-    assert spin.toporun(cfg, "configure") is None
-    assert "toporun: configure" in caplog.text
-    assert "spin.builtin.configure()" in caplog.text
+    cfg.verbosity = Verbosity.DEBUG
+
+    spin.toporun(cfg, "configure")
+
+    captured = capsys.readouterr()
+    assert "toporun: configure" in captured.out
+    assert "spin.builtin.configure()" in captured.out

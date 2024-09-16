@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import logging
 import os
 import sys
 from pathlib import Path as PathlibPath
@@ -25,8 +24,12 @@ from spin.tree import ConfigTree
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
-    from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
+
+from subprocess import check_output
+from subprocess import run as subprocess_run
+
+from spin import Verbosity
 
 
 def test_cli(cli_runner: CliRunner) -> None:
@@ -52,7 +55,50 @@ def test_find_spinfile(tmp_path: PathlibPath) -> None:
         assert cli.find_spinfile(spinfile=None) == spinfile
 
 
-def test_load_plugin(cfg_spin_dummy: ConfigTree, caplog: LogCaptureFixture) -> None:
+def test_find_spinfile_failing(
+    tmp_path: PathlibPath,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    spin.cli.find_spinfile raises an exception if no spinfile could be found
+    """
+    from subprocess import PIPE
+
+    # help case
+    result = subprocess_run(
+        ["spin", "-C", str(tmp_path), "--help"],
+        text=True,
+        stdout=PIPE,
+        stderr=PIPE,
+        check=False,
+    )
+    assert "spin: warning: No configuration file found" in result.stderr
+
+    # no local spinfile found + passed spinfile not found
+    result = subprocess_run(
+        ["spin", "-C", str(tmp_path), "-f", "spinfile.yaml", "--provision"],
+        text=True,
+        stdout=PIPE,
+        stderr=PIPE,
+        check=False,
+    )
+    assert "spin: error: spinfile.yaml not found" in result.stderr
+
+    # not help and no spinfile found nor passed
+    result = subprocess_run(
+        ["spin", "-C", str(tmp_path), "--provision"],
+        text=True,
+        stdout=PIPE,
+        stderr=PIPE,
+        check=False,
+    )
+    assert "spin: error: No configuration file found" in result.stderr
+
+
+def test_load_plugin(
+    cfg_spin_dummy: ConfigTree,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """
     spin.cli.load_plugin loads valid plugins into the tree if they're not
     already present
@@ -61,19 +107,23 @@ def test_load_plugin(cfg_spin_dummy: ConfigTree, caplog: LogCaptureFixture) -> N
 
     from types import ModuleType
 
-    caplog.set_level(logging.DEBUG)
+    cfg_spin_dummy.verbosity = Verbosity.DEBUG
 
     # load plugin that is already present in the tree
     plugin = cli.load_plugin(cfg_spin_dummy, "spin.builtin")
+    captured = capsys.readouterr()
+
     assert isinstance(plugin, ModuleType)
-    assert "import plugin spin.builtin" in caplog.text
-    assert "add subtree" not in caplog.text
+    assert "import plugin spin.builtin" in captured.out
+    assert "add subtree" not in captured.out
 
     # load plugin that is not present in the tree
     assert not cfg_spin_dummy.loaded.get("dummy")
     plugin = cli.load_plugin(cfg=cfg_spin_dummy, import_spec="spin_dummy.dummy")
+    captured = capsys.readouterr()
+
     assert isinstance(plugin, ModuleType)
-    assert "import plugin spin_dummy.dummy" in caplog.text
+    assert "import plugin spin_dummy.dummy" in captured.out
     assert cfg_spin_dummy.loaded.get("spin_dummy.dummy")
     assert isinstance(plugin.defaults, ConfigTree)
 
@@ -174,25 +224,20 @@ def test_load_config_tree_basic(
     mocker: MockerFixture,
     tmp_path: PathlibPath,
     minimum_yaml_path: str,
-    caplog: LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
     spin.cli.load_config_tree returns a valid configuration tree with all
-    expected attributes set (verbose)
+    expected attributes set (Verbosity.NORMAL)
     """
     mock_toporun = mocker.patch("spin.cli.toporun")
-    mock_click_echo = mocker.patch("click.echo")
-    caplog.set_level(logging.DEBUG)
 
     with chdir(tmp_path):
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
 
-        cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path, quiet=True)
+        cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path)
 
-        assert not cfg.verbose
-        assert cfg.quiet
-        assert cfg.quietflag == "-q"
         assert cfg.spin.spinfile == spinfile
         assert cfg.spin.project_root == spinfile.dirname()
         assert cfg.spin.project_name == tmp_path.basename()
@@ -202,33 +247,25 @@ def test_load_config_tree_basic(
         assert (tmp_path / ".spin" / ".gitignore").is_file()
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
             assert f.read() == "# Created by spin automatically\n*\n"
-        mock_click_echo.assert_not_called()
 
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
         mock_toporun.assert_called_once()
-
         assert cfg.get("plugin-path") is None
-        assert f"Loading {str(spinfile)}" in caplog.text
-        assert "loading project plugins:" in caplog.text
-        assert "  import plugin spin.builtin" in caplog.text
-        assert "  add subtree builtin" in caplog.text
-        assert "loading global plugins:" in caplog.text
 
 
 def test_load_config_tree_extended(
     mocker: MockerFixture,
     tmp_path: PathlibPath,
     minimum_yaml_path: str,
-    caplog: LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
     spin.cli.load_config_tree returns a valid configuration tree with all
     expected attributes set (quiet + provision)
     """
     mock_echo = mocker.patch("spin.echo")
-    caplog.set_level(logging.DEBUG)
     with chdir(tmp_path):
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
@@ -237,17 +274,14 @@ def test_load_config_tree_extended(
             spinfile=spinfile,
             envbase=tmp_path,
             cwd=tmp_path,
-            verbose=True,
+            verbosity=Verbosity.DEBUG,
             cleanup=True,
             provision=True,
             properties=("foo=bar",),
         )
+        captured = capsys.readouterr()
 
-        assert not cfg.quiet
-        assert cfg.verbose
         assert cfg.foo == "bar"
-        assert cfg.quietflag is None
-        assert cfg.spin.spinfile == spinfile
         assert cfg.spin.project_root == spinfile.dirname()
         assert cfg.spin.project_name == tmp_path.basename()
         assert cfg.spin.spin_dir == tmp_path / ".spin"
@@ -262,11 +296,10 @@ def test_load_config_tree_extended(
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
         assert cfg.get("plugin-path") is None
-        assert f"Loading {str(spinfile)}" in caplog.text
-        assert "loading project plugins:" in caplog.text
-        assert "  import plugin spin.builtin" in caplog.text
-        assert "  add subtree builtin" in caplog.text
-        assert "loading global plugins:" in caplog.text
+        assert "loading project plugins:" in captured.out
+        assert "  import plugin spin.builtin" in captured.out
+        assert "  add subtree builtin" in captured.out
+        assert "loading global plugins:" in captured.out
 
 
 def test_install_plugin_packages(
@@ -290,3 +323,12 @@ def test_install_plugin_packages(
     assert (plugin_dir / "packages.memo").is_file()
     with memoizer(plugin_dir / "packages.memo") as m:
         assert m.check(trivial_plugin_path)
+
+
+def test_spin_version() -> None:
+    """Ensuring that spin --version prints the correct version of cs.spin"""
+    import importlib.metadata as importlib_metadata
+
+    expected_version = importlib_metadata.version("cs.spin")
+    output = check_output(["spin", "--version"], text=True)
+    assert expected_version in output
