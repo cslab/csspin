@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 from path import Path
 
-from spin import tree
+from spin import die, tree
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Iterable, Type
@@ -171,8 +171,8 @@ def build_descriptor(description: dict) -> Type[BaseDescriptor]:
     description["type"] = description.get("type", "object").split()
     factory = DESCRIPTOR_REGISTRY.get(description["type"][0])
     if factory is None:
-        raise SchemaError(f"No factory for '{description['type'][0]}'")
-    return factory(description)  # type: ignore[return-value]
+        die(f"Unknown type '{description['type'][0]}' found in schema configuration.")
+    return factory(description)  # type: ignore[return-value,misc]
 
 
 def schema_load(fn: str) -> Type[BaseDescriptor]:

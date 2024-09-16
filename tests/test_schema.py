@@ -9,6 +9,7 @@
 
 from typing import Callable
 
+from click import Abort as click_abort
 from pytest import raises
 
 from spin import config, schema
@@ -51,7 +52,7 @@ def test_schema_invalid_factory() -> None:
     """
     Function ensuring that not implemented factories will raise SchemaError.
     """
-    with raises(schema.SchemaError, match="No factory for 'set'"):
+    with raises(click_abort, match="Unknown type 'set' found in schema configuration."):
         schema.build_schema(config(x=config(type="set")))
 
 

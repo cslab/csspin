@@ -141,18 +141,19 @@ def warn(*msg: str, **kwargs: Any) -> None:
     click.echo(" ".join(msg), err=True, **kwargs)
 
 
-def error(*msg: str, **kwargs: Any) -> None:
+def error(*msg: str, resolve: bool = True, **kwargs: Any) -> None:
     """Print an error message to the console by joining the positional
     arguments `msg` with spaces.
 
-    Arguments are interpolated against the configuration tree. The
-    output is written to standard error.
+    Arguments are interpolated against the configuration tree if `resolve`
+    evaluates to `True`. The output is written to standard error.
 
     `error` supports the same keyword arguments as Click's
     :py:func:`click.echo`.
 
     """
-    msg = interpolate(msg)  # type: ignore[assignment]
+    if resolve:
+        msg = interpolate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
@@ -296,15 +297,17 @@ def copy(source: str | Path, target: str | Path) -> None:
         source.copy2(target)
 
 
-def die(*msg: Any) -> None:
+def die(*msg: Any, resolve: bool = True) -> None:
     """Terminates ``spin`` with a non-zero return code and print the error
     message `msg`.
 
-    Arguments are interpolated against the configuration tree.
+    Arguments are interpolated against the configuration tree if `resolve`
+    evaluates to `True`.
 
     """
-    msg = interpolate(msg)  # type: ignore[assignment]
-    error(*msg)
+    if resolve:
+        msg = interpolate(msg)  # type: ignore[assignment]
+    error(*msg, resolve=False)
     raise click.Abort(msg)
 
 
@@ -701,7 +704,10 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
             literal = literal.replace("}}", "}")
             break
         if literal in seen:
-            raise RecursionError(literal)
+            die(
+                f"Could not interpolate '{literal}' due to RecursionError.",
+                resolve=False,
+            )
     if is_path:
         literal = Path(normpath(literal) if literal else "")
     return literal
@@ -1004,7 +1010,9 @@ def is_up_to_date(target: str | Path, sources: Iterable[str | Path]) -> bool:
     if not exists(target):
         return False
     if not isinstance(sources, Iterable):
-        raise TypeError("'sources' must be type 'Iterable'")
+        die(  # type: ignore[unreachable]
+            f"Can't check if {target} is up to date, since 'sources' is not iterable."
+        )
     target_mtime = getmtime(target)
     source_mtimes = [getmtime(src) for src in sources] + [0.0]
     return target_mtime >= max(source_mtimes)

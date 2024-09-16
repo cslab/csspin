@@ -416,7 +416,7 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
         if "internal" in tree_types(target, key):
-            raise ValueError(f"Can't override internal property {key}")
+            die(f"Can't override internal property {key}")
         try:
             if isinstance(value, dict):
                 if key not in target:
@@ -449,7 +449,11 @@ def tree_update_properties(
 
     def modify_property(prop: str, func: Callable) -> None:
         """Modify a config tree value using given func"""
-        fullname, value = prop.split("=")
+        try:
+            fullname, value = prop.split("=")
+        except ValueError:
+            die(f"Value assignment to {prop} invalid (hint: {prop}=foo)")
+
         path = list(fullname.split("."))
         scope = cfg
         while len(path) > 1:
@@ -463,7 +467,8 @@ def tree_update_properties(
             return
 
         if "internal" in tree_types(scope, path[0]):
-            raise ValueError(f"Can't override internal property {prop}")
+            die(f"Can't override internal property {prop}")
+
         func(scope, path[0], ruamel.yaml.YAML().load(interpolate1(value)))
         # Set the value source to "command-line"
         tree_set_keyinfo(scope, path[0], KeyInfo("command-line", "0"))
