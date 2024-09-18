@@ -116,7 +116,6 @@ def test_directory_changer(
     mocker: MockerFixture,
 ) -> None:
     """spin.DirectoryChanger is able to change directories accordingly"""
-    cfg.quiet = False
     cwd = os.getcwd()
     mocker.patch("click.echo")
 
@@ -564,7 +563,6 @@ def test_read_yaml() -> None:
 
 def test_download(cfg: ConfigTree, tmp_path: PathlibPath) -> None:
     """spin.download is downloading the expected content to file"""
-    cfg.quiet = True
     url = "https://contact-software.com"
     location = tmp_path / "index.html"
     spin.download(url=url, location=location)
