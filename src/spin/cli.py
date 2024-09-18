@@ -449,7 +449,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         verbose = -1
 
     verbosity = Verbosity(verbose)
-    # We want to honor the 'quiet' and 'verbose' flags early, even if
+    # We want to honor the '--quiet' and '--verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
     # code uses 'echo' and/or 'log'.
     get_tree().verbosity = verbosity
@@ -603,9 +603,6 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
 
     if envbase:
         cfg.spin.spin_dir = Path(envbase).absolute() / ".spin"
-
-    if verbosity > Verbosity.DEBUG:
-        cfg.quietflag = None
 
     cfg.spin.spinfile = Path(spinfile)
     cfg.spin.project_root = Path(cfg.spin.spinfile).absolute().normpath().dirname()
