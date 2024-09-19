@@ -714,7 +714,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         "-q" if cfg.verbosity < Verbosity.INFO else None,
         "--disable-pip-version-check",
         "-t",
-        os.environ["PYTHONPATH"],
+        plugin_dir,
         "--index-url",
         "{spin.index_url}",
     ]
