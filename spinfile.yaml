@@ -48,8 +48,8 @@ sphinx:
 
 # Host system requirements
 system-requirements:
-  distro=="debian":
-    apt-get: libaio1
+  distro in ("debian", "ubuntu"):
+    apt-get: libaio1 git curl
   distro=="fedora" and version>=parse_version("22"):
     dnf: libaio-fedora
   distro=="windows": {}
