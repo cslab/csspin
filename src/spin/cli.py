@@ -448,6 +448,15 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         quiet = True
         verbose = -1
 
+    if system_provision := (ctx.args and ctx.args[0] == "system-provision"):
+        # --cleanup and --provision are disabled when calling system-provision
+        # since we do not want a full provision, as we only need to pull the
+        # plugin-packages without provisioning plugins. We also do not want
+        # cleanup, as we depend on the existence of the plugin-packages when
+        # calling the system-provision task.
+        cleanup = False
+        provision = False
+
     verbosity = Verbosity(verbose)
     # We want to honor the '--quiet' and '--verbose' flags early, even if
     # the configuration tree has not yet been created, as subsequent
@@ -471,15 +480,16 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
 
     try:
         cfg = load_config_tree(
-            spinfile,
-            cwd,
-            envbase,
-            verbosity,
-            cleanup,
-            provision,
-            properties,
-            prepend_properties,
-            append_properties,
+            spinfile=spinfile,
+            cwd=cwd,
+            envbase=envbase,
+            verbosity=verbosity,
+            cleanup=cleanup,
+            provision=provision,
+            system_provision=system_provision,  # type: ignore[arg-type]
+            properties=properties,
+            prepend_properties=prepend_properties,
+            append_properties=append_properties,
         )
     except ModuleNotFoundError as exc:
         if help:
@@ -512,15 +522,16 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         # Reget the plugins and reload the tree, if cleaned up before.
         if cleanup:
             cfg = load_config_tree(
-                spinfile,
-                cwd,
-                envbase,
-                verbosity,
-                False,
-                provision,
-                properties,
-                prepend_properties,
-                append_properties,
+                spinfile=spinfile,
+                cwd=cwd,
+                envbase=envbase,
+                verbosity=verbosity,
+                cleanup=False,
+                provision=provision,
+                system_provision=False,
+                properties=properties,
+                prepend_properties=prepend_properties,
+                append_properties=append_properties,
             )
         toporun(cfg, "provision")
         toporun(cfg, "finalize_provision")
@@ -566,6 +577,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     verbosity: Verbosity = Verbosity.NORMAL,
     cleanup: bool = False,
     provision: bool = False,
+    system_provision: bool = False,
     properties: tuple = (),
     prepend_properties: tuple = (),
     append_properties: tuple = (),
@@ -624,7 +636,7 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
 
     setenv(**cfg.environment)
 
-    if provision and not cleanup:
+    if (provision or system_provision) and not cleanup:
         # if cleanup == true, we're fine with whatever plugins we
         # have right now. So no need to waste our time pulling new
         # stuff here.
@@ -724,15 +736,11 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
 
     something_was_installed = False
 
-    # Install all plugin packages at once to avoid pip's dependency resolver to
-    # fail without exit-zero, while using the "-t" (target) option pointing to
-    # the plugin directory.
+    # Install all missing plugin-packages at once to avoid pip's dependency
+    # resolver to fail without exit-zero, while using the "-t" (target) option
+    # pointing to the plugin directory.
     with memoizer(plugin_dir / "packages.memo") as m:  # type: ignore[operator]
-        to_be_installed = set()
-        for pkg in find_plugin_packages(cfg):
-            to_be_installed.add(pkg)
-
-        if to_be_installed:
+        if to_be_installed := set(find_plugin_packages(cfg)):
             something_was_installed = True
             args = list(cmd)
             for pkg in to_be_installed:
@@ -741,8 +749,7 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
             for pkg in to_be_installed:
                 m.add(pkg)
 
-    # Now remove PYTHONPATH and make plugin a pth-enabled part of
-    # sys.path
+    # Now remove PYTHONPATH and make plugin a pth-enabled part of sys.path
     if old_python_path:
         os.environ["PYTHONPATH"] = old_python_path
     else:

@@ -13,17 +13,7 @@ import sys
 import click
 import distro
 
-from spin import (
-    argument,
-    die,
-    option,
-    parse_version,
-    run_script,
-    run_spin,
-    sh,
-    task,
-    warn,
-)
+from spin import argument, option, parse_version, run_script, run_spin, sh, task, warn
 
 
 @task("run", add_help_option=False)
@@ -146,41 +136,42 @@ def do_system_provisioning(
 ):
     """Provision system dependencies for the host.
 
-    This will output a script on stdout, that uses OS package managers
-    like apt, yum etc. to install system-level dependencies for the
-    project. The output can for example be piped into a sudo
-    shell. This flag can not be combined with --cleanup, --provision
-    or any subcommands.
+    Usage:
+        spin system-provision [<distro> [<version>]]
 
+    This will output a script on stdout, that uses OS package managers like apt,
+    yum etc. to install system-level dependencies for the project. The output
+    can for example be piped into a sudo shell. This flag can not be combined
+    with --cleanup, --provision or any subcommands.
     """
     if distroargs:
         distroname = distroargs[0]
         if len(distroargs) > 1:
             distroversion = parse_version(distroargs[1])
         else:
-            distroversion = parse_version("")
+            distroversion = ""
     else:
         dinfo = get_distro()
         distroname = dinfo["id"]
         distroversion = parse_version(dinfo["version"])
 
+    # Check system requirements of individual plugins
     out = {}
     for pi in cfg.spin.topo_plugins:
         supported = True
-        fn = getattr(cfg.loaded[pi], "system_requirements", None)
-        if fn is not None:
+        if (fn := getattr(cfg.loaded[pi], "system_requirements", None)) is not None:
             supported = False
-            reqs = fn(cfg)
-            for check, items in reqs:
+            for check, items in fn(cfg):
                 if check(distroname, distroversion):
                     supported = True
                     merge_dicts(out, items)
         if not supported:
-            warn(f"the '{pi}' plugin does not support {distroname} {distroversion}")
+            warn(f"The '{pi}' plugin does not support {distroname} {distroversion}")
 
+    # Check system requirements defined within the configuration tree, usually
+    # defined the projects' spinfile.yaml.
     supported = True
-    system_requirements = cfg.get("system-requirements", None)
-    if system_requirements:
+    if system_requirements := cfg.get("system-requirements", None):
         supported = False
         for check, items in system_requirements.items():
             check = eval(f"lambda distro, version: {check}")
@@ -189,25 +180,21 @@ def do_system_provisioning(
                 if items:
                     merge_dicts(out, items)
     if not supported:
-        die(f"this project does not support {distroname} {distroversion}")
+        warn(f"This project does not support {distroname} {distroversion}")
 
     for line in out.get("before", []):
         print(line)
 
-    # FIXME: add support for zypper etc.
-    for syscmd in ("apt-get", "yum", "dnf"):
-        package_list = out.get(syscmd, "")
-        if package_list:
-            if syscmd == "apt-get":
-                print("apt-get update")
+    for syscmd in "apt":
+        if package_list := out.get(syscmd, ""):
             print(f"{syscmd} install -y {package_list}")
 
     for line in out.get("after", []):
         print(line)
 
 
-@task("distro")
+@task("distro", noenv=True)
 def distro_task(cfg):
     """Print the distro information."""
     dinfo = get_distro()
-    print(f"distro={repr(dinfo['id'])} version={repr(parse_version(dinfo['version']))}")
+    print(f"distro={repr(dinfo['id'])} version={parse_version(dinfo['version'])}")

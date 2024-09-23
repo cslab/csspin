@@ -383,6 +383,32 @@ environment is a crucial feature which possible via:
      represented as environment variable.
 
 
+Builtin tasks
+=============
+
+``system-provision``
+--------------------
+
+The ``system-provision`` task prints the system requirements of
+the project as well as individual plugins that must be installed by the user
+manually in order to provision the project.
+
+Projects can define their system requirements within ``spinfile.yaml``:
+
+.. code-block:: yaml
+  :caption: Defining project specific system requirements in ``spinfile.yaml``
+
+  system-requirements:
+    distro in ("debian", "ubuntu"):
+      apt-get: git curl
+    distro=="fedora" and version>=parse_version("22"):
+      dnf: git curl
+
+Depending on the os, a call of ``spin system-provision`` prints a command that
+can be used to install required dependencies. The output depends on the host OS.
+For reviewing required dependencies on other distributions the following syntax
+can be used: ``spin system-provision [<distro> [<version>]]``.
+
 Troubleshooting
 ===============
 
