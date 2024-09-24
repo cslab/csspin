@@ -707,45 +707,32 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
 
     """
     is_path = isinstance(literal, Path)
-    if not is_path and not isinstance(literal, str):
-        literal = str(literal)
+    literal = str(literal)
+    seen = set()
+    previous = None
 
     where_to_look = collections.ChainMap(
         {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK  # type: ignore[arg-type]
     )
-    seen = set()
 
-    while True:
+    while previous != literal:
         # Interpolate until we reach a fixpoint -- this allows for
         # nested variables.
-        previous = literal
-        seen.add(literal)
-
-        # The whole literal.replace()-dance below is a *crude workaround* which
-        # is necessary to support curly brackets escapes without dropping the
-        # evaluation of nested variables. Doing this 'by the book' requires
-        # substantially higher efforts which we're not ready to pay now. So we
-        # take this shortcut consciously and will repay the TD later.
-        #
-        # *Note*: string reverting (below) is necessary to replace the outer
-        # bracket pairs and not the inner.
-        literal = literal[::-1].replace("}}", "<DOUBLE_BRACE_CLOSE>"[::-1])
-        literal = literal[::-1].replace("{{", "<DOUBLE_BRACE_OPEN>")
-        literal = eval(rf"rf''' {literal} '''", {}, where_to_look)[1:-1]  # noqa
-        literal = literal.replace("<DOUBLE_BRACE_OPEN>", "{{")
-        literal = literal.replace("<DOUBLE_BRACE_CLOSE>", "}}")
-        if previous == literal:
-            literal = literal.replace("{{", "{")
-            literal = literal.replace("}}", "}")
-            break
         if literal in seen:
             die(
                 f"Could not interpolate '{literal}' due to RecursionError.",
                 resolve=False,
             )
-    if is_path:
-        literal = Path(normpath(literal) if literal else "")
-    return literal
+        seen.add(previous := literal)
+
+        # We need to protect double braces by doubling them, because
+        # .format() converts {{}} to {} undependent of if it interpolated
+        # something within these braces or not.
+        literal = literal.replace("}}", "}}}}").replace("{{", "{{{{")
+        literal = literal.format_map(where_to_look)
+
+    literal = literal.replace("{{", "{").replace("}}", "}")
+    return Path(literal).normpath() if is_path else literal
 
 
 def interpolate(literals: Iterable, *extra_dicts: dict) -> list:
