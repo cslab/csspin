@@ -704,6 +704,7 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
 
           defaults = config(key=interpolate1("{some.property}"))
 
+    .. Attention:: If the interpolated property is not set, not NoneType but "None" as a string is returned.
 
     """
     is_path = isinstance(literal, Path)
