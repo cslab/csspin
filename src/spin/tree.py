@@ -415,7 +415,10 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
-        if "internal" in tree_types(target, key):
+        if "internal" in tree_types(target, key) and tree_keyinfo(
+            target, key
+        ).file.removesuffix("_schema.yaml") != ki.file.removesuffix(".py"):
+            # Ensure that only plugin defaults can override internal properties.
             die(f"Can't override internal property {key}")
         try:
             if isinstance(value, dict):

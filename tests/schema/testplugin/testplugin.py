@@ -32,6 +32,7 @@ defaults = config(
     ],
     bool_property=True,
     bool_to_interpolate="{SPIN_TESTING_SCHEMA_VALIDATION_TOGGLE}",
+    internal_property="internal",
 )
 
 
