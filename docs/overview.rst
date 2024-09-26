@@ -70,6 +70,8 @@ listed below.
      - ideal for C++ development
    * - `spin_docs`_
      - building documentation was never easier
+   * - `spin_frontend`_
+     - the frontend development kit
    * - `spin_java`_
      - Java ist auch eine Insel
    * - `spin_python`_
