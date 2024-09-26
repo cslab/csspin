@@ -258,3 +258,22 @@ The proposal is to unify these similar concepts as follows:
    It this isn't doable for technical reasons: well, bad luck.
 
 7. We move the property `verbosity` to the `/spin`-subtree?
+
+## 8. Extending the CLI
+
+When extending the CLI we want to make sure that spin keeps being consistent and
+uses the best practices we find in the field.
+
+1. A (sub-)command (aka task) should do one thing. This could be "setup X", "run
+   the tests".
+2. If your task does multiple unrelated things, it should be split into multiple
+   tasks. However, if those tasks do different things but are somewhat related
+   to each other - using `spin.group` might be a good idea.
+3. Flags and options should only change the way how tasks achieve their goal.
+4. If you have a task that does something semantically equal to an existing
+   tasks, you can make use of workflows.
+
+This changes some parts of the current implementation of cs.spin, especially the
+--provision and --cleanup flags, as they violate 8.3, as the thing that spin
+_does_ is provide a way to run tasks of plugins. Thus, we'll be reimplementing
+the CLI such that we'll have a provision and a cleanup task.

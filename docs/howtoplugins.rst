@@ -520,6 +520,21 @@ should not hardcode assumptions about the location of infrastructure services
 and other CONTACT specifics. Even though this is not yet planned, this should be
 kept in mind when developing new plugins and plugin-packages.
 
+Mind the CLI best-practices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Your plugin probably contains at least one task, resulting in an extension of
+spin's CLI. Make sure, to keep in line with the following best-practices:
+
+#. A task should do one thing. This could be "setup X" or "run the tests".
+#. If your task does multiple unrelated things, it should be split into multiple
+   tasks. However, if those tasks do different things but are somewhat related
+   to each other - using :py:func:`spin.group` might be a good idea.
+#. Flags and options should only change the way how tasks achieve their goal.
+#. If you have a task that does something semantically equal to an existing
+   tasks, you can make use of workflows.
+
+
 Configuration tree
 ------------------
 
