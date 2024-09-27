@@ -39,9 +39,9 @@ def test_directive_interpolate(directive_spinfile: Path) -> None:
     nested properties.
     """
     cfg = directive_spinfile
-    assert cfg.directives.test_interpolate.opts == cfg.spin.cache
+    assert cfg.directives.test_interpolate.opts == cfg.spin.data
     assert not hasattr(cfg.directives.test_interpolate, "interpolate opts")
-    assert cfg.directives.test_interpolate.nested_interpolate.opts == cfg.spin.cache
+    assert cfg.directives.test_interpolate.nested_interpolate.opts == cfg.spin.data
     assert not hasattr(
         cfg.directives.test_interpolate.nested_interpolate, "interpolate opts"
     )
@@ -58,5 +58,5 @@ def test_directives_without_default_defined_in_spinfile(
     cfg = directive_spinfile
     assert cfg.directives.test_setting_1 == ["b", "foo", "a"]
     assert not hasattr(cfg.directives, "append test_setting_1")
-    assert cfg.directives.test_setting_2 == cfg.spin.cache
+    assert cfg.directives.test_setting_2 == cfg.spin.data
     assert not hasattr(cfg.directives, "append test_setting_2")

@@ -65,7 +65,8 @@ built from (in this order):
   values defined within each plugin module.
 * The settings from ``spinfile.yaml`` complement (or override) the defaults.
 * If it exists, user-specific settings are read from
-  ``$XDG_CONFIG_HOME/spin/global.yaml`` and complement the project configuration
+  ``$XDG_CONFIG_HOME/spin/global.yaml`` (``%LOCALAPPDATA%\spin\config\global.yaml``
+  on Windows) and complement the project configuration
   tree; a use-case for this can be to globally set a proxy for accessing
   specific resources. This behavior can be disabled by setting the environment
   variable ``SPIN_DISABLE_GLOBAL_YAML`` to ``True``.
@@ -326,7 +327,8 @@ definitions within the `spinfile.yaml`
 Writing ``global.yaml``
 =======================
 
-``spin`` looks for a file called ``global.yaml`` in ``$XDG_CONFIG_HOME/spin``.
+``spin`` looks for a file called ``global.yaml`` in ``$XDG_CONFIG_HOME/spin``
+(``%LOCALAPPDATA%\spin\config`` on Windows).
 Settings from this file are merged into the project :ref:`configuration tree
 <configuration-tree-system-label>`. This
 facility can be used to provide user/machine specific settings like in the

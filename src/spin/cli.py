@@ -70,6 +70,7 @@ DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
         cache=Path("{SPIN_CACHE}"),
+        data=Path("{SPIN_DATA}"),
         config=Path("{SPIN_CONFIG}"),
         extra_index=None,
         version=importlib_metadata.version("cs.spin"),
@@ -498,6 +499,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         die(exc)
 
     mkdir("{spin.cache}")
+    mkdir("{spin.data}")
 
     # dump config tree when given --dump; if nothing else is requested ...
     # that's it!
@@ -667,6 +669,10 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     sys.path.insert(
         0,
         str(interpolate1(Path(cfg.spin.cache)).absolute() / "plugins"),  # type: ignore[union-attr]
+    )
+    sys.path.insert(
+        0,
+        str(interpolate1(Path(cfg.spin.data)).absolute() / "plugins"),  # type: ignore[union-attr]
     )
     debug("loading global plugins:")
     for ep in entrypoints.get_group_all("spin.plugin"):

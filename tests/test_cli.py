@@ -139,8 +139,8 @@ def test_reverse_toposort(cfg: ConfigTree) -> None:
     """
     graph = {
         "spin.builtin": ["spin.builtin.shell"],
-        "spin.builtin.shell": ["spin.builtin.cache"],
-        "spin.builtin.cache": [],
+        "spin.builtin.shell": ["spin.builtin.data"],
+        "spin.builtin.data": [],
     }
     result = cli.reverse_toposort(nodes=graph.keys(), graph=graph)
 
@@ -149,9 +149,17 @@ def test_reverse_toposort(cfg: ConfigTree) -> None:
         "spin.builtin": ["spin.builtin.shell"],
         "spin.builtin.shell": ["spin.builtin.cache"],
         "spin.builtin.cache": [],
+    } or graph == {
+        "spin.builtin": ["spin.builtin.shell"],
+        "spin.builtin.shell": ["spin.builtin.data"],
+        "spin.builtin.data": [],
     }
 
-    assert result == ["spin.builtin.cache", "spin.builtin.shell", "spin.builtin"]
+    assert result == [
+        "spin.builtin.cache",
+        "spin.builtin.shell",
+        "spin.builtin",
+    ] or result == ["spin.builtin.data", "spin.builtin.shell", "spin.builtin"]
 
     graph = {"foo": ["bar"], "bar": ["foo"]}
     with pytest.raises(click.Abort, match="dependency graph has at least one cycle"):

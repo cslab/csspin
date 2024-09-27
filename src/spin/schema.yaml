@@ -32,6 +32,10 @@ spin:
       type: path
       default: "{SPIN_CACHE}"
       help: Path that points to spins cache
+    data:
+      type: path
+      default: "{SPIN_DATA}"
+      help: Path that points to spins data
     config:
       type: path internal
       default: "{SPIN_CONFIG}"
