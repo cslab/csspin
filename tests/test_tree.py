@@ -322,7 +322,10 @@ def test_directive_interpolate() -> None:
     assert config == expected_config1
 
     tree.directive_interpolate(config, "cache", "'{SPIN_CACHE}'")
-    expected_config2 = tree.ConfigTree(sub="tree", cache=f"'{environ['SPIN_CACHE']}'")
+    tree.directive_interpolate(config, "data", "'{SPIN_DATA}'")
+    expected_config2 = tree.ConfigTree(
+        sub="tree", cache=f"'{environ['SPIN_CACHE']}'", data=f"'{environ['SPIN_DATA']}'"
+    )
     assert config == expected_config2
 
 

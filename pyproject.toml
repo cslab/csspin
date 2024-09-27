@@ -19,7 +19,7 @@ dependencies = [
   "svn",
   "wheel",
   "virtualenv",
-  "xdg"
+  "platformdirs"
 ]
 description = "spin"
 dynamic = ["version", "readme"]

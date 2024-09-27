@@ -25,6 +25,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Iterable, Type
 
 import packaging.version
+import platformdirs.unix
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator
@@ -45,7 +46,7 @@ from contextlib import contextmanager
 
 import click
 import packaging
-import xdg
+import platformdirs
 from path import Path
 
 __all__ = [
@@ -660,11 +661,29 @@ def namespaces(*nslist: str) -> Generator:
         NSSTACK.pop()
 
 
+# On Windows platformdirs.user_config_dir and platformdirs.user_data_dir
+# both point to %LOCALAPPDATA%, that's why we need /data and /config subfolders
 os.environ["SPIN_CONFIG"] = os.environ.get(
-    "SPIN_CONFIG", Path(xdg.xdg_config_home()) / "spin"
+    "SPIN_CONFIG",
+    Path.joinpath(
+        platformdirs.user_config_dir(),
+        "spin",
+        "config" if sys.platform == "win32" else "",
+    ).normpath(),
 )
 os.environ["SPIN_CACHE"] = os.environ.get(
-    "SPIN_CACHE", Path(xdg.xdg_cache_home()) / "spin"
+    "SPIN_CACHE",
+    Path.joinpath(
+        platformdirs.user_cache_dir(),
+        "spin",
+        "cache" if sys.platform == "win32" else "",
+    ).normpath(),
+)
+os.environ["SPIN_DATA"] = os.environ.get(
+    "SPIN_DATA",
+    Path.joinpath(
+        platformdirs.user_data_dir(), "spin", "data" if sys.platform == "win32" else ""
+    ).normpath(),
 )
 
 
@@ -688,9 +707,9 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
     Example:
 
     >>> interpolate1(
-    ...     '{{"header": {{"language": "en", "cache": "{SPIN_CACHE}"}}}}'
+    ...     '{{"header": {{"language": "en", "data": "{SPIN_DATA}"}}}}'
     ... )
-    '{"header": {"language": "en", "cache": "/home/bts/.cache/spin"}}'
+    '{"header": {"language": "en", "data": "/home/bts/.local/share/spin"}}'
 
     .. Attention:: **Do not use** :py:func:`spin.interpolate1` **in a plugins'
        top-level**, as the one can't rely on the configuration tree at import time

@@ -34,12 +34,16 @@ Core
 * ``spin system-provision`` supports the provisioning of machine-level
   dependencies to be installed by tools like ``apt``
 
-* spin now uses XDG paths, i.e. :envvar:`XDG_CACHE_HOME` for
+* spin now uses XDG paths, i.e. :file:`$XDG_DATA_HOME/spin`
+  (:file:`%LOCALAPPDATA%\spin\data` on Windows) for
   environments and provisioned dependencies, and
-  :envvar:`XDG_CONFIG_HOME` for configuration files
+  :file:`$XDG_CONFIG_HOME/spin` (:file:`%LOCALAPPDATA%\spin\config` on Windows)
+  for configuration files
 
-* environments are created out-of-tree in :file:`$XDG_CACHE_HOME/spin`
-  (which defaults to ``~/.cache/spin``)
+* environments are created out-of-tree in :file:`$XDG_DATA_HOME/spin`
+  (which defaults to ``~/.local/share/spin``) on Linux and in
+  :file:`%LOCALAPPDATA%\spin\data` (which defaults to
+  ``C:\Users\<USER>\AppData\Local\spin\data``) on Windows
 
 
 Python

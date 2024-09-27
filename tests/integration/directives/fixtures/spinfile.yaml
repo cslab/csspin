@@ -20,13 +20,13 @@ directives:
       prepend opts: ["z"]
   test_interpolate:
     opts: "abcd"
-    interpolate opts: "{spin.cache}"
+    interpolate opts: "{spin.data}"
     nested_interpolate:
       opts: "abcd"
-      interpolate opts: "{spin.cache}"
+      interpolate opts: "{spin.data}"
 
   # Following tests the behavior if test_setting is not defined/overridden
   # individually in this spinfile.yaml
   append test_setting_1: "a"
   prepend test_setting_1: "b"
-  interpolate test_setting_2: "{spin.cache}"
+  interpolate test_setting_2: "{spin.data}"
