@@ -20,7 +20,7 @@ the `spin_python.python`_ plugin, so it is unnecessary to also include
 
 .. NOTE::
    Any modification of the ``plugin-packages``, ``plugin-path`` and ``plugins``
-   may require to call :option:`--provision <spin --provision>` in order to
+   may require to call ``spin provision`` in order to
    install and provision plugin-packages, plugins and their dependencies.
 
 **Project-local plugins** are modules in plugin directories and can be declared
@@ -113,16 +113,15 @@ Plugin lifecycle
       behavior or subtree based on values of other plugins that are already
       loaded.
 
-   #. If `spin` is in cleanup mode via the :option:`--cleanup <spin --cleanup>`
-      command line option, each plugins' ``cleanup(cfg)`` function is called.
-      ``cleanup`` is meant to remove stuff from the filesystem that has been
-      provisioned by the plugin before. Cleanup functions are executed in
-      inverse topological order.
+   #. If `spin` is in cleanup mode via the  ``cleanup`` subcommand, each
+      plugins' ``cleanup(cfg)`` function is called. ``cleanup`` is meant to
+      remove stuff from the filesystem that has been provisioned by the plugin
+      before. Cleanup functions are executed in inverse topological order.
 
-   #. If `spin` is in provisioning mode via the :option:`--provision <spin
-      --provision>` option, each plugins' ``provision(cfg)`` callback is called.
-      This is meant to create stuff in the filesystem, e.g. a
-      `spin_python.python`_ plugin may create a Python virtual environment here.
+   #. If `spin` is in provisioning mode via the ``provision`` subcommand, each
+      plugins' ``provision(cfg)`` callback is called in topoligical order. This
+      is meant to create stuff in the filesystem, e.g. a `spin_python.python`_
+      plugin may create a Python virtual environment here.
 
    #. After all provisioning callbacks have been processed, each plugins'
       ``finalize_provision(cfg)`` callback is invoked. This is meant to
@@ -137,12 +136,12 @@ Plugin lifecycle
 #. Finally the actual tasks is executed.
 
 .. Note::
-  The cleanup and provisioning steps B, C and D, will *only* be called when the
-  provisioning options :option:`--cleanup <spin --cleanup>` or
-  :option:`--provision <spin --provision>` have been used.
+   The cleanup and provisioning steps B, C and D, will *only* be called when spin
+   get called with the respective subcommand the ``spin cleanup`` or ``spin
+   provision``.
 
-  ``init(cfg)`` on the other hand will only be called in case a subcommand is to
-  be executed.
+   ``init(cfg)`` on the other hand will only be called in case a subcommand is to
+   be executed.
 
 
 Developing plugins
@@ -178,15 +177,14 @@ The plugin API consists of the following:
   executed, but after ``configure(cfg)``. ``init(cfg)`` can be used to setup
   state after all plugins have been configured.
 
-* An optional ``provision(cfg)`` callback that is called when the
-  :option:`--provision <spin --provision>` command line flag is used. E.g. the
-  `spin_python.python`_ plugin provisions a Python interpreter in its
-  ``provision(cfg)``.
+* An optional ``provision(cfg)`` callback that is called when the ``provision``
+  subcommand is used. E.g. the `spin_python.python`_ plugin provisions a Python
+  interpreter in its ``provision(cfg)``.
 
-* An optional ``cleanup(cfg)`` callback that is called when running
-  :option:`--cleanup <spin --cleanup>`. This is used to unprovision
-  dependencies, e.g. the `spin_python.python`_ plugin removes the installation
-  tree of the Python interpreter as well as its virtual environment.
+* An optional ``cleanup(cfg)`` callback that is called when running ``spin
+  cleanup``. This is used to unprovision dependencies, e.g. the
+  `spin_python.python`_ plugin removes the installation tree of the Python
+  interpreter as well as its virtual environment.
 
 Callbacks are called in "dependency" order, i.e. the plugin dependency graph (as
 given by ``requires``) is topologically sorted.

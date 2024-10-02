@@ -19,7 +19,6 @@ and options (see :ref:`environment-as-input-channel-label`).
 
 from __future__ import annotations
 
-import glob
 import importlib
 import importlib.metadata as importlib_metadata
 import os
@@ -29,7 +28,6 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Generator, Iterable
 
 import click
-import entrypoints
 import packaging.version
 from path import Path
 
@@ -45,9 +43,7 @@ from spin import (
     interpolate1,
     memoizer,
     mkdir,
-    readtext,
     readyaml,
-    rmtree,
     schema,
     set_tree,
     setenv,
@@ -81,6 +77,14 @@ DEFAULTS = config(
         kind=sys.platform,
     ),
 )
+
+# Props and dump will only be used in finalize_cfg_tree,
+# which can be called from various places.
+# To make it work, let's define them globally.
+PROP: list[str] = []
+PREPEND_PROP: list[str] = []
+APPEND_PROP: list[str] = []
+DUMP = False
 
 
 def find_spinfile(spinfile: str | None) -> str | None:
@@ -336,29 +340,6 @@ def base_options(fn: Callable) -> Callable:
                 " spin -p python.version=3.9.6 ..."
             ),
         ),
-        click.option(
-            "--provision",
-            is_flag=True,
-            default=False,
-            help=(
-                "Create or update a development environment. This option can be used"
-                " without a command, to only provision an environment. When used with a"
-                " command, the environment will be created or updated, and the command"
-                " will run afterwards."
-            ),
-        ),
-        click.option(
-            "--cleanup",
-            is_flag=True,
-            default=False,
-            help=(
-                "Clean up project-local stuff that has been provisioned by spin, e.g."
-                " virtual environments and {project_root}/.spin. This will not clean"
-                " global caches. '--cleanup' can be combined with '--provision',"
-                " tearing down and re-provisioning the development environment in one"
-                " step."
-            ),
-        ),
     ]
     for decorator in decorators:
         fn = decorator(fn)
@@ -403,7 +384,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
             if not exists(cfg.spin.spin_dir):
                 die(
                     "This project has not yet been provisioned. You "
-                    "may want to run spin with the --provision flag."
+                    "may want to run 'spin provision'."
                 )
             toporun(ctx.obj, "init")
         _nested = True
@@ -418,7 +399,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
         "help_option_names": ["--hidden-help-option"],
         "auto_envvar_prefix": "SPIN",
         "allow_interspersed_args": False,
-    }
+    },
 )
 @base_options
 @click.pass_context
@@ -435,8 +416,6 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     properties: tuple,
     prepend_properties: tuple,
     append_properties: tuple,
-    provision: bool,
-    cleanup: bool,
 ) -> int | None:
     if version:
         print(importlib_metadata.version("cs.spin"))
@@ -445,18 +424,15 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
     if quiet:
         verbose = -1
     elif ctx.args and ctx.args[0] in ("env", "system-provision"):
-        # Special case for 'env' and 'system-provision:
+        # In case of 'env' and 'system-provision' we want spin to be quiet.
         quiet = True
         verbose = -1
 
-    if system_provision := (ctx.args and ctx.args[0] == "system-provision"):
-        # --cleanup and --provision are disabled when calling system-provision
-        # since we do not want a full provision, as we only need to pull the
-        # plugin-packages without provisioning plugins. We also do not want
-        # cleanup, as we depend on the existence of the plugin-packages when
-        # calling the system-provision task.
-        cleanup = False
-        provision = False
+    global DUMP  # pylint: disable=global-statement
+    PROP.extend(properties)
+    PREPEND_PROP.extend(prepend_properties)
+    APPEND_PROP.extend(append_properties)
+    DUMP = dump
 
     verbosity = Verbosity(verbose)
     # We want to honor the '--quiet' and '--verbose' flags early, even if
@@ -479,74 +455,36 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
             die("No configuration file found")
     spinfile = _spinfile  # type: ignore[assignment]
 
+    cfg = load_minimal_tree(
+        spinfile=spinfile,
+        cwd=cwd,
+        envbase=envbase,
+        verbosity=verbosity,
+    )
+
+    if ctx.args and ctx.args[0] in ("cleanup", "provision", "system-provision"):
+        # Special case for tasks that modify the config tree themselves.
+        commands.main(ctx.args)
+        return None
     try:
-        cfg = load_config_tree(
-            spinfile=spinfile,
-            cwd=cwd,
-            envbase=envbase,
-            verbosity=verbosity,
-            cleanup=cleanup,
-            provision=provision,
-            system_provision=system_provision,  # type: ignore[arg-type]
-            properties=properties,
-            prepend_properties=prepend_properties,
-            append_properties=append_properties,
-        )
+        load_plugins_into_tree(cfg)
     except ModuleNotFoundError as exc:
         if help:
             commands.main(args=ctx.args)
             return None
         die(exc)
 
+    finalize_cfg_tree(cfg)
     mkdir("{spin.cache}")
     mkdir("{spin.data}")
 
-    # dump config tree when given --dump; if nothing else is requested ...
-    # that's it!
-    if dump:
-        print(tree.tree_dump(cfg))
-        if not ctx.args and not provision:
-            return None
-
-    # Cleanup. Will also try to load plugins and call their cleanup hooks.
-    if cleanup:
-        toporun(cfg, "cleanup", reverse=True)
-        rmtree(cfg.spin.spin_dir / "plugins")
-        if not provision:
-            # There is nothing we can meaningfully do after 'cleanup',
-            # unless 'provision' is also given => so do not run any
-            # tasks.
-            return None
-
-    # Provision. Will reload the tree, if the plugins have been
-    # deleted before.
-    if provision:
-        # Reget the plugins and reload the tree, if cleaned up before.
-        if cleanup:
-            cfg = load_config_tree(
-                spinfile=spinfile,
-                cwd=cwd,
-                envbase=envbase,
-                verbosity=verbosity,
-                cleanup=False,
-                provision=provision,
-                system_provision=False,
-                properties=properties,
-                prepend_properties=prepend_properties,
-                append_properties=append_properties,
-            )
-        toporun(cfg, "provision")
-        toporun(cfg, "finalize_provision")
-        if not ctx.args:
-            # When provisioning without a subcommand, don't run
-            # into the usage.
-            return None
+    if dump and not ctx.args:
+        # Otherwise help would be displayed right after the dump.
+        return None
 
     # Invoke the main command group, which by now has all the
     # sub-commands from the plugins.
-    kwargs = getattr(cli, "click_main_kwargs", {})
-    kwargs["complete_var"] = "_SPIN_COMPLETE"
-    commands.main(args=ctx.args, **kwargs)
+    commands.main(args=ctx.args)
 
 
 def find_plugin_packages(cfg: tree.ConfigTree) -> Generator:
@@ -572,23 +510,15 @@ def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
             yield item
 
 
-def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
+def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
     spinfile: str | Path,
     cwd: str = "",
     envbase: str | None = None,
     verbosity: Verbosity = Verbosity.NORMAL,
-    cleanup: bool = False,
-    provision: bool = False,
-    system_provision: bool = False,
-    properties: tuple = (),
-    prepend_properties: tuple = (),
-    append_properties: tuple = (),
 ) -> tree.ConfigTree:
-    """Load the configuration and plugins from ``spinfile`` and build the tree.
-
-    The user's global spinfile is used to extend the built tree.
-
-    If ``provision`` is set, plugins will be provisioned.
+    """
+    Create a minimal ConfigTree from the provided spinfile and the global config
+    file. Will also load the project-local and built-in plugins.
     """
     get_tree().verbosity = verbosity
     debug(f"Loading {spinfile}")
@@ -634,16 +564,18 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
             "# Created by spin automatically\n*\n",
         )
 
-    sys.path.insert(0, str(interpolate1(cfg.spin.spin_dir / "plugins")))
-
     setenv(**cfg.environment)
+    cfg.loaded = config()
+    debug("loading project plugins:")
+    load_plugin(cfg, "spin.builtin")
+    return cfg  # type: ignore[no-any-return]
 
-    if (provision or system_provision) and not cleanup:
-        # if cleanup == true, we're fine with whatever plugins we
-        # have right now. So no need to waste our time pulling new
-        # stuff here.
-        install_plugin_packages(cfg)
 
+def load_plugins_into_tree(cfg: tree.ConfigTree, cleanup: bool = False) -> None:
+    """
+    Update the tree by loading the installed plugin-packages and the globally
+    available plugins.
+    """
     plugin_path = cfg.get("plugin-path", [])
     if not isinstance(plugin_path, list):
         die("'plugin-path' configuration is invalid!")
@@ -652,31 +584,16 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
         localabs = interpolate1(cfg.spin.project_root / localpath)
         if not exists(localabs):
             die(f"Plugin path {localabs} doesn't exist")
-        sys.path.insert(0, localabs)
+        addsitedir(localabs)
 
     # Load plugins. "Plugins" are not plugin packages, but modules
     # which we expect to live in plugin packages. Afterwards
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
-    cfg.loaded = config()
     addsitedir(cfg.spin.spin_dir / "plugins")
-    debug("loading project plugins:")
-    load_plugin(cfg, "spin.builtin", may_fail=cleanup)
+
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec, may_fail=cleanup)
-
-    # Also load global plugins
-    sys.path.insert(
-        0,
-        str(interpolate1(Path(cfg.spin.cache)).absolute() / "plugins"),  # type: ignore[union-attr]
-    )
-    sys.path.insert(
-        0,
-        str(interpolate1(Path(cfg.spin.data)).absolute() / "plugins"),  # type: ignore[union-attr]
-    )
-    debug("loading global plugins:")
-    for ep in entrypoints.get_group_all("spin.plugin"):
-        load_plugin(cfg, ep.module_name, may_fail=cleanup)
 
     # Create a topologically sorted list of the plugins by their
     # dependencies, which have been stored in "_requires" by
@@ -689,27 +606,28 @@ def load_config_tree(  # pylint: disable=too-many-locals,too-many-arguments
     graph = {n: getattr(mod.defaults, "_requires", []) for n, mod in cfg.loaded.items()}
     cfg.spin.topo_plugins = reverse_toposort(nodes, graph)
 
-    # Update properties modified via: -p, --pp, --ap and the environment
+
+def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
+    """Load the configuration and plugins from ``spinfile`` and build the tree.
+
+    The user's global spinfile is used to extend the built tree.
+
+    If ``provision`` is set, plugins will be provisioned.
+    """
     tree.tree_update_properties(
         cfg,
-        properties,
-        prepend_properties,
-        append_properties,
+        PROP,
+        PREPEND_PROP,
+        APPEND_PROP,
     )
+    # Run 'configure' hooks of plugins
+    toporun(cfg, "configure")
 
-    if not cleanup:
-        # Do not configure and sanitize in case of cleanup, since plugin
-        # packages may not be installed, causing AttributeErrors in case of
-        # accessing not-initialized plugins via "cfg." as well as failures due
-        # to interpolation against property tree keys that does not exist.
+    # Interpolate values of the configuration tree and enforce their types
+    tree.tree_sanitize(cfg)
 
-        # Run 'configure' hooks of plugins
-        toporun(cfg, "configure")
-
-        # Interpolate values of the configuration tree and enforce their types
-        tree.tree_sanitize(cfg)
-
-    return cfg  # type: ignore[no-any-return]
+    if DUMP:
+        print(tree.tree_dump(cfg))
 
 
 def install_plugin_packages(cfg: tree.ConfigTree) -> None:
@@ -740,14 +658,11 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     if cfg.spin.extra_index:
         cmd.extend(["--extra-index-url", cfg.spin.extra_index])
 
-    something_was_installed = False
-
     # Install all missing plugin-packages at once to avoid pip's dependency
     # resolver to fail without exit-zero, while using the "-t" (target) option
     # pointing to the plugin directory.
     with memoizer(plugin_dir / "packages.memo") as m:  # type: ignore[operator]
         if to_be_installed := set(find_plugin_packages(cfg)):
-            something_was_installed = True
             args = list(cmd)
             for pkg in to_be_installed:
                 args.extend(pkg.split())
@@ -760,13 +675,3 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         os.environ["PYTHONPATH"] = old_python_path
     else:
         del os.environ["PYTHONPATH"]
-
-    if something_was_installed:
-        # Now it becomes a little dirty: pip did not write
-        # easy-install.pth while installing plugin packages to the
-        # plugin dir: fix it up, in case some plugin packages had been
-        # installed editable.
-        easy_install = []
-        for egg_link in glob.iglob(plugin_dir / "*.egg-link"):  # type: ignore[operator]
-            easy_install.append(readtext(egg_link).splitlines()[0])
-        writetext(plugin_dir / "easy-install.pth", "\n".join(easy_install))  # type: ignore[operator]

@@ -1,56 +1,38 @@
 # The Architecture of cs.spin
 
 The following diagram schematically visualizes the action spin performs during a
-call using `--cleanup`, `--provision`, a task, or a combination of those.
+call using `cleanup`, `provision`, or some other task.
 
 ```mermaid
 graph LR
-    start(((entry))) --> load_configuration_files
-    load_configuration_files --> |cleanup: yes| cleanup__
-    cleanup__ --> |provision: no| end1(((end)))
-    cleanup__ --> |provision: yes| load_configuration_files
-    build_tree__ --> |provision: no; task: no| end1
-    build_tree__ --> |provision: no; task: yes| task__
-    load_configuration_tree__ --> |provision: yes| provision["Provision Plugins - Calling provision()"]
-    provision --> |task: no| end1
-    provision --> |task: yes| task__
-    task__ --> end1
+start --> load_minimal_tree--> choice1{Called subcommand is provision or system-provision}
+end_(((end)))
 
-    subgraph load_configuration_tree__[Load Configuration Tree]
-        install_dependencies__
-        load_configuration_files[Load Configuration Files]
-        load_configuration_files --> |cleanup: no/done| build_tree__
-        modify_tree__ --> install_dependencies
-        install_dependencies --> sanitize_tree__
+choice1 --> |yes| install_plugin_packages[Install Plugin Packages] --> load_plugins_into_tree
+choice1 --> |no| load_plugins_into_tree
 
-        subgraph build_tree__[Build Tree]
-            load_builtin_plugins[Load Built-In Plugins] -->
-            install_dependencies__
-            install_dependencies__ --> modify_tree__
-            install_dependencies["Configure Plugins - Calling configure()"]
+load_plugins_into_tree --> finalize_cfg_tree
 
-            subgraph install_dependencies__[Install Dependencies]
-                install_plugin_packages[Install Plugin Packages] -->
-                install_plugins[Install Plugins]
-                install_plugins --> tpp[Install TPP and cs.*]
-            end
-            subgraph modify_tree__[Modify Tree]
-                direction LR
-                apply_environment[Environment Variables] -->
-                apply_cli[Command-Line Parameters]
-            end
-            subgraph sanitize_tree__[Sanitize Tree]
-                interpolate_all_values[Interpolate/resolve all Values] -->
-                enforce_typecheck[Enforce Typecheck]
-            end
+finalize_cfg_tree --> choice2{subcommand}
+
+choice2 --> |subcommand: cleanup| toporun_cleanup[Toporun-step: cleanup] --> end_
+choice2 --> |subcommand: provision| toporun_provision[Toporun-step: provision] --> toporun_finalize_provision[Toporun-step: finalize-provision] --> end_
+choice2 --> |subcommand: system-provision| print_system_provision_cmdline[Print command for system-provisioning] --> end_
+choice2 --> |otherwise| toporun_init[Toporun-step: init] --> run_task[Execute the called task] --> end_
+
+    subgraph load_minimal_tree[Setup minimal ConfigTree]
+        load_spinfile[Load spinfile.yaml] --> load_global_yaml[Load global.yaml] --> load_local_plugins[Load project-local plugins] --> load_builtin_plugin[Load spin's built-in Plugin]
+    end
+
+    subgraph load_plugins_into_tree[Load plugins into the ConfigTree]
+        load_plugin_packages[Load installed plugins] --> load_global_plugins[Load globally installed plugins]
+    end
+
+    subgraph finalize_cfg_tree[Finalize the ConfigTree]
+        subgraph update_properties
+        direction TB
+            update_config_from_environment[Update tree with SPIN_TREE variables ] --> apply_properties[Apply properties from -p CLI Option] --> apply_prepend_properties[Apply properties from -pp CLI Option] --> apply_append_properties[Apply properties from -ap CLI Option]
         end
-    end
-
-    subgraph task__[Task]
-        init["Calling init()"] --> task[Calling the task]
-    end
-    subgraph cleanup__[Cleanup]
-        cleanup__a["Cleanup Plugins - Calling cleanup()"]
-        cleanup__a --> cleanup__b[Purge Plugin Directory]
+        update_properties --> toporun_configure[Toporun-step: configure] --> tree_sanitize[Sanitize the ConfigTree] --> | if --dump option set|dump[Print the ConfigTree to stdout]
     end
 ```

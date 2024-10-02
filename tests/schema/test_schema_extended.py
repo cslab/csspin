@@ -12,8 +12,10 @@ import pytest
 
 def execute_spin(yaml, env, cmd="", subprocess_env=None):
     """Helper function to execute spin and return the output"""
+    cmd = (f"spin -C tests/schema --env {str(env)} -f {yaml} " + cmd).split(" ")
+    print(subprocess.list2cmdline(cmd))
     return subprocess.check_output(
-        (f"spin -C tests/schema --env {str(env)} -f {yaml} " + cmd).split(" "),
+        cmd,
         encoding="utf-8",
         stderr=subprocess.PIPE,
         env=subprocess_env,
@@ -28,7 +30,12 @@ def test_testplugin_general(cfg, tmp_path) -> None:
     execute_spin(
         yaml="test_schema_general.yaml",
         env=tmp_path,
-        cmd="--provision testplugin",
+        cmd="provision",
+    )
+    execute_spin(
+        yaml="test_schema_general.yaml",
+        env=tmp_path,
+        cmd="testplugin",
     )
 
 
@@ -39,7 +46,7 @@ def test_environment_set_via_spinfile(tmp_path) -> None:
     output = execute_spin(
         yaml="test_schema_environment.yaml",
         env=tmp_path,
-        cmd="--provision",
+        cmd="provision",
     )
     assert "spin: set FOO=bar" in output
     assert "spin: unset BAR" in output
@@ -64,7 +71,7 @@ def test_schema_failure_override_internal_via_cli(
         execute_spin(
             yaml="test_schema_general.yaml",
             env=tmp_path,
-            cmd=f"--provision -p {property_value}",
+            cmd=f"-p {property_value} provision",
         )
     except subprocess.CalledProcessError as exc:
         assert f"Can't override internal property {property_value}" in exc.stderr
@@ -97,7 +104,7 @@ def test_schema_failure_override_internal_via_environment(
         execute_spin(
             yaml="test_schema_general.yaml",
             env=tmp_path,
-            cmd="--provision",
+            cmd="provision",
             subprocess_env=environ | {envvar: envvar_value},
         )
     except subprocess.CalledProcessError as exc:

@@ -20,7 +20,7 @@ Python and Javascript, `spin` would:
   Python and Node can be used
 * install tools and dependencies for development, testing, etc.
 
-All with a single command: ``spin --provision``!
+All with a single command: ``spin provision``!
 
 Second, `spin` standardizes workflows, best practices and how development tools
 are used, especially in a development group with many similar projects that
@@ -29,7 +29,7 @@ workflows executing multiple task in sequence using a single command.
 
 By default, `spins` will automatically generate the right options and arguments
 for the tools it runs, and show the user the precise commands. As a result,
-*anyone* will be able to check out *any project*, run ``spin --provision`` and
+*anyone* will be able to check out *any project*, run ``spin provision`` and
 will be all set - Running a project's test suite becomes as simple as doing
 ``spin test`` etc.
 
@@ -171,7 +171,7 @@ to then add the current project as editable install:
    :caption: Provision a Python project using cs.spin
    :emphasize-lines: 1,3,6,11,14
 
-   $ spin --provision
+   $ spin provision
    spin: mkdir /home/bts/src/qs/spin/cs.spin/.spin/plugins
    spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q -t /home/bts/src/qs/spin/cs.spin/.spin/plugins --index-url https://packages.contact.de/tools/stable spin_python
    spin: set PYTHON_BUILD_CACHE_PATH=/home/bts/.cache/spin/pyenv_cache
@@ -218,7 +218,7 @@ that ``spin_python.pytest`` depends on from PyPI:
    :caption: Provision the ``spin_python.pytest`` plugin as well as its dependencies
    :emphasize-lines: 7
 
-   $ spin --provision
+   $ spin provision
    spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
        -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
        --index-url https://packages.contact.de/tools/stable \
@@ -283,7 +283,7 @@ installs all the tools and sets up the :program:`pre-commit` hooks.
    :caption: Provisioning a plugin-package from a git-repository
    :emphasize-lines: 8-10
 
-   $ spin --provision
+   $ spin provision
    spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
        -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
        --index-url https://packages.contact.de/tools/stable \

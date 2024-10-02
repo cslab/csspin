@@ -934,10 +934,10 @@ def task(*args: Any, **kwargs: Any) -> Callable:
         context_settings = config()
         sig = inspect.signature(fn)
         param_names = list(sig.parameters.keys())
-        if param_names and param_names[0] == "ctx":
+        if param_names and "ctx" in param_names:
             pass_context = True
             task_object = click.pass_context(fn)
-            param_names.pop(0)
+            param_names.pop(param_names.index("ctx"))
         pass_config = False
         for pn in param_names:
             if pn == "cfg":
@@ -979,7 +979,9 @@ def task(*args: Any, **kwargs: Any) -> Callable:
             ensure(task_object)  # type: ignore[arg-type]
             return fn(get_tree(), *args, **kwargs)
 
-        if pass_config:
+        if pass_config and pass_context:
+            task_object.callback = click.pass_context(alternate_callback)
+        elif pass_config:
             task_object.callback = alternate_callback
         elif pass_context:
             task_object.callback = click.pass_context(regular_callback)
@@ -1169,6 +1171,10 @@ def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
     for func_name in fn_names:
         debug(f"toporun: {func_name}")
         for pi_name in plugins:
+            if pi_name == "spin.builtin" and func_name in ("cleanup", "provision"):
+                # Don't run the hook in spin.builtin, it's a task there and not
+                # considered a plugin's hook.
+                continue
             pi_mod = cfg.loaded[pi_name]
             initf = getattr(pi_mod, func_name, None)
             if initf:
@@ -1181,10 +1187,6 @@ def main(*args: Any, **kwargs: Any) -> None:
 
     if not args:
         args = None  # type: ignore[assignment]
-    kwargs["auto_envvar_prefix"] = "SPIN"
-    kwargs["complete_var"] = "XOKSAPOKA"
-    kwargs.setdefault("standalone_mode", False)
-    cli.click_main_kwargs = kwargs  # type: ignore[attr-defined]
     cli.main(args, **kwargs)  # type: ignore[arg-type]
 
 

@@ -578,7 +578,7 @@ def test_set_tree(cfg: ConfigTree, minimum_yaml_path: str) -> None:
     """spin.set_tree overwrites the current instance of spin.ConfigTree"""
     assert spin.get_tree() == cfg
 
-    spin.cli.load_config_tree(minimum_yaml_path, cwd=os.getcwd())
+    spin.cli.load_minimal_tree(minimum_yaml_path, cwd=os.getcwd())
     new_tree = spin.get_tree()
     assert new_tree != cfg
 
@@ -942,4 +942,3 @@ def test_toporun(
 
     captured = capsys.readouterr()
     assert "toporun: configure" in captured.out
-    assert "spin.builtin.configure()" in captured.out

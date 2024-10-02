@@ -239,25 +239,7 @@ The proposal is to unify these similar concepts as follows:
    and map it in a suitable way to the verbosity level of the
    according tools they call.
 
-6. If the user wants different verbosity for different spin
-   activities, she should make different calls. As an example,
-   if you want just the task to run in very verbose mode but not
-   the provisioning, instead of:
-
-   ```
-   spin -vv --provision pytest
-   ```
-
-   you call:
-
-   ```
-   spin -q --provision
-   spin -vv pytest
-   ```
-
-   It this isn't doable for technical reasons: well, bad luck.
-
-7. We move the property `verbosity` to the `/spin`-subtree?
+6. We move the property `verbosity` to the `/spin`-subtree?
 
 ## 8. Extending the CLI
 

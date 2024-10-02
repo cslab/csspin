@@ -76,7 +76,7 @@ def test_find_spinfile_failing(
 
     # no local spinfile found + passed spinfile not found
     result = subprocess_run(
-        ["spin", "-C", str(tmp_path), "-f", "spinfile.yaml", "--provision"],
+        ["spin", "-C", str(tmp_path), "-f", "spinfile.yaml", "provision"],
         text=True,
         stdout=PIPE,
         stderr=PIPE,
@@ -86,7 +86,7 @@ def test_find_spinfile_failing(
 
     # not help and no spinfile found nor passed
     result = subprocess_run(
-        ["spin", "-C", str(tmp_path), "--provision"],
+        ["spin", "-C", str(tmp_path), "provision"],
         text=True,
         stdout=PIPE,
         stderr=PIPE,
@@ -119,13 +119,11 @@ def test_load_plugin(
 
     # load plugin that is not present in the tree
     assert not cfg_spin_dummy.loaded.get("dummy")
-    plugin = cli.load_plugin(cfg=cfg_spin_dummy, import_spec="spin_dummy.dummy")
+    cli.load_plugins_into_tree(cfg=cfg_spin_dummy)
     captured = capsys.readouterr()
 
-    assert isinstance(plugin, ModuleType)
     assert "import plugin spin_dummy.dummy" in captured.out
     assert cfg_spin_dummy.loaded.get("spin_dummy.dummy")
-    assert isinstance(plugin.defaults, ConfigTree)
 
     # load plugin that does not exist
     with pytest.raises(ModuleNotFoundError, match="No module named 'foo"):
@@ -229,28 +227,24 @@ def test_yield_plugin_import_specs(cfg: ConfigTree) -> None:
 
 
 def test_load_config_tree_basic(
-    mocker: MockerFixture,
     tmp_path: PathlibPath,
     minimum_yaml_path: str,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
     spin.cli.load_config_tree returns a valid configuration tree with all
     expected attributes set (Verbosity.NORMAL)
     """
-    mock_toporun = mocker.patch("spin.cli.toporun")
 
     with chdir(tmp_path):
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
 
-        cfg = cli.load_config_tree(spinfile=spinfile, envbase=tmp_path)
+        cfg = cli.load_minimal_tree(spinfile=spinfile, envbase=tmp_path)
 
         assert cfg.spin.spinfile == spinfile
         assert cfg.spin.project_root == spinfile.dirname()
         assert cfg.spin.project_name == tmp_path.basename()
         assert cfg.spin.spin_dir == tmp_path / ".spin"
-        assert cfg.spin.spin_dir / "plugins" in sys.path
 
         assert (tmp_path / ".spin" / ".gitignore").is_file()
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
@@ -259,11 +253,10 @@ def test_load_config_tree_basic(
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
-        mock_toporun.assert_called_once()
         assert cfg.get("plugin-path") is None
 
 
-def test_load_config_tree_extended(
+def test_load_plugins_into_tree(
     mocker: MockerFixture,
     tmp_path: PathlibPath,
     minimum_yaml_path: str,
@@ -278,15 +271,13 @@ def test_load_config_tree_extended(
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
 
-        cfg = cli.load_config_tree(
+        cfg = cli.load_minimal_tree(
             spinfile=spinfile,
-            envbase=tmp_path,
             cwd=tmp_path,
+            envbase=tmp_path,
             verbosity=Verbosity.DEBUG,
-            cleanup=True,
-            provision=True,
-            properties=("foo=bar",),
         )
+        cli.load_plugins_into_tree(cfg)
         captured = capsys.readouterr()
 
         assert cfg.foo == "bar"
@@ -307,7 +298,6 @@ def test_load_config_tree_extended(
         assert "loading project plugins:" in captured.out
         assert "  import plugin spin.builtin" in captured.out
         assert "  add subtree builtin" in captured.out
-        assert "loading global plugins:" in captured.out
 
 
 def test_install_plugin_packages(
@@ -327,7 +317,6 @@ def test_install_plugin_packages(
     cli.install_plugin_packages(cfg)
 
     assert (plugin_dir / "trivial-1.0.0.dist-info").is_dir()
-    assert (plugin_dir / "easy-install.pth").is_file()
     assert (plugin_dir / "packages.memo").is_file()
     with memoizer(plugin_dir / "packages.memo") as m:
         assert m.check(trivial_plugin_path)
