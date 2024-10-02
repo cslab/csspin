@@ -8,14 +8,24 @@
 import subprocess
 
 
-def execute_spin(yaml, env, path="tests/integration/yamls", cmd=""):
+def execute_spin_in_clean_and_provisioned_env(
+    yaml, env, path="tests/integration/yamls", cmd=""
+):
     """Helper function to execute spin and return the output"""
+    subprocess.check_call(
+        f"spin -p spin.data={env} -C {path} --env {str(env)} -f {yaml} cleanup".split(
+            " "
+        )
+    )
+    subprocess.check_call(
+        f"spin -p spin.data={env} -C {path} --env {str(env)} -f {yaml} provision".split(
+            " "
+        )
+    )
     return subprocess.check_output(
-        (
-            f"spin -p spin.data={env} -C {path} --env {str(env)} -f {yaml} --cleanup"
-            " --provision "
-            + cmd
-        ).split(" "),
+        f"spin -p spin.data={env} -C {path} --env {str(env)} -f {yaml} {cmd}".split(
+            " "
+        ),
         encoding="utf-8",
         stderr=subprocess.PIPE,
     ).strip()
@@ -26,7 +36,7 @@ def test_complex_plugin_dependencies(tmp_path):
     spin is able to handle plugin-packages with plugins that depend on each
     other - within a plugin package and across multiple plugin-packages.
     """
-    output = execute_spin(
+    output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         yaml="complex_plugin_dependencies.yaml",
         cmd="depend",
@@ -36,7 +46,7 @@ def test_complex_plugin_dependencies(tmp_path):
 
 def test_schemadoc_spin_only(tmp_path):
     """Ensuring that the schemadoc task is able to only document spins schema"""
-    output = execute_spin(
+    output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",
@@ -50,7 +60,7 @@ def test_schemadoc_spin_only(tmp_path):
 
 def test_schemadoc_selection_single(tmp_path):
     """Check that an individual property without a parent can be accessed"""
-    output = execute_spin(
+    output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",
@@ -64,7 +74,7 @@ def test_schemadoc_selection_nested(tmp_path):
     """
     Validating that nested properties can be accessed using the schemadoc task.
     """
-    output = execute_spin(
+    output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",

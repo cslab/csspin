@@ -13,7 +13,19 @@ import sys
 import click
 import distro
 
-from spin import argument, option, parse_version, run_script, run_spin, sh, task, warn
+from spin import (
+    argument,
+    option,
+    parse_version,
+    rmtree,
+    run_script,
+    run_spin,
+    sh,
+    task,
+    toporun,
+    warn,
+)
+from spin.cli import finalize_cfg_tree, install_plugin_packages, load_plugins_into_tree
 
 
 @task("run", add_help_option=False)
@@ -141,9 +153,13 @@ def do_system_provisioning(
 
     This will output a script on stdout, that uses OS package managers like apt,
     yum etc. to install system-level dependencies for the project. The output
-    can for example be piped into a sudo shell. This flag can not be combined
-    with --cleanup, --provision or any subcommands.
+    can for example be piped into a sudo shell.
     """
+    # Install the plugins and build the full config tree
+    install_plugin_packages(cfg)
+    load_plugins_into_tree(cfg)
+    finalize_cfg_tree(cfg)
+
     if distroargs:
         distroname = distroargs[0]
         if len(distroargs) > 1:
@@ -185,7 +201,7 @@ def do_system_provisioning(
     for line in out.get("before", []):
         print(line)
 
-    for syscmd in "apt":
+    for syscmd in ("apt", "apt-get"):
         if package_list := out.get(syscmd, ""):
             print(f"{syscmd} install -y {package_list}")
 
@@ -198,3 +214,35 @@ def distro_task(cfg):
     """Print the distro information."""
     dinfo = get_distro()
     print(f"distro={repr(dinfo['id'])} version={parse_version(dinfo['version'])}")
+
+
+@task("provision", noenv=True)
+def provision(cfg):
+    """
+    Create or update a development environment.
+    """
+    # Install the plugins and build the full config tree
+    install_plugin_packages(cfg)
+    load_plugins_into_tree(cfg)
+    finalize_cfg_tree(cfg)
+
+    toporun(cfg, "provision")
+    toporun(cfg, "finalize_provision")
+
+
+@task("cleanup", noenv=True)
+def cleanup(cfg):
+    """
+    Clean up project-local resources that have been provisioned by spin, e.g.
+    virtual environments and {project_root}/.spin.
+    """
+    # Load the plugins as far as they are available.
+    load_plugins_into_tree(cfg, cleanup=True)
+
+    # Do not configure and sanitize in case of cleanup, since plugin
+    # packages may not be installed, causing AttributeErrors in case of
+    # accessing not-initialized plugins via "cfg." as well as failures due
+    # to interpolation against property tree keys that does not exist.
+
+    toporun(cfg, "cleanup", reverse=True)
+    rmtree(cfg.spin.spin_dir / "plugins")

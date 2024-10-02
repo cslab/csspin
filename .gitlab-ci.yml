@@ -9,6 +9,8 @@ include:
       - ci/release.yml
       - ci/analyze.yml
 
+variables:
+  SPIN_VERBOSE: 1
 # --------------------------------- Build stage --------------------------------
 wheel:
   stage: build
@@ -18,10 +20,12 @@ wheel:
     # (potentially) the whole SCM history to work correctly
     GIT_DEPTH: 0
     GIT_STRATEGY: clone
+    SPIN_TREE_PYTHON__USE: python
   script:
     - pip install -e .
-    - spin -v --provision -p python.use=python python:wheel
-    - spin -v docs html
+    - spin provision
+    - spin python:wheel
+    - spin docs html
   artifacts:
     when: always
     expire_in: 72 hrs
@@ -37,15 +41,13 @@ pre-commit:
 
 .test_base:
   needs: []
+  variables:
+    SPIN_TREE_PYTHON__USE: python
+    SPIN_TREE_PYTEST__OPTS: "['--cov-report', 'term', '--cov-report', 'xml:coverage-${CI_JOB_ID}.xml', '--junitxml', 'reports-${CI_JOB_ID}/pytest.xml']"
   script:
     - pip install -e .
-    - >
-      spin --provision
-      -p python.use=python
-      -p pytest.opts="['--cov-report', 'term', '--cov-report',
-      'xml:coverage-${CI_JOB_ID}.xml', '--junitxml',
-      'reports-${CI_JOB_ID}/pytest.xml']"
-      test -vv --coverage
+    - spin provision
+    - spin test -vv --coverage
   artifacts:
     when: always
     expire_in: 24 hrs
@@ -78,17 +80,11 @@ python3.12:
 windows:
   extends: [.test_base]
   tags: ["Powershell", "Python3"]
+  variables:
+    SPIN_TREE_PYTHON__USE: ""
   before_script:
     - "& python.exe -m venv venv"
     - venv\Scripts\activate.ps1
-    - pip install -e .
-  script:
-    - >
-      spin --provision
-      -p pytest.opts="['--cov-report', 'term', '--cov-report',
-      'xml:coverage-$env:CI_JOB_ID.xml', '--junitxml',
-      'reports-$env:CI_JOB_ID/pytest.xml']"
-      test -vv --coverage
 
 # -------------------------- Integration Tests ---------------------------------
 .external_integration_base:

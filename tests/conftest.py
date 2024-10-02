@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from click.testing import CliRunner
 from pytest import fixture
 
-from spin.cli import load_config_tree
+from spin.cli import finalize_cfg_tree, load_minimal_tree, load_plugins_into_tree
 
 if TYPE_CHECKING:
     import pathlib
@@ -31,12 +31,12 @@ def cli_runner() -> CliRunner:
 
 @fixture()
 def cfg(minimum_yaml_path) -> ConfigTree:
-    return load_config_tree(minimum_yaml_path, cwd=os.getcwd())
+    return load_minimal_tree(minimum_yaml_path, cwd=os.getcwd())
 
 
 @fixture()
 def cfg_spin_dummy() -> ConfigTree:
-    return load_config_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
+    return load_minimal_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
 
 
 @fixture()
@@ -79,7 +79,7 @@ def trivial_plugin_path() -> Path:
 
 @fixture(scope="session")
 def directive_spinfile() -> Path:
-    return load_config_tree(
+    cfg = load_minimal_tree(
         Path(__file__).dirname()
         / "integration"
         / "directives"
@@ -87,3 +87,6 @@ def directive_spinfile() -> Path:
         / "spinfile.yaml",
         cwd=os.getcwd(),
     )
+    load_plugins_into_tree(cfg)
+    finalize_cfg_tree(cfg)
+    return cfg

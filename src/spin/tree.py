@@ -440,9 +440,9 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
 
 def tree_update_properties(
     cfg: ConfigTree,
-    override_properties: tuple = (),
-    prepend_properties: tuple = (),
-    append_properties: tuple = (),
+    override_properties: Iterable[str] = (),
+    prepend_properties: Iterable[str] = (),
+    append_properties: Iterable[str] = (),
 ) -> None:
     """Modify the configuration tree, by overriding, prepending and
     appending settings to existing properties.

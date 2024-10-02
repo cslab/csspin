@@ -17,8 +17,8 @@ An **environment** is a directory, where spin creates language stack specific
 things, e.g. for Python it creates a Python virtual environment. Then, the
 project's runtime and development dependencies and the project itself is
 installed into the environment. Environments must be created explicitly, by
-passing the command line option :option:`--provision <spin --provision>` to
-spin. Spin will refuse to run most tasks before an environment has been created.
+running ``spin provision``. Spin will refuse to run most tasks before an
+environment has been created.
 
 Environments are generally created below ``.spin`` which is located in the
 project root directory. Spin and its plugins try hard to place everything that

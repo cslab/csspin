@@ -59,3 +59,4 @@ venv.bak/
 *.org_rst
 *.log
 docs/_build/
+.vscode
