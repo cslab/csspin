@@ -15,6 +15,7 @@ import distro
 
 from spin import (
     argument,
+    die,
     option,
     parse_version,
     rmtree,
@@ -32,7 +33,7 @@ from spin.cli import finalize_cfg_tree, install_plugin_packages, load_plugins_in
 def exec_shell(args):
     """Run a shell command in the project context."""
     if not args:
-        args = ("{platform.shell}",)
+        die("Use of run is not possible without arguments.")
     sh(*args)
 
 
