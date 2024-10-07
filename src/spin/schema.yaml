@@ -113,10 +113,6 @@ loaded:
   type: object internal
   help: Mapping between plugin names and their module objects
 
-schema:
-  type: object internal
-  help: The schema shipped by cs.spin.
-
 build_rules:
   type: object
   help: Configuration of rules for build targets.
@@ -124,3 +120,7 @@ build_rules:
 system_requirements:
   type: object
   help: The system requirements for the current project.
+
+schema:
+  type: object internal
+  help: The schema shipped by cs.spin.

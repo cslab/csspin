@@ -705,7 +705,7 @@ def test_build_target_no_target(cfg: ConfigTree) -> None:
     with pytest.raises(
         click.Abort, match=".*Sorry, I don't know.* 'NOT_EXISTING_THING'.*"
     ):
-        spin.build_target(spin.config(), target="NOT_EXISTING_THING")
+        spin.build_target(cfg, target="NOT_EXISTING_THING")
 
 
 def test_build_target_no_target_but_exists(
@@ -716,7 +716,7 @@ def test_build_target_no_target_but_exists(
     tree's build rules, but still exist
     """
     cfg["TMPDIR"] = tmp_path
-    spin.build_target(spin.config(), target="{TMPDIR}")
+    spin.build_target(cfg, target="{TMPDIR}")
 
 
 def test_build_target_up_to_date(
