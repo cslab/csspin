@@ -1,7 +1,7 @@
 # YAML using local plugin-packages for integration tests;
 # - checking for requires.spin between plugins in the same plugin-package
 # - .......................................... of different plugin-packages
-plugin-packages:
+plugin_packages:
   - ../../data/spin_depend
   - ../../data/spin_dummy
 plugins:

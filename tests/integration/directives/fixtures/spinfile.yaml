@@ -1,5 +1,5 @@
 # Spinfile used for testing the directives
-plugin-path:
+plugin_paths:
   - plugins
 plugins:
   - directives

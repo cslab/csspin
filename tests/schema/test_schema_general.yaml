@@ -1,4 +1,4 @@
-plugin-path:
+plugin_paths:
   - testplugin
 plugins:
   - testplugin

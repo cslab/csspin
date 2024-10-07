@@ -85,12 +85,18 @@ plugins:
   type: list
   help: The list of plugins to import.
 
-plugin-packages:
+plugin_packages:
   type: list
   help: |
     A list of plugin packages to install. Supports the same
     requirements specifiers as pip, including URLs, local file names
     and PEP 440 specifiers.
+
+plugin_paths:
+  type: list
+  help: |
+    A list of paths to lcoal directories containing plugin modules and their
+    optional schemas.
 
 platform:
   type: object
@@ -110,3 +116,11 @@ loaded:
 schema:
   type: object internal
   help: The schema shipped by cs.spin.
+
+build_rules:
+  type: object
+  help: Configuration of rules for build targets.
+
+system_requirements:
+  type: object
+  help: The system requirements for the current project.

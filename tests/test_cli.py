@@ -198,14 +198,14 @@ def test_group_with_aliases() -> None:
 def test_find_plugin_packages(cfg: ConfigTree) -> None:
     """
     spin.cli.find_plugin_packages returns a generator which items are the
-    expected 'plugin-packages' of the passed configuration tree
+    expected 'plugin_packages' of the passed configuration tree
     """
     result = cli.find_plugin_packages(cfg)
     assert isinstance(result, Generator)
     assert not list(result), "Result should not have length > 0"
 
     packages = ["flake8", "pytest"]
-    cfg["plugin-packages"] = packages
+    cfg["plugin_packages"] = packages
     assert list(cli.find_plugin_packages(cfg)) == packages
 
 
@@ -253,7 +253,7 @@ def test_load_config_tree_basic(
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
-        assert cfg.get("plugin-path") is None
+        assert cfg.plugin_paths == []
 
 
 def test_load_plugins_into_tree(
@@ -294,7 +294,7 @@ def test_load_plugins_into_tree(
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("spin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
-        assert cfg.get("plugin-path") is None
+        assert cfg.plugin_paths == []
         assert "loading project plugins:" in captured.out
         assert "  import plugin spin.builtin" in captured.out
         assert "  add subtree builtin" in captured.out

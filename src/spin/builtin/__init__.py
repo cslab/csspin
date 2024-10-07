@@ -123,7 +123,7 @@ def configure(cfg):
 def merge_dicts(a, b):
     for k, v in b.items():
         if k in a:
-            # We support lists and strings in system-requirements;
+            # We support lists and strings in system_requirements;
             # this is not very robust, though.
             if isinstance(v, list):
                 a[k].extend(v)
@@ -188,9 +188,9 @@ def do_system_provisioning(
     # Check system requirements defined within the configuration tree, usually
     # defined the projects' spinfile.yaml.
     supported = True
-    if system_requirements := cfg.get("system-requirements", None):
+    if cfg.system_requirements.keys():
         supported = False
-        for check, items in system_requirements.items():
+        for check, items in cfg.system_requirements.items():
             check = eval(f"lambda distro, version: {check}")
             if check(distroname, distroversion):
                 supported = True

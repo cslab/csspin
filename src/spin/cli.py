@@ -490,18 +490,16 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
 def find_plugin_packages(cfg: tree.ConfigTree) -> Generator:
     # Packages that are required to load plugins are identified by
     # the keys in dict-valued list items of the 'plugins' setting
-    plugin_packages = cfg.get("plugin-packages", [])
-    if not isinstance(plugin_packages, list):
-        die("'plugin-packages' configuration is invalid!")
-    yield from plugin_packages
+    if not isinstance(cfg.plugin_packages, list):
+        die("'plugin_packages' configuration is invalid!")
+    yield from cfg.plugin_packages
 
 
 def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
-    plugins = cfg.get("plugins", [])
-    if not isinstance(plugins, list):
+    if not isinstance(cfg.plugins, list):
         die("'plugins' configuration is invalid!")
 
-    for item in plugins:
+    for item in cfg.plugins:
         if isinstance(item, dict):
             for package, modules in item.items():
                 for module in modules:
@@ -576,11 +574,10 @@ def load_plugins_into_tree(cfg: tree.ConfigTree, cleanup: bool = False) -> None:
     Update the tree by loading the installed plugin-packages and the globally
     available plugins.
     """
-    plugin_path = cfg.get("plugin-path", [])
-    if not isinstance(plugin_path, list):
-        die("'plugin-path' configuration is invalid!")
+    if not isinstance(cfg.plugin_paths, list):
+        die("'plugin_paths' configuration is invalid!")
 
-    for localpath in plugin_path:
+    for localpath in cfg.plugin_paths:
         localabs = interpolate1(cfg.spin.project_root / localpath)
         if not exists(localabs):
             die(f"Plugin path {localabs} doesn't exist")

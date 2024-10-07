@@ -19,12 +19,12 @@ the `spin_python.python`_ plugin, so it is unnecessary to also include
 `spin_python.python`_ (it won't hurt either, though).
 
 .. NOTE::
-   Any modification of the ``plugin-packages``, ``plugin-path`` and ``plugins``
+   Any modification of the ``plugin_packages``, ``plugin_paths`` and ``plugins``
    may require to call ``spin provision`` in order to
    install and provision plugin-packages, plugins and their dependencies.
 
 **Project-local plugins** are modules in plugin directories and can be declared
-using their relative path to the project via ``plugin-path``. Local plugins can
+using their relative path to the project via ``plugin_paths``. Local plugins can
 then by used adding their name. Given a project layout like this:
 
   .. code-block:: console
@@ -44,22 +44,22 @@ then by used adding their name. Given a project layout like this:
   .. code-block:: yaml
     :caption: ``spinfile.yaml`` defining a project-local plugin
 
-    # 'plugin-path' is a list of relative paths from where plugins are imported.
-    plugin-path:
+    # 'plugin_path' is a list of relative paths from where plugins are imported.
+    plugin_paths:
       - spinplugins
     plugins:
       - myplugin
 
 **Plugin-packages** containing a set of plugins are declared in
-``plugin-packages``. spin will install installable plugins into
+``plugin_packages``. spin will install installable plugins into
 ``.spin/plugins``.
 
   .. code-block:: yaml
     :caption: ``spinfile.yaml`` defining plugins to import from plugin-packages
 
-    # 'plugin-packages' is a list of plugin-packages which are to be installed
+    # 'plugin_packages' is a list of plugin-packages which are to be installed
     # during provision and provide a set of plugins.
-    plugin-packages:
+    plugin_packages:
       - spin_python
     plugins:
       - spin_python.python

@@ -144,14 +144,14 @@ as an example to perform the provisioning.
 .. code-block:: yaml
    :caption: Minimal :file:`spinfile.yaml` for a Python project
 
-   plugin-packages:
+   plugin_packages:
      - spin_python
    plugins:
      - spin_python.python
    python:
      version: 3.9.8
 
-The ``plugin-packages`` key lists plugin-packages that are installed using
+The ``plugin_packages`` key lists plugin-packages that are installed using
 :program:`pip` into a project-specific plugin directory (which notably is
 different from the project's virtual environment, in case it is a Python
 project).
@@ -200,7 +200,7 @@ Now you want to test your project using `pytest`_. All that is necessary
    :caption: Minimal :file:`spinfile.yaml` to run the pytest plugin
    :emphasize-lines: 4
 
-   plugin-packages:
+   plugin_packages:
      - spin_python
    plugins:
      - spin_python.pytest
@@ -257,7 +257,7 @@ tools and settings required. You can simply add that plugin to your
    :emphasize-lines: 2,6,9-10
    :linenos:
 
-   plugin-packages:
+   plugin_packages:
      - git+https://git.example.com/projstds#egg=projstds
      - spin_python
    plugins:
@@ -268,7 +268,7 @@ tools and settings required. You can simply add that plugin to your
    projstds:
      # Plugin settings goes here
 
-The ``plugin-packages`` key lists plugin-packages that are installed using
+The ``plugin_packages`` key lists plugin-packages that are installed using
 :program:`pip` into a project specific plugin directory (which notably is
 different from the project's virtual environment, in case it is a Python
 project). Line 6 makes spin import and use the plugin module
