@@ -1,13 +1,13 @@
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
-plugin-packages:
+plugin_packages:
   - spin_consd
   - spin_docs
   - spin_python
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
-plugin-path:
+plugin_paths:
   - plugins
 
 # The list of plugins to be used for this project.
@@ -31,7 +31,7 @@ pytest:
   opts: [-m, "not slow"]
   tests: [tests]
 
-build-rules:
+build_rules:
   task docs:
     sources: docs/schemaref.rst
   docs/schemaref.rst:
@@ -47,7 +47,7 @@ sphinx:
   build_dir: _build
 
 # Host system requirements
-system-requirements:
+system_requirements:
   distro in ("debian", "ubuntu"):
     apt-get: libaio1 git curl
   distro=="fedora" and version>=parse_version("22"):

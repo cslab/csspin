@@ -690,7 +690,7 @@ def test_build_target(cfg: ConfigTree, mocker: MockerFixture) -> None:
     arguments
     """
     mocker.patch("subprocess.run")
-    cfg["build-rules"] = spin.config(
+    cfg["build_rules"] = spin.config(
         phony=spin.config(sources="notphony"),
         notphony=spin.config(script=["1", "2"]),
     )
@@ -727,8 +727,8 @@ def test_build_target_up_to_date(
     """spin.build_target will not build anything if the target is up-to-date"""
     mocker.patch("spin.info")
     cfg["TMPDIR"] = tmp_path
-    cfg["build-rules"] = spin.config()
-    cfg["build-rules"]["{TMPDIR}"] = spin.config(script=["mkdir", "{TMPDIR}"])
+    cfg["build_rules"] = spin.config()
+    cfg["build_rules"]["{TMPDIR}"] = spin.config(script=["mkdir", "{TMPDIR}"])
     spin.build_target(cfg, "{TMPDIR}", False)
     assert "{TMPDIR} is up to date" in str(spin.info.call_args_list[1])
 

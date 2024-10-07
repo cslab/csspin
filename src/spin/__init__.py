@@ -1101,16 +1101,15 @@ def get_sources(tree: ConfigTree) -> list:
 
 def build_target(cfg: ConfigTree, target: str, phony: bool = False) -> None:
     info(f"target '{target}'{' (phony)' if phony else ''}")
-    build_rules = cfg.get("build-rules", config())
-    target_def = build_rules.get(target, None)
-    if target_def is None:
+    if (target_def := cfg.build_rules.get(target, None)) is None:
         if not exists(target) and not phony:
             die(
                 f"Sorry, I don't know how to produce '{target}'. You may want to"
-                " add a rule to your spinfile.yaml in the 'build-rules'"
+                " add a rule to your spinfile.yaml in the 'build_rules'"
                 " section."
             )
         return
+
     sources = get_sources(target_def)
     # First, build preconditions
     if sources:
@@ -1129,7 +1128,7 @@ def build_target(cfg: ConfigTree, target: str, phony: bool = False) -> None:
 
 def ensure(command: click.Command) -> None:
     # Check 'command_name' for dependencies declared under
-    # "build-rules", and make sure to produce it. This is used
+    # 'build_rules', and make sure to produce it. This is used
     # internally and intentionally undocumented.
     debug(f"checking preconditions for {command}")
     cfg = get_tree()

@@ -1,4 +1,4 @@
-plugin-packages:
+plugin_packages:
   - ../../data/spin_dummy
 plugins:
   - spin_python.python

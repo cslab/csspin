@@ -123,7 +123,7 @@ Plugins are Python modules, and they are imported by spin using their (full)
 import name. Plugin import names are listed under the :py:data:`plugins` key. It
 is important to note, that plugin modules and spin itself are totally separate
 from your project, even if it also uses Python. A common way to distribute and
-access plugins is via :py:data:`plugin-packages`, which are Python packages
+access plugins is via :py:data:`plugin_packages`, which are Python packages
 containing multiple plugins.
 
 The example below demonstrates how to declare a plugin package and selected
@@ -132,7 +132,7 @@ plugins to be installed from the default Python package index.
 .. code-block:: yaml
    :caption: Example: :file:`spinfile.yaml` configuration for importing plugins
 
-   plugin-packages:
+   plugin_packages:
      - spin_python
    plugins:
      - spin_python.behave
@@ -145,7 +145,7 @@ one:
 .. code-block:: yaml
    :caption: Example: :file:`spinfile.yaml` configuration for importing plugins (short)
 
-   plugin-packages:
+   plugin_packages:
      - spin_python
    plugins:
      - spin_python:
@@ -158,7 +158,7 @@ git-repositories is possible:
 .. code-block:: yaml
     :caption: Example: Additional ways to install plugin-packages
 
-    plugin-packages:
+    plugin_packages:
      - someones-spin-plugins~=2.0
      - git+https://git.example.com/projstds#egg=projstds
 
@@ -169,12 +169,12 @@ Local plugins
 
 Spin supports project-specific plugins local to a project. You can specify a
 list of paths relative to the project root directory, where spin looks for local
-plugins using the ``plugin-path`` key:
+plugins using the ``plugin_paths`` key:
 
 .. code-block:: yaml
    :caption: Importing plugins from a local path
 
-   plugin-path:
+   plugin_paths:
      - plugins/deployment
      - plugins/building
 
@@ -260,7 +260,7 @@ primitive.
 
 .. Attention:: Don't use this to simulate a real build tool!
 
-Dependencies are declared under the ``build-rules`` key as follows:
+Dependencies are declared under the ``build_rules`` key as follows:
 
 * each sub-key is a target; tasks are "pseudo" targets prefixed with
   ``"task "`` (exactly one space!)
@@ -289,9 +289,9 @@ is updated whenever :program:`spin docs` is executed, and
 :file:`schemaref.rst`:
 
 .. code-block:: yaml
-   :caption: Custom `build-rules` to automate documentation building
+   :caption: Custom `build_rules` to automate documentation building
 
-   build-rules:
+   build_rules:
      task docs:
        sources: docs/schemaref.rst
      docs/schemaref.rst:
@@ -400,7 +400,7 @@ Projects can define their system requirements within ``spinfile.yaml``:
 .. code-block:: yaml
   :caption: Defining project specific system requirements in ``spinfile.yaml``
 
-  system-requirements:
+  system_requirements:
     distro in ("debian", "ubuntu"):
       apt-get: git curl
     distro=="fedora" and version>=parse_version("22"):
