@@ -25,6 +25,7 @@ from spin.tree import ConfigTree
 if TYPE_CHECKING:
     from click.testing import CliRunner
     from pytest_mock.plugin import MockerFixture
+    from pytest import MonkeyPatch
 
 from subprocess import check_output
 from subprocess import run as subprocess_run
@@ -36,6 +37,26 @@ def test_cli(cli_runner: CliRunner) -> None:
     """spin.cli can be invoked using click"""
     result = cli_runner.invoke(cli.cli, ["--help"])
     assert result.exit_code == 0
+
+
+def test_cleanup(
+    cli_runner: CliRunner,
+    mocker: MockerFixture,
+    monkeypatch: MonkeyPatch,
+    tmp_path: PathlibPath,
+) -> None:
+    (tmp_spin_data := tmp_path / "tmp_spin_data").mkdir()
+    (tmp_spin_dir := tmp_path / ".spin").mkdir()
+    (tmp_spin_plugins := tmp_spin_dir / "plugins").mkdir()
+    (tmp_plugin := tmp_spin_plugins / "tmp_plugin").mkdir()
+
+    monkeypatch.setenv("SPIN_DATA", tmp_spin_data)
+    mocker.patch("spin.builtin.toporun", return_value=None)
+
+    cli_runner.invoke(cli.cli, ["--env", tmp_path, "cleanup", "--purge", "-y"])
+
+    assert not tmp_spin_data.exists()
+    assert not tmp_plugin.exists()
 
 
 def test_find_spinfile(tmp_path: PathlibPath) -> None:

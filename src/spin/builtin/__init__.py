@@ -15,6 +15,7 @@ import distro
 
 from spin import (
     argument,
+    confirm,
     die,
     option,
     parse_version,
@@ -231,12 +232,39 @@ def provision(cfg):
     toporun(cfg, "finalize_provision")
 
 
-@task("cleanup", noenv=True)
-def cleanup(cfg):
+@task(noenv=True)
+def cleanup(
+    cfg,
+    purge: option(
+        "--purge",
+        is_flag=True,
+        help="Removes spin plugin data.",  # noqa: F722
+    ),
+    skip_confirmation: option(
+        "--yes",
+        "-y",
+        "skip_confirmation",
+        is_flag=True,
+        hidden=True,
+    ),
+):
     """
     Clean up project-local resources that have been provisioned by spin, e.g.
-    virtual environments and {project_root}/.spin.
+    virtual environments and {project_root}/.spin. Also deletes {spin.data}
+    if --purge is passed.
     """
+    if (
+        purge
+        and not skip_confirmation
+        and not (
+            confirm(
+                f"You are about to delete all plugin's data in {cfg.spin.data}."
+                " Continue?"
+            )
+        )
+    ):
+        return
+
     # Load the plugins as far as they are available.
     load_plugins_into_tree(cfg, cleanup=True)
 
@@ -247,3 +275,6 @@ def cleanup(cfg):
 
     toporun(cfg, "cleanup", reverse=True)
     rmtree(cfg.spin.spin_dir / "plugins")
+
+    if purge:
+        rmtree(cfg.spin.data)

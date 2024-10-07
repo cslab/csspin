@@ -57,6 +57,7 @@ __all__ = [
     "error",
     "cd",
     "copy",
+    "confirm",
     "exists",
     "mkdir",
     "rmtree",
@@ -178,6 +179,22 @@ def error(*msg: str, resolve: bool = True, **kwargs: Any) -> None:
         msg = interpolate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
+
+
+def confirm(*msg: str, resolve: bool = True, **kwargs: Any) -> bool:
+    """Prompt user for confirmation.
+
+    Arguments are interpolated against the configuration tree if `resolve`
+    evaluates to `True`. The output is written to standard out.
+
+    `confirm` supports the same keyword arguments as Click's
+    :py:func:`click.confirm`.
+
+    """
+    if resolve:
+        msg = interpolate(msg)  # type: ignore[assignment]
+    click.echo(click.style("spin: ", fg="yellow"), nl=False)
+    return click.confirm(" ".join(msg), **kwargs)
 
 
 class Verbosity(IntEnum):
