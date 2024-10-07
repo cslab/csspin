@@ -175,14 +175,24 @@ def test_mkdir(tmp_path: PathlibPath) -> None:
     assert os.path.isdir(path)
 
 
-def test_mkdir_rmdir(tmp_path: PathlibPath) -> None:
-    """spin.rmdir is able to delete directories"""
+def test_mkdir_rmtree(tmp_path: PathlibPath) -> None:
+    """spin.rmtree is able to delete directories"""
     xxx = tmp_path / "xxx"
     assert not spin.exists(xxx)
     spin.mkdir(xxx)
     assert spin.exists(xxx)
     spin.rmtree(xxx)
     assert not spin.exists(xxx)
+
+
+def test_rmtree_file(tmp_path: PathlibPath) -> None:
+    """spin.rmtree is able to delete files"""
+    tmp_file = tmp_path / "tempfile"
+    tmp_file.touch()
+
+    assert spin.exists(tmp_file)
+    spin.rmtree(tmp_file)
+    assert not spin.exists(tmp_file)
 
 
 def test_mv(tmp_path: PathlibPath) -> None:
