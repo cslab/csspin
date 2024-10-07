@@ -265,7 +265,7 @@ def abspath(*args: str | Path) -> str:
     return os.path.abspath(normpath(*args))
 
 
-def mkdir(path: str) -> str:
+def mkdir(path: str | Path) -> str:
     """Ensure that `path` exists.
 
     If necessary, directories are recursively created to make `path`
@@ -279,8 +279,9 @@ def mkdir(path: str) -> str:
     return path
 
 
-def rmtree(path: str) -> None:
-    """Recursively remove `path` and everything it contains. The argument
+def rmtree(path: str | Path) -> None:
+    """Recursively remove `path` and everything it contains.
+    Can also remove single files. The argument
     is interpolated against the configuration tree.
 
     Obviously, this should be used with care.
@@ -292,7 +293,11 @@ def rmtree(path: str) -> None:
         echo(f"rm {path} -recurse -force")
     else:
         echo(f"rm -rf {path}")
-    shutil.rmtree(path)
+
+    if (path := Path(path)).is_dir():
+        path.rmtree()
+    else:
+        path.remove()
 
 
 def mv(source: str | Path, target: str | Path) -> None:
