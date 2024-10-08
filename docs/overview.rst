@@ -46,7 +46,7 @@ Plugins automatically provision the tools they need, come with meaningful
 default settings, provide new subcommands to `spin` (e.g. ``spin pytest`` will
 launch `pytest`_ in the development environment), and hook into generic
 workflows. For example, the `spin_python.pytest`_ plugin automatically hooks
-into the generic ``spin test`` command in case `spin_consd.stdworkflows`_ is
+into the generic ``spin test`` command in case `spin_conpod.stdworkflows`_ is
 loaded. If your project one day decides to replace `pytest` with something else,
 ``spin test`` will still do the right thing.
 
@@ -64,7 +64,7 @@ listed below.
      - Description
    * - `spin_ce`_
      - required for CE16 development
-   * - `spin_consd`_
+   * - `spin_conpod`_
      - collection of workflows and CON/SD related plugins
    * - `spin_cpp`_
      - ideal for C++ development
