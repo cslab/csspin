@@ -3,7 +3,7 @@
 .. plugin-packages
 
 .. _spin_ce: http://qs.pages.contact.de/spin/spin_ce
-.. _spin_consd: http://qs.pages.contact.de/spin/spin_consd
+.. _spin_conpod: http://qs.pages.contact.de/spin/spin_conpod
 .. _spin_cpp: http://qs.pages.contact.de/spin/spin_cpp
 .. _spin_docs: http://qs.pages.contact.de/spin/spin_docs
 .. _spin_frontend: http://qs.pages.contact.de/spin/spin_frontend
@@ -13,7 +13,7 @@
 
 .. plugins
 
-.. _spin_consd.stdworkflows: http://qs.pages.contact.de/spin/spin_consd/plugins/stdworkflows.html
+.. _spin_conpod.stdworkflows: http://qs.pages.contact.de/spin/spin_conpod/plugins/stdworkflows.html
 .. _spin_frontend.node: http://qs.pages.contact.de/spin/spin_frontend/plugins/node.html
 .. _spin_python.pytest: http://qs.pages.contact.de/spin/spin_python/plugins/pytest.html
 .. _spin_python.python: http://qs.pages.contact.de/spin/spin_python/plugins/python.html

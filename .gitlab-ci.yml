@@ -140,9 +140,9 @@ test_spin_docs_integration:
     TRIGGER_PROJECT: qs/spin/spin_docs
   extends: .external_integration_base
 
-test_spin_consd_integration:
+test_spin_conpod_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_consd
+    TRIGGER_PROJECT: qs/spin/spin_conpod
   extends: .external_integration_base
 
 # ---------------------------- Deploy/Analyze stage ----------------------------
@@ -178,7 +178,7 @@ analyze:
       artifacts: false
     - job: test_spin_docs_integration
       artifacts: false
-    - job: test_spin_consd_integration
+    - job: test_spin_conpod_integration
       artifacts: false
 
 conpi:

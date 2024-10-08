@@ -1,7 +1,7 @@
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin_packages:
-  - spin_consd
+  - spin_conpod
   - spin_docs
   - spin_python
 
@@ -12,7 +12,7 @@ plugin_paths:
 
 # The list of plugins to be used for this project.
 plugins:
-  - spin_consd.stdworkflows
+  - spin_conpod.stdworkflows
   - spin_python.pytest
   - spin_docs.sphinx
   - demo_plugin
