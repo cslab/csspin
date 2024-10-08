@@ -693,14 +693,6 @@ os.environ["SPIN_CONFIG"] = os.environ.get(
         "config" if sys.platform == "win32" else "",
     ).normpath(),
 )
-os.environ["SPIN_CACHE"] = os.environ.get(
-    "SPIN_CACHE",
-    Path.joinpath(
-        platformdirs.user_cache_dir(),
-        "spin",
-        "cache" if sys.platform == "win32" else "",
-    ).normpath(),
-)
 os.environ["SPIN_DATA"] = os.environ.get(
     "SPIN_DATA",
     Path.joinpath(

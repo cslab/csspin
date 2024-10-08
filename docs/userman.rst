@@ -23,7 +23,7 @@ environment has been created.
 Environments are generally created below ``.spin`` which is located in the
 project root directory. Spin and its plugins try hard to place everything that
 is generated while provisioning, building, testing etc. in the environment
-directory or the users cache directory to keep the source tree clean.
+directory or the users data directory to keep the source tree clean.
 
 **Plugins** are Python modules that leverage spin's API to do one ore more of
 the following:
@@ -188,8 +188,8 @@ Interpolation
 
 Settings in the :ref:`configuration tree <configuration-tree-system-label>` can
 refer to other settings by using *string interpolation*: path expressions
-surrounded by braces are replaced by the setting given. E.g. ``{spin.cache}`` is
-the setting ``cache`` in the subtree ``spin`` and its semantic is to hold the
+surrounded by braces are replaced by the setting given. E.g. ``{spin.data}`` is
+the setting ``data`` in the subtree ``spin`` and its semantic is to hold the
 path where spin and it's plugins are caching files. Strings are interpolated
 against the configuration tree and environment variables until they no longer
 contain an expression. Expressions are resolved recursively so an interpolation

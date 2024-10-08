@@ -28,10 +28,6 @@ spin:
       type: path internal
       help: The directory in which spin was called.
       # value is set during runtime
-    cache:
-      type: path
-      default: "{SPIN_CACHE}"
-      help: Path that points to spins cache
     data:
       type: path
       default: "{SPIN_DATA}"

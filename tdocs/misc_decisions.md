@@ -86,7 +86,7 @@ Things aren't equal though; we have the benefit of directly using the
 Path-Methods like:
 
 ```
-cfg.spin.cache / dir / file
+cfg.spin.data / dir / file
 ```
 
 instead of
