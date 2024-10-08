@@ -168,10 +168,10 @@ The plugin API consists of the following:
   plugins can manipulate the configuration tree so that subsequent callbacks of
   other plugins behave differently. Note that the configuration tree is not yet
   fully resolved, meaning values still contain values to be interpolated like
-  ``"{spin.cache}"``, meaning that during the ``configure(cfg)`` callback,
+  ``"{spin.data}"``, meaning that during the ``configure(cfg)`` callback,
   accessing properties should be done via :py:func:`spin.interpolate1` or by
   passing the values to spins API that will resolve values internally (e.g.
-  :py:func:`spin.sh` via ``sh("ls {spin.cache}")``).
+  :py:func:`spin.sh` via ``sh("ls {spin.data}")``).
 
 * An optional ``init(cfg)`` callback that is called before any subcommand is
   executed, but after ``configure(cfg)``. ``init(cfg)`` can be used to setup
@@ -203,7 +203,7 @@ Here is an example for a simple plugin:
 
     from spin import config, echo, task
 
-    defaults = config(msg="Spin's cache is located at {spin.cache}")
+    defaults = config(msg="Spin's data is located at {spin.data}")
 
 
     @task()
@@ -378,7 +378,7 @@ Here is a simple example using the core functions of spins API:
 
    from spin import cd, die, echo, exists, sh, task, config, mkdir, setenv
 
-   defaults = config(cache="{spin.cache}/dummy")
+   defaults = config(cache="{spin.data}/dummy")
 
 
    def configure(cfg):

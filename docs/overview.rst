@@ -98,7 +98,7 @@ are directly assigned below ``spin``:
     :emphasize-lines: 1
 
     spin:
-      cache: Path('/home/bts/.cache/spin')
+      data: Path('/home/bts/.local/share/spin')
       extra_index: None
       index_url: 'https://packages.contact.de/tools/stable'
       spinfile: Path('/home/bts/src/qs/spin/cs.spin/spinfile.yaml')
@@ -174,14 +174,14 @@ to then add the current project as editable install:
    $ spin provision
    spin: mkdir /home/bts/src/qs/spin/cs.spin/.spin/plugins
    spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q -t /home/bts/src/qs/spin/cs.spin/.spin/plugins --index-url https://packages.contact.de/tools/stable spin_python
-   spin: set PYTHON_BUILD_CACHE_PATH=/home/bts/.cache/spin/pyenv_cache
+   spin: set PYTHON_BUILD_CACHE_PATH=/home/bts/.local/share/spin/pyenv_cache
    spin: set PYTHON_CFLAGS=-DOPENSSL_NO_COMP
-   spin: /home/bts/.cache/spin/pyenv/plugins/python-build/bin/python-build 3.9.8 /home/bts/.cache/spin/python/3.9.8
+   spin: /home/bts/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.9.8 /home/bts/.local/share/spin/python/3.9.8
    Downloading Python-3.9.8.tar.xz...
    -> https://www.python.org/ftp/python/3.9.8/Python-3.9.8.tar.xz
    Installing Python-3.9.8...
-   Installed Python-3.9.8 to /home/bts/.cache/spin/python/3.9.8
-   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mvirtualenv -q -p /home/bts/.cache/spin/python/3.9.8/bin/python /home/bts/src/qs/spin/cs.spin/.spin/venv
+   Installed Python-3.9.8 to /home/bts/.local/share/spin/python/3.9.8
+   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mvirtualenv -q -p /home/bts/.local/share/spin/python/3.9.8/bin/python /home/bts/src/qs/spin/cs.spin/.spin/venv
    spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
    spin: python -mpip -q install -U pip
    spin: pip install -q -e .

@@ -65,7 +65,6 @@ if TYPE_CHECKING:
 DEFAULTS = config(
     spin=config(
         spinfile="spinfile.yaml",
-        cache=Path("{SPIN_CACHE}"),
         data=Path("{SPIN_DATA}"),
         config=Path("{SPIN_CONFIG}"),
         extra_index=None,
@@ -475,7 +474,6 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-r
         die(exc)
 
     finalize_cfg_tree(cfg)
-    mkdir("{spin.cache}")
     mkdir("{spin.data}")
 
     if dump and not ctx.args:

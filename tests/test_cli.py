@@ -166,19 +166,15 @@ def test_reverse_toposort(cfg: ConfigTree) -> None:
     # Ensure that the origin graph is not modified by calling reverse_toposort.
     assert graph == {
         "spin.builtin": ["spin.builtin.shell"],
-        "spin.builtin.shell": ["spin.builtin.cache"],
-        "spin.builtin.cache": [],
-    } or graph == {
-        "spin.builtin": ["spin.builtin.shell"],
         "spin.builtin.shell": ["spin.builtin.data"],
         "spin.builtin.data": [],
     }
 
     assert result == [
-        "spin.builtin.cache",
+        "spin.builtin.data",
         "spin.builtin.shell",
         "spin.builtin",
-    ] or result == ["spin.builtin.data", "spin.builtin.shell", "spin.builtin"]
+    ]
 
     graph = {"foo": ["bar"], "bar": ["foo"]}
     with pytest.raises(click.Abort, match="dependency graph has at least one cycle"):
