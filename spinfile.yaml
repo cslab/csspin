@@ -33,11 +33,11 @@ pytest:
 
 build_rules:
   task docs:
-    sources: docs/schemaref.rst
-  docs/schemaref.rst:
+    sources: doc/schemaref.rst
+  doc/schemaref.rst:
     sources: [src/spin/schema.yaml]
     spin:
-      - schemadoc --full=False -o docs/schemaref.rst
+      - schemadoc --full=False -o doc/schemaref.rst
   requirements.txt:
     sources: [setup.cfg, setup.py]
     script:

@@ -65,7 +65,7 @@ listed below.
    * - `spin_ce`_
      - required for CE16 development
    * - `spin_conpod`_
-     - collection of workflows and CON/SD related plugins
+     - collection of workflows and CON/POD related plugins
    * - `spin_cpp`_
      - ideal for C++ development
    * - `spin_docs`_

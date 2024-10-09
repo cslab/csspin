@@ -2,7 +2,7 @@
 
 include:
   - project: qs/cs.template
-    ref: v15.9.0.3
+    ref: v15.9.0.4
     file:
       - ci/common.yml
       - ci/pre-commit.yml
@@ -11,10 +11,11 @@ include:
 
 variables:
   SPIN_VERBOSE: 1
+
 # --------------------------------- Build stage --------------------------------
 wheel:
   stage: build
-  image: registry.contact.de/cetest:16.0-1.latest
+  image: registry.contact.de/cetest:16.0-5.latest
   variables:
     # The version generation via setuptools_scm needs
     # (potentially) the whole SCM history to work correctly
@@ -31,7 +32,7 @@ wheel:
     expire_in: 72 hrs
     paths:
       - dist/*.whl
-      - docs/_build/html
+      - doc/_build/html
   interruptible: true
 
 # --------------------------------- Test stage ---------------------------------
@@ -192,7 +193,7 @@ pages:
   image: alpine
   stage: release
   script:
-    - mv docs/_build/html public
+    - mv doc/_build/html public
   artifacts:
     paths:
       - public

@@ -24,7 +24,7 @@
 import importlib.metadata
 
 project = "cs.spin"
-copyright = "2021, CONTACT Software GmbH"
+copyright = "2021, CONTACT Software GmbH"  # pylint: disable=redefined-builtin
 author = "Frank Patz-Brockmann"
 
 # The full version, including alpha/beta/rc tags
