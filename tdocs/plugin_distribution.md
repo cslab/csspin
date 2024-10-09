@@ -78,7 +78,7 @@ organizational units differ as well by the processes they use as the
 domain(s) they're addressing, and this is obviously reflected in their
 tools usage. Based on this criterion, we define the following cluster:
 
-**spin-conpod**:
+**spin-conpod** (old: spin-consd):
 
 - `stdworkflows` (builtin)
 - `preflight` (builtin): probably obsolete

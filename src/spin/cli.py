@@ -402,7 +402,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 )
 @base_options
 @click.pass_context
-def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-return-statements
+def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-return-statements # noqa: E501
     ctx: click.Context,
     version: packaging.version.Version | None,
     help: bool,  # pylint: disable=W0622
