@@ -37,7 +37,7 @@ cover/
 *.pot
 
 # Sphinx documentation
-docs/_build/
+doc/_build/
 /tdocs/*.pdf
 
 # Environments
@@ -58,5 +58,5 @@ venv.bak/
 /_phix/
 *.org_rst
 *.log
-docs/_build/
+doc/_build/
 .vscode

@@ -160,9 +160,17 @@ def load_plugin(
                         f"{plugin_name}_schema.yaml",
                     )
                 ).properties[plugin_name]
-                schema_defaults = plugin_schema.get_default()
+
+                # Assign the schema to the plugins sub-tree as well as to the
+                # global schema.
                 plugin_config_tree.schema = plugin_schema
-                tree.tree_merge(plugin_config_tree, schema_defaults)
+                # fmt: off
+                cfg._ConfigTree__schema.properties[settings_name] = (  # pylint: disable=protected-access
+                    plugin_schema
+                )
+                # fmt: on
+
+                tree.tree_merge(plugin_config_tree, plugin_schema.get_default())
             except FileNotFoundError:
                 warn(f"Plugin {import_spec} does not provide a schema.")
             except KeyError:
