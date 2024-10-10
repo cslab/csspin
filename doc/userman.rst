@@ -283,7 +283,7 @@ Here is an example from a previous version of the spin project
 itself.
 
 **Example 1**: The reference documentation for the spinfile schema is generated from
-a schema file by a spin task. The resulting :file:`docs/schemaref.rst`
+a schema file by a spin task. The resulting :file:`doc/schemaref.rst`
 is updated whenever :program:`spin docs` is executed, and
 :file:`src/spin/schema.yaml` is more recent than
 :file:`schemaref.rst`:
@@ -293,11 +293,27 @@ is updated whenever :program:`spin docs` is executed, and
 
    build_rules:
      task docs:
-       sources: docs/schemaref.rst
-     docs/schemaref.rst:
+       sources: doc/schemaref.rst
+     doc/schemaref.rst:
        sources: [src/spin/schema.yaml]
        spin:
-         - schemadoc -o docs/schemaref.rst
+         - schemadoc --rst -o doc/schemaref.rst
+
+
+Review property documentation
+-----------------------------
+
+The documentation of configuration properties can be accessed
+through :program:`spin schemadoc`. Passing properties as arguments
+allows to review individual property documentations.
+
+.. code-block:: bash
+   :caption: Review the documentation of a single configuration property
+
+   $ spin schemadoc spin.spin_dir
+   spin.spin_dir: [path, internal] = '{spin.project_root}/.spin'
+   The absolute path to spin's project related data. This is also the place
+   environments are provisioned.
 
 
 Directives
