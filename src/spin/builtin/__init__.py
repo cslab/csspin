@@ -38,17 +38,24 @@ def exec_shell(args):
     sh(*args)
 
 
-def pretty_descriptor(parent, name, descriptor):
-    typename = " ".join(getattr(descriptor, "type", ["any"]))
+def pretty_descriptor(parent, name, descriptor, rst: bool):
+    types = getattr(descriptor, "type", ["any"])
     default = getattr(descriptor, "default", None)
     if name:
         if parent:
             name = f"{parent}.{name}"
-        decl = f".. py:data:: {name}\n   :type: '{typename}'\n"
-        if default:
-            decl += f"   :value: '{default}'\n"
-        if hasattr(descriptor, "noindex") or "object" in typename:
-            decl += "   :noindex:\n"
+        if rst:
+            joined_types = " ".join(types)
+            decl = f".. py:data:: {name}\n   :type: '{joined_types}'\n"
+            if default:
+                decl += f"   :value: '{default}'\n"
+            if hasattr(descriptor, "noindex") or "object" in types:
+                decl += "   :noindex:\n"
+        else:
+            joined_types = ", ".join(types)
+            decl = f"{name}: [{joined_types}]"
+            if default:
+                decl += f" = '{default}'"
         helptext = getattr(descriptor, "help", "")
         if not helptext.endswith("\n"):
             helptext += "\n"
@@ -58,11 +65,12 @@ def pretty_descriptor(parent, name, descriptor):
     return decl
 
 
-@task(hidden=True)
+@task()
 def schemadoc(
     cfg,
     outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa: F722
     full: option("--full", default=True, type=click.BOOL),  # noqa: F722
+    rst: option("--rst", is_flag=True, default=False, type=click.BOOL),  # noqa: F722
     select: argument(  # noqa: F722
         type=click.STRING,
         default="",  # noqa: F722
@@ -72,7 +80,7 @@ def schemadoc(
     """Print the schema definitions for cs.spin."""
 
     def do_docwrite(parent, name, desc):
-        outfile.write(pretty_descriptor(parent, name, desc))
+        outfile.write(pretty_descriptor(parent, name, desc, rst))
         properties = getattr(desc, "properties", {})
         if parent:
             name = f"{parent}.{name}"

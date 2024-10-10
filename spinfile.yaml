@@ -37,7 +37,7 @@ build_rules:
   doc/schemaref.rst:
     sources: [src/spin/schema.yaml]
     spin:
-      - schemadoc --full=False -o doc/schemaref.rst
+      - schemadoc --rst --full=False -o doc/schemaref.rst
   requirements.txt:
     sources: [setup.cfg, setup.py]
     script:

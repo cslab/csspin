@@ -132,10 +132,10 @@ and re-add later if necessary.
 
 ## 5. The Environment as Input Channel for cs.spin
 
-> Draft and ideas; mostly copied from docs/userman.rst
+> Draft and ideas; mostly copied from doc/userman.rst
 
 cs.spin provides a command-line interface as documented in
-`docs/cliref.rst`. Besides that, passing options to spin, called
+`doc/cliref.rst`. Besides that, passing options to spin, called
 tasks/plugins as well as modifying the configuration tree via the environment is
 a crucial feature which is implemented using different approaches:
 

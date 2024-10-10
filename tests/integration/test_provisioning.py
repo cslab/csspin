@@ -50,12 +50,25 @@ def test_schemadoc_spin_only(tmp_path):
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",
-        cmd="-q schemadoc --full=False",
+        cmd="-q schemadoc --rst --full=False",
     )
     # just to name a few:
     assert ".. py:data:: spin.spinfile" in output
     assert ".. py:data:: spin.project_root" in output
     assert output.endswith("The schema shipped by cs.spin.")
+
+
+def test_schemadoc_spin_only_cli_output(tmp_path):
+    """Ensuring that the schemadoc task is able to only document spins schema"""
+    output = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        path="tests/yamls",
+        yaml="sample.yaml",
+        cmd="-q schemadoc --full=False",
+    )
+    # just to name a few:
+    assert "spin.spinfile: [path] = 'spinfile.yaml'" in output
+    assert "spin.project_root: [path, internal]" in output
 
 
 def test_schemadoc_selection_single(tmp_path):
@@ -64,10 +77,22 @@ def test_schemadoc_selection_single(tmp_path):
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",
-        cmd="-q schemadoc --full=False plugins",
+        cmd="-q schemadoc --rst --full=False plugins",
     )
     assert output.startswith(".. py:data:: plugins")
     assert output.endswith("The list of plugins to import.")
+
+
+def test_schemadoc_selection_single_cli_output(tmp_path):
+    """Check that an individual property without a parent can be accessed"""
+    output = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        path="tests/yamls",
+        yaml="sample.yaml",
+        cmd="-q schemadoc --full=False verbosity",
+    )
+    assert output.startswith("verbosity: [str, internal] = 'NORMAL'")
+    assert output.endswith("Levels are: QUIET, NORMAL, INFO, DEBUG")
 
 
 def test_schemadoc_selection_nested(tmp_path):
@@ -78,7 +103,7 @@ def test_schemadoc_selection_nested(tmp_path):
         env=tmp_path,
         path="tests/yamls",
         yaml="sample.yaml",
-        cmd="-q schemadoc --full=False spin.spinfile",
+        cmd="-q schemadoc --rst --full=False spin.spinfile",
     )
     assert output.startswith(".. py:data:: spin.spinfile")
     assert output.endswith("be overridden via 'spin -f <filename>'.")
