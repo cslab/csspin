@@ -43,9 +43,6 @@ build_rules:
     script:
       - pip-compile --generate-hashes --no-build-isolation --reuse-hashes
 
-sphinx:
-  build_dir: _build
-
 # Host system requirements
 system_requirements:
   distro in ("debian", "ubuntu"):

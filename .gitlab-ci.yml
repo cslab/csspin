@@ -15,7 +15,7 @@ variables:
 # --------------------------------- Build stage --------------------------------
 wheel:
   stage: build
-  image: registry.contact.de/cetest:16.0-5.latest
+  image: registry.contact.de/cetest:16.0-6.latest
   variables:
     # The version generation via setuptools_scm needs
     # (potentially) the whole SCM history to work correctly
@@ -26,12 +26,25 @@ wheel:
     - pip install -e .
     - spin provision
     - spin python:wheel
-    - spin docs html
   artifacts:
     when: always
     expire_in: 72 hrs
     paths:
       - dist/*.whl
+  interruptible: true
+
+documentation:
+  stage: build
+  image: registry.contact.de/cetest:16.0-6.latest
+  variables:
+    SPIN_TREE_PYTHON__USE: python
+  script:
+    - spin provision
+    - spin docs html
+  artifacts:
+    when: always
+    expire_in: 72 hrs
+    paths:
       - doc/_build/html
   interruptible: true
 
