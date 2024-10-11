@@ -467,6 +467,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
         cwd=cwd,
         envbase=envbase,
         verbosity=verbosity,
+        setenvs=not help,
     )
 
     if ctx.args and ctx.args[0] in ("cleanup", "provision", "system-provision"):
@@ -519,6 +520,7 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
     cwd: str = "",
     envbase: str | None = None,
     verbosity: Verbosity = Verbosity.NORMAL,
+    setenvs: bool = True,
 ) -> tree.ConfigTree:
     """
     Create a minimal ConfigTree from the provided spinfile and the global config
@@ -568,7 +570,8 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
             "# Created by spin automatically\n*\n",
         )
 
-    setenv(**cfg.environment)
+    if setenvs:
+        setenv(**cfg.environment)
     cfg.loaded = config()
     debug("loading project plugins:")
     load_plugin(cfg, "spin.builtin")
