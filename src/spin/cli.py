@@ -379,20 +379,12 @@ _nested = False
 
 
 @click.command(cls=GroupWithAliases, help=__doc__)
-# Note that the base_options here are not actually used and ignore by
-# 'commands'. Base options are processed by 'cli'.
-@base_options
 @click.pass_context
 def commands(ctx: click.Context, **kwargs: Any) -> None:
     global _nested  # pylint: disable=global-statement
-    cfg = ctx.obj = get_tree()
+    ctx.obj = get_tree()
     if not _nested:
         if ctx.invoked_subcommand not in NOENV_COMMANDS:
-            if not exists(cfg.spin.spin_dir):
-                die(
-                    "This project has not yet been provisioned. You "
-                    "may want to run 'spin provision'."
-                )
             toporun(ctx.obj, "init")
         _nested = True
 
