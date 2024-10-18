@@ -307,7 +307,7 @@ The documentation of configuration properties can be accessed
 through :program:`spin schemadoc`. Passing properties as arguments
 allows to review individual property documentations.
 
-.. code-block:: bash
+.. code-block:: console
    :caption: Review the documentation of a single configuration property
 
    $ spin schemadoc spin.spin_dir
