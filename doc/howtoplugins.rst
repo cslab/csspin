@@ -488,6 +488,18 @@ on command line. Example:
    spin: pytest -m 'not slow' tests
    ...
 
+Use caching
+~~~~~~~~~~~
+
+If a plugin downloads or provisions files and data structures which are not
+bound to a single project or virtual environment, it is worth to store them
+below ``{spin.data}``. This way, the time to provision projects can be reduced,
+resources can be shared between multiple projects independently, and are not
+lost when the project's local virtual environment is removed.
+
+.. Attention::
+   Data below ``{spin.data}`` must not contain project-specific information.
+
 Fail early
 ~~~~~~~~~~
 
