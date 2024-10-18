@@ -27,15 +27,24 @@ from spin import (
     toporun,
     warn,
 )
-from spin.cli import finalize_cfg_tree, install_plugin_packages, load_plugins_into_tree
+from spin.cli import (
+    commands,
+    finalize_cfg_tree,
+    install_plugin_packages,
+    load_plugins_into_tree,
+)
 
 
 @task("run", add_help_option=False)
-def exec_shell(args):
+def exec_shell(ctx, args):
     """Run a shell command in the project context."""
     if not args:
         die("Use of run is not possible without arguments.")
-    sh(*args)
+    if "--help" == args[0]:
+        subcommand_obj = commands.get_command(ctx, "run")
+        click.echo(subcommand_obj.get_help(ctx))
+    else:
+        sh(*args)
 
 
 def pretty_descriptor(parent, name, descriptor, rst: bool):
