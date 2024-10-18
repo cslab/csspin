@@ -220,7 +220,7 @@ def do_system_provisioning(
     for line in out.get("before", []):
         print(line)
 
-    for syscmd in ("apt", "apt-get"):
+    for syscmd in ("apt", "apt-get", "choco"):
         if package_list := out.get(syscmd, ""):
             print(f"{syscmd} install -y {package_list}")
 
