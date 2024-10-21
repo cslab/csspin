@@ -372,18 +372,34 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
             tree_merge(target[key], value)
 
 
-def tree_apply_directives(tree: ConfigTree) -> None:
-    """Recursively walking through the tree and processing directives"""
+def tree_apply_certain(tree: ConfigTree, keys: Iterable[str] | None = None) -> None:
+    """Apply directives to ceratin keys
+
+    :param target: The target tree
+    :type target: ConfigTree
+    :param keys: The keys, to which directives must be applied.
+        Default value is None, what makes the function apply
+        directives to all keys without exceptions. Alternatively,
+        empty Iterable will result in not applying any directives.
+    :type keys: Iterable[str] | None"""
 
     # Note that we need a list for the iteration, as we remove directive keys on
     # the fly.
     for clause, value in list(tree.items()):
         directive, key = rpad(clause.split(maxsplit=1), 2)
+        if keys is not None and key not in keys:
+            continue
         if fn := globals().get(f"directive_{directive}", None):
             fn(tree, key, value)
             del tree[clause]
 
-    for key, value, _, _, types, _ in tree_walk(tree):
+
+def tree_apply_directives(tree: ConfigTree) -> None:
+    """Recursively walking through the tree and processing directives"""
+
+    tree_apply_certain(tree)
+
+    for _, value, _, _, types, _ in tree_walk(tree):
         if isinstance(value, ConfigTree) and "internal" not in types:
             tree_apply_directives(value)
 
