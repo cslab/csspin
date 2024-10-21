@@ -412,8 +412,7 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     arguments are interpolated against the configuration tree. When
     `silent` is ``False``, the resulting command line will be
     echoed. When `shell` is ``True``, the command line is passed to
-    the system's shell. When `may_fail` is ``True``, sh tolerates
-    failures when invocating the command.
+    the system's shell.
 
     Other keyword arguments are passed into
     :py:func:`subprocess.run`.
@@ -427,7 +426,6 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     cmd = interpolate(cmd)  # type: ignore[assignment]
     shell = kwargs.pop("shell", len(cmd) == 1)
     check = kwargs.pop("check", True)
-    may_fail = kwargs.pop("may_fail", False)
     env = argenv = kwargs.pop("env", None)
     if env:
         process_env = dict(os.environ)
@@ -450,7 +448,8 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
 
         echo(" ".join(quote(c) for c in cmd))
 
-    cpi = None
+    message = "Command '{cmd_}' failed with exit status {returncode}."
+    cmd_ = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[unreachable] # noqa: E501
     try:
         t0 = time.monotonic()
         debug(
@@ -463,16 +462,14 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
         t1 = time.monotonic()
         info(click.style(f"[{t1 - t0} seconds]", fg="cyan"))
     except FileNotFoundError as ex:
-        msg = str(ex)
-        if not may_fail:
-            die(msg)
-        warn(msg)
+        die(str(ex))
     except subprocess.CalledProcessError as ex:
-        cmd = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[assignment,unreachable] # noqa: E501
-        msg = f"Command '{cmd}' failed with return code {ex.returncode}"
-        if not may_fail:
-            die(msg)
-        warn(msg)
+        if check:
+            die(message.format(cmd_=cmd_, returncode=ex.returncode))
+        cpi = subprocess.CompletedProcess(args=cmd, returncode=ex.returncode)
+
+    if not check and cpi.returncode:
+        warn(message.format(cmd_=cmd, returncode=cpi.returncode))
 
     return cpi
 
@@ -1146,7 +1143,7 @@ def ensure(command: click.Command) -> None:
 
 def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
     '''``invoke()`` invokes the tasks that have the ``when`` hook
-    `hook`. As an example, here is the implementation of **lint**:
+    `hook`. As an example, here is the implementation of **test**:
 
     .. code-block:: python
 
