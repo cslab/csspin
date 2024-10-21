@@ -265,11 +265,12 @@ def test_command() -> None:
     assert cmd._cmd == ["pip", "list", "--help"]
 
 
-def test_sh(mocker: MockerFixture) -> None:
+def test_sh(cfg, mocker: MockerFixture) -> None:
     """
     spin.sh will raise the expected errors on faulty input as well as execute
     valid commands by calling subprocess.run with the correct arguments
     """
+    # check=True, shell=False
     with pytest.raises(
         click.Abort,
         match=(
@@ -280,37 +281,35 @@ def test_sh(mocker: MockerFixture) -> None:
     ):
         spin.sh("FileNotFoundTrigger", shell=False)
 
-    with mock.patch("spin.warn") as spin_warn:
-        spin.sh("FileNotFoundTrigger", shell=False, may_fail=True)
-        warning = (
-            "WinError 2"
-            if sys.platform == "win32"
-            else "[Errno 2] No such file or directory: 'FileNotFoundTrigger'"
-        )
-        assert any(warning in arg for arg in spin_warn.call_args.args)
-
+    # check=False, shell=False
     with pytest.raises(
         click.Abort,
-        match=".*Command.*'CalledProcessErrorTrigger'.*failed with return code.*",
+        match=(
+            ".*WinError 2.*"
+            if sys.platform == "win32"
+            else ".*No such file or directory.*FileNotFoundTrigger.*"
+        ),
     ):
-        spin.sh("CalledProcessErrorTrigger")
+        spin.sh("FileNotFoundTrigger", shell=False, check=False)
 
+    # check=True, shell=True
+    with pytest.raises(
+        click.Abort,
+        match=".*Command.*'spin foobar'.*failed with exit status.*",
+    ):
+        spin.sh("spin", "foobar")
+
+    # check=False, shell=True
     with mock.patch("spin.warn") as spin_warn:
-        spin.sh("CalledProcessErrorTrigger", may_fail=True)
-        assert any(
-            "Command 'CalledProcessErrorTrigger' failed with return code" in arg
-            for arg in spin_warn.call_args.args
+        spin.sh("spin", "foobar", check=False)
+        assert (
+            "Command '['spin', 'foobar']' failed with exit status"
+            in spin_warn.call_args.args[0]
         )
-
-    spin.sh("FileNotFoundTrigger", shell=False, may_fail=True)
 
     mocker.patch("subprocess.run")
     spin.sh("abc", "123 4")
     assert subprocess.run.call_args.args[0] == ["abc", "123 4"]  # type: ignore[attr-defined]
-
-    if sys.platform == "win32":
-        spin.sh("abc 123")
-        assert subprocess.run.call_args.args[0] == ["abc", "123"]
 
     env = {"_OJDS": "x"}
     spin.sh("abc", "123", env=env)
@@ -689,13 +688,16 @@ def test_build_target(cfg: ConfigTree, mocker: MockerFixture) -> None:
     spin.build_target extends the ConfigTree and is called using the expected
     arguments
     """
-    mocker.patch("subprocess.run")
     cfg["build_rules"] = spin.config(
         phony=spin.config(sources="notphony"),
         notphony=spin.config(script=["1", "2"]),
     )
     # According to the rule above, building "phony" would require
     # "notphony" to exist, which would be produced by calling 1 and 2.
+    mocker.patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: subprocess.CompletedProcess(args, 0),
+    )
     spin.build_target(cfg, "phony", True)
     assert [c.args[0][0] for c in subprocess.run.call_args_list] == ["1", "2"]  # type: ignore[attr-defined]
 
