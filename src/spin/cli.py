@@ -568,6 +568,7 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
     cfg.loaded = config()
     debug("loading project plugins:")
     load_plugin(cfg, "spin.builtin")
+    tree.tree_apply_certain(cfg, ("plugins", "plugin_paths", "plugin_packages"))
     return cfg  # type: ignore[no-any-return]
 
 

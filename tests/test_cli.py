@@ -139,7 +139,7 @@ def test_load_plugin(
     assert "add subtree" not in captured.out
 
     # load plugin that is not present in the tree
-    assert not cfg_spin_dummy.loaded.get("dummy")
+    assert not cfg_spin_dummy.loaded.get("spin_dummy.dummy")
     cli.load_plugins_into_tree(cfg=cfg_spin_dummy)
     captured = capsys.readouterr()
 
@@ -315,6 +315,26 @@ def test_load_plugins_into_tree(
         assert "loading project plugins:" in captured.out
         assert "  import plugin spin.builtin" in captured.out
         assert "  add subtree builtin" in captured.out
+
+
+def test_plugin_directives(
+    monkeypatch: MonkeyPatch,
+    dummy_yaml_path: str,
+    spin_config_patch: str,
+):
+    monkeypatch.setenv("SPIN_CONFIG", spin_config_patch)
+    monkeypatch.setenv("SPIN_DISABLE_GLOBAL_YAML", "")
+
+    cfg = cli.load_minimal_tree(
+        spinfile=dummy_yaml_path,
+        cwd=os.getcwd(),
+        verbosity=Verbosity.DEBUG,
+    )
+    cli.load_plugins_into_tree(cfg)
+
+    assert "spin_python" in cfg.plugin_packages
+    assert cfg.loaded.get("spin_dummy.dummy")
+    assert cfg.loaded.get("spin_dummy.dummy2")
 
 
 def test_install_plugin_packages(

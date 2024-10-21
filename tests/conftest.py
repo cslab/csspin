@@ -35,13 +35,23 @@ def cfg(minimum_yaml_path) -> ConfigTree:
 
 
 @fixture()
-def cfg_spin_dummy() -> ConfigTree:
-    return load_minimal_tree("tests/yamls/spin_dummy_config.yaml", cwd=os.getcwd())
+def cfg_spin_dummy(dummy_yaml_path) -> ConfigTree:
+    return load_minimal_tree(dummy_yaml_path, cwd=os.getcwd())
 
 
 @fixture()
 def minimum_yaml_path() -> str:
     return Path(__file__).dirname() / "yamls" / "sample.yaml"
+
+
+@fixture()
+def dummy_yaml_path():
+    return Path(__file__).dirname() / "yamls" / "spin_dummy_config.yaml"
+
+
+@fixture()
+def spin_config_patch() -> str:
+    return Path(__file__).dirname() / "yamls" / ".config"
 
 
 @fixture()
