@@ -706,3 +706,46 @@ additional benefit to control the according configuration properties via private
 unshared ``global.yaml`` (see :ref:`writing-global-label`).
 
 .. TODO:: More of tdocs/plugin_guideline.md?
+
+Dependency Management
+---------------------
+
+Plugins can depend on other plugins, by listing the required plugins within the
+current plugin's configuration using the ``requires.spin`` property.
+
+.. code-block:: python
+   :caption: Example of a plugin requiring the ``spin_python.python`` plugin
+
+   from spin import config
+
+   defaults = config(requires=config(spin=["spin_python.python"]))
+
+Dependencies are resolved by the plugin system and the required plugins are
+provisioned and loaded before the plugin itself.
+
+.. Note::
+   Plugin-packages do not get automatically installed, they need to be
+   defined within the project's ``spinfile.yaml``.
+
+If plugins depend on system libraries or tools, that that can't be installed
+into the virtual environment managed by spin nor into ``{spin.data}``, it has to
+provide a ``system_requirements(cfg)`` hook:
+
+.. code-block:: python
+   :caption: Example of a plugin providing system requirements
+
+   ...
+
+
+   def system_requirements(cfg):
+       return [
+           (
+               lambda distro, version: distro in ("debian", "mint", "ubuntu"),
+               {
+                   "apt": " ".join(["libkrb5-dev", "xz-utils"]),
+               },
+           ),
+       ]
+
+This enables the user of the plugin to review the required system packages and
+install them manually (see :ref:`system-provision-label`).

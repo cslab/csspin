@@ -380,6 +380,7 @@ _nested = False
 
 @click.command(cls=GroupWithAliases, help=__doc__)
 @click.pass_context
+@base_options  # required for the documentation build to find CLI references
 def commands(ctx: click.Context, **kwargs: Any) -> None:
     global _nested  # pylint: disable=global-statement
     ctx.obj = get_tree()

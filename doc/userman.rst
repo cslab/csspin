@@ -404,6 +404,8 @@ environment is a crucial feature which possible via:
 Builtin tasks
 =============
 
+.. _system-provision-label:
+
 ``system-provision``
 --------------------
 
