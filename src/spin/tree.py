@@ -248,16 +248,23 @@ def tree_dump(tree: ConfigTree) -> str:
     cwd = os.getcwd()
     home = os.path.expanduser("~")
 
-    def shorten_filename(fn: str) -> str:
-        if fn.startswith(cwd):
-            return fn[len(cwd) + 1 :]  # noqa: E203
-        if fn.startswith(home):
-            return f"~{fn[len(home):]}"
-        return fn
+    def shorten_filename_line(info: KeyInfo) -> str:
+        if (
+            tree.verbosity < Verbosity.DEBUG
+            and Path(info.file).absolute().dirname()
+            == Path(__file__).absolute().dirname()
+        ):
+            return "cs.spin"
+
+        if info.file.startswith(cwd):
+            return f"{info.file[len(cwd) + 1 :]}:{info.line}"  # noqa: E203
+        if info.file.startswith(home):
+            return f"~{info.file[len(home):]}:{info.line}"
+        return f"{info.file}:{info.line}"
 
     tagcolumn = max(
         (
-            len(f"{shorten_filename(info.file)}:{info.line}:")
+            len(shorten_filename_line(info) + ":")
             for _, _, _, info, _, _ in tree_walk(tree)
         ),
         default=0,
@@ -267,7 +274,7 @@ def tree_dump(tree: ConfigTree) -> str:
         if "internal" in types and not tree.verbosity > Verbosity.NORMAL:
             continue
 
-        tag = f"{shorten_filename(info.file)}:{info.line}:"
+        tag = shorten_filename_line(info) + ":"
         space = (tagcolumn - len(tag) + 1) * " "
         if isinstance(value, list):
             if value:

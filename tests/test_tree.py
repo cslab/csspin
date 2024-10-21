@@ -150,12 +150,15 @@ def test_tree_keyname() -> None:
     Tests creating a config tree while validating the correct assignment of
     subtrees as well as the expected return of the tree_dump.
     """
+    from spin import Verbosity
+
     config = tree.ConfigTree(
         subtree1=tree.ConfigTree(foo="bar"),
         subtree2=tree.ConfigTree(foo=["bar", "baz"]),
         subtree3=tree.ConfigTree(foo=[]),
         subtree4=tree.ConfigTree(foo={"bar": "baz"}),
         subtree5=tree.ConfigTree(foo={}),
+        verbosity=Verbosity.NORMAL,
     )
     assert config.subtree1.foo == "bar"
     assert config.subtree2.foo == ["bar", "baz"]
