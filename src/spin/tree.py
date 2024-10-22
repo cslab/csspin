@@ -240,6 +240,7 @@ def tree_walk(config: ConfigTree, indent: str = "") -> Generator:
 
 
 def tree_dump(tree: ConfigTree) -> str:
+    """Print the configuration tree in a human-readable format."""
     text = []
 
     def write(line: str) -> None:
@@ -270,31 +271,46 @@ def tree_dump(tree: ConfigTree) -> str:
         default=0,
     )
     separator = "|"
-    for key, value, _, info, types, indent in tree_walk(tree):
-        if "internal" in types and not tree.verbosity > Verbosity.NORMAL:
-            continue
 
-        tag = shorten_filename_line(info) + ":"
-        space = (tagcolumn - len(tag) + 1) * " "
-        if isinstance(value, list):
-            if value:
-                write(f"{tag}{space}{separator}{indent}{key}:")
-                blank_location = len(f"{tag}{space}") * " "
-                for item in value:
-                    # That does not work if the value is a dict/object
-                    # https://code.contact.de/qs/spin/cs.spin/-/issues/58
-                    write(f"{blank_location}{separator}{indent}  - {repr(item)}")
+    def build_tree_dump(tree: ConfigTree, key_prefix: str = "", ind: str = "") -> None:
+        """Build the tree dump of passed configuration tree.
+
+        :param tree: The tree to iterate through
+        :param key_prefix: The prefix of the keys (only applicable for recursive
+            calls to align with the top-level data type, e.g. "list")
+        :param ind: Additional indention for the output
+        """
+
+        for key, value, _, info, types, indent in tree_walk(tree):
+            if "internal" in types and not tree.verbosity > Verbosity.NORMAL:
+                continue
+            indent += ind
+            key = key_prefix + key
+
+            tag = shorten_filename_line(info) + ":"
+            space = (tagcolumn - len(tag) + 1) * " "
+            if isinstance(value, list):
+                if value:
+                    write(f"{tag}{space}{separator}{indent}{key}:")
+                    blank_location = len(f"{tag}{space}") * " "
+                    for item in value:
+                        if isinstance(item, str):
+                            write(
+                                f"{blank_location}{separator}{indent}  - {repr(item)}"
+                            )
+                        elif isinstance(item, ConfigTree):
+                            build_tree_dump(item, key_prefix="- ", ind=indent + "  ")
+                else:
+                    write(f"{tag}{space}{separator}{indent}{key}: []")
+            elif isinstance(value, dict):
+                if value:
+                    write(f"{tag}{space}{separator}{indent}{key}:")
+                else:
+                    write(f"{tag}{space}{separator}{indent}{key}: {{}}")
             else:
-                write(f"{tag}{space}{separator}{indent}{key}: []")
-        elif isinstance(value, dict):
-            if value:
-                # Shouldn't the value be shown like for lists?
-                # https://code.contact.de/qs/spin/cs.spin/-/issues/58
-                write(f"{tag}{space}{separator}{indent}{key}:")
-            else:
-                write(f"{tag}{space}{separator}{indent}{key}: {{}}")
-        else:
-            write(f"{tag}{space}{separator}{indent}{key}: {repr(value)}")
+                write(f"{tag}{space}{separator}{indent}{key}: {repr(value)}")
+
+    build_tree_dump(tree)
     return "\n".join(text)
 
 
