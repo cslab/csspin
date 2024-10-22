@@ -213,7 +213,23 @@ the environment.
       user: buildbot
       url: "{upload.user}@{UPLOAD_PASSWORD}/upload"
 
-For more information about the interpolation
+For more information about the interpolation see :py:func:`spin.interpolate1`.
+
+Environment variables
+---------------------
+
+The ``spinfile.yaml`` enables setting environment variables before the execution
+of a task. This can be done by using the ``environment`` key. The following
+example:
+
+.. code-block:: yaml
+   :caption: Setting environment variables within :file:`spinfile.yaml`
+
+   environment:
+     TOOL_X_LOCATION: "path/to/something"
+
+There is no need for calling ``spin provision`` after modifying this property.
+
 
 Extra-tasks
 -----------
@@ -298,23 +314,6 @@ is updated whenever :program:`spin docs` is executed, and
        sources: [src/spin/schema.yaml]
        spin:
          - schemadoc --rst -o doc/schemaref.rst
-
-
-Review property documentation
------------------------------
-
-The documentation of configuration properties can be accessed
-through :program:`spin schemadoc`. Passing properties as arguments
-allows to review individual property documentations.
-
-.. code-block:: console
-   :caption: Review the documentation of a single configuration property
-
-   $ spin schemadoc spin.spin_dir
-   spin.spin_dir: [path, internal] = '{spin.project_root}/.spin'
-   The absolute path to spin's project related data. This is also the place
-   environments are provisioned.
-
 
 Directives
 ----------
@@ -403,6 +402,21 @@ environment is a crucial feature which possible via:
 
 Builtin tasks
 =============
+
+``schemadoc``
+-------------
+
+The documentation of configuration properties can be accessed through
+:program:`spin schemadoc`. Passing properties as arguments allows to review
+individual property documentations.
+
+.. code-block::
+   :caption: Review the documentation of a single configuration property
+
+   $ spin schemadoc spin.spin_dir
+   spin.spin_dir: [path, internal] = '{spin.project_root}/.spin'
+   The absolute path to spin's project related data. This is also the place
+   environments are provisioned.
 
 .. _system-provision-label:
 
