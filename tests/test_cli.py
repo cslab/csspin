@@ -147,7 +147,10 @@ def test_load_plugin(
     assert cfg_spin_dummy.loaded.get("spin_dummy.dummy")
 
     # load plugin that does not exist
-    with pytest.raises(ModuleNotFoundError, match="No module named 'foo"):
+    with pytest.raises(
+        click.exceptions.Abort,
+        match="Plugin foo could not be loaded, it may need to be provisioned",
+    ):
         cli.load_plugin(cfg_spin_dummy, import_spec="foo")
 
 
