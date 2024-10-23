@@ -125,12 +125,19 @@ def load_plugin(
         importlib.invalidate_caches()
         mod = importlib.import_module(import_spec)
         full_name = mod.__name__
-    except ModuleNotFoundError as ex:
-        warn(f"Plugin {import_spec} could not be loaded, it may need to be provisioned")
-        # We tolerate this only in context of cleanup, where imports may not
-        # succeed.
-        if not may_fail:
-            raise ex
+    except ModuleNotFoundError:
+        if may_fail:
+            # We tolerate this only in context of cleanup, where imports may not
+            # succeed.
+            warn(
+                f"Plugin {import_spec} could not be loaded, it may need to be"
+                " provisioned"
+            )
+        else:
+            die(
+                f"Plugin {import_spec} could not be loaded, it may need to be"
+                " provisioned"
+            )
 
     if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
