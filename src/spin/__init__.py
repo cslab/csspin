@@ -1160,7 +1160,21 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
     '''
     ctx = click.get_current_context()
     cfg = get_tree()
-    for task_object in cfg.spin.hooks.setdefault(hook, []):
+
+    if not (hooks := cfg.spin.hooks.setdefault(hook, [])):
+        warn(f"No tasks found for hook '{hook}'")
+        return
+    n_hooks = len(hooks)
+
+    info(
+        f"{hook} hook will invoke the following tasks: "
+        + ", ".join([f"'{h.full_name}'" for h in hooks])
+    )
+
+    for i, task_object in enumerate(hooks):
+        prefix = f"{hook} ({i + 1}/{n_hooks}) -"
+
+        echo(f"{prefix} calling '{task_object.full_name}'")
         # Filter kwargs so that plugins don't need to provide
         # options, just for being able to get called by a workflow
         task_opts = [
@@ -1171,6 +1185,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
         pass_opts = {k: v for k, v in kwargs.items() if k in task_opts}
 
         ctx.invoke(task_object, *args, **pass_opts)
+        info(f"{prefix} '{task_object.full_name}' done")
 
 
 def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
