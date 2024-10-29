@@ -91,7 +91,7 @@ plugin_packages:
 plugin_paths:
   type: list
   help: |
-    A list of paths to lcoal directories containing plugin modules and their
+    A list of paths to local directories containing plugin modules and their
     optional schemas.
 
 platform:
@@ -101,9 +101,6 @@ platform:
     exe:
       type: path
       help: The file type of executables, "exe" on Windows and "" on non-Windows
-    shell:
-      type: path
-      help: Reflects the `SHELL` environment variable at cs.spins startup
 
 loaded:
   type: object internal

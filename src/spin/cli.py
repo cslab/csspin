@@ -72,7 +72,6 @@ DEFAULTS = config(
     ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
-        shell=os.getenv("SHELL"),
         kind=sys.platform,
     ),
 )
