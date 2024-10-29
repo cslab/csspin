@@ -131,7 +131,7 @@ def configure(cfg):
     them as subcommands.
 
     """
-    for clause_name in ("extra-tasks", "tasks"):
+    for clause_name in ("extra_tasks", "tasks"):
         for task_name, task_definition in cfg.get(clause_name, {}).items():
             task(task_name, help=task_definition.get("help", ""))(
                 TaskDefinition(task_definition)

@@ -235,7 +235,7 @@ Extra-tasks
 -----------
 
 If a project needs a few extra tasks, those can be defined explicitly in
-spinfile using ``extra-tasks``: for each new task a key is added, and each task
+spinfile using ``extra_tasks``: for each new task a key is added, and each task
 can define the following sub-keys:
 
 * ``script``: a list of shell commands
@@ -250,7 +250,7 @@ spin:
 .. code-block:: yaml
 
    ...
-   extra-tasks:
+   extra_tasks:
      pipx-install:
        env:
          USE_EMOJI: no
