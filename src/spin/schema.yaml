@@ -64,10 +64,10 @@ environment:
     `environment` maps additional environment variables and their values which
     will added to the environment when running cs.spin.
 
-extra-tasks:
+extra_tasks:
   type: object
   help: |
-    `extra-tasks` maps task names to task definitions, where task
+    `extra_tasks` maps task names to task definitions, where task
     definitions support ``env`` and ``script`` keys.
 
 verbosity:
