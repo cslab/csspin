@@ -1148,7 +1148,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
     .. code-block:: python
 
        @task(aliases=["tests"])
-       def test(coverage: option("--coverage", "coverage", is_flag=True)):
+       def test(cfg, coverage: option("--coverage", "coverage", is_flag=True)):
            """Run all tests defined in this project"""
            invoke("test", coverage=coverage)
 
@@ -1176,7 +1176,7 @@ def invoke(hook: str, *args: Any, **kwargs: Any) -> None:
 
         echo(f"{prefix} calling '{task_object.full_name}'")
         # Filter kwargs so that plugins don't need to provide
-        # options, just for being able to get called by a workflow
+        # options, just for being able to get called by a workflow.
         task_opts = [
             param.name
             for param in task_object.params
