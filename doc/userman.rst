@@ -343,27 +343,21 @@ Writing ``global.yaml``
 =======================
 
 ``spin`` looks for a file called ``global.yaml`` in ``$XDG_CONFIG_HOME/spin``
-(``%LOCALAPPDATA%\spin\config`` on Windows).
-Settings from this file are merged into the project :ref:`configuration tree
-<configuration-tree-system-label>`. This
-facility can be used to provide user/machine specific settings like in the
+(``%LOCALAPPDATA%\spin\config`` on Windows). Settings from this file are merged
+into the project :ref:`configuration tree <configuration-tree-system-label>`.
+This facility can be used to provide user/machine specific settings like in the
 example below.
 
 .. code-block:: yaml
 
-   # Settings for frank@haskell
-
-   # I use a local devpi mirror. Set its properties here.
+   # Imagine using a local devpi mirror that sets its properties here.
    devpi:
      user: frank
      url: http://haskell:4033
-     stage: "{devpi.url}/{devpi.user}/staging"
 
-   # Override pipconf settings in virtualenv to use my devpi mirror.
+   # Override the python plugin settings to use the devpi mirror.
    python:
-     pipconf:
-       global:
-         extra-index-url: "{devpi.stage}/+simple/"
+     index_url: "{devpi.url}/{devpi.user}/staging/+simple/"
 
      # Packages whose sources are expected to be available locally
      # and potentially require additional tools (e.g. Node) to be
