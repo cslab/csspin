@@ -181,48 +181,46 @@ def do_system_provisioning(
 
     if distroargs:
         distroname = distroargs[0]
-        if len(distroargs) > 1:
-            distroversion = parse_version(distroargs[1])
-        else:
-            distroversion = ""
     else:
         dinfo = get_distro()
         distroname = dinfo["id"]
-        distroversion = parse_version(dinfo["version"])
 
     # Check system requirements of individual plugins
     out = {}
+    supported = True
     for pi in cfg.spin.topo_plugins:
-        supported = True
-        if (fn := getattr(cfg.loaded[pi], "system_requirements", None)) is not None:
-            supported = False
-            for check, items in fn(cfg):
-                if check(distroname, distroversion):
-                    supported = True
-                    merge_dicts(out, items)
-        if not supported:
-            warn(f"The '{pi}' plugin does not support {distroname} {distroversion}")
+        defaults = cfg.loaded[pi].defaults
+        if defaults.get("requires") and defaults.requires.get("system"):
+            system_requirements = defaults.requires.system
+            if distroname not in system_requirements.keys():
+                warn(
+                    f"The '{pi}' plugin does not officially support"
+                    f" {distroname}. You can see which packages to"
+                    " manually install by running 'spin system-provision debian'"
+                )
+                supported = False
+            else:
+                merge_dicts(out, system_requirements.get(distroname, []))
 
     # Check system requirements defined within the configuration tree, usually
     # defined the projects' spinfile.yaml.
-    supported = True
     if cfg.system_requirements.keys():
-        supported = False
-        for check, items in cfg.system_requirements.items():
-            check = eval(f"lambda distro, version: {check}")
-            if check(distroname, distroversion):
-                supported = True
-                if items:
-                    merge_dicts(out, items)
-    if not supported:
-        warn(f"This project does not support {distroname} {distroversion}")
+        if distroname not in cfg.system_requirements.keys():
+            warn(
+                "This project does not officially support"
+                f" {distroname}. You can see which packages to manually"
+                " install by running 'spin system-provision debian'"
+            )
+            supported = False
+        else:
+            merge_dicts(out, cfg.system_requirements.get(distroname, []))
 
     for line in out.get("before", []):
         print(line)
 
     for syscmd in ("apt", "apt-get", "choco"):
-        if package_list := out.get(syscmd, ""):
-            print(f"{syscmd} install -y {package_list}")
+        if (package_list := out.get(syscmd, [])) and supported:
+            print(f"{syscmd} install -y {' '.join(package_list)}")
 
     for line in out.get("after", []):
         print(line)
