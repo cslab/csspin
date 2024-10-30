@@ -107,3 +107,23 @@ def test_schemadoc_selection_nested(tmp_path):
     )
     assert output.startswith(".. py:data:: spin.spinfile")
     assert output.endswith("be overridden via 'spin -f <filename>'.")
+
+
+def test_system_provision(tmp_path):
+    """
+    Validate that system_provision task is working properly.
+    """
+    output_debian = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        yaml="system_provision.yaml",
+        cmd="system-provision debian",
+    )
+    assert "apt install -y " in output_debian
+    assert "git" in output_debian
+    output_windows = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        yaml="system_provision.yaml",
+        cmd="system-provision windows",
+    )
+    assert "choco install -y " in output_windows
+    assert "git" in output_windows

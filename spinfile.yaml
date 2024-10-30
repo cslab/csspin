@@ -45,8 +45,12 @@ build_rules:
 
 # Host system requirements
 system_requirements:
-  distro in ("debian", "ubuntu"):
-    apt-get: libaio1 git curl
-  distro=="fedora" and version>=parse_version("22"):
-    dnf: libaio-fedora
-  distro=="windows": {}
+  debian:
+    apt:
+      - curl
+      - git
+      - libaio1
+  windows:
+    choco:
+      - curl
+      - git

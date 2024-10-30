@@ -1,0 +1,10 @@
+system_requirements:
+  debian:
+    apt:
+      - curl
+      - git
+      - libaio1
+  windows:
+    choco:
+      - curl
+      - git
