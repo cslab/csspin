@@ -16,7 +16,7 @@ from os import environ
 from click.exceptions import Abort
 from pytest import raises
 
-from spin import tree
+from spin import schema, tree
 
 
 def test_tree_typecheck() -> None:
@@ -364,3 +364,67 @@ def test_tree_update_properties_skip_not_existing_property(capfd) -> None:
     _, err = capfd.readouterr()
     assert "Can't set unknown property 'bar'" in err
     assert "Can't set unknown property 'foo.baz'" in err
+
+
+def test_ensure_descriptors() -> None:
+    """Ensuring tree is finalized correctly."""
+    test_config_tree = tree.ConfigTree(
+        subtree1=tree.ConfigTree(
+            subsubtree=tree.ConfigTree(subsubsubstr="hehehoho"),
+            subsublist=["pupa", "lupa"],
+        ),
+        subtree2=tree.ConfigTree(subsublist=["bar"]),
+    )
+
+    obj_desc = schema.DESCRIPTOR_REGISTRY["object"]
+    config = test_config_tree
+
+    setattr(config, "_ConfigTree__schema", obj_desc(description={"type": ["object"]}))
+    tree.tree_ensure_descriptors(config)
+
+    assert isinstance(
+        tree.tree_get_descriptor(config, "subtree2"),
+        schema.DESCRIPTOR_REGISTRY["object"],
+    )
+    assert isinstance(
+        tree.tree_get_descriptor(config["subtree1"], "subsubtree"),
+        schema.DESCRIPTOR_REGISTRY["object"],
+    )
+    assert isinstance(
+        tree.tree_get_descriptor(config["subtree1"], "subsublist"),
+        schema.DESCRIPTOR_REGISTRY["list"],
+    )
+    assert isinstance(
+        tree.tree_get_descriptor(config["subtree1"]["subsubtree"], "subsubsubstr"),
+        schema.DESCRIPTOR_REGISTRY["str"],
+    )
+    assert "subsublist" in config["subtree2"]._ConfigTree__schema.properties
+
+
+def test_inherit_internal() -> None:
+    """Ensuring tree is finalized correctly."""
+    test_config_tree = tree.ConfigTree(
+        subtree1=tree.ConfigTree(
+            subsubtree=tree.ConfigTree(subsubsubstr="hehehoho"),
+            subsublist=["pupa", "lupa"],
+        ),
+        subtree2=tree.ConfigTree(subsublist=["bar"]),
+    )
+
+    obj_desc = schema.DESCRIPTOR_REGISTRY["object"]
+    config = test_config_tree
+
+    desc = obj_desc(description={"type": ["object", "internal"]})
+    setattr(config, "_ConfigTree__schema", desc)
+
+    tree.tree_ensure_descriptors(config)
+    tree.tree_inherit_internal(config, True)
+
+    assert "internal" in tree.tree_types(config, "subtree1")
+    assert "internal" in tree.tree_types(config["subtree1"], "subsubtree")
+    assert "internal" in tree.tree_types(
+        config["subtree1"]["subsubtree"], "subsubsubstr"
+    )
+    assert "internal" in tree.tree_types(config["subtree1"], "subsublist")
+    assert "internal" in tree.tree_types(config, "subtree2")
+    assert "internal" in tree.tree_types(config["subtree2"], "subsublist")

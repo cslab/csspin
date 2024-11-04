@@ -53,7 +53,7 @@ spin:
       type: str
       help: Additional index to install plugin-packages from.
     hooks:
-      type: object
+      type: object internal
       help: |
         A dictionary mapping workflow names to lists of commands. This is
         automatically set up by the `when` argument to :py:func:`spin.task`.

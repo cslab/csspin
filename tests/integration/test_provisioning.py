@@ -55,7 +55,7 @@ def test_schemadoc_spin_only(tmp_path):
     # just to name a few:
     assert ".. py:data:: spin.spinfile" in output
     assert ".. py:data:: spin.project_root" in output
-    assert output.endswith("The schema shipped by cs.spin.")
+    assert "The schema shipped by cs.spin." in output
 
 
 def test_schemadoc_spin_only_cli_output(tmp_path):

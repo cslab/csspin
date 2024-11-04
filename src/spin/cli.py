@@ -620,6 +620,9 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
 
     If ``provision`` is set, plugins will be provisioned.
     """
+    tree.tree_ensure_descriptors(cfg)
+    tree.tree_inherit_internal(cfg)
+
     tree.tree_update_properties(
         cfg,
         PROP,
