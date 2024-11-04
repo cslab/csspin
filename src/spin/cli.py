@@ -542,7 +542,7 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
     # Merge user-specific globals if they exist
     if (
         not os.getenv("SPIN_DISABLE_GLOBAL_YAML")
-        and (spin_global := interpolate1("{SPIN_CONFIG}/global.yaml"))
+        and (spin_global := interpolate1(Path("{SPIN_CONFIG}/global.yaml")))
         and exists(spin_global)
     ):
         user_settings = readyaml(spin_global)
