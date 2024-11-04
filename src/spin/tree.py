@@ -15,6 +15,7 @@ import os
 import re
 import sys
 from collections import OrderedDict, namedtuple
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 import ruamel.yaml
@@ -22,6 +23,7 @@ import ruamel.yaml.comments
 from path import Path
 
 from spin import Verbosity, die, interpolate1, warn  # pylint: disable=cyclic-import
+from spin.schema import DESCRIPTOR_REGISTRY
 
 if TYPE_CHECKING:
     from collections.abc import Hashable
@@ -102,6 +104,27 @@ def tree_get_descriptor(tree: ConfigTree, key: Hashable) -> Any:
     if schema := getattr(tree, "_ConfigTree__schema", None):
         return schema.properties.get(key, None)
     return None
+
+
+def tree_set_descriptor(
+    tree: ConfigTree, key: Hashable, desc_type: Any, **kwargs: Any
+) -> None:
+    """Set or override descriptor of type `descriptor` to `key` property in `tree` ConfigTree.
+    All additional arguments are passed to the descriptor's __init__."""
+    schema = getattr(tree, "_ConfigTree__schema", None)
+    if not hasattr(schema, "properties"):
+        setattr(schema, "properties", ConfigTree())
+
+    desc = desc_type(**kwargs)
+    schema.properties[key] = desc
+    if isinstance(tree[key], OrderedDict):
+        setattr(tree[key], "_ConfigTree__schema", desc)
+
+
+def tree_set_types(tree: ConfigTree, key: Hashable, types: Iterable[str]) -> None:
+    """Set element's type"""
+    if desc := tree_get_descriptor(tree, key):
+        desc.type = list(types)
 
 
 def tree_typecheck(tree: ConfigTree, key: Hashable, value: Any) -> Any:
@@ -243,8 +266,11 @@ def tree_dump(tree: ConfigTree) -> str:
     """Print the configuration tree in a human-readable format."""
     text = []
 
-    def write(line: str) -> None:
-        text.append(line)
+    grey, reset = "\033[90m", "\033[0m"
+
+    def write(line: str, internal: bool = False) -> None:
+        output = f"{grey}{line}{reset}" if internal else line
+        text.append(output)
 
     cwd = os.getcwd()
     home = os.path.expanduser("~")
@@ -263,6 +289,7 @@ def tree_dump(tree: ConfigTree) -> str:
             return f"~{info.file[len(home):]}:{info.line}"
         return f"{info.file}:{info.line}"
 
+    filterout = (DESCRIPTOR_REGISTRY["object"], ModuleType)
     tagcolumn = max(
         (
             len(shorten_filename_line(info) + ":")
@@ -282,33 +309,44 @@ def tree_dump(tree: ConfigTree) -> str:
         """
 
         for key, value, _, info, types, indent in tree_walk(tree):
-            if "internal" in types and not tree.verbosity > Verbosity.NORMAL:
+            is_internal = "internal" in types
+            if is_internal and not tree.verbosity > Verbosity.NORMAL:
                 continue
             indent += ind
             key = key_prefix + key
 
             tag = shorten_filename_line(info) + ":"
             space = (tagcolumn - len(tag) + 1) * " "
+
+            if isinstance(value, filterout):
+                continue
+
             if isinstance(value, list):
                 if value:
-                    write(f"{tag}{space}{separator}{indent}{key}:")
+                    write(f"{tag}{space}{separator}{indent}{key}:", is_internal)
                     blank_location = len(f"{tag}{space}") * " "
                     for item in value:
+                        if isinstance(item, filterout):
+                            continue
+
                         if isinstance(item, str):
                             write(
-                                f"{blank_location}{separator}{indent}  - {repr(item)}"
+                                f"{blank_location}{separator}{indent}  - {repr(item)}",
+                                is_internal,
                             )
                         elif isinstance(item, ConfigTree):
                             build_tree_dump(item, key_prefix="- ", ind=indent + "  ")
                 else:
-                    write(f"{tag}{space}{separator}{indent}{key}: []")
+                    write(f"{tag}{space}{separator}{indent}{key}: []", is_internal)
             elif isinstance(value, dict):
                 if value:
-                    write(f"{tag}{space}{separator}{indent}{key}:")
+                    write(f"{tag}{space}{separator}{indent}{key}:", is_internal)
                 else:
-                    write(f"{tag}{space}{separator}{indent}{key}: {{}}")
+                    write(f"{tag}{space}{separator}{indent}{key}: {{}}", is_internal)
             else:
-                write(f"{tag}{space}{separator}{indent}{key}: {repr(value)}")
+                write(
+                    f"{tag}{space}{separator}{indent}{key}: {repr(value)}", is_internal
+                )
 
     build_tree_dump(tree)
     return "\n".join(text)
@@ -664,3 +702,42 @@ def parse_yaml(
     variables = variables if variables else {}
     yamlparser = YamlParser(fn, facts, variables)
     return yamlparser.parse_yaml(yaml_file)
+
+
+def tree_inherit_internal(cfg: ConfigTree, parent_internal: bool = False) -> None:
+    """Walk through the tree and make all subtrees
+    inherit parent's `internal` property"""
+    INTERNAL_TYPE = "internal"
+
+    for key, value in cfg.items():
+        if not tree_get_descriptor(cfg, key):
+            continue
+
+        types = tree_types(cfg, key)
+        internal = INTERNAL_TYPE in types
+
+        if parent_internal and not internal:
+            types.append(INTERNAL_TYPE)
+            tree_set_types(cfg, key, types)
+
+        if isinstance(value, ConfigTree):
+            tree_inherit_internal(value, internal or parent_internal)
+
+
+def tree_ensure_descriptors(cfg: ConfigTree) -> None:
+    """Create descriptors for those elements of config tree,
+    which are not defined in schema.yaml"""
+    if not getattr(cfg, "_ConfigTree__schema", None):
+        return
+
+    for key, value in cfg.items():
+        if not tree_get_descriptor(cfg, key):
+            desc_name = type(value).__name__.lower()
+            if desc_name not in DESCRIPTOR_REGISTRY:
+                desc_name = "object"
+
+            desc_type = DESCRIPTOR_REGISTRY[desc_name]
+            tree_set_descriptor(cfg, key, desc_type, description={"type": [desc_name]})
+
+        if isinstance(value, ConfigTree):
+            tree_ensure_descriptors(value)

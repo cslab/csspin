@@ -16,10 +16,10 @@ from click.testing import CliRunner
 from pytest import fixture
 
 from spin.cli import finalize_cfg_tree, load_minimal_tree, load_plugins_into_tree
+from spin.tree import ConfigTree
 
 if TYPE_CHECKING:
     import pathlib
-    from spin.tree import ConfigTree
 
 from path import Path
 
