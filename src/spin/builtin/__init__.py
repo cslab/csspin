@@ -88,32 +88,32 @@ def schemadoc(
 ):
     """Print the schema definitions for cs.spin."""
 
-    def do_docwrite(parent, name, desc):
+    def do_docwrite(parent, name, desc, ignore=tuple()):
+        fullname = f"{parent}.{name}" if parent else name
+        if fullname in ignore:
+            return
+
         outfile.write(pretty_descriptor(parent, name, desc, rst))
         properties = getattr(desc, "properties", {})
-        if parent:
-            name = f"{parent}.{name}"
         for prop, descr in properties.items():
-            do_docwrite(name, prop, descr)
+            do_docwrite(fullname, prop, descr, ignore)
 
     schema = cfg.schema
 
-    if full:
+    ignore = []
+    if not full:
         for import_spec in cfg.loaded:
             if "spin." in import_spec:
                 continue
-
             import_spec = tuple(import_spec.split("."))
             plugin_name = import_spec[-1]
-
-            if hasattr(cfg, plugin_name) and hasattr(cfg[plugin_name], "schema"):
-                schema.properties.update({plugin_name: cfg[plugin_name].schema})
+            ignore.append(plugin_name)
 
     arg = ""
     for arg in select:
         schema = schema.properties.get(arg)
     parent = "" if len(select) < 2 else ".".join(select[:-1])
-    do_docwrite(parent, arg, schema)
+    do_docwrite(parent, arg, schema, ignore)
 
 
 class TaskDefinition:

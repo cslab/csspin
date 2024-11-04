@@ -109,6 +109,29 @@ def test_schemadoc_selection_nested(tmp_path):
     assert output.endswith("be overridden via 'spin -f <filename>'.")
 
 
+def test_schemadoc_full_param(tmp_path):
+    """
+    Checking schemadoc full param.
+    """
+    output = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        path="tests/yamls",
+        yaml="spin_dummy_config.yaml",
+        cmd="-q schemadoc --rst --full=False",
+    )
+    assert "dummy" not in output
+    assert "dummy.dummy" not in output
+
+    output = execute_spin_in_clean_and_provisioned_env(
+        env=tmp_path,
+        path="tests/yamls",
+        yaml="spin_dummy_config.yaml",
+        cmd="-q schemadoc --rst --full=True",
+    )
+    assert "dummy" in output
+    assert "dummy.dummy" in output
+
+
 def test_system_provision(tmp_path):
     """
     Validate that system_provision task is working properly.
