@@ -728,24 +728,31 @@ provisioned and loaded before the plugin itself.
    defined within the project's ``spinfile.yaml``.
 
 If plugins depend on system libraries or tools, that that can't be installed
-into the virtual environment managed by spin nor into ``{spin.data}``, it has to
-provide a ``system_requirements(cfg)`` hook:
+into the virtual environment managed by spin nor into ``{spin.data}``, they have to be
+specified under the defaults config:
 
 .. code-block:: python
-   :caption: Example of a plugin providing system requirements
 
    ...
-
-
-   def system_requirements(cfg):
-       return [
-           (
-               lambda distro, version: distro in ("debian", "mint", "ubuntu"),
-               {
-                   "apt": " ".join(["libkrb5-dev", "xz-utils"]),
-               },
-           ),
-       ]
+   defaults = config(
+       requires=config(
+           system=config(
+               debian=config(
+                   apt=[
+                       "git",
+                       "subversion",
+                   ],
+               ),
+               windows=config(
+                   choco=[
+                       "git",
+                       "svn",
+                   ],
+               ),
+           )
+       ),
+   )
 
 This enables the user of the plugin to review the required system packages and
-install them manually (see :ref:`system-provision-label`).
+install them manually (see :ref:`system-provision-label`). Note: currently only windows and debian
+with the package managers chocolatey and apt are supported.
