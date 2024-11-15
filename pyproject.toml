@@ -15,6 +15,7 @@ dependencies = [
   "install-jdk",
   "packaging",
   "path",
+  "pip",
   "ruamel.yaml",
   "svn",
   "wheel",
