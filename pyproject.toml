@@ -8,19 +8,12 @@ authors = [
 ]
 dependencies = [
   "Click",
-  "colorama",
   "distro",
-  "entrypoints",
-  "GitPython",
-  "install-jdk",
   "packaging",
   "path",
   "pip",
-  "ruamel.yaml",
-  "svn",
-  "wheel",
-  "virtualenv",
-  "platformdirs"
+  "platformdirs",
+  "ruamel.yaml"
 ]
 description = "spin"
 dynamic = ["version", "readme"]
