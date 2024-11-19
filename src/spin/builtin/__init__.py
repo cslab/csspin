@@ -256,11 +256,11 @@ def cleanup(
         help="Removes spin plugin data.",  # noqa: F722
     ),
     skip_confirmation: option(
-        "--yes",
         "-y",
+        "--yes",
         "skip_confirmation",
         is_flag=True,
-        hidden=True,
+        help="Skip confirmation when using --purge.",  # noqa: F722
     ),
 ):
     """
