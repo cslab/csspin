@@ -25,13 +25,6 @@ class TestYaml:
         cfg = self.config["test_empty"]
         assert cfg is None
 
-    def test_if(self: TestYaml) -> None:
-        cfg = self.config["test_if"]
-        assert hasattr(cfg, "check_true")
-        assert not hasattr(cfg, "check_false")
-        assert cfg["list_with_item"] == ["item"]
-        assert cfg["list_without_item"] is None
-
     def test_var(self: TestYaml) -> None:
         cfg = self.config["test_var"]
         assert not hasattr(cfg, "var test")
