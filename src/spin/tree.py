@@ -658,27 +658,6 @@ class YamlParser:
         self._var[expression] = _value
         del out[key]
 
-    def directive_if(
-        self: YamlParser,
-        key: str,
-        expression: str,
-        value: ruamel.yaml.comments.CommentedKeyMap,
-        out: ConfigTree,
-    ) -> None:
-        if eval(expression, self._facts):
-            # We have to take care to not evaluate clauses
-            # for falsy if statements -- thus
-            # 'parse_yaml(v)' below, only when the
-            # expression was true.
-            _value = self.parse_yaml(value)
-            if isinstance(_value, list):
-                listout = out.setdefault("$", [])
-                listout.extend(_value)
-            elif isinstance(_value, dict):
-                for ifk, ifv in _value.items():
-                    out[ifk] = ifv
-        del out[key]
-
     def parse_key(
         self: YamlParser,
         key: str,
