@@ -627,6 +627,35 @@ config-tree of a spin plugin:
 
 Most plugins should follow the second model.
 
+
+Outer and inner interpreter
+---------------------------
+
+To avoid confusion when and where to define Python dependencies, we clarify the
+concept between the outer and the inner interpreter.
+
+spin itself creates a Python virtual environment to install plugin-packages,
+plugins, additional packages, and their dependencies during the provision. This
+is being performed by the outer interpreter that cs.spin runs with, e.g.,
+Python 3.11.
+
+Packages that are needed by plugins during hooks like `configure`, `provision`,
+`finalize_provision`, and `cleanup`, should be installed using the outer
+interpreter. This can be for example the `jdk` package for provisioning Java or
+`virtualenv` for provisioning the inner Python virtual environment of the
+`spin_python.python`_ plugin.
+
+Dependencies that are required during the execution of tasks, must be installed
+using the inner interpreter e.g., when using `spin_python.python`_ as Python
+backend, the required packages must be defined using `requires.python` within
+the configuration of the plugin.
+
+Packages installed using the outer interpreter can depend on other Python
+versions than those installed using the inner interpreter. This is a common
+source of confusion, especially when using the `spin_python.python`_-like
+plugins.
+
+
 Transparency and behavior consistency
 -------------------------------------
 
