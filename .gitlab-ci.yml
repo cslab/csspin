@@ -209,7 +209,7 @@ conpi:
 
 pages:
   extends: .release_deps
-  needs: [wheel, analyze]
+  needs: [wheel, documentation, analyze]
   image: alpine
   stage: release
   script:
