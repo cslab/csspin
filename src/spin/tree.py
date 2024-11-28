@@ -22,12 +22,20 @@ import ruamel.yaml
 import ruamel.yaml.comments
 from path import Path
 
-from spin import Verbosity, die, interpolate1, warn  # pylint: disable=cyclic-import
+from spin import (  # pylint: disable=cyclic-import
+    Verbosity,
+    debug,
+    die,
+    interpolate1,
+    warn,
+)
 from spin.schema import DESCRIPTOR_REGISTRY
 
 if TYPE_CHECKING:
     from collections.abc import Hashable
     from typing import Any, Callable, Generator, Iterable
+
+from traceback import format_exc
 
 KeyInfo = namedtuple("KeyInfo", ["file", "line"])
 ParentInfo = namedtuple("ParentInfo", ["parent", "key"])
@@ -428,6 +436,7 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
                 target[key] = value
                 tree_set_keyinfo(target, key, tree_keyinfo(source, key))
             except Exception:  # pylint: disable=broad-exception-caught
+                debug(format_exc())
                 die(f"Can't merge {value=} into '{target=}[{key=}]'")
         elif isinstance(value, ConfigTree):
             tree_merge(target[key], value)
@@ -512,6 +521,7 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
                 target[key] = value
                 tree_set_keyinfo(target, key, ki)
         except (TypeError, schema.SchemaError) as exc:
+            debug(format_exc())
             die(f"{ki.file}:{ki.line}: cannot assign '{value}' to '{key}': {exc}")
 
 
@@ -532,6 +542,7 @@ def tree_update_properties(
         try:
             fullname, value = prop.split("=")
         except ValueError:
+            debug(format_exc())
             die(f"Value assignment to {prop} invalid (hint: {prop}=foo)")
 
         path = list(fullname.split("."))
@@ -540,6 +551,7 @@ def tree_update_properties(
             try:
                 scope = getattr(scope, path.pop(0))
             except AttributeError:
+                debug(format_exc())
                 warn(f"Can't set unknown property '{fullname}' - skipping!")
                 return
         if path[0] not in scope:
