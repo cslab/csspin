@@ -24,6 +24,7 @@ import importlib.metadata as importlib_metadata
 import os
 import sys
 from site import addsitedir
+from traceback import format_exc
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Generator, Iterable
 
@@ -133,6 +134,7 @@ def load_plugin(
                 " provisioned"
             )
         else:
+            debug(format_exc())
             die(
                 f"Plugin {import_spec} could not be loaded, it may need to be"
                 " provisioned"
@@ -178,8 +180,10 @@ def load_plugin(
 
                 tree.tree_merge(plugin_config_tree, plugin_schema.get_default())
             except FileNotFoundError:
+                debug(format_exc())
                 warn(f"Plugin {import_spec} does not provide a schema.")
             except KeyError:
+                debug(format_exc())
                 warn(f"Plugin {import_spec} does not provide a valid schema.")
 
             if plugin_defaults:

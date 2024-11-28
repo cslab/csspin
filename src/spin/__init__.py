@@ -43,6 +43,7 @@ import sys
 import time
 import urllib.request
 from contextlib import contextmanager
+from traceback import format_exc
 
 import click
 import packaging
@@ -462,8 +463,10 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
         t1 = time.monotonic()
         info(click.style(f"[{t1 - t0} seconds]", fg="cyan"))
     except FileNotFoundError as ex:
+        debug(format_exc())
         die(str(ex))
     except subprocess.CalledProcessError as ex:
+        debug(format_exc())
         if check:
             die(message.format(cmd_=cmd_, returncode=ex.returncode))
         cpi = subprocess.CompletedProcess(args=cmd, returncode=ex.returncode)
