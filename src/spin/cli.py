@@ -555,7 +555,8 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
 
     cfg.spin.spinfile = Path(spinfile)
     cfg.spin.project_root = Path(cfg.spin.spinfile).absolute().normpath().dirname()
-    cfg.spin.project_name = cfg.spin.project_root.basename()
+    if not cfg.spin.project_name:
+        cfg.spin.project_name = cfg.spin.project_root.basename()
     cfg.spin.launch_dir = Path().cwd().relpath(cfg.spin.project_root)
     cfg.spin.spin_dir = interpolate1(Path(cfg.spin.spin_dir)).absolute()  # type: ignore[union-attr]
 

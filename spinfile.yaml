@@ -1,3 +1,8 @@
+# Setting the project_name should always be done
+# in the spinfile.yaml to avoid errors.
+spin:
+  project_name: cs.spin
+
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin_packages:

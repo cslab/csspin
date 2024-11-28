@@ -39,6 +39,7 @@ documentation:
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
+    - pip install -e .
     - spin provision
     - spin docs html
   artifacts:

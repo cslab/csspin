@@ -142,14 +142,21 @@ directory. Spin is just a task-runner, so lets take a most simple Python project
 as an example to perform the provisioning.
 
 .. code-block:: yaml
-   :caption: Minimal :file:`spinfile.yaml` for a Python project
+   :caption: Minimal :file:`spinfile.yaml` for a Python project "foo"
 
+   spin:
+     project_name: foo
    plugin_packages:
      - spin_python
    plugins:
      - spin_python.python
    python:
      version: 3.9.8
+
+The ``spin.project_name`` property tells spin the name of the project we're
+working on. Setting it may not be required, but is always recommended to avoid
+errors where a project's directory name differs from the project name, for
+example if a project ``foo`` has been cloned into the directory ``foo_new``.
 
 The ``plugin_packages`` key lists plugin-packages that are installed using
 :program:`pip` into a project-specific plugin directory (which notably is
@@ -198,8 +205,10 @@ Now you want to test your project using `pytest`_. All that is necessary
 
 .. code-block:: yaml
    :caption: Minimal :file:`spinfile.yaml` to run the pytest plugin
-   :emphasize-lines: 4
+   :emphasize-lines: 6
 
+   spin:
+     project_name: foo
    plugin_packages:
      - spin_python
    plugins:
@@ -254,9 +263,11 @@ tools and settings required. You can simply add that plugin to your
 
 .. code-block:: yaml
    :caption: :file:`spinfile.yaml` defining a plugin-package from a git-repository
-   :emphasize-lines: 2,6,9-10
+   :emphasize-lines: 4,8,11-12
    :linenos:
 
+   spin:
+     project_name: foo
    plugin_packages:
      - git+https://git.example.com/projstds#egg=projstds
      - spin_python
