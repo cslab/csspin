@@ -40,7 +40,7 @@ spin:
       type: str internal
       help: The version of cs.spin that is being used.
     project_name:
-      type: str internal
+      type: str
       help: The project that is spin running on
     topo_plugins:
       type: list internal

@@ -84,8 +84,10 @@ To do anything useful, at least one plugin must be included. Here, we use the
 `spin_python.python`_ plugin, that also requires a version.
 
 .. code-block:: yaml
-   :caption: Minimal :file:`spinfile.yaml` for a Python project
+   :caption: Minimal :file:`spinfile.yaml` for a Python project "foo"
 
+   spin:
+     project_name: foo
    plugins:
      - spin_python.python
    python:
@@ -95,10 +97,12 @@ You can visualize the configuration tree for this minimal example by using the
 :option:`--dump <spin --dump>` option (many lines left out):
 
 .. code-block:: console
-   :emphasize-lines: 5-6,8
+   :emphasize-lines: 4,7-8,10
 
    $ spin --dump
    src/spin/schema.yaml:17: |spin:
+
+   spinfile.yaml:4:         |  project_name: 'cs.spin'
    src/spin/cli.py:612:     |  spinfile: Path('/home/bts/src/qs/spin/cs.spin/spinfile.yaml')
    ... more lines ...
    spinfile.yaml:14:        |plugins:
