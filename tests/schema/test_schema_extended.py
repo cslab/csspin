@@ -5,6 +5,7 @@
 # https://www.contact-software.com/
 
 import subprocess
+import sys
 from os import environ
 
 import pytest
@@ -48,8 +49,12 @@ def test_environment_set_via_spinfile(tmp_path) -> None:
         env=tmp_path,
         cmd="provision",
     )
-    assert "spin: set FOO=bar" in output
-    assert "spin: unset BAR" in output
+    if sys.platform == "win32":
+        assert '$env:FOO="bar"' in output
+        assert "$env:BAR=$null" in output
+    else:
+        assert "spin: export FOO=bar" in output
+        assert "spin: unset BAR" in output
 
 
 @pytest.mark.parametrize(
