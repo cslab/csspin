@@ -501,13 +501,19 @@ def setenv(*args: Any, **kwargs: Any) -> None:
     for key, value in kwargs.items():
         if value is None:
             if not args:
-                echo(f"unset {key}")
+                if sys.platform == "win32":
+                    echo(f"$env:{key}=$null")
+                else:
+                    echo(f"unset {key}")
             os.environ.pop(key, None)
             EXPORTS[key] = None
         else:
             value = interpolate1(value)
             if not args:
-                echo(f"set {key}={value}")
+                if sys.platform == "win32":
+                    echo(f'$env:{key}="{value}"')
+                else:
+                    echo(f"export {key}={value}")
             else:
                 echo(args[0])
             os.environ[key] = value
