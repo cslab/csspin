@@ -23,7 +23,7 @@ wheel:
     GIT_STRATEGY: clone
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install -e .
+    - pip install .
     - spin provision
     - spin python:wheel
   artifacts:
@@ -39,7 +39,7 @@ documentation:
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install -e .
+    - pip install .
     - spin provision
     - spin docs html
   artifacts:
@@ -59,7 +59,7 @@ pre-commit:
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install -e .
+    - pip install .
     - spin provision
     - spin test -vv --coverage --with-test-report
   after_script:
