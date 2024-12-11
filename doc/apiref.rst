@@ -28,6 +28,7 @@ Interacting with spin
 .. autofunction:: interpolate
 .. autofunction:: namespaces
 .. autofunction:: toporun
+.. autodata:: EXPORTS
 
 Communication with the user
 ===========================

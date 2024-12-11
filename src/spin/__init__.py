@@ -36,6 +36,7 @@ import collections
 import inspect
 import os
 import pickle
+import re
 import shlex
 import shutil
 import subprocess
@@ -89,6 +90,7 @@ __all__ = [
     "toporun",
     "Path",
     "Memoizer",
+    "EXPORTS",
 ]
 
 
@@ -483,7 +485,29 @@ def backtick(*cmd: str, **kwargs: Any) -> str:
     return cpi.stdout.decode()  # type: ignore[no-any-return,union-attr]
 
 
-EXPORTS: dict = {}
+#: EXPORTS is a list that contains all (key, value) tuples of environment variables
+#: that got set or unset via :py:func:`spin.setenv` during the current spin execution.
+#:
+#: The ``value`` of a given element is already fully interpolated, except for
+#: parts that look like environment variables. So any plugin using ``EXPORTS`` is able
+#: to lazily evaluate the value of a variable in cases, where it has been set
+#: multiple times.
+#:
+#: A case where that's relevant can be seen in the following example:
+#:
+#: Example:
+#:
+#: >>> os.environ.getenv("PATH")
+#: "/usr/bin:/bin"
+#: >>> setenv(PATH="{spin.project_root}/bin:{PATH}")
+#: >>> setenv(PATH="{python.scriptdir}:{PATH}")
+#: >>> EXPORTS
+#: [("PATH", "/home/foo/project/bin:{PATH}"), ("PATH", "/home/foo/project/.spin/venv/bin:{PATH})]
+#:
+#: As can be seen, the real value of ``PATH`` should be
+#: ``"/home/foo/project/.spin/venv/bin:/home/foo/project/bin:"/usr/bin:/bin"``,
+#: which any plugin could now generate.
+EXPORTS: list[tuple[str, str]] = []
 
 
 def setenv(*args: Any, **kwargs: Any) -> None:
@@ -498,26 +522,41 @@ def setenv(*args: Any, **kwargs: Any) -> None:
     >>> setenv(FOO="{spin.foo}", BAR="{bar.options}")
 
     """
+
+    def _value_replacement_for_echoing(value: str) -> str:
+        keys = re.findall(r"{(?P<key>\w+?)}", value)
+        if sys.platform == "win32":
+            for key in keys:
+                if key in os.environ:
+                    value = value.replace(f"{{{key}}}", f"$env:{key}")
+        else:
+            for key in keys:
+                if key in os.environ:
+                    value = value.replace(f"{{{key}}}", f"${key}")
+        return value
+
     for key, value in kwargs.items():
         if value is None:
             if not args:
                 if sys.platform == "win32":
-                    echo(f"$env:{key}=$null")
+                    echo(f"$env:{key}=$null", resolve=False)
                 else:
-                    echo(f"unset {key}")
+                    echo(f"unset {key}", resolve=False)
             os.environ.pop(key, None)
-            EXPORTS[key] = None
+            EXPORTS.append((key, ""))
         else:
-            value = interpolate1(value)
+            interpolated_value = interpolate1(value)
+            exports_value = interpolate1(value, interpolate_environ=False)
             if not args:
+                value_to_print = _value_replacement_for_echoing(exports_value)
                 if sys.platform == "win32":
-                    echo(f'$env:{key}="{value}"')
+                    echo(f'$env:{key}="{value_to_print}"', resolve=False)
                 else:
-                    echo(f"export {key}={value}")
+                    echo(f"export {key}={value_to_print}", resolve=False)
             else:
                 echo(args[0])
-            os.environ[key] = value
-            EXPORTS[key] = value
+            os.environ[key] = interpolated_value
+            EXPORTS.append((key, exports_value))
 
 
 def _read_file(fn: str | Path, mode: str) -> str | bytes:
@@ -707,7 +746,9 @@ os.environ["SPIN_DATA"] = os.environ.get(
 )
 
 
-def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
+def interpolate1(
+    literal: str | Path, *extra_dicts: dict, interpolate_environ: bool = True
+) -> str | Path:
     """
     Interpolate a string or path against the configuration tree and the
     environment.
@@ -731,6 +772,14 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
     ... )
     '{"header": {"language": "en", "data": "/home/bts/.local/share/spin"}}'
 
+    It may be necessary to omit the interpolation against the environment, in that case
+    the parameter ``interpolate_environ`` can be set to ``False``.
+
+    Example:
+
+    >>> interpolate1("{spin.version} and {PATH}", interpolate_environ=False)
+    "1.0.2.dev5 and {PATH}"
+
     .. Attention:: **Do not use** :py:func:`spin.interpolate1` **in a plugins'
        top-level**, as the one can't rely on the configuration tree at import time
        of the module.
@@ -752,7 +801,11 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
     previous = None
 
     where_to_look = collections.ChainMap(
-        {"config": CONFIG}, CONFIG, os.environ, *extra_dicts, *NSSTACK  # type: ignore[arg-type]
+        {"config": CONFIG},
+        CONFIG,
+        os.environ if interpolate_environ else {},
+        *extra_dicts,
+        *NSSTACK,  # type: ignore[arg-type]
     )
 
     while previous != literal:
@@ -769,8 +822,21 @@ def interpolate1(literal: str | Path, *extra_dicts: dict) -> str | Path:
         # .format() converts {{}} to {} undependent of if it interpolated
         # something within these braces or not.
         literal = literal.replace("}}", "}}}}").replace("{{", "{{{{")
-        literal = literal.format_map(where_to_look)
-
+        try:
+            if interpolate_environ:
+                literal = literal.format_map(where_to_look)
+            else:
+                # When not interpolating the environ, we need to escape
+                # sub-literals that look like environment variables.
+                literal = re.sub(r"({\w+})", r"{\1}", literal)
+                literal = literal.format_map(where_to_look)
+                literal = re.sub(r"{({\w+})}", r"\1", literal)
+        except KeyError as ex:
+            error_key = str(ex)[1:-1]
+            die(f"Cannot interpolate '{{{error_key}}}' in {literal}.", resolve=False)
+        except AttributeError as ex:
+            error_key = str(ex).replace("No property ", "")[1:-1]
+            die(f"Cannot interpolate '{{{error_key}}}' in {literal}.", resolve=False)
     literal = literal.replace("{{", "{").replace("}}", "}")
     return Path(literal).normpath() if is_path else literal
 

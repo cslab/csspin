@@ -500,6 +500,22 @@ def test_setenv(cfg):
     assert os.getenv("FOO") == "foo"
 
 
+@pytest.mark.xfail(
+    raises=click.exceptions.Abort,
+    reason="Setenv's value must be an interpolatable string.",
+)
+def test_setenv_fails(cfg):
+    spin.setenv(FOO=r'{"header": {"language": "en", "cache": "bar"}}')
+
+
+@patch.object(spin, "EXPORTS", [])
+@patch.dict(os.environ, {"LALA": "foo"}, clear=True)
+def test_setenv_nested(cfg):
+    spin.setenv(BAR="bar:{LALA}")
+    assert os.getenv("BAR") == "bar:foo"
+    assert spin.EXPORTS == [("BAR", "bar:{LALA}")]
+
+
 @patch.dict(os.environ, {"FOO": "foo"})
 def test_interpolate1(cfg):
     """
@@ -508,6 +524,7 @@ def test_interpolate1(cfg):
     """
     # interpolation against the environment
     assert spin.interpolate1("'{FOO}'") == f"'{os.environ['FOO']}'"
+    assert spin.interpolate1("'{FOO}'", interpolate_environ=False) == "'{FOO}'"
 
     # ... one step recursion
     cfg.bad = "{bad}"
