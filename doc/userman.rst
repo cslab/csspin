@@ -461,9 +461,9 @@ the environment will be overridden, in case the same keys were modified via CLI.
   # SPIN_P will be overridden by values passed via "-p"
   SPIN_P="pytest.opts=[-vv]" spin -p pytest.opts="[-m, wip]" pytest
 
-  # SPIN_TREE_PYTEST__OPS will be overridden by values passed via
+  # SPIN_TREE_PYTEST__OPTS will be overridden by values passed via
   #   "-p pytest.opts"
-  SPIN_TREE_PYTEST__OPS="[-m, 'not slow']" spin \
+  SPIN_TREE_PYTEST__OPTS="[-m, 'not slow']" spin \
     -p pytest.opts="[-m, wip]" pytest
 
   # SPIN_P will be overridden by SPIN_TREE_PYTEST__OPTS
