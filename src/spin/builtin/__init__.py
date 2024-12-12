@@ -77,10 +77,27 @@ def pretty_descriptor(parent, name, descriptor, rst: bool):
 @task()
 def schemadoc(
     cfg,
-    outfile: option("-o", "outfile", default="-", type=click.File("w")),  # noqa: F722
-    full: option("--full", default=True, type=click.BOOL),  # noqa: F722
-    rst: option("--rst", is_flag=True, default=False, type=click.BOOL),  # noqa: F722
-    select: argument(  # noqa: F722
+    outfile: option(
+        "-o",
+        "outfile",
+        default="-",  # noqa: F722
+        type=click.File("w"),
+        help="Write output into FILENAME.",  # noqa: F722
+    ),
+    full: option(
+        "--full",
+        default=True,
+        type=click.BOOL,
+        help="Show schema documentation for the whole ConfigTree.",  # noqa: F722
+    ),
+    rst: option(
+        "--rst",
+        is_flag=True,
+        default=False,
+        type=click.BOOL,
+        help="Print the schema documentation in rst format.",  # noqa: F722
+    ),
+    select: argument(
         type=click.STRING,
         default="",  # noqa: F722
         callback=lambda ctx, param, value: value.split(".") if value else "",
