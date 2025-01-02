@@ -15,7 +15,7 @@ variables:
 # --------------------------------- Build stage --------------------------------
 wheel:
   stage: build
-  image: registry.contact.de/cetest:16.0-6.latest
+  image: registry.contact.de/cetest:16.0-7.latest
   variables:
     # The version generation via setuptools_scm needs
     # (potentially) the whole SCM history to work correctly
@@ -35,7 +35,7 @@ wheel:
 
 documentation:
   stage: build
-  image: registry.contact.de/cetest:16.0-6.latest
+  image: registry.contact.de/cetest:16.0-7.latest
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
