@@ -12,6 +12,7 @@
 import os
 from inspect import currentframe
 from os import environ
+from unittest import mock
 
 from click.exceptions import Abort
 from pytest import raises
@@ -329,21 +330,20 @@ def test_directive_interpolate() -> None:
     assert config == expected_config2
 
 
+@mock.patch.dict(os.environ, {"SPIN_TREE_SUB__X": "[1, 2]"}, clear=True)
 def test_tree_update_properties() -> None:
     """Ensuring that spin.tree.update_properties is updating the config tree
     correctly.
     """
-    os.environ["SPIN_TREE_SUB__X"] = "[1, 2]"
     cfg = tree.ConfigTree(sub=tree.ConfigTree(opts=["none"], x=[]))
     tree.tree_update_properties(
         cfg,
         override_properties=("sub.opts=['second', 'third']",),
         prepend_properties=("sub.opts='new first'",),
-        append_properties=("sub.opts=['second last', 'last']",),
+        append_properties=("sub.opts=['second last', 'last=final']",),
     )
-    assert cfg.sub.opts == ["new first", "second", "third", "second last", "last"]
+    assert cfg.sub.opts == ["new first", "second", "third", "second last", "last=final"]
     assert cfg.sub.x == [1, 2]
-    del os.environ["SPIN_TREE_SUB__X"]
 
 
 def test_tree_update_properties_skip_not_existing_property(capfd) -> None:

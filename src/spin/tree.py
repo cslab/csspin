@@ -540,7 +540,7 @@ def tree_update_properties(
     def modify_property(prop: str, func: Callable) -> None:
         """Modify a config tree value using given func"""
         try:
-            fullname, value = prop.split("=")
+            fullname, value = prop.split("=", 1)
         except ValueError:
             debug(format_exc())
             die(f"Value assignment to {prop} invalid (hint: {prop}=foo)")
