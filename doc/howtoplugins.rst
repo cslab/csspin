@@ -739,6 +739,9 @@ unshared ``global.yaml`` (see :ref:`writing-global-label`).
 Dependency Management
 ---------------------
 
+Plugins
+~~~~~~~
+
 Plugins can depend on other plugins, by listing the required plugins within the
 current plugin's configuration using the ``requires.spin`` property.
 
@@ -756,9 +759,30 @@ provisioned and loaded before the plugin itself.
    Plugin-packages do not get automatically installed, they need to be
    defined within the project's ``spinfile.yaml``.
 
+Plugin-packages
+~~~~~~~~~~~~~~~
+
+If a plugin-package contains plugins that depend on plugins from other
+plugin-packages, the required plugin-packages should be listed as dependencies
+in the current plugin-package project's ``pyproject.toml``. This enables spin to
+automatically install all required plugin-packages during provision and avoids
+the need for the end-user to manually define all required plugin-packages within
+the project's ``plugin_packages`` section of the ``spinfile.yaml``.
+
+.. code-block:: toml
+   :caption: Example of a plugin-package depending on another plugin-package in ``pyproject.toml``
+
+   ...
+   [project]
+   dependencies = ["spin_python", "spin_java", "spin_frontend"]
+   ...
+
+System dependencies
+~~~~~~~~~~~~~~~~~~~
+
 If plugins depend on system libraries or tools, that that can't be installed
-into the virtual environment managed by spin nor into ``{spin.data}``, they have to be
-specified under the defaults config:
+into the virtual environment managed by spin nor into ``{spin.data}``, they have
+to be specified under the defaults config:
 
 .. code-block:: python
 
@@ -783,5 +807,5 @@ specified under the defaults config:
    )
 
 This enables the user of the plugin to review the required system packages and
-install them manually (see :ref:`system-provision-label`). Note: currently only windows and debian
-with the package managers chocolatey and apt are supported.
+install them manually (see :ref:`system-provision-label`). Note: currently only
+windows and debian with the package managers chocolatey and apt are supported.
