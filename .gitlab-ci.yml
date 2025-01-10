@@ -2,7 +2,7 @@
 
 include:
   - project: qs/cs.template
-    ref: v15.9.0.4
+    ref: v15.9.1.0
     file:
       - ci/common.yml
       - ci/pre-commit.yml
