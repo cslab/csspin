@@ -944,7 +944,7 @@ def option(*args: Any, **kwargs: Any) -> Callable:
                 default="-",
                 type=click.File("w"),
                 help="... usage information ...",
-            )
+            ),
         ):
             foo("do something")
 
