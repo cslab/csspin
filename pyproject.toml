@@ -10,7 +10,7 @@ dependencies = [
   "Click",
   "distro",
   "packaging",
-  "path",
+  "path>=17",
   "pip",
   "platformdirs",
   "ruamel.yaml"
