@@ -207,6 +207,7 @@ conpi:
   extends: [.upload_conpi_prod, .release_deps]
   variables:
     PYPI_INDEX: tools/misc
+    EGG_PATH: dist/cs_spin-*
 
 pages:
   extends: .release_deps
