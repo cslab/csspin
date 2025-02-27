@@ -223,8 +223,7 @@ Environment variables
 ---------------------
 
 The ``spinfile.yaml`` enables setting environment variables before the execution
-of a task. This can be done by using the ``environment`` key. The following
-example:
+of a task. This can be done by using the ``environment`` key.
 
 .. code-block:: yaml
    :caption: Setting environment variables within :file:`spinfile.yaml`

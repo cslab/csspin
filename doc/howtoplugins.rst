@@ -25,7 +25,7 @@ the `spin_python.python`_ plugin, so it is unnecessary to also include
 
 **Project-local plugins** are modules in plugin directories and can be declared
 using their relative path to the project via ``plugin_paths``. Local plugins can
-then by used adding their name. Given a project layout like this:
+then be used by adding their name. Given a project layout like this:
 
   .. code-block:: console
     :caption: Project-local plugin file hierarchy
@@ -51,7 +51,7 @@ then by used adding their name. Given a project layout like this:
       - myplugin
 
 **Plugin-packages** containing a set of plugins are declared in
-``plugin_packages``. spin will install installable plugins into
+``plugin_packages``. spin installs plugins into
 ``.spin/plugins``.
 
   .. code-block:: yaml
@@ -81,7 +81,7 @@ Plugin lifecycle
    is loaded into the :ref:`configuration tree
    <configuration-tree-system-label>` under the name of the plugin. E.g. for a
    plugin called ``myplugin``. The plugin settings would end up in the
-   configuration three as:
+   configuration tree as:
 
    .. code-block:: yaml
       :caption: Subtree of a plugin added to spin's configuration tree
@@ -251,7 +251,7 @@ our message:
       example    Example plugin
     ...
     $ spin example
-    spin: This project lives in .
+    spin: Spin's data is located at .
 
 Plugin schema
 =============
@@ -449,9 +449,9 @@ The source code should be compliant with our `Python Coding Guide`_.
 Idempotence
 ~~~~~~~~~~~~
 
-Plugins provisioning them selfs by installing packages, downloading and caching
-resources, as well as creating and modifying required file system structures,
-must ensure, that a second or third provision doesn't break the setup. Ideally a
+Plugins provision themselves by installing packages, downloading and caching
+resources, as well as creating and modifying required file system structures.
+They must ensure, that a second or third provision doesn't break the setup. Ideally a
 second provision call of the same plugin won't do anything.
 
 OS-independency
@@ -473,8 +473,8 @@ Short and descriptive naming
 
 The name of a plugin should be as well descriptive as short. The latter is
 important since it is also used as the name of the node of the plugin-specific
-config-subtree, so a over-long names makes for unnecessarily long
-config-three-paths which are more difficult to handle on CLI etc. In case you're
+config-subtree, so the overly long names result in unnecessarily lengthy
+configuration paths which are more difficult to handle on CLI etc. In case you're
 wrapping a tool, "plugin-name == task-name == tool-name" makes for a good UX in
 many cases.
 
