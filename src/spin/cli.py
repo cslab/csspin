@@ -69,7 +69,7 @@ DEFAULTS = config(
         data=Path("{SPIN_DATA}"),
         config=Path("{SPIN_CONFIG}"),
         extra_index=None,
-        version=importlib_metadata.version("cs.spin"),
+        version=importlib_metadata.version("cs-spin"),
     ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
@@ -428,7 +428,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
     append_properties: tuple,
 ) -> int | None:
     if version:
-        print(importlib_metadata.version("cs.spin"))
+        print(importlib_metadata.version("cs-spin"))
         return 0
 
     if quiet:
