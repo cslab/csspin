@@ -44,8 +44,10 @@ from spin import (
     interpolate1,
     memoizer,
     mkdir,
+    obfuscate,
     readyaml,
     schema,
+    secrets,
     set_tree,
     setenv,
     sh,
@@ -640,8 +642,10 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
     # Interpolate values of the configuration tree and enforce their types
     tree.tree_sanitize(cfg)
 
+    secrets.update(tree.tree_extract_secrets(cfg))
+
     if DUMP:
-        print(tree.tree_dump(cfg))
+        print(obfuscate(tree.tree_dump(cfg)))
 
 
 def install_plugin_packages(cfg: tree.ConfigTree) -> None:

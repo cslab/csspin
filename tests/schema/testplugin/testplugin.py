@@ -10,7 +10,18 @@ import os
 
 from path import Path
 
-from spin import config, interpolate1, setenv, task
+from spin import (
+    config,
+    confirm,
+    debug,
+    echo,
+    error,
+    info,
+    interpolate1,
+    setenv,
+    task,
+    warn,
+)
 
 defaults = config(
     nested_properties=config(
@@ -38,6 +49,7 @@ defaults = config(
 
 def configure(cfg) -> None:
     setenv(SPIN_TESTING_SCHEMA_VALIDATION_TOGGLE=True)
+    cfg.testplugin.another_secret_property = "sssssshhhitsasecret"
 
 
 @task()
@@ -70,3 +82,13 @@ def testplugin(cfg) -> None:
     assert cfg.testplugin.nested_properties.iam_another_path == Path("iam_another_path")
     assert isinstance(cfg.testplugin.nested_properties.iam_a_path, Path)
     assert cfg.testplugin.nested_properties.iam_a_path == Path("path1")
+
+
+@task()
+def output_secrets(cfg) -> None:
+    debug(cfg.testplugin.secret_property)
+    echo(cfg.testplugin.secret_property)
+    info(cfg.testplugin.secret_property)
+    warn(cfg.testplugin.secret_property)
+    error(cfg.testplugin.secret_property)
+    confirm(cfg.testplugin.secret_property)

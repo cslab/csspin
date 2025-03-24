@@ -58,3 +58,9 @@ testplugin:
     internal_property:
       type: str internal
       help: Used for testing that internal properties can't be modified by input
+    secret_property:
+      type: secret
+      help: Used for testing that secret properties are not shown in the output
+    another_secret_property:
+      type: secret
+      help: Used for testing secret properties set in configure hook
