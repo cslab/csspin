@@ -39,6 +39,26 @@ def test_cli(cli_runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
+def test_secret_obfuscation(
+    cli_runner: CliRunner,
+    tmp_path: PathlibPath,
+) -> None:
+    """Test whether secrets containing interpolatable elements are hidden.
+    This test also applies to secrets that do not require interpolation."""
+    interpolated_secret = "pupa228lup__hey__a1337hehehoho"
+    secret_from_configure = "sssssshhhitsasecret"
+    args = ["--env", tmp_path, "-f", "tests/schema/test_schema_secrets.yaml", "-vv"]
+
+    cli_runner.invoke(cli.cli, [*args, "provision"])
+    res = cli_runner.invoke(cli.cli, [*args, "output-secrets"], input="y")
+    assert interpolated_secret not in res.output
+    assert secret_from_configure not in res.output
+
+    res = cli_runner.invoke(cli.cli, [*args, "--dump"])
+    assert interpolated_secret not in res.output
+    assert secret_from_configure not in res.output
+
+
 def test_cleanup(
     cli_runner: CliRunner,
     mocker: MockerFixture,

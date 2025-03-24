@@ -344,6 +344,8 @@ types are referenced below.
      - integer values
    * - ``bool``
      - boolean values
+   * - secret
+     - secret string values (API keys, passwords) that will be masked in the output
 
 Spin handles types of configuration tree properties as defined in the respective
 schemas. Since lists are designed to store multiple elements, they're all

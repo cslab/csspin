@@ -172,7 +172,7 @@ def tree_sanitize(cfg: ConfigTree) -> None:
             enforce_typecheck(cfg_[keys[0]], keys[1:], value, ki)
 
     interpolateable = (str, Path)
-    for _, value, fullname, ki, _, _ in tree_walk(cfg):
+    for _, value, fullname, ki, _, _, _ in tree_walk(cfg):
         if (
             isinstance(value, interpolateable)
             and (value := interpolate1(value))
@@ -255,19 +255,25 @@ def tree_load(fn: str) -> ConfigTree | Any:
 
 
 def tree_walk(config: ConfigTree, indent: str = "") -> Generator:
-    """Walk configuration tree depth-first, yielding the key, its value,
-    the full name of the key, the tracking information and an
-    indentation string that increases by ``"  "`` for each level.
+    """Walk configuration tree depth-first, yielding:
+    - Key
+    - Value
+    - Full name of the key
+    - Tracking information
+    - Types
+    - Indentation string that increases by ``"  "`` for each level
+    - Descriptor
     """
     for key, value in sorted(config.items()):
         yield key, value, tree_keyname(config, key), tree_keyinfo(
-            config, key
-        ), tree_types(config, key), indent
+            config,
+            key,
+        ), tree_types(config, key), indent, tree_get_descriptor(config, key)
         if isinstance(value, ConfigTree):
-            for key, value, fullname, info, types, subindent in tree_walk(
+            for key, value, fullname, info, types, subindent, desc in tree_walk(
                 value, indent + "  "
             ):
-                yield key, value, fullname, info, types, subindent
+                yield key, value, fullname, info, types, subindent, desc
 
 
 def tree_dump(tree: ConfigTree) -> str:
@@ -301,7 +307,7 @@ def tree_dump(tree: ConfigTree) -> str:
     tagcolumn = max(
         (
             len(shorten_filename_line(info) + ":")
-            for _, _, _, info, _, _ in tree_walk(tree)
+            for _, _, _, info, _, _, _ in tree_walk(tree)
         ),
         default=0,
     )
@@ -316,7 +322,7 @@ def tree_dump(tree: ConfigTree) -> str:
         :param ind: Additional indention for the output
         """
 
-        for key, value, _, info, types, indent in tree_walk(tree):
+        for key, value, _, info, types, indent, _ in tree_walk(tree):
             is_internal = "internal" in types
             if is_internal and not tree.verbosity > Verbosity.NORMAL:
                 continue
@@ -469,7 +475,7 @@ def tree_apply_directives(tree: ConfigTree) -> None:
 
     tree_apply_certain(tree)
 
-    for _, value, _, _, types, _ in tree_walk(tree):
+    for _, value, _, _, types, _, _ in tree_walk(tree):
         if isinstance(value, ConfigTree) and "internal" not in types:
             tree_apply_directives(value)
 
@@ -693,6 +699,19 @@ def parse_yaml(
     variables = variables if variables else {}
     yamlparser = YamlParser(fn, facts, variables)
     return yamlparser.parse_yaml(yaml_file)
+
+
+def tree_extract_secrets(cfg: ConfigTree) -> set[str]:
+    """Return a set of strings from ConfigTree whose descriptors are of type 'secret'"""
+    secrets = set()
+    exceptions = ("", None)  # Calling replace on these strings can brake the output
+
+    for _, value, _, _, _, _, desc in tree_walk(cfg):
+        if isinstance(desc, DESCRIPTOR_REGISTRY["secret"]):
+            if value not in exceptions:
+                secrets.add(str(value))
+
+    return secrets
 
 
 def tree_inherit_internal(cfg: ConfigTree, parent_internal: bool = False) -> None:

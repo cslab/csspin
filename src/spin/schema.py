@@ -86,6 +86,14 @@ class StringDescriptor(BaseDescriptor):
         return str(value) if not callable(value) else value
 
 
+@descriptor("secret")
+class SecretDescriptor(BaseDescriptor):
+    """Descriptor for handling string values."""
+
+    def coerce(self: SecretDescriptor, value: str | Callable) -> str | Callable:
+        return str(value) if not callable(value) else value
+
+
 @descriptor("int")
 class IntDescriptor(BaseDescriptor):
     """Descriptor for handling integer values."""

@@ -93,6 +93,26 @@ __all__ = [
     "EXPORTS",
 ]
 
+secrets: set[str] = set()
+
+
+def obfuscate(msg: Iterable[str] | str) -> list[str] | str:
+    mask = "*******"
+
+    if isinstance(msg, str):
+        new_msg = msg
+        for secret in secrets:
+            new_msg = new_msg.replace(secret, mask)
+        return new_msg
+
+    elif isinstance(msg, Iterable):
+        msg_list: list[str] = []
+        for string in msg:
+            for secret in secrets:
+                string = string.replace(secret, mask)
+            msg_list.append(string)
+        return msg_list
+
 
 def echo(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
     """Print a message to the console by joining the positional arguments
@@ -109,6 +129,7 @@ def echo(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
     if CONFIG.verbosity > Verbosity.QUIET:
         if resolve:
             msg = interpolate(msg)  # type: ignore[assignment]
+        msg = obfuscate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(click.style(" ".join(msg), bold=True), **kwargs)
 
@@ -127,6 +148,7 @@ def info(*msg: str, **kwargs: Any) -> None:
     """
     if CONFIG.verbosity > Verbosity.NORMAL:
         msg = interpolate(msg)  # type: ignore[assignment]
+        msg = obfuscate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: ", fg="green"), nl=False)
         click.echo(" ".join(msg), **kwargs)
 
@@ -147,6 +169,7 @@ def debug(*msg: str, resolve: bool = False, **kwargs: Any) -> None:
     if CONFIG.verbosity > Verbosity.INFO:
         if resolve:
             msg = interpolate(msg)  # type: ignore[assignment]
+        msg = obfuscate(msg)  # type: ignore[assignment]
         click.echo(click.style("spin: debug: ", fg="white", dim=True), nl=False)
         click.echo(" ".join(msg), **kwargs)
 
@@ -163,6 +186,7 @@ def warn(*msg: str, **kwargs: Any) -> None:
 
     """
     msg = interpolate(msg)  # type: ignore[assignment]
+    msg = obfuscate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: warning: ", fg="yellow"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
@@ -180,6 +204,7 @@ def error(*msg: str, resolve: bool = True, **kwargs: Any) -> None:
     """
     if resolve:
         msg = interpolate(msg)  # type: ignore[assignment]
+    msg = obfuscate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: error: ", fg="red"), nl=False, err=True)
     click.echo(" ".join(msg), err=True, **kwargs)
 
@@ -196,6 +221,7 @@ def confirm(*msg: str, resolve: bool = True, **kwargs: Any) -> bool:
     """
     if resolve:
         msg = interpolate(msg)  # type: ignore[assignment]
+    msg = obfuscate(msg)  # type: ignore[assignment]
     click.echo(click.style("spin: ", fg="yellow"), nl=False)
     return click.confirm(" ".join(msg), **kwargs)
 
