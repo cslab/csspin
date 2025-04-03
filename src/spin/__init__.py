@@ -41,7 +41,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import time
 import urllib.request
 from contextlib import contextmanager
 from traceback import format_exc
@@ -480,7 +479,6 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     message = "Command '{cmd_}' failed with exit status {returncode}."
     cmd_ = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[unreachable] # noqa: E501
     try:
-        t0 = time.monotonic()
         debug(
             f"subprocess.run({cmd}, shell={shell}, check={check}, env={argenv},"
             f" executable={executable}, kwargs={kwargs}",
@@ -488,8 +486,6 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
         cpi = subprocess.run(
             cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
         )
-        t1 = time.monotonic()
-        info(click.style(f"[{t1 - t0} seconds]", fg="cyan"))
     except FileNotFoundError as ex:
         debug(format_exc())
         die(str(ex))
