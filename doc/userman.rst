@@ -447,6 +447,47 @@ At every place where people work, there will be some errors, so feel free to
 read the following characteristics of spin and it's behavior to avoid some
 sources of error in advance.
 
+Missing system dependencies
+---------------------------
+
+.. NOTE:: This section only affects uses of cs.spin in non-Windows environments.
+
+Provisioning system dependencies is a task that is not handled by cs.spin. Users
+have to manually install system dependencies. The :command:`spin
+system-provision` command prints the system requirements of a project that must
+be installed by the user manually.
+
+Here we can have the case that all system dependencies are installed and the
+provision of the project runs through successfully, but further tasks fail due
+to missing system dependencies as shown below:
+
+.. code-block:: text
+   :caption: Example: Missing system dependencies
+   :emphasize-lines: 3
+
+      from _ctypes import Union, Structure, Array
+      ...
+      ModuleNotFoundError: No module named '_ctypes'
+      spin: error: Command 'mkinstance --unsafe --batchmode ...
+      Aborted!
+
+To fix this error, the user has to:
+
+1. Ensure the system dependencies via :command:`spin system-provision` are
+   installed.
+2. Delete ``~/.local/spin/{pyenv,pyenv_cache,python}``
+3. Re-provision the project via :command:`spin provision`.
+
+.. admonition:: Background
+
+   cs.spin uses pyenv to download and compile the Python version
+   specified in the spinfile. The error above is caused by one or more missing
+   system dependencies that affect the build of the Python interpreter, which is
+   then missing certain modules, e.g. ``_ctypes``. By removing the broken build,
+   ensuring all required system dependencies are present on the current machine,
+   and provisioning the project again, the Python interpreter will be built with
+   the required feature set and the error will be resolved.
+
 Order of property overriding
 ----------------------------
 
