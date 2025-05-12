@@ -94,7 +94,6 @@ def schemadoc(
         "--rst",
         is_flag=True,
         default=False,
-        type=click.BOOL,
         help="Print the schema documentation in rst format.",  # noqa: F722
     ),
     select: argument(
