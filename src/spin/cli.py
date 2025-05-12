@@ -432,7 +432,6 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
     if version:
         print(importlib_metadata.version("cs-spin"))
         return 0
-
     if quiet:
         verbose = -1
     elif ctx.args and ctx.args[0] in ("env", "system-provision"):
@@ -489,6 +488,11 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
 
     finalize_cfg_tree(cfg)
     mkdir("{spin.data}")
+
+    if help:
+        # If help should be printed, we do so with exit-code 0
+        print(commands.get_help(ctx))
+        return None
 
     if dump and not ctx.args:
         # Otherwise help would be displayed right after the dump.

@@ -7,7 +7,7 @@ authors = [
   {name = "Frank Patz-Brockmann", email = "frank.patz-brockmann@contact-software.com"}
 ]
 dependencies = [
-  "Click",
+  "click",
   "distro",
   "packaging",
   "path>=17",
