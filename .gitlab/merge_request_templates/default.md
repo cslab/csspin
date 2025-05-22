@@ -22,11 +22,11 @@
   - [ ] Testing against latest cs.spin and plugin-packages (done in CI)
   - [ ] Tested the change using cs.template or another project
   - [ ] Change integrates well with registry.contact.de/cetest
-  - [ ] Does the change radiates widely and could break e.g., project local
+  - [ ] Does the change radiate widely and could break e.g., project local
         plugins
 - Documentation
   - [ ] README.md is up-to-date
-  - [ ] Update user manuals in `doc/` are up-to-date
+  - [ ] User manuals in `doc/` are up-to-date
   - [ ] Comments and docstrings in code are up-to-date
 - Formalities
   - [ ] The merge request and related issue(s) are labeled and will be closed
