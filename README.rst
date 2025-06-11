@@ -47,6 +47,7 @@ As every other command line tool, `spin` can be run from the command line. The
 command is simply called ``spin``. To see the available commands, run:
 
 .. code-block:: console
+
    spin --help
 
 Leveraging `spin`'s capabilities requires a project to be set up with a
@@ -58,6 +59,7 @@ the project.
 A basic `spinfile.yaml` might look like this:
 
 .. code-block:: yaml
+
     # spinfile.yaml
     spin:
       project_name: my_project
