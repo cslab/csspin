@@ -271,7 +271,7 @@ zu zerschlagen. Die Ordnung der Schritte ist partiell.
 5. Das Hochladen auf test.pypi.org üben und sicherstellen, dass
    alles gut ist.
 
-6. Wir stelen die Plugin Packages um und veröffentlichen sie auf
+6. Wir stellen die Plugin Packages um und veröffentlichen sie auf
    pypi.org.
 
 7. Nachdem das alles durch ist, können wir ein angepasstes spin core,
