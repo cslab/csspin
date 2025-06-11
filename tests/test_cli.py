@@ -4,7 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""Module implementing the unit tests regarding the cli.py module of cs.spin"""
+"""Module implementing the unit tests regarding the cli.py module of spin"""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ import pytest
 from conftest import chdir
 from path import Path
 
-from spin import cli, memoizer
-from spin.tree import ConfigTree
+from csspin import cli, memoizer
+from csspin.tree import ConfigTree
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
@@ -30,11 +30,11 @@ if TYPE_CHECKING:
 from subprocess import check_output
 from subprocess import run as subprocess_run
 
-from spin import Verbosity
+from csspin import Verbosity
 
 
 def test_cli(cli_runner: CliRunner) -> None:
-    """spin.cli can be invoked using click"""
+    """csspin.cli can be invoked using click"""
     result = cli_runner.invoke(cli.cli, ["--help"])
     assert result.exit_code == 0
 
@@ -71,7 +71,7 @@ def test_cleanup(
     (tmp_plugin := tmp_spin_plugins / "tmp_plugin").mkdir()
 
     monkeypatch.setenv("SPIN_DATA", tmp_spin_data)
-    mocker.patch("spin.builtin.toporun", return_value=None)
+    mocker.patch("csspin.builtin.toporun", return_value=None)
 
     cli_runner.invoke(cli.cli, ["--env", tmp_path, "cleanup", "--purge", "-y"])
 
@@ -81,7 +81,7 @@ def test_cleanup(
 
 def test_find_spinfile(tmp_path: PathlibPath) -> None:
     """
-    spin.cli.find_spinfile is able to find the passed spinfile and returning
+    csspin.cli.find_spinfile is able to find the passed spinfile and returning
     None if not and the default location if None was passed
     """
     spinfile = os.path.normpath(f"{tmp_path}/spinfile.yaml")
@@ -101,7 +101,7 @@ def test_find_spinfile_failing(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
-    spin.cli.find_spinfile raises an exception if no spinfile could be found
+    csspin.cli.find_spinfile raises an exception if no spinfile could be found
     """
     from subprocess import PIPE
 
@@ -141,7 +141,7 @@ def test_load_plugin(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
-    spin.cli.load_plugin loads valid plugins into the tree if they're not
+    csspin.cli.load_plugin loads valid plugins into the tree if they're not
     already present
     """
     # TODO: Test to add a package that ships unloaded requirements.
@@ -151,20 +151,20 @@ def test_load_plugin(
     cfg_spin_dummy.verbosity = Verbosity.DEBUG
 
     # load plugin that is already present in the tree
-    plugin = cli.load_plugin(cfg_spin_dummy, "spin.builtin")
+    plugin = cli.load_plugin(cfg_spin_dummy, "csspin.builtin")
     captured = capsys.readouterr()
 
     assert isinstance(plugin, ModuleType)
-    assert "import plugin spin.builtin" in captured.out
+    assert "import plugin csspin.builtin" in captured.out
     assert "add subtree" not in captured.out
 
     # load plugin that is not present in the tree
-    assert not cfg_spin_dummy.loaded.get("spin_dummy.dummy")
+    assert not cfg_spin_dummy.loaded.get("csspin_dummy.dummy")
     cli.load_plugins_into_tree(cfg=cfg_spin_dummy)
     captured = capsys.readouterr()
 
-    assert "import plugin spin_dummy.dummy" in captured.out
-    assert cfg_spin_dummy.loaded.get("spin_dummy.dummy")
+    assert "import plugin csspin_dummy.dummy" in captured.out
+    assert cfg_spin_dummy.loaded.get("csspin_dummy.dummy")
 
     # load plugin that does not exist
     with pytest.raises(
@@ -176,27 +176,27 @@ def test_load_plugin(
 
 def test_reverse_toposort(cfg: ConfigTree) -> None:
     """
-    spin.cli.reverse_toposort returns a list containing the passed 'nodes' in
+    csspin.cli.reverse_toposort returns a list containing the passed 'nodes' in
     the expected order while failing when passing cycles
     """
     graph = {
-        "spin.builtin": ["spin.builtin.shell"],
-        "spin.builtin.shell": ["spin.builtin.data"],
-        "spin.builtin.data": [],
+        "csspin.builtin": ["csspin.builtin.shell"],
+        "csspin.builtin.shell": ["csspin.builtin.data"],
+        "csspin.builtin.data": [],
     }
     result = cli.reverse_toposort(nodes=graph.keys(), graph=graph)
 
     # Ensure that the origin graph is not modified by calling reverse_toposort.
     assert graph == {
-        "spin.builtin": ["spin.builtin.shell"],
-        "spin.builtin.shell": ["spin.builtin.data"],
-        "spin.builtin.data": [],
+        "csspin.builtin": ["csspin.builtin.shell"],
+        "csspin.builtin.shell": ["csspin.builtin.data"],
+        "csspin.builtin.data": [],
     }
 
     assert result == [
-        "spin.builtin.data",
-        "spin.builtin.shell",
-        "spin.builtin",
+        "csspin.builtin.data",
+        "csspin.builtin.shell",
+        "csspin.builtin",
     ]
 
     graph = {"foo": ["bar"], "bar": ["foo"]}
@@ -205,7 +205,7 @@ def test_reverse_toposort(cfg: ConfigTree) -> None:
 
 
 def test_base_options() -> None:
-    """spin.cli.base_options can be used to equip functions with defined"""
+    """csspin.cli.base_options can be used to equip functions with defined"""
 
     def command() -> None:
         return "hello earth"
@@ -218,7 +218,7 @@ def test_base_options() -> None:
 
 def test_group_with_aliases() -> None:
     """
-    spin.cli.GroupWithAliases is able to assign new command aliases and return
+    csspin.cli.GroupWithAliases is able to assign new command aliases and return
     existing ones
     """
     grouper = cli.GroupWithAliases()
@@ -237,7 +237,7 @@ def test_group_with_aliases() -> None:
 
 def test_find_plugin_packages(cfg: ConfigTree) -> None:
     """
-    spin.cli.find_plugin_packages returns a generator which items are the
+    csspin.cli.find_plugin_packages returns a generator which items are the
     expected 'plugin_packages' of the passed configuration tree
     """
     result = cli.find_plugin_packages(cfg)
@@ -250,7 +250,7 @@ def test_find_plugin_packages(cfg: ConfigTree) -> None:
 
 
 def test_yield_plugin_import_specs(cfg: ConfigTree) -> None:
-    """spin.cli.yield_plugin_import_specs returns the expected plugins"""
+    """csspin.cli.yield_plugin_import_specs returns the expected plugins"""
     result = cli.yield_plugin_import_specs(cfg)
 
     assert isinstance(result, Generator)
@@ -271,7 +271,7 @@ def test_load_config_tree_basic(
     minimum_yaml_path: str,
 ) -> None:
     """
-    spin.cli.load_config_tree returns a valid configuration tree with all
+    csspin.cli.load_config_tree returns a valid configuration tree with all
     expected attributes set (Verbosity.NORMAL)
     """
 
@@ -291,7 +291,7 @@ def test_load_config_tree_basic(
             assert f.read() == "# Created by spin automatically\n*\n"
 
         assert isinstance(cfg.loaded, ConfigTree)
-        assert cfg.loaded.get("spin.builtin")
+        assert cfg.loaded.get("csspin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
         assert cfg.plugin_paths == []
 
@@ -303,10 +303,10 @@ def test_load_plugins_into_tree(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
-    spin.cli.load_config_tree returns a valid configuration tree with all
+    csspin.cli.load_config_tree returns a valid configuration tree with all
     expected attributes set (quiet + provision)
     """
-    mock_echo = mocker.patch("spin.echo")
+    mock_echo = mocker.patch("csspin.echo")
     with chdir(tmp_path):
         spinfile = tmp_path / "spinfile.yaml"
         copy(minimum_yaml_path, spinfile)
@@ -332,11 +332,11 @@ def test_load_plugins_into_tree(
         mock_echo.assert_called_with("mkdir", tmp_path.absolute() / ".spin")
 
         assert isinstance(cfg.loaded, ConfigTree)
-        assert cfg.loaded.get("spin.builtin")
+        assert cfg.loaded.get("csspin.builtin")
         assert len(cfg.loaded) == 1  # no other/global plugins loaded
         assert cfg.plugin_paths == []
         assert "loading project plugins:" in captured.out
-        assert "  import plugin spin.builtin" in captured.out
+        assert "  import plugin csspin.builtin" in captured.out
         assert "  add subtree builtin" in captured.out
 
 
@@ -356,8 +356,8 @@ def test_plugin_directives(
     cli.load_plugins_into_tree(cfg)
 
     assert "spin_python" in cfg.plugin_packages
-    assert cfg.loaded.get("spin_dummy.dummy")
-    assert cfg.loaded.get("spin_dummy.dummy2")
+    assert cfg.loaded.get("csspin_dummy.dummy")
+    assert cfg.loaded.get("csspin_dummy.dummy2")
 
 
 def test_install_plugin_packages(
@@ -367,12 +367,12 @@ def test_install_plugin_packages(
     trivial_plugin_path: Path,
 ) -> None:
     """
-    spin.cli.install_plugin_packages executes is able to install plugin packages
+    csspin.cli.install_plugin_packages executes is able to install plugin packages
     """
     cfg.spin.spin_dir = tmp_path
     plugin_dir = cfg.spin.spin_dir / "plugins"
     mocker.patch(
-        "spin.cli.find_plugin_packages", return_value=(str(trivial_plugin_path),)
+        "csspin.cli.find_plugin_packages", return_value=(str(trivial_plugin_path),)
     )
     cli.install_plugin_packages(cfg)
 
@@ -383,9 +383,9 @@ def test_install_plugin_packages(
 
 
 def test_spin_version() -> None:
-    """Ensuring that spin --version prints the correct version of cs.spin"""
+    """Ensuring that spin --version prints the correct version of spin"""
     import importlib.metadata as importlib_metadata
 
-    expected_version = importlib_metadata.version("cs.spin")
+    expected_version = importlib_metadata.version("csspin")
     output = check_output(["spin", "--version"], text=True)
     assert expected_version in output

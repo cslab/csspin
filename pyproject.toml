@@ -1,38 +1,51 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=75.8.1", "setuptools_scm>=8"]
+requires = ["setuptools>=77", "setuptools_scm>=8"]
 
 [project]
 authors = [
+  {name = "CONTACT Software GmbH", email = "info@contact-software.com"},
   {name = "Frank Patz-Brockmann", email = "frank.patz-brockmann@contact-software.com"}
 ]
-dependencies = [
-  "click",
-  "distro",
-  "packaging",
-  "path>=17",
-  "pip",
-  "platformdirs",
-  "ruamel.yaml"
+classifiers = [
+  "Environment :: Console",
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development"
 ]
-description = "spin"
+dependencies = [
+  "click~=8.1.8",
+  "distro~=1.9.0",
+  "packaging~=25.0",
+  "path~=17.0.0",
+  "pip>=22.0",
+  "platformdirs~=4.3.8",
+  "ruamel.yaml~=0.18.10"
+]
+description = "Spin is a task runner that aims to solve the problems of provisioning development environments and standardizing workflows."
 dynamic = ["version", "readme"]
-license = {text = "Copyright (C) 2021 Contact Software GmbH"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 maintainers = [
   {name = "Waleri Enns", email = "waleri.enns@contact-software.com"},
   {name = "Benjamin Thomas Schwertfeger", email = "benjaminthomas.schwertfeger@contact-software.com"},
   {name = "Fabian Hafer", email = "fabian.hafer@contact-software.com"}
 ]
-name = "cs.spin"
+name = "csspin"
 requires-python = ">=3.9"
 
 [project.scripts]
-spin = "spin:_main"
+spin = "csspin:_main"
 
 [project.urls]
-Documentation = "http://qs.pages.contact.de/spin/cs.spin/"
-Issues = "https://code.contact.de/qs/spin/cs.spin/-/issues"
-Repository = "https://code.contact.de/qs/spin/cs.spin"
+Homepage = "https://contact-software.com"
 
 [tool.black]
 enable-unstable-feature = ["string_processing"]
@@ -49,7 +62,7 @@ precision = 2
 omit = ["/tmp/**/*.py"]
 parallel = true
 relative_files = true
-source_pkgs = ["spin"]
+source_pkgs = ["csspin"]
 
 [tool.isort]
 multi_line_output = 3
@@ -287,7 +300,7 @@ markers = [
 ]
 
 [tool.setuptools.dynamic]
-readme = {file = ["README.rst"]}
+readme = {file = "README.rst", content-type = "text/x-rst"}
 
 [tool.setuptools.packages.find]
 namespaces = false

@@ -1,8 +1,19 @@
 # -*- mode: python; coding: utf-8 -*-
 #
-# Copyright (C) 2020 CONTACT Software GmbH
-# All rights reserved.
+# Copyright 2020 CONTACT Software GmbH
 # https://www.contact-software.com/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """Plugins that come with spin. These don't have to be installed
 through a plugin package and are always available.
@@ -13,7 +24,7 @@ import sys
 import click
 import distro
 
-from spin import (
+from csspin import (
     argument,
     confirm,
     die,
@@ -27,7 +38,7 @@ from spin import (
     toporun,
     warn,
 )
-from spin.cli import (
+from csspin.cli import (
     commands,
     finalize_cfg_tree,
     install_plugin_packages,
@@ -36,18 +47,18 @@ from spin.cli import (
 
 
 @task("run", add_help_option=False)
-def exec_shell(ctx, args):
+def exec_shell(ctx: click.Context, args: list[str]) -> None:
     """Run a shell command in the project context."""
     if not args:
         die("Use of run is not possible without arguments.")
     if "--help" == args[0]:
-        subcommand_obj = commands.get_command(ctx, "run")
+        subcommand_obj = commands.get_command(ctx, "run")  # type: ignore[attr-defined]
         click.echo(subcommand_obj.get_help(ctx))
     else:
         sh(*args)
 
 
-def pretty_descriptor(parent, name, descriptor, rst: bool):
+def pretty_descriptor(parent: str, name: str, descriptor, rst: bool) -> str:  # type: ignore[no-untyped-def]
     types = getattr(descriptor, "type", ["any"])
     default = getattr(descriptor, "default", None)
     if name:
@@ -75,36 +86,36 @@ def pretty_descriptor(parent, name, descriptor, rst: bool):
 
 
 @task()
-def schemadoc(
+def schemadoc(  # type: ignore[no-untyped-def]
     cfg,
-    outfile: option(
+    outfile: option(  # type: ignore[valid-type]
         "-o",
         "outfile",
         default="-",  # noqa: F722
         type=click.File("w"),
         help="Write output into FILENAME.",  # noqa: F722
     ),
-    full: option(
+    full: option(  # type: ignore[valid-type]
         "--full",
         default=True,
         type=click.BOOL,
         help="Show schema documentation for the whole ConfigTree.",  # noqa: F722
     ),
-    rst: option(
+    rst: option(  # type: ignore[valid-type]
         "--rst",
         is_flag=True,
         default=False,
         help="Print the schema documentation in rst format.",  # noqa: F722
     ),
-    select: argument(
+    select: argument(  # type: ignore[valid-type]
         type=click.STRING,
         default="",  # noqa: F722
         callback=lambda ctx, param, value: value.split(".") if value else "",
     ),
-):
-    """Print the schema definitions for cs.spin."""
+) -> None:
+    """Print the schema definitions for spin."""
 
-    def do_docwrite(parent, name, desc, ignore=tuple()):
+    def do_docwrite(parent: str, name: str, desc, ignore=tuple()):  # type: ignore[no-untyped-def]
         fullname = f"{parent}.{name}" if parent else name
         if fullname in ignore:
             return
@@ -119,7 +130,7 @@ def schemadoc(
     ignore = []
     if not full:
         for import_spec in cfg.loaded:
-            if "spin." in import_spec:
+            if "csspin." in import_spec:
                 continue
             import_spec = tuple(import_spec.split("."))
             plugin_name = import_spec[-1]
@@ -133,19 +144,19 @@ def schemadoc(
 
 
 class TaskDefinition:
-    def __init__(self, definition):
+    def __init__(self, definition: dict) -> None:
         self._definition = definition
 
-    def __call__(self):
+    def __call__(self) -> None:
         env = self._definition.get("env", None)
         run_spin(self._definition.get("spin", []))
         run_script(self._definition.get("script", []), env)
 
 
-def configure(cfg):
-    """Grab explicitly defined tasks from the configuration tree and add
-    them as subcommands.
-
+def configure(cfg) -> None:  # type: ignore[no-untyped-def]
+    """
+    Grab explicitly defined tasks from the configuration tree and add them as
+    subcommands.
     """
     for clause_name in ("extra_tasks", "tasks"):
         for task_name, task_definition in cfg.get(clause_name, {}).items():
@@ -154,7 +165,7 @@ def configure(cfg):
             )
 
 
-def merge_dicts(a, b):
+def merge_dicts(a: dict, b: dict) -> None:
     for k, v in b.items():
         if k in a:
             # We support lists and strings in system_requirements;
@@ -167,20 +178,20 @@ def merge_dicts(a, b):
             a[k] = v
 
 
-def get_distro():
+def get_distro() -> dict:
     dinfo = distro.info()
     if sys.platform == "win32":
         dinfo["id"] = "windows"
         winver = sys.getwindowsversion()
         dinfo["version"] = f"{winver.major}.{winver.minor}.{winver.build}"
-    return dinfo
+    return dinfo  # type: ignore[no-any-return]
 
 
 @task("system-provision", noenv=True)
-def do_system_provisioning(
+def do_system_provisioning(  # type: ignore[no-untyped-def]
     cfg,
-    distroargs: argument(nargs=-1),
-):
+    distroargs: argument(nargs=-1),  # type: ignore[valid-type]
+) -> None:
     """Provision system dependencies for the host.
 
     Usage:
@@ -202,7 +213,7 @@ def do_system_provisioning(
         distroname = dinfo["id"]
 
     # Check system requirements of individual plugins
-    out = {}
+    out: dict = {}
     supported = True
     for pi in cfg.spin.topo_plugins:
         defaults = cfg.loaded[pi].defaults
@@ -243,14 +254,14 @@ def do_system_provisioning(
 
 
 @task("distro", noenv=True)
-def distro_task(cfg):
+def distro_task(cfg) -> None:  # type: ignore[no-untyped-def]
     """Print the distro information."""
     dinfo = get_distro()
     print(f"distro={repr(dinfo['id'])} version={parse_version(dinfo['version'])}")
 
 
 @task("provision", noenv=True)
-def provision(cfg):
+def provision(cfg) -> None:  # type: ignore[no-untyped-def]
     """
     Create or update a development environment.
     """
@@ -264,21 +275,21 @@ def provision(cfg):
 
 
 @task(noenv=True)
-def cleanup(
+def cleanup(  # type: ignore[no-untyped-def]
     cfg,
-    purge: option(
+    purge: option(  # type: ignore[valid-type]
         "--purge",
         is_flag=True,
         help="Removes spin plugin data.",  # noqa: F722
     ),
-    skip_confirmation: option(
+    skip_confirmation: option(  # type: ignore[valid-type]
         "-y",
         "--yes",
         "skip_confirmation",
         is_flag=True,
         help="Skip confirmation when using --purge.",  # noqa: F722
     ),
-):
+) -> None:
     """
     Clean up project-local resources that have been provisioned by spin, e.g.
     virtual environments and {project_root}/.spin. Also deletes {spin.data}

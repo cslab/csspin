@@ -6,7 +6,7 @@
 
 """A dummy plugin used for testing directives"""
 
-from spin import config
+from csspin import config
 
 defaults = config(
     test_append=config(opts=["1", "2", "3"]),

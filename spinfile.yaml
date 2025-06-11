@@ -1,7 +1,8 @@
 # Setting the project_name should always be done
 # in the spinfile.yaml to avoid errors.
 spin:
-  project_name: cs.spin
+  project_name: spin
+  index_url: https://packages.contact.de/tools/stable
 
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
@@ -30,7 +31,7 @@ python:
     - sphinx-click
     - sphinx-rtd-theme
     - pytest-mock
-    - build # TODO: Maybe move into spin_python.python
+    - build # TODO: Maybe move into csspin_python.python
 
 pytest:
   opts: [-m, "not slow"]
@@ -40,7 +41,7 @@ build_rules:
   task docs:
     sources: doc/schemaref.rst
   doc/schemaref.rst:
-    sources: [src/spin/schema.yaml]
+    sources: [src/csspin/schema.yaml]
     spin:
       - schemadoc --rst --full=False -o doc/schemaref.rst
   requirements.txt:

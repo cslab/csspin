@@ -1,9 +1,20 @@
 # -*- mode: python; coding: utf-8 -*-
 #
-# Copyright (C) 2020 CONTACT Software GmbH
-# All rights reserved.
+# Copyright 2020 CONTACT Software GmbH
 # https://www.contact-software.com/
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # pylint: disable=too-many-lines
 
 """This is the plugin API of spin. It contains functions and classes
@@ -29,8 +40,8 @@ import platformdirs.unix
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Generator
-    from spin.tree import ConfigTree
-    from spin.cli import GroupWithAliases
+    from csspin.tree import ConfigTree
+    from csspin.cli import GroupWithAliases
 
 import collections
 import inspect
@@ -229,13 +240,13 @@ class Verbosity(IntEnum):
     """
     :py:class:`enum.IntEnum` defining four verbosity levels:
 
-    * ``QUIET``: Outputs only warnings and errors via :py:func:`spin.warn()` and
-      :py:func:`spin.error()`.
+    * ``QUIET``: Outputs only warnings and errors via :py:func:`csspin.warn()` and
+      :py:func:`csspin.error()`.
     * ``NORMAL``: Outputs the normal amount of verbosity, extending the quiet
-      level by enabling :py:func:`spin.echo()`.
-    * ``INFO``: Extends normal verbosity to enable :py:func:`spin.info()`.
+      level by enabling :py:func:`csspin.echo()`.
+    * ``INFO``: Extends normal verbosity to enable :py:func:`csspin.info()`.
     * ``DEBUG``: Extends info verbosity to enable debug messages via
-      :py:func:`spin.debug()`.
+      :py:func:`csspin.debug()`.
     """
 
     QUIET = -1
@@ -508,7 +519,7 @@ def backtick(*cmd: str, **kwargs: Any) -> str:
 
 
 #: EXPORTS is a list that contains all (key, value) tuples of environment variables
-#: that got set or unset via :py:func:`spin.setenv` during the current spin execution.
+#: that got set or unset via :py:func:`csspin.setenv` during the current spin execution.
 #:
 #: The ``value`` of a given element is already fully interpolated, except for
 #: parts that look like environment variables. So any plugin using ``EXPORTS`` is able
@@ -792,7 +803,7 @@ def interpolate1(
     >>> interpolate1(
     ...     '{{"header": {{"language": "en", "data": "{SPIN_DATA}"}}}}'
     ... )
-    '{"header": {"language": "en", "data": "/home/bts/.local/share/spin"}}'
+    '{"header": {"language": "en", "data": "/home/developer/.local/share/spin"}}'
 
     It may be necessary to omit the interpolation against the environment, in that case
     the parameter ``interpolate_environ`` can be set to ``False``.
@@ -802,15 +813,15 @@ def interpolate1(
     >>> interpolate1("{spin.version} and {PATH}", interpolate_environ=False)
     "1.0.2.dev5 and {PATH}"
 
-    .. Attention:: **Do not use** :py:func:`spin.interpolate1` **in a plugins'
+    .. Attention:: **Do not use** :py:func:`csspin.interpolate1` **in a plugins'
        top-level**, as the one can't rely on the configuration tree at import time
        of the module.
 
        .. code-block:: python
-          :caption: Negative example: How not to use :py:func:`spin.interpolate1`
+          :caption: Negative example: How not to use :py:func:`csspin.interpolate1`
           :linenos:
 
-          from spin import config, interpolate1
+          from csspin import config, interpolate1
 
           defaults = config(key=interpolate1("{some.property}"))
 
@@ -887,14 +898,14 @@ def config(*args: Any | None, **kwargs: Any) -> ConfigTree:
 
     """
 
-    from spin.tree import ConfigTree
+    from csspin.tree import ConfigTree
 
     return ConfigTree(*args, **kwargs, __ofs_frames__=1)  # type: ignore[arg-type]
 
 
 def readyaml(fname: str | Path) -> ConfigTree:
     """Read a YAML file."""
-    from spin.tree import tree_load
+    from csspin.tree import tree_load
 
     fname = interpolate1(fname)
     return tree_load(fname)
@@ -1031,7 +1042,7 @@ def task(*args: Any, **kwargs: Any) -> Callable:
     """
 
     # Import cli here, to avoid an import cycle
-    from spin import cli  # pylint: disable=cyclic-import
+    from csspin import cli  # pylint: disable=cyclic-import
 
     def task_wrapper(
         fn: Callable,
@@ -1122,7 +1133,7 @@ def group(*args: Any, **kwargs: Any) -> Callable:
     The above example creates a ``spin foo bar`` command.
 
     """
-    from spin import cli
+    from csspin import cli
 
     def group_decorator(fn: str | Path) -> Callable:
 
@@ -1180,7 +1191,7 @@ def run_script(script: str | list, env: dict | None = None) -> None:
 
 def run_spin(script: str | list) -> None:
     """Run a list of spin commands."""
-    from spin.cli import commands
+    from csspin.cli import commands
 
     if isinstance(script, str) or not isinstance(script, Iterable):
         script = [str(script)]
@@ -1293,7 +1304,7 @@ def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
     for func_name in fn_names:
         debug(f"toporun: {func_name}")
         for pi_name in plugins:
-            if pi_name == "spin.builtin" and func_name in ("cleanup", "provision"):
+            if pi_name == "csspin.builtin" and func_name in ("cleanup", "provision"):
                 # Don't run the hook in spin.builtin, it's a task there and not
                 # considered a plugin's hook.
                 continue
@@ -1305,7 +1316,7 @@ def toporun(cfg: ConfigTree, *fn_names: Any, reverse: bool = False) -> None:
 
 
 def main(*args: Any, **kwargs: Any) -> None:
-    from spin.cli import cli
+    from csspin.cli import cli
 
     if not args:
         args = None  # type: ignore[assignment]

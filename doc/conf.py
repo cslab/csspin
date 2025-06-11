@@ -23,12 +23,12 @@
 # -- Project information -----------------------------------------------------
 import importlib.metadata
 
-project = "cs.spin"
+project = "csspin"
 copyright = "2021, CONTACT Software GmbH"  # pylint: disable=redefined-builtin
 author = "Frank Patz-Brockmann"
 
 # The full version, including alpha/beta/rc tags
-release = importlib.metadata.version("cs.spin")
+release = importlib.metadata.version("csspin")
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,7 +52,15 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "links.rst"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "links.rst",
+    ".venv",
+    "venv",
+    ".spin",
+]
 
 rst_epilog = ""
 # Read link all targets from file

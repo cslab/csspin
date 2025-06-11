@@ -11,12 +11,12 @@ plugin-package.
 NOTE: This plugin does not provide a schema.
 """
 
-from spin import config, echo, task
+from csspin import config, echo, task
 
 defaults = config(
     dummy2="me",
     requires=config(
-        spin=["spin_dummy.dummy"],
+        spin=["csspin_dummy.dummy"],
     ),
 )
 

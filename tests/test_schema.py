@@ -12,8 +12,8 @@ from typing import Callable
 from click import Abort as click_abort
 from pytest import raises
 
-from spin import config, schema
-from spin.schema import DESCRIPTOR_REGISTRY
+from csspin import config, schema
+from csspin.schema import DESCRIPTOR_REGISTRY
 
 
 def test_build_schema() -> None:
@@ -58,7 +58,7 @@ def test_schema_invalid_factory() -> None:
 
 def test_descriptor() -> None:
     """Test checking the registration of a descriptor."""
-    from spin.schema import BaseDescriptor  # pylint: disable=unused-import
+    from csspin.schema import BaseDescriptor  # pylint: disable=unused-import
 
     assert "test" not in DESCRIPTOR_REGISTRY
 

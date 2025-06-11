@@ -55,7 +55,7 @@ def test_schemadoc_spin_only(tmp_path):
     # just to name a few:
     assert ".. py:data:: spin.spinfile" in output
     assert ".. py:data:: spin.project_root" in output
-    assert "The schema shipped by cs.spin." in output
+    assert "The schema shipped by spin." in output
 
 
 def test_schemadoc_spin_only_cli_output(tmp_path):
@@ -116,7 +116,7 @@ def test_schemadoc_full_param(tmp_path):
     output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         path="tests/yamls",
-        yaml="spin_dummy_config.yaml",
+        yaml="csspin_dummy_config.yaml",
         cmd="-q schemadoc --rst --full=False",
     )
     assert "dummy" not in output
@@ -125,7 +125,7 @@ def test_schemadoc_full_param(tmp_path):
     output = execute_spin_in_clean_and_provisioned_env(
         env=tmp_path,
         path="tests/yamls",
-        yaml="spin_dummy_config.yaml",
+        yaml="csspin_dummy_config.yaml",
         cmd="-q schemadoc --rst --full=True",
     )
     assert "dummy" in output

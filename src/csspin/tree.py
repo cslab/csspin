@@ -1,9 +1,20 @@
 # -*- mode: python; coding: utf-8 -*-
 #
-# Copyright (C) 2020 CONTACT Software GmbH
-# All rights reserved.
+# Copyright 2020 CONTACT Software GmbH
 # https://www.contact-software.com/
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Disabling "union-attr" since inspect.currentframe() could return None, which
 # is not the case for the implementation in this file.
 # mypy: disable-error-code=union-attr
@@ -22,14 +33,14 @@ import ruamel.yaml
 import ruamel.yaml.comments
 from path import Path
 
-from spin import (  # pylint: disable=cyclic-import
+from csspin import (  # pylint: disable=cyclic-import
     Verbosity,
     debug,
     die,
     interpolate1,
     warn,
 )
-from spin.schema import DESCRIPTOR_REGISTRY
+from csspin.schema import DESCRIPTOR_REGISTRY
 
 if TYPE_CHECKING:
     from collections.abc import Hashable
@@ -295,7 +306,7 @@ def tree_dump(tree: ConfigTree) -> str:
             and Path(info.file).absolute().dirname()
             == Path(__file__).absolute().dirname()
         ):
-            return "cs.spin"
+            return "csspin"
 
         if info.file.startswith(cwd):
             return f"{info.file[len(cwd) + 1 :]}:{info.line}"  # noqa: E203
@@ -423,9 +434,9 @@ def tree_merge(target: ConfigTree, source: ConfigTree) -> None:
     for replacing configuration variables.
     """
     if not isinstance(target, ConfigTree):
-        die("Can't merge tree's since 'target' is not type 'spin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
+        die("Can't merge tree's since 'target' is not type 'csspin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
     if not isinstance(source, ConfigTree):
-        die("Can't merge tree's since 'source' is not type 'spin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
+        die("Can't merge tree's since 'source' is not type 'csspin.tree.ConfigTree'")  # type: ignore[unreachable] # noqa: E501
 
     if not hasattr(target, "_ConfigTree__schema") and hasattr(
         source, "_ConfigTree__schema"
@@ -497,8 +508,8 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
     if not isinstance(keep, (str, tuple)):
         raise TypeError("keep must be type 'str' or 'tuple'.")
 
-    # import spin.schema here to avoid cyclic import
-    from spin import schema  # pylint: disable=cyclic-import
+    # import csspin.schema here to avoid cyclic import
+    from csspin import schema  # pylint: disable=cyclic-import
 
     if (
         isinstance(keep, str) and (keep := (keep,))
