@@ -1,8 +1,19 @@
 # -*- mode: python; coding: utf-8 -*-
 #
-# Copyright (C) 2020 CONTACT Software GmbH
-# All rights reserved.
+# Copyright 2020 CONTACT Software GmbH
 # https://www.contact-software.com/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """Spin automates the provisioning of tools and other development
 requirements and provides shrink-wrapped project workflows.
@@ -32,7 +43,7 @@ import click
 import packaging.version
 from path import Path
 
-from spin import (
+from csspin import (
     Verbosity,
     cd,
     config,
@@ -56,7 +67,7 @@ from spin import (
     warn,
     writetext,
 )
-from spin.tree import ConfigTree
+from csspin.tree import ConfigTree
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -71,7 +82,7 @@ DEFAULTS = config(
         data=Path("{SPIN_DATA}"),
         config=Path("{SPIN_CONFIG}"),
         extra_index=None,
-        version=importlib_metadata.version("cs-spin"),
+        version=importlib_metadata.version("csspin"),
     ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
@@ -159,7 +170,7 @@ def load_plugin(
                 " and global.yaml."
             )
 
-        if not import_spec.startswith("spin."):
+        if not import_spec.startswith("csspin."):
             try:
                 # Load the plugin specific schema for non-builtin plugins
                 plugin_name = import_spec.split(".")[-1]
@@ -430,7 +441,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
     append_properties: tuple,
 ) -> int | None:
     if version:
-        print(importlib_metadata.version("cs-spin"))
+        print(importlib_metadata.version("csspin"))
         return 0
     if quiet:
         verbose = -1
@@ -584,7 +595,7 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
         setenv(**cfg.environment)
     cfg.loaded = config()
     debug("loading project plugins:")
-    load_plugin(cfg, "spin.builtin")
+    load_plugin(cfg, "csspin.builtin")
     tree.tree_apply_certain(cfg, ("plugins", "plugin_paths", "plugin_packages"))
     return cfg  # type: ignore[no-any-return]
 

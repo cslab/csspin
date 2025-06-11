@@ -5,7 +5,7 @@
 # https://www.contact-software.com/
 #
 
-from spin import echo, task
+from csspin import echo, task
 
 
 @task()

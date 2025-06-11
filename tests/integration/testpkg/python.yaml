@@ -1,5 +1,5 @@
 plugin_packages:
-  - ../../data/spin_dummy
+  - ../../data/csspin_dummy
 plugins:
   - spin_python.python
 python:

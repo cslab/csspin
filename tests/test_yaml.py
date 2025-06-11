@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-from spin import tree
+from csspin import tree
 
 
 class TestYaml:

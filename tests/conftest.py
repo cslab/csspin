@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING
 from click.testing import CliRunner
 from pytest import fixture
 
-from spin.cli import finalize_cfg_tree, load_minimal_tree, load_plugins_into_tree
-from spin.tree import ConfigTree
+from csspin.cli import finalize_cfg_tree, load_minimal_tree, load_plugins_into_tree
+from csspin.tree import ConfigTree
 
 if TYPE_CHECKING:
     import pathlib
@@ -46,7 +46,7 @@ def minimum_yaml_path() -> str:
 
 @fixture()
 def dummy_yaml_path():
-    return Path(__file__).dirname() / "yamls" / "spin_dummy_config.yaml"
+    return Path(__file__).dirname() / "yamls" / "csspin_dummy_config.yaml"
 
 
 @fixture()
@@ -57,7 +57,7 @@ def spin_config_patch() -> str:
 @fixture()
 def tmp_path(tmp_path: pathlib.Path):
     """
-    Using the custom Path provides simplifies tests, since cs.spin is using this
+    Using the custom Path provides simplifies tests, since spin is using this
     type a lot.
     """
     return Path(tmp_path)

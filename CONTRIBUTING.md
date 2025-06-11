@@ -1,16 +1,13 @@
-# cs.spin
+# Development and Contributing Guide
 
-Spin is a task runner that aims so solve the problem of standardizing
-workflows for many similar projects. It does this by encapsulating
-task definitions in Python packages and automating the provisioning of
-development sandboxes and dependencies.
+This document provides instructions for developers who want
+to build/test/release spin.
 
-Documentation: http://qs.pages.contact.de/spin/cs.spin
+## Prerequisites
 
-## CPython Support Policies
+Make sure you have the following installed:
 
-Our CPython support policy for cs.spin aligns with the official CPython release
-schedule, encompassing versions 3.9 through 3.12 (so far).
+- Python 3.9+
 
 ## Release Procedure
 
@@ -27,7 +24,7 @@ Steps to create a release:
      properly.
    - If there is a milestone, make sure that all tasks are done.
 
-1. Enter the Repository within GitLab > Releases > New Release, select the
+1. Enter the repository within GitLab > Releases > New Release, select the
    master branch and desired tag. Further down, enter the release notes
    including a list of changes (e.g. mention resolved issue + link related MR)
    and further information that might be useful. Make sure to align the style of
@@ -39,4 +36,4 @@ Steps to create a release:
    [cetest](https://code.contact.de/qs/images/cetest) image, follow the release
    procedure there.
 
-4. [optional] Create a DemoIT! demonstrating the latest improvements of cs.spin.
+4. [optional] Create a DemoIT! demonstrating the latest improvements of spin.

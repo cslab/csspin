@@ -10,7 +10,7 @@ import os
 
 from path import Path
 
-from spin import (
+from csspin import (
     config,
     confirm,
     debug,

@@ -1,8 +1,18 @@
-
 .. -*- coding: utf-8 -*-
    Copyright (C) 2024 CONTACT Software GmbH
-   All rights reserved.
    https://www.contact-software.com/
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 
 ==========
 About spin
@@ -27,7 +37,7 @@ are used, especially in a development group with many similar projects that
 share practices and tools. It's plugin-based architecture allows to define
 workflows executing multiple task in sequence using a single command.
 
-By default, `spins` will automatically generate the right options and arguments
+By default, `spin` will automatically generate the right options and arguments
 for the tools it runs, and show the user the precise commands. As a result,
 *anyone* will be able to check out *any project*, run ``spin provision`` and
 will be all set - Running a project's test suite becomes as simple as doing
@@ -39,14 +49,14 @@ Spin's plugin system
 
 The knowledge of how to do all this comes from two places: *reusable plugins*
 and *project-specific settings*. `spin` has a plugin system, where reusable bits
-are encapsulated in plugins like `spin_python.python`_, `spin_python.pytest`_,
-`spin_frontend.node`_ etc.
+are encapsulated in plugins like `csspin_python.python`_, `csspin_python.pytest`_,
+`csspin_frontend.node`_ etc.
 
 Plugins automatically provision the tools they need, come with meaningful
 default settings, provide new subcommands to `spin` (e.g. ``spin pytest`` will
 launch `pytest`_ in the development environment), and hook into generic
-workflows. For example, the `spin_python.pytest`_ plugin automatically hooks
-into the generic ``spin test`` command in case `spin_conpod.stdworkflows`_ is
+workflows. For example, the `csspin_python.pytest`_ plugin automatically hooks
+into the generic ``spin test`` command in case `csspin_workflows.workflows`_ is
 loaded. If your project one day decides to replace `pytest` with something else,
 ``spin test`` will still do the right thing.
 
@@ -62,21 +72,17 @@ listed below.
 
    * - Package name
      - Description
-   * - `spin_ce`_
+   * - `csspin_ce`_
      - required for CE16 development
-   * - `spin_conpod`_
-     - collection of workflows and CON/POD related plugins
-   * - `spin_cpp`_
-     - ideal for C++ development
-   * - `spin_docs`_
-     - building documentation was never easier
-   * - `spin_frontend`_
+   * - `csspin_workflows`_
+     - collection of standard workflows
+   * - `csspin_frontend`_
      - the frontend development kit
-   * - `spin_java`_
+   * - `csspin_java`_
      - Java ist auch eine Insel
-   * - `spin_python`_
+   * - `csspin_python`_
      - a must for Python development
-   * - `spin_vcs`_
+   * - `csspin_vcs`_
      - enhancing version control system actions
 
 .. _configuration-tree-system-label:
@@ -98,10 +104,9 @@ are directly assigned below ``spin``:
     :emphasize-lines: 1
 
     spin:
-      data: Path('/home/bts/.local/share/spin')
+      data: Path('/home/developer/.local/share/spin')
       extra_index: None
-      index_url: 'https://packages.contact.de/tools/stable'
-      spinfile: Path('/home/bts/src/qs/spin/cs.spin/spinfile.yaml')
+      spinfile: Path('/home/developer/src/qs/spin/csspin/spinfile.yaml')
       ...
 
 Plugins configured in project and user settings ship their own configuration
@@ -147,9 +152,9 @@ as an example to perform the provisioning.
    spin:
      project_name: foo
    plugin_packages:
-     - spin_python
+     - csspin_python
    plugins:
-     - spin_python.python
+     - csspin_python.python
    python:
      version: 3.9.8
 
@@ -165,31 +170,31 @@ project).
 
 ``plugins`` is a list of Python modules of plugin-packages or local modules,
 that are imported by spin and implement spin plugins. In this case,
-`spin_python.python`_ is a plugin from the ``spin_python`` plugin-package, that
+`csspin_python.python`_ is a plugin from the ``csspin_python`` plugin-package, that
 provides Python to a project. The ``python`` section is read by the Python
 plugin, and ``version`` specifies the release of the Python interpreter that
 this project wants to use.
 
-Provisioning this project would download the `spin_python`_ plugin-package and
+Provisioning this project would download the `csspin_python`_ plugin-package and
 its dependencies, install Python 3.9.8 and create a virtual environment from it
 to then add the current project as editable install:
 
 .. code-block:: console
-   :caption: Provision a Python project using cs.spin
+   :caption: Provision a Python project using spin
    :emphasize-lines: 1,3,6,11,14
 
    $ spin provision
-   spin: mkdir /home/bts/src/qs/spin/cs.spin/.spin/plugins
-   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q -t /home/bts/src/qs/spin/cs.spin/.spin/plugins --index-url https://packages.contact.de/tools/stable spin_python
-   spin: set PYTHON_BUILD_CACHE_PATH=/home/bts/.local/share/spin/pyenv_cache
+   spin: mkdir /home/developer/src/qs/spin/csspin/.spin/plugins
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q -t /home/developer/src/qs/spin/csspin/.spin/plugins csspin_python
+   spin: set PYTHON_BUILD_CACHE_PATH=/home/developer/.local/share/spin/pyenv_cache
    spin: set PYTHON_CFLAGS=-DOPENSSL_NO_COMP
-   spin: /home/bts/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.9.8 /home/bts/.local/share/spin/python/3.9.8
+   spin: /home/developer/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.9.8 /home/developer/.local/share/spin/python/3.9.8
    Downloading Python-3.9.8.tar.xz...
    -> https://www.python.org/ftp/python/3.9.8/Python-3.9.8.tar.xz
    Installing Python-3.9.8...
-   Installed Python-3.9.8 to /home/bts/.local/share/spin/python/3.9.8
-   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mvirtualenv -q -p /home/bts/.local/share/spin/python/3.9.8/bin/python /home/bts/src/qs/spin/cs.spin/.spin/venv
-   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   Installed Python-3.9.8 to /home/developer/.local/share/spin/python/3.9.8
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mvirtualenv -q -p /home/developer/.local/share/spin/python/3.9.8/bin/python /home/developer/src/qs/spin/csspin/.spin/venv
+   spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: python -mpip -q install -U pip
    spin: pip install -q -e .
 
@@ -200,7 +205,7 @@ under development is installed. `spin` can handle other stacks like Java and
 Node within the same venv, depending on their implementation.
 
 Now you want to test your project using `pytest`_. All that is necessary
-(besides writing the tests), is to add the `spin_python.pytest`_ plugin to
+(besides writing the tests), is to add the `csspin_python.pytest`_ plugin to
 :file:`spinfile.yaml`:
 
 .. code-block:: yaml
@@ -210,29 +215,28 @@ Now you want to test your project using `pytest`_. All that is necessary
    spin:
      project_name: foo
    plugin_packages:
-     - spin_python
+     - csspin_python
    plugins:
-     - spin_python.pytest
+     - csspin_python.pytest
    python:
      version: 3.9.6
 
-Spin will resolve the dependency from ``spin_python.pytest`` to
-``spin_python.python`` without the need to define both plugins within
+Spin will resolve the dependency from ``csspin_python.pytest`` to
+``csspin_python.python`` without the need to define both plugins within
 :file:`spinfile.yaml`.
 
 Provisioning again will automatically install ``pytest`` and other packages
-that ``spin_python.pytest`` depends on from PyPI:
+that ``csspin_python.pytest`` depends on from PyPI:
 
 .. code-block:: console
-   :caption: Provision the ``spin_python.pytest`` plugin as well as its dependencies
+   :caption: Provision the ``csspin_python.pytest`` plugin as well as its dependencies
    :emphasize-lines: 7
 
    $ spin provision
-   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
-       -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
-       --index-url https://packages.contact.de/tools/stable \
-       spin_python
-   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q \
+       -t /home/developer/src/qs/spin/csspin/.spin/plugins \
+       csspin_python
+   spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pip install -q pytest-cov pytest
    spin: pip install -q -e .
 
@@ -244,11 +248,11 @@ After provisioning, `spin` gained a new subcommand ``pytest``:
 
    $ spin pytest
    spin -p pytest.tests=tests pytest
-   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pytest tests
    ======================= test session starts =================================
    platform linux -- Python 3.9.8, pytest-8.3.2, pluggy-1.5.0
-   rootdir: /home/bts/src/qs/spin/cs.spin
+   rootdir: /home/developer/src/qs/spin/csspin
    configfile: pyproject.toml
    plugins: cov-5.0.0
    collected 113 items
@@ -270,9 +274,9 @@ tools and settings required. You can simply add that plugin to your
      project_name: foo
    plugin_packages:
      - git+https://git.example.com/projstds#egg=projstds
-     - spin_python
+     - csspin_python
    plugins:
-     - spin_python.pytest
+     - csspin_python.pytest
      - mycompany.projstds
    python:
      version: 3.9.6
@@ -295,12 +299,11 @@ installs all the tools and sets up the :program:`pre-commit` hooks.
    :emphasize-lines: 8-10
 
    $ spin provision
-   spin: /home/bts/src/qs/spin/cs.spin/venv/bin/python3.12 -mpip install -q \
-       -t /home/bts/src/qs/spin/cs.spin/.spin/plugins \
-       --index-url https://packages.contact.de/tools/stable \
-       spin_python \
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q \
+       -t /home/developer/src/qs/spin/csspin/.spin/plugins \
+       csspin_python \
        git+https://git.example.com/projstds#egg=projstds
-   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pip -q install pytest pre-commit flake8 black flake8-isort ...
    spin: pre-commit install
    pre-commit installed at .git/hooks/pre-commit

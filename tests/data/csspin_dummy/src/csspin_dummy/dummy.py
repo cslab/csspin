@@ -4,9 +4,9 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""A simple dummy plugin used for testing cs.spin"""
+"""A simple dummy plugin used for testing spin"""
 
-from spin import config, echo, task
+from csspin import config, echo, task
 
 defaults = config(dummy="me")
 

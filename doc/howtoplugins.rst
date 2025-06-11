@@ -1,7 +1,18 @@
 .. -*- coding: utf-8 -*-
    Copyright (C) 2024 CONTACT Software GmbH
-   All rights reserved.
    https://www.contact-software.com/
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 
 ==========================
  Plugin Development Guide
@@ -14,9 +25,9 @@ plugin-packages containing a set of plugins or adding project-local plugins.
 The plugins used by a project must be declared under the ``plugins`` key. As
 plugins can *require* other plugins to work, it is generally not necessary to
 declare all plugins a project actually uses, as lower-level plugins are imported
-automatically. For example, the `spin_python.pytest`_ plugin naturally requires
-the `spin_python.python`_ plugin, so it is unnecessary to also include
-`spin_python.python`_ (it won't hurt either, though).
+automatically. For example, the `csspin_python.pytest`_ plugin naturally requires
+the `csspin_python.python`_ plugin, so it is unnecessary to also include
+`csspin_python.python`_ (it won't hurt either, though).
 
 .. NOTE::
    Any modification of the ``plugin_packages``, ``plugin_paths`` and ``plugins``
@@ -60,9 +71,9 @@ then be used by adding their name. Given a project layout like this:
     # 'plugin_packages' is a list of plugin-packages which are to be installed
     # during provision and provide a set of plugins.
     plugin_packages:
-      - spin_python
+      - csspin_python
     plugins:
-      - spin_python.python
+      - csspin_python.python
 
 Plugin lifecycle
 ================
@@ -98,7 +109,7 @@ Plugin lifecycle
       :caption: Defining plugin defaults within the plugin module
       :emphasize-lines: 4
 
-      from spin import config
+      from csspin import config
 
 
       defaults = config(setting1="...", setting2=config(foo="bar"))
@@ -120,17 +131,17 @@ Plugin lifecycle
 
    #. If `spin` is in provisioning mode via the ``provision`` subcommand, each
       plugins' ``provision(cfg)`` callback is called in topoligical order. This
-      is meant to create stuff in the filesystem, e.g. a `spin_python.python`_
+      is meant to create stuff in the filesystem, e.g. a `csspin_python.python`_
       plugin may create a Python virtual environment here.
 
    #. After all provisioning callbacks have been processed, each plugins'
       ``finalize_provision(cfg)`` callback is invoked. This is meant to
-      post-process the provisioned resources. E.g. the `spin_python.python`_
+      post-process the provisioned resources. E.g. the `csspin_python.python`_
       installs all collected Python dependencies into the virtual environment.
 
    #. Each plugin's ``init(cfg)`` callback is invoked. This is meant to prepare
       the environment for using the resources provisioned by the plugin. For
-      example, the `spin_python.python`_ plugin activates the virtual
+      example, the `csspin_python.python`_ plugin activates the virtual
       environment here.
 
 #. Finally the actual tasks is executed.
@@ -160,7 +171,7 @@ side-effects are required. Plugins are loaded in one of the following ways:
 The plugin API consists of the following:
 
 * An optional module-level variable ``defaults`` holding a configuration subtree
-  created by :py:func:`config <spin.config>`. This configuration tree will be
+  created by :py:func:`config <csspin.config>`. This configuration tree will be
   merged with project, global settings and the plugins schema to become the
   configuration subtree named like the plugin.
 
@@ -169,21 +180,21 @@ The plugin API consists of the following:
   other plugins behave differently. Note that the configuration tree is not yet
   fully resolved, meaning values still contain values to be interpolated like
   ``"{spin.data}"``, meaning that during the ``configure(cfg)`` callback,
-  accessing properties should be done via :py:func:`spin.interpolate1` or by
+  accessing properties should be done via :py:func:`csspin.interpolate1` or by
   passing the values to spins API that will resolve values internally (e.g.
-  :py:func:`spin.sh` via ``sh("ls {spin.data}")``).
+  :py:func:`csspin.sh` via ``sh("ls {spin.data}")``).
 
 * An optional ``init(cfg)`` callback that is called before any subcommand is
   executed, but after ``configure(cfg)``. ``init(cfg)`` can be used to setup
   state after all plugins have been configured.
 
 * An optional ``provision(cfg)`` callback that is called when the ``provision``
-  subcommand is used. E.g. the `spin_python.python`_ plugin provisions a Python
+  subcommand is used. E.g. the `csspin_python.python`_ plugin provisions a Python
   interpreter in its ``provision(cfg)``.
 
 * An optional ``cleanup(cfg)`` callback that is called when running ``spin
   cleanup``. This is used to unprovision dependencies, e.g. the
-  `spin_python.python`_ plugin removes the installation tree of the Python
+  `csspin_python.python`_ plugin removes the installation tree of the Python
   interpreter as well as its virtual environment.
 
 Callbacks are called in "dependency" order, i.e. the plugin dependency graph (as
@@ -201,7 +212,7 @@ Here is an example for a simple plugin:
     # We assume that this plugin module is called "example", providing
     # a subcommand of the same name.
 
-    from spin import config, echo, task
+    from csspin import config, echo, task
 
     defaults = config(msg="Spin's data is located at {spin.data}")
 
@@ -272,7 +283,7 @@ For an external plugin, e.g. ``pytest``, the plugin should ship
     # pytest_schema.yaml
     pytest: # name of the plugin
       type: object
-      help: This is the pytest plugin for cs.spin
+      help: This is the pytest plugin for spin
       properties:
         coverage:
           type: bool
@@ -330,7 +341,7 @@ types are referenced below.
        * permits the modification of properties via CLI and environment variables
        * can be used like ``type: path internal``
    * - ``object``
-     - Python ``dict`` / :py:class:`spin.tree.ConfigTree` for mapping key-value
+     - Python ``dict`` / :py:class:`csspin.tree.ConfigTree` for mapping key-value
        pairs
    * - ``path``
      - :py:class:`path.Path` object that provides modern path operations
@@ -364,9 +375,9 @@ treated as strings for simplicity. The following configuration would result in
 Plugin API
 ==========
 
-The API for plugin development is defined in :py:mod:`spin`. The general idea is
+The API for plugin development is defined in :py:mod:`csspin`. The general idea is
 to keep plugin scripts short and tidy, similar to shell scripts of commands in a
-Makefile. Thus, :py:mod:`spin` provides simple, short-named Python function to
+Makefile. Thus, :py:mod:`csspin` provides simple, short-named Python function to
 do things like manipulating files and running programs.
 
 Arguments to spin APIs are automatically interpolated against the configuration
@@ -378,7 +389,7 @@ Here is a simple example using the core functions of spins API:
    :linenos:
    :caption: Basic Spin API usage by a dummy plugin
 
-   from spin import cd, die, echo, exists, sh, task, config, mkdir, setenv
+   from csspin import cd, die, echo, exists, sh, task, config, mkdir, setenv
 
    defaults = config(cache="{spin.data}/dummy")
 
@@ -443,11 +454,6 @@ details.
 General recommendations
 -----------------------
 
-Coding standards
-~~~~~~~~~~~~~~~~
-
-The source code should be compliant with our `Python Coding Guide`_.
-
 Idempotence
 ~~~~~~~~~~~~
 
@@ -468,7 +474,7 @@ Prefer spin APIs
 
 To offer consistent behavior, plugins should prefer using spin API to similar
 APIs from the standard libraries and packages. E.g. prefer
-:py:func:`spin.rmtree` over :py:func:`shutil.rmtree`.
+:py:func:`csspin.rmtree` over :py:func:`shutil.rmtree`.
 
 Short and descriptive naming
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -486,7 +492,7 @@ on command line. Example:
 .. code-block:: console
 
    $ spin pytest
-   spin: activate /home/bts/src/qs/spin/cs.spin/.spin/venv
+   spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pytest -m 'not slow' tests
    ...
 
@@ -517,20 +523,10 @@ A typical example is a missing secret, the according check may look as below:
            cfg.mkinstance.dbms == "postgres"
            and not cfg.mkinstance.postgres.postgres_syspwd
        ):
-           spin.die(
+           csspin.die(
                "Please provide the PostgreSQL system password in the"
                f" property 'mkinstance.postgres.postgres_syspwd'"
            )
-
-Consider the outside-of-CONTACT usage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-We want to address the automation demand outside CONTACT/SD in the future, too.
-So, for many spin plugins, we have to expect the usage outside CONTACT, in a
-different organization with different infrastructure. That means that the plugin
-should not hardcode assumptions about the location of infrastructure services
-and other CONTACT specifics. Even though this is not yet planned, this should be
-kept in mind when developing new plugins and plugin-packages.
 
 Mind the CLI best-practices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -541,7 +537,7 @@ spin's CLI. Make sure, to keep in line with the following best-practices:
 #. A task should do one thing. This could be "setup X" or "run the tests".
 #. If your task does multiple unrelated things, it should be split into multiple
    tasks. However, if those tasks do different things but are somewhat related
-   to each other - using :py:func:`spin.group` might be a good idea.
+   to each other - using :py:func:`csspin.group` might be a good idea.
 #. Flags and options should only change the way how tasks achieve their goal.
 #. If you have a task that does something semantically equal to an existing
    tasks, you can make use of workflows.
@@ -638,23 +634,23 @@ concept between the outer and the inner interpreter.
 
 spin itself creates a Python virtual environment to install plugin-packages,
 plugins, additional packages, and their dependencies during the provision. This
-is being performed by the outer interpreter that cs.spin runs with, e.g.,
+is being performed by the outer interpreter that spin runs with, e.g.,
 Python 3.11.
 
 Packages that are needed by plugins during hooks like `configure`, `provision`,
 `finalize_provision`, and `cleanup`, should be installed using the outer
 interpreter. This can be for example the `jdk` package for provisioning Java or
 `virtualenv` for provisioning the inner Python virtual environment of the
-`spin_python.python`_ plugin.
+`csspin_python.python`_ plugin.
 
 Dependencies that are required during the execution of tasks, must be installed
-using the inner interpreter e.g., when using `spin_python.python`_ as Python
+using the inner interpreter e.g., when using `csspin_python.python`_ as Python
 backend, the required packages must be defined using `requires.python` within
 the configuration of the plugin.
 
 Packages installed using the outer interpreter can depend on other Python
 versions than those installed using the inner interpreter. This is a common
-source of confusion, especially when using the `spin_python.python`_-like
+source of confusion, especially when using the `csspin_python.python`_-like
 plugins.
 
 
@@ -672,11 +668,11 @@ Therefore:
 
 - The command lines used to make subprocess calls have to be printed
   on the standard out stream and highlighted consistently. For the
-  most cases just call the spin-API :py:func:`spin.sh` like follows:
+  most cases just call the spin-API :py:func:`csspin.sh` like follows:
 
   .. code-block:: python
 
-     from spin import sh
+     from csspin import sh
 
      sh(npm, "install", "-g", req)
 
@@ -687,7 +683,7 @@ Therefore:
 
   .. code-block:: python
 
-     from spin import setenv
+     from csspin import setenv
 
      ...
      setenv(
@@ -700,14 +696,14 @@ Therefore:
 
   .. code-block:: python
 
-     from spin import info
+     from csspin import info
 
      info(f"Create {coverage_path}")
 
 Moreover, to have the output layed out consistently, the plugins are discouraged
 to write to standard output stream directly via :py:func:`print` & Co; instead,
-use according spin APIs (:py:func:`spin.echo`, :py:func:`spin.info`,
-:py:func:`spin.warning`, :py:func:`spin.error`, :py:func:`spin.die`).
+use according spin APIs (:py:func:`csspin.echo`, :py:func:`csspin.info`,
+:py:func:`csspin.warning`, :py:func:`csspin.error`, :py:func:`csspin.die`).
 
 
 Secret management
@@ -727,7 +723,7 @@ environment variable, i.e. something like this:
 .. code-block:: python
    :caption: Secret usage within a plugin
 
-   from spin import config
+   from csspin import config
 
    defaults = config(postgres=config(postgres_syspwd="{POSTGRES_SYSPWD}"))
 
@@ -748,11 +744,11 @@ Plugins can depend on other plugins, by listing the required plugins within the
 current plugin's configuration using the ``requires.spin`` property.
 
 .. code-block:: python
-   :caption: Example of a plugin requiring the ``spin_python.python`` plugin
+   :caption: Example of a plugin requiring the ``csspin_python.python`` plugin
 
-   from spin import config
+   from csspin import config
 
-   defaults = config(requires=config(spin=["spin_python.python"]))
+   defaults = config(requires=config(spin=["csspin_python.python"]))
 
 Dependencies are resolved by the plugin system and the required plugins are
 provisioned and loaded before the plugin itself.
@@ -776,7 +772,7 @@ the project's ``plugin_packages`` section of the ``spinfile.yaml``.
 
    ...
    [project]
-   dependencies = ["spin_python", "spin_java", "spin_frontend"]
+   dependencies = ["csspin_python", "csspin_java", "csspin_frontend"]
    ...
 
 System dependencies

@@ -6,9 +6,9 @@
 
 """A dummy plugin package used to test dependencies between plugin packages"""
 
-from spin import config, echo, task
+from csspin import config, echo, task
 
-defaults = config(foo="bar", requires=config(spin=["spin_dummy.dummy"]))
+defaults = config(foo="bar", requires=config(spin=["csspin_dummy.dummy"]))
 
 
 @task()

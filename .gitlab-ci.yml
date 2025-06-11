@@ -6,8 +6,37 @@ include:
     file:
       - ci/common.yml
       - ci/pre-commit.yml
-      - ci/release.yml
       - ci/analyze.yml
+  - component: $CI_SERVER_FQDN/qs/ci-templates/twine_upload@0.1.0
+    inputs:
+      name: pypi-upload
+      twine_username: __token__
+      twine_password: $TWINE_API_KEY
+      wheel_path: dist/csspin-*.whl
+      needs:
+        - wheel
+        - job: analyze
+          artifacts: false
+        - job: test_spin_ce_integration
+          artifacts: false
+        - job: test_spin_frontend_integration
+          artifacts: false
+        - job: test_spin_java_integration
+          artifacts: false
+        - job: test_spin_python_integration
+          artifacts: false
+        - job: test_spin_docs_integration
+          artifacts: false
+        - job: test_spin_conpod_integration
+          artifacts: false
+        # - job: test_spin_cpp_integration
+        #   artifacts: false
+        # - job: test_spin_vcs_integration
+        #   artifacts: false
+      rules:
+        - if: $CI_COMMIT_TAG
+          when: on_success
+        - when: never
 
 variables:
   SPIN_VERBOSE: 1
@@ -23,7 +52,7 @@ wheel:
     GIT_STRATEGY: clone
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install .
+    - python -m pip install . # FIXME: can't we use python:3.13 and python -m build here?
     - spin provision
     - spin python:wheel
   artifacts:
@@ -39,7 +68,7 @@ documentation:
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install .
+    - python -m pip install .
     - spin provision
     - spin docs html
   artifacts:
@@ -59,7 +88,7 @@ pre-commit:
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
-    - pip install .
+    - python -m pip install .
     - spin provision
     - spin test -vv --coverage --with-test-report
   after_script:
@@ -94,6 +123,10 @@ python3.11:
 python3.12:
   extends: .test_base
   image: python:3.12
+
+python3.13:
+  extends: .test_base
+  image: python:3.13
 
 windows:
   extends: .test_base
@@ -132,11 +165,6 @@ test_spin_ce_integration:
     TRIGGER_PROJECT: qs/spin/spin_ce
   extends: .external_integration_base
 
-test_spin_cpp_integration:
-  variables:
-    TRIGGER_PROJECT: qs/spin/spin_cpp
-  extends: .external_integration_base
-
 test_spin_frontend_integration:
   variables:
     TRIGGER_PROJECT: qs/spin/spin_frontend
@@ -152,11 +180,6 @@ test_spin_python_integration:
     TRIGGER_PROJECT: qs/spin/spin_python
   extends: .external_integration_base
 
-test_spin_vcs_integration:
-  variables:
-    TRIGGER_PROJECT: qs/spin/spin_vcs
-  extends: .external_integration_base
-
 test_spin_docs_integration:
   variables:
     TRIGGER_PROJECT: qs/spin/spin_docs
@@ -166,6 +189,18 @@ test_spin_conpod_integration:
   variables:
     TRIGGER_PROJECT: qs/spin/spin_conpod
   extends: .external_integration_base
+
+# The following integration tests are currently disabled since those
+# plugin-packages are currently not used.
+# test_spin_cpp_integration:
+#   variables:
+#     TRIGGER_PROJECT: qs/spin/spin_cpp
+#   extends: .external_integration_base
+
+# test_spin_vcs_integration:
+#   variables:
+#     TRIGGER_PROJECT: qs/spin/spin_vcs
+#   extends: .external_integration_base
 
 # ---------------------------- Deploy/Analyze stage ----------------------------
 analyze:
@@ -178,39 +213,12 @@ analyze:
     - python3.10
     - python3.11
     - python3.12
+    - python3.13
     - windows
 
 # ------------------------------- Release stage --------------------------------
-.release_deps:
-  needs:
-    - wheel
-    - job: analyze
-      artifacts: false
-    - job: test_spin_ce_integration
-      artifacts: false
-    - job: test_spin_cpp_integration
-      artifacts: false
-    - job: test_spin_frontend_integration
-      artifacts: false
-    - job: test_spin_java_integration
-      artifacts: false
-    - job: test_spin_python_integration
-      artifacts: false
-    - job: test_spin_vcs_integration
-      artifacts: false
-    - job: test_spin_docs_integration
-      artifacts: false
-    - job: test_spin_conpod_integration
-      artifacts: false
-
-conpi:
-  extends: [.upload_conpi_prod, .release_deps]
-  variables:
-    PYPI_INDEX: tools/misc
-    EGG_PATH: dist/cs_spin-*
 
 pages:
-  extends: .release_deps
   needs: [wheel, documentation, analyze]
   image: alpine
   stage: release

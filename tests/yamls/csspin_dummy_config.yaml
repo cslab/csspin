@@ -2,6 +2,6 @@
 # spin_dummy.dummy plugin.
 #
 plugin_paths:
-  - ../data/spin_dummy/src
+  - ../data/csspin_dummy/src
 plugins:
-  - spin_dummy.dummy
+  - csspin_dummy.dummy

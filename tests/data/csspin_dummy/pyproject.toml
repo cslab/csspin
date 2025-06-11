@@ -4,7 +4,7 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 
 [project]
 dependencies = []
-description = "Dummy plugin package for testing cs.spin"
-name = "spin_depend"
+description = "Dummy plugin package for testing spin"
+name = "spin_dummy"
 requires-python = ">=3.9"
 version = "1.0"

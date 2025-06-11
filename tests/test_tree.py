@@ -17,7 +17,7 @@ from unittest import mock
 from click.exceptions import Abort
 from pytest import raises
 
-from spin import schema, tree
+from csspin import schema, tree
 
 
 def test_tree_typecheck() -> None:
@@ -151,7 +151,7 @@ def test_tree_keyname() -> None:
     Tests creating a config tree while validating the correct assignment of
     subtrees as well as the expected return of the tree_dump.
     """
-    from spin import Verbosity
+    from csspin import Verbosity
 
     config = tree.ConfigTree(
         subtree1=tree.ConfigTree(foo="bar"),
@@ -241,13 +241,13 @@ def test_merge() -> None:
     dummy = {"sub": {"a": "a"}}
     with raises(
         Abort,
-        match="Can't merge tree's since 'source' is not type 'spin.tree.ConfigTree'",
+        match="Can't merge tree's since 'source' is not type 'csspin.tree.ConfigTree'",
     ):
         tree.tree_merge(a, dummy)
 
     with raises(
         Abort,
-        match="Can't merge tree's since 'target' is not type 'spin.tree.ConfigTree'",
+        match="Can't merge tree's since 'target' is not type 'csspin.tree.ConfigTree'",
     ):
         tree.tree_merge(dummy, a)
 
@@ -332,7 +332,7 @@ def test_directive_interpolate() -> None:
 
 @mock.patch.dict(os.environ, {"SPIN_TREE_SUB__X": "[1, 2]"}, clear=True)
 def test_tree_update_properties() -> None:
-    """Ensuring that spin.tree.update_properties is updating the config tree
+    """Ensuring that csspin.tree.update_properties is updating the config tree
     correctly.
     """
     cfg = tree.ConfigTree(sub=tree.ConfigTree(opts=["none"], x=[]))

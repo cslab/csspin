@@ -2,10 +2,10 @@
 # - checking for requires.spin between plugins in the same plugin-package
 # - .......................................... of different plugin-packages
 plugin_packages:
-  - ../../data/spin_depend
-  - ../../data/spin_dummy
+  - ../../data/csspin_depend
+  - ../../data/csspin_dummy
 plugins:
-  - spin_dummy:
+  - csspin_dummy:
       - dummy
-      - dummy2 # requires spin_dummy.dummy
-  - spin_depend.depend # requires spin_dummy.dummy
+      - dummy2 # requires csspin_dummy.dummy
+  - csspin_depend.depend # requires csspin_dummy.dummy

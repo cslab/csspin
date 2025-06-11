@@ -1,14 +1,25 @@
 .. -*- coding: utf-8 -*-
    Copyright (C) 2024 CONTACT Software GmbH
-   All rights reserved.
    https://www.contact-software.com/
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 
 ==========
 Using spin
 ==========
 
 Spin, or better the spin plugins, do just two things: they **provision
-development environments**, and **run development tools**.
+development environments** and **run development tools**.
 
 .. index::
    single: environment
@@ -102,8 +113,8 @@ You can visualize the configuration tree for this minimal example by using the
    $ spin --dump
    src/spin/schema.yaml:17: |spin:
 
-   spinfile.yaml:4:         |  project_name: 'cs.spin'
-   src/spin/cli.py:612:     |  spinfile: Path('/home/bts/src/qs/spin/cs.spin/spinfile.yaml')
+   spinfile.yaml:4:         |  project_name: 'csspin'
+   src/spin/cli.py:612:     |  spinfile: Path('/home/developer/src/qs/spin/csspin/spinfile.yaml')
    ... more lines ...
    spinfile.yaml:14:        |plugins:
                             |  - 'spin.builtin.python'
@@ -214,7 +225,7 @@ the environment.
 
    ...
    upload:
-      user: buildbot
+      user: developer
       url: "{upload.user}@{UPLOAD_PASSWORD}/upload"
 
 For more information about the interpolation see :py:func:`spin.interpolate1`.
@@ -374,12 +385,12 @@ example below.
 Environment variables
 =====================
 
-cs.spin provides a command-line interface as documented in spins
+spin provides a command-line interface as documented in spins
 :ref:`cliref-label`. Besides that, modifying the configuration tree via the
 environment is a crucial feature which possible via:
 
 - ``SPIN_`` **-prefix**:
-   - Used to modify the options directly passed to cs.spin itself.
+   - Used to modify the options directly passed to spin itself.
    - Is subject of the natural limitation of assigning values to a property,
      which could be assigned by multiple values at once, i.e. ``SPIN_P`` can
      obviously only used once: ``SPIN_P="pytest.opts=-vv"``.
@@ -450,9 +461,9 @@ sources of error in advance.
 Missing system dependencies
 ---------------------------
 
-.. NOTE:: This section only affects uses of cs.spin in non-Windows environments.
+.. NOTE:: This section only affects uses of spin in non-Windows environments.
 
-Provisioning system dependencies is a task that is not handled by cs.spin. Users
+Provisioning system dependencies is a task that is not handled by spin. Users
 have to manually install system dependencies. The :command:`spin
 system-provision` command prints the system requirements of a project that must
 be installed by the user manually.
@@ -480,7 +491,7 @@ To fix this error, the user has to:
 
 .. admonition:: Background
 
-   cs.spin uses pyenv to download and compile the Python version
+   spin uses pyenv to download and compile the Python version
    specified in the spinfile. The error above is caused by one or more missing
    system dependencies that affect the build of the Python interpreter, which is
    then missing certain modules, e.g. ``_ctypes``. By removing the broken build,
