@@ -7,9 +7,9 @@ spin:
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin_packages:
-  - spin_conpod
-  - spin_docs
-  - spin_python
+  - csspin-workflows
+  - csspin-docs
+  - csspin-python
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
@@ -18,9 +18,9 @@ plugin_paths:
 
 # The list of plugins to be used for this project.
 plugins:
-  - spin_conpod.stdworkflows
-  - spin_python.pytest
-  - spin_docs.sphinx
+  - csspin_workflows.stdworkflows
+  - csspin_python.pytest
+  - csspin_docs.sphinx
   - demo_plugin
 
 python:

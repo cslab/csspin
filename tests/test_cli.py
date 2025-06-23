@@ -355,7 +355,7 @@ def test_plugin_directives(
     )
     cli.load_plugins_into_tree(cfg)
 
-    assert "spin_python" in cfg.plugin_packages
+    assert "csspin-python" in cfg.plugin_packages
     assert cfg.loaded.get("csspin_dummy.dummy")
     assert cfg.loaded.get("csspin_dummy.dummy2")
 

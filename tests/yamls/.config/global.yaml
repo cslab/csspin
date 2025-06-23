@@ -1,4 +1,4 @@
 append plugin_packages:
-  - spin_python
+  - csspin-python
 append plugins:
   - csspin_dummy.dummy2
