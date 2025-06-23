@@ -27,7 +27,7 @@ include:
           artifacts: false
         - job: test_spin_docs_integration
           artifacts: false
-        - job: test_spin_conpod_integration
+        - job: test_csspin_workflows_integration
           artifacts: false
         # - job: test_spin_cpp_integration
         #   artifacts: false
@@ -185,9 +185,9 @@ test_spin_docs_integration:
     TRIGGER_PROJECT: qs/spin/spin_docs
   extends: .external_integration_base
 
-test_spin_conpod_integration:
+test_csspin_workflows_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_conpod
+    TRIGGER_PROJECT: qs/spin/csspin-workflows
   extends: .external_integration_base
 
 # The following integration tests are currently disabled since those
