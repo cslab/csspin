@@ -108,25 +108,29 @@ pre-commit:
         path: ./*coverage*.xml
   interruptible: true
 
+.install_git:
+  before_script:
+    - apt update -y && apt install git -y
+
 python3.9:
-  extends: .test_base
-  image: python:3.9
+  extends: [.test_base, .install_git]
+  image: python:3.9-slim
 
 python3.10:
-  extends: .test_base
-  image: python:3.10
+  extends: [.test_base, .install_git]
+  image: python:3.10-slim
 
 python3.11:
-  extends: .test_base
-  image: python:3.11
+  extends: [.test_base, .install_git]
+  image: python:3.11-slim
 
 python3.12:
-  extends: .test_base
-  image: python:3.12
+  extends: [.test_base, .install_git]
+  image: python:3.12-slim
 
 python3.13:
-  extends: .test_base
-  image: python:3.13
+  extends: [.test_base, .install_git]
+  image: python:3.13-slim
 
 windows:
   extends: .test_base
