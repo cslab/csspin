@@ -329,7 +329,7 @@ def test_load_plugins_into_tree(
         assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
             assert f.read() == "# Created by spin automatically\n*\n"
-        mock_echo.assert_called_with("mkdir", tmp_path.absolute() / ".spin")
+        mock_echo.assert_called_with("mkdir -p", tmp_path.absolute() / ".spin")
 
         assert isinstance(cfg.loaded, ConfigTree)
         assert cfg.loaded.get("csspin.builtin")
