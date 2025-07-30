@@ -330,7 +330,7 @@ def mkdir(path: str | Path) -> str:
 
     """
     if not exists(path := interpolate1(Path(path))):
-        echo("mkdir", path)
+        echo("mkdir -p", path)
         os.makedirs(path)
     return path
 
