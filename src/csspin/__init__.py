@@ -276,6 +276,7 @@ class DirectoryChanger:
     def __exit__(self: DirectoryChanger, *args: Any) -> None:
         """Change back to where we came from."""
         if not os.path.samefile(self._cwd, os.getcwd()):
+            echo("cd", self._cwd)
             os.chdir(self._cwd)
 
 
