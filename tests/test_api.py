@@ -117,12 +117,15 @@ def test_directory_changer(
 ) -> None:
     """csspin.DirectoryChanger is able to change directories accordingly"""
     cwd = os.getcwd()
-    mocker.patch("click.echo")
+    mock_echo = mocker.patch("click.echo")
 
     with csspin.DirectoryChanger(path=tmp_path):
         assert os.getcwd() == str(tmp_path)
         assert str(tmp_path) in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined] # noqa: E501
     assert os.getcwd() == cwd
+    assert cwd in repr(click.echo.call_args_list).replace("\\\\", "\\")  # type: ignore[attr-defined]
+
+    mock_echo.reset_mock()
 
     # if nothing to do, directory changer does nothing and echoes nothing
     with csspin.DirectoryChanger(path=cwd):
