@@ -56,7 +56,7 @@ Plugins automatically provision the tools they need, come with meaningful
 default settings, provide new subcommands to `spin` (e.g. ``spin pytest`` will
 launch `pytest`_ in the development environment), and hook into generic
 workflows. For example, the `csspin_python.pytest`_ plugin automatically hooks
-into the generic ``spin test`` command in case `csspin_workflows.workflows`_ is
+into the generic ``spin test`` command in case `csspin_workflows.stdworkflows`_ is
 loaded. If your project one day decides to replace `pytest` with something else,
 ``spin test`` will still do the right thing.
 
@@ -296,7 +296,7 @@ installs all the tools and sets up the :program:`pre-commit` hooks.
 
 .. code-block:: console
    :caption: Provisioning a plugin-package from a git-repository
-   :emphasize-lines: 8-10
+   :emphasize-lines: 5
 
    $ spin provision
    spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q \

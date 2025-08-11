@@ -18,7 +18,7 @@
 Plugin API Reference
 ====================
 
-.. automodule:: spin
+.. automodule:: csspin
    :no-members:
 
 Defining tasks

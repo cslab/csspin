@@ -17,22 +17,22 @@
 .. plugin-packages
    TODO: change the links when publishing the dox for external users
 
-.. _spin_ce: http://qs.pages.contact.de/spin/spin_ce
-.. _spin_conpod: http://qs.pages.contact.de/spin/spin_conpod
-.. _spin_cpp: http://qs.pages.contact.de/spin/spin_cpp
-.. _spin_docs: http://qs.pages.contact.de/spin/spin_docs
-.. _spin_frontend: http://qs.pages.contact.de/spin/spin_frontend
-.. _spin_java: http://qs.pages.contact.de/spin/spin_java
-.. _spin_python: http://qs.pages.contact.de/spin/spin_python
-.. _spin_vcs: http://qs.pages.contact.de/spin/spin_vcs
+.. _csspin_ce: http://qs.pages.contact.de/spin/spin_ce
+.. _csspin_workflows: https://qs.pages.contact.de/spin/csspin-workflows/
+.. _csspin_cpp: http://qs.pages.contact.de/spin/spin_cpp
+.. _csspin_docs: http://qs.pages.contact.de/spin/spin_docs
+.. _csspin_frontend: http://qs.pages.contact.de/spin/spin_frontend
+.. _csspin_java: http://qs.pages.contact.de/spin/spin_java
+.. _csspin_python: http://qs.pages.contact.de/spin/spin_python
+.. _csspin_vcs: http://qs.pages.contact.de/spin/spin_vcs
 
 .. plugins
    TODO: change the links when publishing the dox for external users
 
-.. _spin_conpod.stdworkflows: http://qs.pages.contact.de/spin/spin_conpod/plugins/stdworkflows.html
-.. _spin_frontend.node: http://qs.pages.contact.de/spin/spin_frontend/plugins/node.html
-.. _spin_python.pytest: http://qs.pages.contact.de/spin/spin_python/plugins/pytest.html
-.. _spin_python.python: http://qs.pages.contact.de/spin/spin_python/plugins/python.html
+.. _csspin_workflows.stdworkflows: https://qs.pages.contact.de/spin/csspin-workflows/plugins/stdworkflows.html
+.. _csspin_frontend.node: http://qs.pages.contact.de/spin/spin_frontend/plugins/node.html
+.. _csspin_python.pytest: http://qs.pages.contact.de/spin/spin_python/plugins/pytest.html
+.. _csspin_python.python: http://qs.pages.contact.de/spin/spin_python/plugins/python.html
 
 .. python packages
 
