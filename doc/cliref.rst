@@ -20,5 +20,5 @@
 Command Line Reference
 ======================
 
-.. click:: spin.cli:commands
+.. click:: csspin.cli:commands
    :prog: spin

@@ -39,24 +39,24 @@ directory or the users data directory to keep the source tree clean.
 **Plugins** are Python modules that leverage spin's API to do one ore more of
 the following:
 
-* register new subcommands; e.g. the `spin_python.python`_ plugin registers a
+* register new subcommands; e.g. the `csspin_python.python`_ plugin registers a
   subcommand ``python``; this can be verified by calling ``spin
   --help``, which displays all know subcommands.
 
-* declare plugin dependencies, e.g. the `spin_python.pytest`_ plugin depends on
-  `spin_python.python`_ because we need Python to actually run ``pytest``.
+* declare plugin dependencies, e.g. the `csspin_python.pytest`_ plugin depends on
+  `csspin_python.python`_ because we need Python to actually run ``pytest``.
 
 * declare package requirements, that are installed into a virtual environment.
-  For example, the `spin_python.pytest`_ plugin requires `pytest`_ and
+  For example, the `csspin_python.pytest`_ plugin requires `pytest`_ and
   `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_ and some of its
   extensions to be installed.
 
 * declare *hooks* that are called while spin runs; e.g. the
-  `spin_python.python`_ plugin declares a hook that provisions the required
+  `csspin_python.python`_ plugin declares a hook that provisions the required
   Python release.
 
 **Tasks** are commands run by spin plugins inside an environment, e.g. the
-`spin_python.python`_ plugin registers a ``python`` task, that simply runs the
+`csspin_python.python`_ plugin registers a ``python`` task, that simply runs the
 Python interpreter.
 
 
@@ -92,7 +92,7 @@ built from (in this order):
 
 
 To do anything useful, at least one plugin must be included. Here, we use the
-`spin_python.python`_ plugin, that also requires a version.
+`csspin_python.python`_ plugin, that also requires a version.
 
 .. code-block:: yaml
    :caption: Minimal :file:`spinfile.yaml` for a Python project "foo"
@@ -100,7 +100,7 @@ To do anything useful, at least one plugin must be included. Here, we use the
    spin:
      project_name: foo
    plugins:
-     - spin_python.python
+     - csspin_python.python
    python:
      version: 3.11.9
 
@@ -148,10 +148,10 @@ plugins to be installed from the default Python package index.
    :caption: Example: :file:`spinfile.yaml` configuration for importing plugins
 
    plugin_packages:
-     - spin_python
+     - csspin_python
    plugins:
-     - spin_python.behave
-     - spin_python.pytest
+     - csspin_python.behave
+     - csspin_python.pytest
 
 To not repeat yourself, this can be expressed more compact by nesting the
 plugins under some namespaces. The next example is equivalent to the previous
@@ -161,9 +161,9 @@ one:
    :caption: Example: :file:`spinfile.yaml` configuration for importing plugins (short)
 
    plugin_packages:
-     - spin_python
+     - csspin_python
    plugins:
-     - spin_python:
+     - csspin_python:
        - behave
        - pytest
 
