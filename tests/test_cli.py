@@ -78,6 +78,32 @@ def test_cleanup(
     assert not tmp_spin_data.exists()
     assert not tmp_plugin.exists()
 
+    tmp_spin_data.mkdir()
+    monkeypatch.delenv("SPIN_DATA", raising=False)
+    monkeypatch.setenv("SPIN_TREE_SPIN__DATA", tmp_spin_data)
+
+    cli_runner.invoke(cli.cli, ["--env", tmp_path, "cleanup", "--purge", "-y"])
+
+    assert not tmp_spin_data.exists()
+
+    monkeypatch.delenv("SPIN_TREE_SPIN__DATA", raising=False)
+    tmp_spin_data.mkdir()
+
+    cli_runner.invoke(
+        cli.cli,
+        [
+            "--env",
+            tmp_path,
+            "-p",
+            f"spin.data={tmp_spin_data}",
+            "cleanup",
+            "--purge",
+            "-y",
+        ],
+    )
+
+    assert not tmp_spin_data.exists()
+
 
 def test_find_spinfile(tmp_path: PathlibPath) -> None:
     """

@@ -25,6 +25,7 @@ import click
 import distro
 
 from csspin import (
+    abspath,
     argument,
     confirm,
     die,
@@ -36,9 +37,13 @@ from csspin import (
     sh,
     task,
     toporun,
+    tree,
     warn,
 )
 from csspin.cli import (
+    APPEND_PROP,
+    PREPEND_PROP,
+    PROP,
     commands,
     finalize_cfg_tree,
     install_plugin_packages,
@@ -295,6 +300,19 @@ def cleanup(  # type: ignore[no-untyped-def]
     virtual environments and {project_root}/.spin. Also deletes {spin.data}
     if --purge is passed.
     """
+    # Load the plugins as far as they are available.
+    load_plugins_into_tree(cfg, cleanup=True)
+    # Can't use finalize_cfg_tree here, because it would execute all plugins configure hooks,
+    # which might not be available during cleanup
+    tree.tree_update_properties(  # pylint: disable=duplicate-code
+        cfg,
+        PROP,
+        PREPEND_PROP,
+        APPEND_PROP,
+    )
+
+    cfg.spin.data = abspath(cfg.spin.data)
+
     if (
         purge
         and not skip_confirmation
@@ -306,9 +324,6 @@ def cleanup(  # type: ignore[no-untyped-def]
         )
     ):
         return
-
-    # Load the plugins as far as they are available.
-    load_plugins_into_tree(cfg, cleanup=True)
 
     # Do not configure and sanitize in case of cleanup, since plugin
     # packages may not be installed, causing AttributeErrors in case of
