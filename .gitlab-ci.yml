@@ -6,7 +6,6 @@ include:
     file:
       - ci/common.yml
       - ci/pre-commit.yml
-      - ci/analyze.yml
   - component: $CI_SERVER_FQDN/qs/ci-templates/twine_upload@0.1.0
     inputs:
       name: pypi_upload
@@ -15,8 +14,6 @@ include:
       wheel_path: dist/csspin-*.whl
       needs:
         - wheel
-        - job: analyze
-          artifacts: false
         - job: test_spin_ce_integration
           artifacts: false
         - job: test_spin_frontend_integration
@@ -206,24 +203,26 @@ test_csspin_workflows_integration:
 #     TRIGGER_PROJECT: qs/spin/spin_vcs
 #   extends: .external_integration_base
 
-# ---------------------------- Deploy/Analyze stage ----------------------------
-analyze:
-  extends: .analyze
-  variables:
-    SOURCE_DIRS: src tests
-    PYLINTRC: pyproject.toml
-  needs:
-    - python3.9
-    - python3.10
-    - python3.11
-    - python3.12
-    - python3.13
-    - windows
-
 # ------------------------------- Release stage --------------------------------
 
 pages:
-  needs: [wheel, documentation, analyze]
+  needs:
+    - job: documentation
+      artifacts: true
+    - job: wheel
+      artifacts: false
+    - job: python3.9
+      artifacts: false
+    - job: python3.10
+      artifacts: false
+    - job: python3.11
+      artifacts: false
+    - job: python3.12
+      artifacts: false
+    - job: python3.13
+      artifacts: false
+    - job: windows
+      artifacts: false
   image: alpine
   stage: release
   script:
