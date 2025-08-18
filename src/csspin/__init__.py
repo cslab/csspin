@@ -254,6 +254,14 @@ class Verbosity(IntEnum):
     INFO = 1
     DEBUG = 2
 
+    @classmethod
+    def _missing_(cls, _) -> Verbosity:  # type: ignore[no-untyped-def]
+        warn(
+            "Invalid verbosity level, only '-v' and '-vv' are allowed! Verbosity is"
+            " set to 'DEBUG'."
+        )
+        return Verbosity(2)
+
 
 class DirectoryChanger:
     """A simple class to change the current directory.
