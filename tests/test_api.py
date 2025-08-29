@@ -496,11 +496,22 @@ def test_setenv(cfg):
     """
     cfg["FOO"] = "foo"
 
+    # General case
     csspin.setenv(FOO="bar", BAR="foo")
     assert os.getenv("FOO") == "bar"
     assert os.getenv("BAR") == "foo"
+
+    # With interpolation
     csspin.setenv(FOO="{FOO}")
     assert os.getenv("FOO") == "foo"
+
+    # Who wins?
+    csspin.setenv(FOO="foo", foo="bar")
+    if sys.platform == "win32":
+        assert os.getenv("FOO") == "bar"
+    else:
+        assert os.getenv("FOO") == "foo"
+        assert os.getenv("foo") == "bar"
 
 
 @pytest.mark.xfail(
