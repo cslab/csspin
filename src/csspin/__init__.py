@@ -561,7 +561,9 @@ def setenv(*args: Any, **kwargs: Any) -> None:
     Variables that have been set during or before ``configure()`` will be
     patched into the activation scripts of the Python virtual environment.
 
-    >>> setenv(FOO="{spin.foo}", BAR="{bar.options}")
+    On Windows, all passed environment variable keys will be set in upper case.
+
+    >>> setenv(FOO="{foo.bar}", BAZ="some-value")
 
     """
 
@@ -578,6 +580,9 @@ def setenv(*args: Any, **kwargs: Any) -> None:
         return value
 
     for key, value in kwargs.items():
+        if sys.platform == "win32":
+            key = key.upper()
+
         if value is None:
             if not args:
                 if sys.platform == "win32":
