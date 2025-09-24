@@ -2,14 +2,13 @@
 # in the spinfile.yaml to avoid errors.
 spin:
   project_name: spin
-  index_url: https://packages.contact.de/tools/stable
 
 # To develop plugins comfortably, install the packages editable as
 # follows and add the relevant plugins to the list 'plugins' below
 plugin_packages:
-  - csspin-workflows
   - csspin-docs
   - csspin-python
+  - csspin-workflows
 
 # Path to local plugins. This is just here for demonstration purposes
 # (see "demo_plugin") -- the spin project does not use local plugins.
@@ -28,10 +27,10 @@ python:
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
+    - build # TODO: Maybe move into csspin_python.python
+    - pytest-mock
     - sphinx-click
     - sphinx-rtd-theme
-    - pytest-mock
-    - build # TODO: Maybe move into csspin_python.python
 
 pytest:
   opts: [-m, "not slow"]
