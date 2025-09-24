@@ -25,7 +25,7 @@ import importlib.metadata
 
 project = "csspin"
 copyright = "2021, CONTACT Software GmbH"  # pylint: disable=redefined-builtin
-author = "Frank Patz-Brockmann"
+author = "CONTACT Software GmbH"
 
 # The full version, including alpha/beta/rc tags
 release = importlib.metadata.version("csspin")
@@ -54,12 +54,12 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
     "_build",
-    "Thumbs.db",
     ".DS_Store",
-    "links.rst",
-    ".venv",
-    "venv",
     ".spin",
+    ".venv",
+    "links.rst",
+    "Thumbs.db",
+    "venv",
 ]
 
 rst_epilog = ""
@@ -88,3 +88,9 @@ intersphinx_mapping = {
 #
 html_theme = "sphinx_rtd_theme"
 html_favicon = "static/favicon.ico"
+html_context = {
+    "display_github": True,
+    "github_user": "cslab",
+    "github_repo": "csspin",
+    "github_version": "master/doc/",
+}
