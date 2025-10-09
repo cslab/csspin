@@ -31,6 +31,7 @@ python:
     - pytest-mock
     - sphinx-click
     - sphinx-rtd-theme
+    - .
 
 pytest:
   opts: [-m, "not slow"]
