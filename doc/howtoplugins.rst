@@ -732,8 +732,6 @@ AWS/production as on dev-workstations. Additionally, developers have the
 additional benefit to control the according configuration properties via private
 unshared ``global.yaml`` (see :ref:`writing-global-label`).
 
-.. TODO:: More of tdocs/plugin_guideline.md?
-
 Dependency Management
 ---------------------
 

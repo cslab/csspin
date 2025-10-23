@@ -82,8 +82,6 @@ listed below.
      - Java ist auch eine Insel
    * - `csspin_python`_
      - a must for Python development
-   * - `csspin_vcs`_
-     - enhancing version control system actions
 
 .. _configuration-tree-system-label:
 
