@@ -28,6 +28,7 @@ Welcome to spin's documentation!
    cliref.rst
    apiref.rst
    schemaref.rst
+   relnotes.rst
 
 Indices and tables
 ==================
