@@ -62,6 +62,17 @@
 Release Notes
 =============
 
+.. v3.0.0
+.. ======
+
+.. .. Month Day, Year
+
+.. Breaking Changes
+.. ----------------
+
+.. - Removal of the `system-provision` subcommand due to deprecation (`#212 <https://code.contact.de/qs/spin/cs.spin/-/issues/212`_)
+
+
 Upcoming Release
 ================
 
@@ -71,5 +82,6 @@ Chores
 ------
 
 - Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
-- Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
 - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
+- Deprecation of the `system-provision` subcommand (`#197 <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_)
+- Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)

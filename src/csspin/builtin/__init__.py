@@ -197,7 +197,7 @@ def do_system_provisioning(  # type: ignore[no-untyped-def]
     cfg,
     distroargs: argument(nargs=-1),  # type: ignore[valid-type]
 ) -> None:
-    """Provision system dependencies for the host.
+    """Prints system requirements for the host.
 
     Usage:
         spin system-provision [<distro> [<version>]]
@@ -206,6 +206,11 @@ def do_system_provisioning(  # type: ignore[no-untyped-def]
     yum etc. to install system-level dependencies for the project. The output
     can for example be piped into a sudo shell.
     """
+    warn(
+        "The 'system-provision' subcommand is deprecated and will be removed in"
+        " a future release. Please refer to the 'System requirements' section"
+        " in csspin's documentation."
+    )
     # Install the plugins and build the full config tree
     install_plugin_packages(cfg)
     load_plugins_into_tree(cfg)

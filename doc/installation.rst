@@ -18,10 +18,10 @@
 Installation
 ============
 
-Spin requires Python 3.9 or later, and you can install it using any
-way you like using :program:`pip`. It is most convenient to have the ``spin``
-command locally installed and always available on your ``PATH``, just like a
-system command.
+csspin is available at PyPI: https://pypi.org/project/csspin/ and can be
+installed using any way you like using :program:`pip`. It is most convenient
+to have the ``spin`` command locally installed and always available on your
+``PATH``, just like a system command.
 
 One easy way of installing `spin` privately in your home directory is by using
 :program:`pipx`, as described in the next section.
@@ -49,3 +49,12 @@ Installing spin is as easy as follows:
    :caption: Installation of csspin using pipx
 
    pipx install csspin
+
+.. _section-system-requirements:
+
+System requirements
+===================
+
+In order to install and run csspin, the following system dependencies are needed:
+
+- Python 3.9 or later
