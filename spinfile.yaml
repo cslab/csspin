@@ -48,15 +48,3 @@ build_rules:
     sources: [setup.cfg, setup.py]
     script:
       - pip-compile --generate-hashes --no-build-isolation --reuse-hashes
-
-# Host system requirements
-system_requirements:
-  debian:
-    apt:
-      - curl
-      - git
-      - libaio1
-  windows:
-    choco:
-      - curl
-      - git

@@ -772,36 +772,3 @@ the project's ``plugin_packages`` section of the ``spinfile.yaml``.
    [project]
    dependencies = ["csspin_python", "csspin_java", "csspin_frontend"]
    ...
-
-System dependencies
-~~~~~~~~~~~~~~~~~~~
-
-If plugins depend on system libraries or tools, that that can't be installed
-into the virtual environment managed by spin nor into ``{spin.data}``, they have
-to be specified under the defaults config:
-
-.. code-block:: python
-
-   ...
-   defaults = config(
-       requires=config(
-           system=config(
-               debian=config(
-                   apt=[
-                       "git",
-                       "subversion",
-                   ],
-               ),
-               windows=config(
-                   choco=[
-                       "git",
-                       "svn",
-                   ],
-               ),
-           )
-       ),
-   )
-
-This enables the user of the plugin to review the required system packages and
-install them manually (see :ref:`system-provision-label`). Note: currently only
-windows and debian with the package managers chocolatey and apt are supported.
