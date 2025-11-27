@@ -81,6 +81,7 @@ Upcoming Release
 Chores
 ------
 
+- Programs started using spin run might misbehave in some cases (`#215 <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
 - Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
 - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
 - Deprecation of the `system-provision` subcommand (`#197 <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_)
