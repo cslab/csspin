@@ -73,16 +73,21 @@ Release Notes
 .. - Removal of the `system-provision` subcommand due to deprecation (`#212 <https://code.contact.de/qs/spin/cs.spin/-/issues/212`_)
 
 
-Upcoming Release
-================
+v2.0.2
+======
 
-.. Month Day, Year
+December 12, 2025
+
+Bug Fixes
+---------
+
+- Programs started using spin run might misbehave in some cases (`#215 <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
 
 Chores
 ------
 
-- Programs started using spin run might misbehave in some cases (`#215 <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
 - Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
 - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
-- Deprecation of the `system-provision` subcommand (`#197 <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_)
+- Deprecation of the `system-provision` subcommand (`#197
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_, `#183 <https://code.contact.de/qs/spin/cs.spin/-/issues/183>`_)
 - Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
