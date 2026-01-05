@@ -45,7 +45,11 @@ requires-python = ">=3.9"
 spin = "csspin:_main"
 
 [project.urls]
-Homepage = "https://contact-software.com"
+"CONTACT Software GmbH" = "https://contact-software.com"
+Documentation = "https://csspin.readthedocs.io/en/stable/"
+"Issue Tracker" = "https://github.com/cslab/csspin/issues"
+"Release Notes" = "https://csspin.readthedocs.io/en/stable/relnotes.html"
+Repository = "https://github.com/cslab/csspin"
 
 [tool.black]
 enable-unstable-feature = ["string_processing"]
