@@ -194,7 +194,7 @@ def test_load_plugin(
 
     # load plugin that does not exist
     with pytest.raises(
-        click.exceptions.Abort,
+        ModuleNotFoundError,
         match="Plugin foo could not be loaded, it may need to be provisioned",
     ):
         cli.load_plugin(cfg_spin_dummy, import_spec="foo")

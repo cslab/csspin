@@ -138,7 +138,7 @@ def load_plugin(
         importlib.invalidate_caches()
         mod = importlib.import_module(import_spec)
         full_name = mod.__name__
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as exc:
         if may_fail:
             # We tolerate this only in context of cleanup, where imports may not
             # succeed.
@@ -147,11 +147,10 @@ def load_plugin(
                 " provisioned"
             )
         else:
-            debug(format_exc())
-            die(
+            raise ModuleNotFoundError(
                 f"Plugin {import_spec} could not be loaded, it may need to be"
                 " provisioned"
-            )
+            ) from exc
 
     if full_name and full_name not in cfg.loaded:
         # This plugin module has not been imported so far --
@@ -493,6 +492,10 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
         load_plugins_into_tree(cfg)
     except ModuleNotFoundError as exc:
         if help:
+            warn(
+                "To get the complete help output you might need to run 'spin provision'"
+                " first!"
+            )
             commands.main(args=ctx.args)
             return None
         die(exc)
