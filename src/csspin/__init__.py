@@ -501,7 +501,7 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     try:
         debug(
             f"subprocess.run({cmd}, shell={shell}, check={check}, env={argenv},"
-            f" executable={executable}, kwargs={kwargs}",
+            f" executable={executable}, kwargs={kwargs})",
         )
         cpi = subprocess.run(
             cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
