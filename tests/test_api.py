@@ -478,13 +478,17 @@ def test_memoizer_context_manager(tmp_path: PathlibPath) -> None:
 
 
 def test_namespace_context_manager() -> None:
-    """
-    csspin.namespace can be used as context manager to modify csspin.NSSTACK
-    temporary
+    """csspin.namespace can be used as context manager to modify
+    csspin.NSSTACK temporarily, providing additional resolution
+    namespaces.
     """
     assert not csspin.NSSTACK
-    with csspin.namespaces("prod", "qa"):
-        assert csspin.NSSTACK == ["prod", "qa"]
+    prod_ns = {"prod": "prod-value"}
+    qa_ns = {"qa": "qa-value"}
+    with csspin.namespaces(prod_ns, qa_ns):
+        assert csspin.NSSTACK == [prod_ns, qa_ns]
+        assert csspin.interpolate1("{prod}") == "prod-value"
+        assert csspin.interpolate1("{qa}") == "qa-value"
     assert not csspin.NSSTACK
 
 
