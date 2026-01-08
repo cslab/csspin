@@ -766,7 +766,7 @@ NSSTACK = []
 
 
 @contextmanager
-def namespaces(*nslist: str) -> Generator:
+def namespaces(*nslist: dict) -> Generator:
     """Add namespaces for interpolation."""
     for ns in nslist:
         NSSTACK.append(ns)
@@ -852,7 +852,7 @@ def interpolate1(
         CONFIG,
         os.environ if interpolate_environ else {},
         *extra_dicts,
-        *NSSTACK,  # type: ignore[arg-type]
+        *NSSTACK,
     )
 
     while previous != literal:
