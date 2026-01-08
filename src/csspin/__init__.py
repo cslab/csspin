@@ -775,12 +775,35 @@ def namespaces(*nslist: str) -> Generator:
         NSSTACK.pop()
 
 
-# On Windows platformdirs.user_config_dir and platformdirs.user_data_dir
-# both point to %LOCALAPPDATA%, that's why we need /data and /config subfolders
+# Here we set the defaults for spin's configuration and data
+# directories for diverse platforms, partially using the
+# `platformdirs` library.
+#
+# For macOS we use the Linux XDG defaults, instead of what
+# platformdirs provides by default, which is ~/Library/Application
+# Support/, unsuitable for command line applications like spin.  See
+# https://github.com/cslab/csspin-python/issues/1 and the discussion
+# at https://code.contact.de/qs/spin/cs.spin/-/merge_requests/76
+#
+# On Windows platformdirs.user_config_dir and
+# platformdirs.user_data_dir both point to %LOCALAPPDATA%, that's why
+# we need /data and /config subfolders
+
+
+def _user_config_and_data_dir() -> tuple[str, str]:
+    """Return base config/data dirs; enforce XDG layout on macOS to avoid spaces."""
+    if sys.platform == "darwin":
+        pfdirs = platformdirs.unix.Unix()
+        return pfdirs.user_config_dir, pfdirs.user_data_dir
+    return platformdirs.user_config_dir(), platformdirs.user_data_dir()
+
+
+USER_CONFIG_DIR, USER_DATA_DIR = _user_config_and_data_dir()
+
 os.environ["SPIN_CONFIG"] = os.environ.get(
     "SPIN_CONFIG",
     Path.joinpath(
-        platformdirs.user_config_dir(),
+        USER_CONFIG_DIR,
         "spin",
         "config" if sys.platform == "win32" else "",
     ).normpath(),
@@ -788,7 +811,7 @@ os.environ["SPIN_CONFIG"] = os.environ.get(
 os.environ["SPIN_DATA"] = os.environ.get(
     "SPIN_DATA",
     Path.joinpath(
-        platformdirs.user_data_dir(), "spin", "data" if sys.platform == "win32" else ""
+        USER_DATA_DIR, "spin", "data" if sys.platform == "win32" else ""
     ).normpath(),
 )
 
@@ -1150,7 +1173,6 @@ def group(*args: Any, **kwargs: Any) -> Callable:
     from csspin import cli
 
     def group_decorator(fn: str | Path) -> Callable:
-
         noenv = kwargs.pop("noenv", False)
         kwargs["cls"] = cli.GroupWithAliases
         grp = cli.commands.group(*args, **kwargs)(click.pass_context(fn))  # type: ignore[attr-defined]
