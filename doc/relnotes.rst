@@ -15,11 +15,11 @@
    limitations under the License.
 
 .. This document contains the release notes for csspin. Each release is
-   documented in a separate section, starting with the upcoming release.
+   documented in a separate section, starting with the most recent release at
+   the top.
 
-   The upcoming release section must be renamed to the actual release date when
-   the release is done, and a new upcoming release section must be added at the
-   top. The date of the release must be in the format `Month Day, Year`/`"%B %d,
+   The release section must be renamed to the actual release tag with a prefixed
+   "v". The date of the release must be in the format `Month Day, Year`/`"%B %d,
    %Y"`.
 
     At least one of these subsections must be present for each release:
@@ -44,7 +44,6 @@
 
     Example:
 
-    ```
     v2.0.2
     ======
 
@@ -56,7 +55,6 @@
     - Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
     - Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
     - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
-
 
 =============
 Release Notes
