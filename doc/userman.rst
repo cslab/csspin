@@ -119,7 +119,7 @@ You can visualize the configuration tree for this minimal example by using the
    spinfile.yaml:14:        |plugins:
                             |  - 'spin.builtin.python'
    src/spin/cli.py:137:     |python:
-   spinfile.yaml:21:        |  version: '3.9.8'
+   spinfile.yaml:21:        |  version: '3.10.19'
    ... even more lines ...
 
 :option:`--dump <spin --dump>` shows the complete configuration tree, and for
@@ -530,7 +530,7 @@ environment variables, that will be overridden:
   :caption: Negative Examples: How environment variables should not be used.
 
   # The python.version passed via CLI is not used in coverage.opts, since
-  # pytest.coverage_opts is set to the default python.version=3.9.8, before
+  # pytest.coverage_opts is set to the default python.version=3.10.19, before
   # python.version was overridden via CLI.
   SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
     -p python.version="3.11.7" \
@@ -539,7 +539,7 @@ environment variables, that will be overridden:
   command-line:0:                 |  opts:
                                   |    - '3.11.7'
   command-line:0:                 |  coverage_opts:
-                                  |    - '3.9.8'
+                                  |    - '3.10.19'
 
   # The order of -p calls makes a difference too.
   SPIN_TREE_pytest__coverage_opts="[{python.version}]" spin \
@@ -547,9 +547,9 @@ environment variables, that will be overridden:
     -p python.version="3.11.7" --dump | grep -A4 "|pytest:"
   src/spin/cli.py:142:            |pytest:
   command-line:0:                 |  opts:
-                                  |    - '3.9.8'
+                                  |    - '3.10.19'
   command-line:0:                 |  coverage_opts:
-                                  |    - '3.9.8'
+                                  |    - '3.10.19'
 
   # The correct way in both cases would be to first override python.version via
   # the environment:

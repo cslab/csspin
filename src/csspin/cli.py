@@ -366,7 +366,7 @@ def base_options(fn: Callable) -> Callable:
             help=(
                 "Override a setting in spin's configuration tree, using"
                 " 'property=value'. This only works for string properties. Example:"
-                " spin -p python.version=3.9.6 ..."
+                " spin -p python.version=3.10.19 ..."
             ),
         ),
     ]
