@@ -2,7 +2,7 @@
 
 include:
   - project: qs/cs.template
-    ref: v15.9.1.0
+    ref: v2026.2.3.0
     file:
       - ci/common.yml
       - ci/pre-commit.yml
@@ -26,10 +26,6 @@ include:
           artifacts: false
         - job: test_csspin_workflows_integration
           artifacts: false
-        # - job: test_spin_cpp_integration
-        #   artifacts: false
-        # - job: test_spin_vcs_integration
-        #   artifacts: false
       rules:
         - if: $CI_COMMIT_TAG
           when: on_success
@@ -41,17 +37,17 @@ variables:
 # --------------------------------- Build stage --------------------------------
 wheel:
   stage: build
-  image: registry.contact.de/cetest:16.0-7.latest
+  image: python:3.14
   variables:
     # The version generation via setuptools_scm needs
     # (potentially) the whole SCM history to work correctly
     GIT_DEPTH: 0
     GIT_STRATEGY: clone
     SPIN_TREE_PYTHON__USE: python
+  before_script:
+    - python -m pip install --upgrade build
   script:
-    - python -m pip install . # FIXME: can't we use python:3.13 and python -m build here?
-    - spin provision
-    - spin python:wheel
+    - python -m build --wheel .
   artifacts:
     when: always
     expire_in: 72 hrs
@@ -61,7 +57,7 @@ wheel:
 
 documentation:
   stage: build
-  image: registry.contact.de/cetest:16.0-7.latest
+  image: registry.contact.de/cetest:2026.2-3.latest
   variables:
     SPIN_TREE_PYTHON__USE: python
   script:
@@ -107,11 +103,7 @@ pre-commit:
 
 .install_git:
   before_script:
-    - apt update -y && apt install git -y
-
-python3.9:
-  extends: [.test_base, .install_git]
-  image: python:3.9-slim
+    - apt-get update -y && apt-get install git -y
 
 python3.10:
   extends: [.test_base, .install_git]
@@ -128,6 +120,10 @@ python3.12:
 python3.13:
   extends: [.test_base, .install_git]
   image: python:3.13-slim
+
+python3.14:
+  extends: [.test_base, .install_git]
+  image: python:3.14-slim
 
 windows:
   extends: .test_base
@@ -191,18 +187,6 @@ test_csspin_workflows_integration:
     TRIGGER_PROJECT: qs/spin/csspin-workflows
   extends: .external_integration_base
 
-# The following integration tests are currently disabled since those
-# plugin-packages are currently not used.
-# test_spin_cpp_integration:
-#   variables:
-#     TRIGGER_PROJECT: qs/spin/spin_cpp
-#   extends: .external_integration_base
-
-# test_spin_vcs_integration:
-#   variables:
-#     TRIGGER_PROJECT: qs/spin/spin_vcs
-#   extends: .external_integration_base
-
 # ------------------------------- Release stage --------------------------------
 
 pages:
@@ -211,8 +195,6 @@ pages:
       artifacts: true
     - job: wheel
       artifacts: false
-    - job: python3.9
-      artifacts: false
     - job: python3.10
       artifacts: false
     - job: python3.11
@@ -220,6 +202,8 @@ pages:
     - job: python3.12
       artifacts: false
     - job: python3.13
+      artifacts: false
+    - job: python3.14
       artifacts: false
     - job: windows
       artifacts: false

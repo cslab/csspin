@@ -57,4 +57,4 @@ System requirements
 
 In order to install and run csspin, the following system dependencies are needed:
 
-- Python 3.9 or later
+- Python 3.10 or later

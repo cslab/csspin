@@ -6,5 +6,5 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 dependencies = []
 description = "Dummy plugin package for testing spin"
 name = "csspin_depend"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 version = "1.0"

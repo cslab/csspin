@@ -7,7 +7,7 @@ spin:
 # follows and add the relevant plugins to the list 'plugins' below
 plugin_packages:
   - csspin-docs
-  - csspin-python
+  - csspin-python[uv]
   - csspin-workflows
 
 # Path to local plugins. This is just here for demonstration purposes
@@ -18,12 +18,14 @@ plugin_paths:
 # The list of plugins to be used for this project.
 plugins:
   - csspin_workflows.stdworkflows
-  - csspin_python.pytest
+  - csspin_python:
+      - pytest
+      - uv_provisioner
   - csspin_docs.sphinx
   - demo_plugin
 
 python:
-  version: 3.9.8
+  version: 3.10.19
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
@@ -32,6 +34,9 @@ python:
     - sphinx-click
     - sphinx-rtd-theme
     - .
+
+uv_provisioner:
+  enabled: true
 
 pytest:
   opts: [-m, "not slow"]

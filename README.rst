@@ -74,7 +74,7 @@ A basic `spinfile.yaml` might look like this:
       - csspin_python.pytest
 
     python:
-      version: 3.9.8
+      version: 3.10.19
       requirements:
         - sphinx-click
         - sphinx-rtd-theme
@@ -89,7 +89,7 @@ CPython Support Policies
 ------------------------
 
 Our CPython support policy for spin aligns with the official CPython release
-schedule, encompassing versions 3.9 through 3.13 (so far).
+schedule, encompassing versions 3.10 through 3.14 (so far).
 
 .. _`CONTACT Software GmbH`: https://contact-software.com
 .. |Python| image:: https://img.shields.io/pypi/pyversions/csspin.svg?style=flat
