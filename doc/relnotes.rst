@@ -60,16 +60,35 @@
 Release Notes
 =============
 
-.. v3.0.0
-.. ======
+v3.0.0
+======
 
-.. .. Month Day, Year
+January 14, 2026
 
-.. Breaking Changes
-.. ----------------
+Breaking Changes
+----------------
 
-.. - Removal of the `system-provision` subcommand due to deprecation (`#212 <https://code.contact.de/qs/spin/cs.spin/-/issues/212`_)
+- Drop Python 3.9 support (`#210
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/225>`_)
 
+Bug Fixes
+---------
+
+- ``spin --help`` fails if project is not provisioned (`#209
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/209>`_)
+- Building python on macOS fails with default config (`#2
+  <https://github.com/cslab/csspin/issues/2>`_, (`#221
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/221>`_))
+- Type hint for ``namespaces()`` incorrect (`!169
+  <https://code.contact.de/qs/spin/cs.spin/-/merge_requests/169>`_)
+
+Chores
+------
+
+- Add repository URL information to Wheel metadata (`#219
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/219>`_)
+- Update release process documentation and contribution guideline (`#224
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/224>`_)
 
 v2.0.2
 ======
@@ -79,13 +98,18 @@ December 12, 2025
 Bug Fixes
 ---------
 
-- Programs started using spin run might misbehave in some cases (`#215 <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
+- Programs started using spin run might misbehave in some cases (`#215
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
 
 Chores
 ------
 
-- Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
-- Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
+- Add release notes to the documentation structure (`#204
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
+- Remove outdated TODO in the documentation (`#200
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
 - Deprecation of the `system-provision` subcommand (`#197
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_, `#183 <https://code.contact.de/qs/spin/cs.spin/-/issues/183>`_)
-- Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_, `#183
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/183>`_)
+- Update links in the documentation (`#195
+  <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
