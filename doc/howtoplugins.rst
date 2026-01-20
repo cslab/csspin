@@ -111,7 +111,6 @@ Plugin lifecycle
 
       from csspin import config
 
-
       defaults = config(setting1="...", setting2=config(foo="bar"))
 
 #. `spin` then starts to invoke callbacks provided by the plugins. *All callback

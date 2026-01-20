@@ -23,7 +23,7 @@ repos:
   # ------------------Format Hooks--------------- #
   - repo: https://github.com/ambv/black
     # Black is a PEP 8 compliant opinionated code formatter.
-    rev: 24.10.0
+    rev: 26.1.0
     hooks:
       - id: black
         types: [file] # override `types: [python]`
@@ -31,29 +31,31 @@ repos:
         args: ["--include", '\.(pyi?|ue)$', "-v"]
   - repo: https://github.com/asottile/blacken-docs
     # Runs black on Python code blocks in documentation files.
-    rev: 1.19.0
+    rev: 1.20.0
     hooks:
       - id: blacken-docs
+        additional_dependencies:
+          - black==26.1.0
   - repo: https://github.com/pycqa/isort
     # Python utility that sorts imports in files
-    rev: 5.13.2
+    rev: 7.0.0
     hooks:
       - id: isort
         types: [file] # override `types: [python]`
         files: \.(pyi?|ue)$
-  - repo: https://github.com/pre-commit/mirrors-prettier
+  - repo: https://github.com/rbubley/mirrors-prettier
     # Prettier is an opinionated code formatter for JS, TS, json etc.
-    rev: v3.1.0
+    rev: v3.8.0
     hooks:
       - id: prettier
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.14.0
+    rev: v2.16.0
     hooks:
       - id: pretty-format-toml
         args: [--autofix]
   # ------------------Linter Hooks--------------- #
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # Prevents large files from being committed. Default is args: ['--maxkb=500']
       - id: check-added-large-files
@@ -87,7 +89,7 @@ repos:
       # Trims trailing whitespace.
       - id: trailing-whitespace
   - repo: https://github.com/homebysix/pre-commit-macadmin
-    rev: v1.16.2
+    rev: v1.22.0
     hooks:
       # Checks, whether a correct identity is used to commit/ push
       - id: check-git-config-email
@@ -95,7 +97,7 @@ repos:
   - repo: https://github.com/PyCQA/flake8
     # Flake8 is a wrapper around PyFlakes, pycodestyle and Ned Batchelder's McCabe script
     # and runs these tools to lint files.
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
       - id: flake8
         args:
@@ -108,7 +110,7 @@ repos:
         additional_dependencies: [flake8-copyright]
   - repo: https://github.com/pycqa/pylint
     # Linting of Python 3 files
-    rev: v3.3.1
+    rev: v4.0.4
     hooks:
       - id: pylint
         args:

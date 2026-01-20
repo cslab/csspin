@@ -19,7 +19,6 @@ For these "channels", we:
   paths have to be normalized here.
 
 - Note:
-
   1.  Property trees may contain callables. This is currently the case
       e.g. for the mkinstance plugin. These are to be evaluated in the configure-hook,
       which leads to better DevEx as we see the resulting values in
@@ -196,7 +195,6 @@ depending on the value of `/quiet`.
 The proposal is to unify these similar concepts as follows:
 
 1. There is one property `verbosity` which has the following values:
-
    - `-1`: means `quiet`
    - `0`: means `normal`
    - `1`: means `verbose`
@@ -204,7 +202,6 @@ The proposal is to unify these similar concepts as follows:
 
    Side note: To have the code more readable, we probably should use an
    `enum` here. Hereby:
-
    - `quiet` means "no output at all". This mode is
      e.g. necessary/handy if you want to pass the output to some
      other tool which expects which is picky about the input (e.g. it

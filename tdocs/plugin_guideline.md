@@ -72,7 +72,6 @@ Moreover, we can differentiate between two ways of modeling the
 config-tree of a spin plugin:
 
 1. "Mkinstance model" or "the cs.recipes-way"
-
    - We provide a configuration property for every(\*) CLI parameter of
      mkinstance
    - We compute the values of some of those to ease the usage
@@ -84,14 +83,12 @@ config-tree of a spin plugin:
    CLI params independently.
 
    Pros:
-
    - every CLI param can be controlled easily an independently
    - automatically computed values ease the usage of the tool
    - you don't have to set every option in your spinfile,
      defaults "match" in many situations
 
    Cons:
-
    - The configuration tree is essentially bound to the CLI of the
      tool with all the negative effects (e.g. plugin breakage by
      minor changes of tools' CLI)
@@ -116,7 +113,6 @@ config-tree of a spin plugin:
    provide such generic lists for every "block" in the CLI.
 
    Pros:
-
    - results in simple plugins implementations
    - results in simple configuration trees
      Cons:
