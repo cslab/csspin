@@ -21,17 +21,14 @@ have to be refactored.
 ## Linters
 
 - `cppcheck` (**removed**):
-
   - foremost: how to integrate this with pre-commit?
   - dependency on package from ConPI, have to deal with that somehow.
 
 - `cpplint` (**removed**):
-
   - TODO: test on the platform
   - foremost: same as above: how to integrate this with pre-commit?
 
 - `flake8` (**removed**):
-
   - determination of the changeset is wrong, when there are deleted files,
     files in the index etc.
   - pre-commit integration
@@ -61,31 +58,24 @@ have to be refactored.
 ## The Rest
 
 - `portwheel` (**removed**):
-
   - unused, not important, removed. Can be regained later if necessary.
 
 - `pre-commit` (**removed**):
-
   - the name is inconsistent with the tool name
 
 - `preflight` (**removed**):
-
   - obsolete, removed
 
 - `stdworkflows`:
-
   - incomplete. Defining standard workflows is a work item on its own.
 
 - `pytest`:
-
   - obsolete, but used for spin. Will be replaced later by `tooling/spin_plugins`
 
 - `radon`:
-
   - nice small tool. Can stay...
 
 - `scons`:
-
   - provisioning works
   - where do we want to use it? cs.workspaces? cs.threed? Shouldn't they be
     better migrated cmake?
@@ -93,30 +83,25 @@ have to be refactored.
   - not sure whether this all actually works
 
 - `shell` (**removed**):
-
   - move to builtin? Its very basic and not tech-stack specific
   - not sure what it should do and whats the difference to env
 
 - `sphinx`:
-
   - only necessary for the own (spin) documentation, as it seems.
     Degrade to an unshared plugin, unless more use cases are
     detected.
 
 - `vcs`:
-
   - currently only used by the linters. If we ditch them, this will be
     obsolete.
   - If we dont: the concept of this service should be documented
 
 - `devpi`:
-
   - incomplete, broken, but probably useful to connect
     to package.contact.de, to fetch the resources from
     16.0-dev etc
 
 - `gitlab-ci`:
-
   - essentially an empty wrapper, but worth to explore
 
 **Summary**: lots of small reworking necessary, nothing especially troublesome

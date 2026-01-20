@@ -154,12 +154,10 @@ This is a topic for the months to come, though.
    separately.
 
    **Pros**:
-
    - This offers maximum flexibility for the composition of
      what-to-be-pull configurations
 
    **Cons**:
-
    - Lots of redundancy.
    - The change process is severely slowed down. The maintainers will
      have to do lots of small MRs.
@@ -171,9 +169,7 @@ This is a topic for the months to come, though.
    in one package.
 
    **Pros**:
-
    - ?
 
    **Cons**:
-
    - Nut much gain over the status quo, actually.

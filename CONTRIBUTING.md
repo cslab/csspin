@@ -102,7 +102,6 @@ this repository.
 Steps to create a release:
 
 0. Preparations
-
    - Verify that all relevant changes are merged into the master branch, which
      is the source for all releases.
    - Also make sure that the latest non-scheduled master pipeline is green.

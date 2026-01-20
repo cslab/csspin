@@ -7,7 +7,6 @@ deutlich bessere DevEx bieten können.
 ## Planung und Prüfung
 
 - [x] Den Satz der Pakete festlegen, den wir veröffentlichen wollen:
-
   1. cs.spin: ja (Name verfügbar)
   2. spin_ce: ja
   3. spin_workflows: ja (neu)
@@ -28,7 +27,6 @@ deutlich bessere DevEx bieten können.
   des Projekts. Gucken wir mal, was wir hier hinbekommen.
 
 - [x] Auf Namenskollisionen prüfen
-
   1. cs.spin: nein
   2. spin_ce: nein
   3. spin_conpod: name wird eher anders
@@ -37,7 +35,6 @@ deutlich bessere DevEx bieten können.
   6. spin_python: nein
 
 - [x] Schauen, was unsere Competition on PyPI veröffentlicht.
-
   - https://pypi.org/project/tcsoa/: Teamcenter something
   - Placeholder package 'siemens' (WTF?)
 
@@ -54,7 +51,6 @@ deutlich bessere DevEx bieten können.
   etc. hinreichend. Die Projekte auf GitHub/cslab verwenden bereits
   MIT und BSD 3-Clause. Ich tendiere gerade zu Apache License 2.0,
   weil:
-
   - Empfohlen von [https://choosealicense.com](https://choosealicense.com)
   - Hat den IMO den richtigen [Feature-Set](https://choosealicense.com/appendix/).
 
@@ -71,7 +67,6 @@ deutlich bessere DevEx bieten können.
       Medataten, die wir nicht veröffentlichen wollen?
 
   Haben wir. Im Detail:
-
   1.  Die Metadaten in `pyproject.toml` beinhalten einige interne URLs
       (fixed).
   2.  Das `Readme.md`, welches wir für das Füllen von `long_description`
@@ -81,11 +76,8 @@ deutlich bessere DevEx bieten können.
 
   Zudem haben wir Zugriffe und nicht-öffentliche Ressourcen in den
   Plugins und weiteres. Änderungsbedarf, AFAICS:
-
   1.  spin_ce:
-
       - ce_services:
-
         - Der HiveMQ service lädt was von einer internen URL runter (code.contact.de)
         - braucht das Tool ce_services
 
@@ -94,7 +86,6 @@ deutlich bessere DevEx bieten können.
       - localization: dito
 
   2.  cs.spin-conpod:
-
       - Hier kommen POD-spezifische Defaults rein
       - Die Workflows wandern ins cs.spin-workflows
 
@@ -143,7 +134,6 @@ deutlich bessere DevEx bieten können.
   explicitly mean the package name.
 
   The plugin packages will also be renamed as follows:
-
   - spin_python -> csspin_python
   - spin_ce -> csspin_ce
   - spin_java -> csspin_java
@@ -168,12 +158,10 @@ deutlich bessere DevEx bieten können.
   window to adjust the packages before removing the old wheels.
 
   So, things to rename (summary):
-
   1. Package name -> MUST csspin
   2. Python namespace name -> SHOULD csspin
 
   Following things will be _not_ renamed:
-
   1. The executable script "spin"
   2. The root of the property tree: "spin."
   3. Umgebungsvariablen usw. "SPIN\_..."
@@ -191,11 +179,9 @@ deutlich bessere DevEx bieten können.
 
   It should be better frictionless and with low migration efforts for
   everybody. To do that:
-
   - First, we will validate the whole thing our own repos. We will leave
     the old packages alone and build-up a parallel set of renamed things
     next to them. For that we will:
-
     - Rename according to the concept on feature branches of the
       according repos
     - Build and upload the packages to `packages-qa.contact.de`
@@ -209,19 +195,16 @@ deutlich bessere DevEx bieten können.
 
   Wir wollen einen gemeinsamen PyPI-Account anlegen, der für die
   Veröffentlichungen auf PyPI zu benutzen ist. Vorteil hierbei:
-
   - Geringere Org-Aufwände
   - Kontinuität / Einheitlichkeit
   - Übersicht über alle von uns hochgeladenen Pakete: diese
     sind nämlich in PyPI dann diesem Account zugeordnet
 
   Andere Organisationen benutzen auch solche Corporate Accounts, z.B.:
-
   - [aws](https://pypi.org/user/aws/)
   - [microsoft](https://pypi.org/user/microsoft/)
 
   Weitere Details:
-
   - Als primäre E-Mail-Adresse wollen wir unseren Team-Mailverteiler
     `qm@contact-software.com` (den wir bald umbenennen zu ptm@).
     Grund: darüber werden technische Information verteilt, welche nur
@@ -233,7 +216,6 @@ deutlich bessere DevEx bieten können.
     Projekt Tokens aus.
 
   - Ansonsten:
-
     - Username: contact (ist noch nicht belegt)
     - Full-Name: CONTACT Software GmbH
     - CONTACT Logo als Profilbild
@@ -278,7 +260,6 @@ zu zerschlagen. Die Ordnung der Schritte ist partiell.
    mit dem neuen Packagenamen und einem geänderten Python Namespace,
    freigeben und überall provisionieren, ohne dass uns alles
    zusammenbricht. Hiermit hängen folgende Aktivitäten zusammen:
-
    1. spin.index_url auf code.contact.de instanzweit via
       CI/CD-Variablen setzen
    2. Neues spin core im cetest image bereitstellen,
@@ -288,7 +269,6 @@ zu zerschlagen. Die Ordnung der Schritte ist partiell.
       können.
 
    Natürlich kündigen wir das auch an, weil:
-
    - man danach eine Anpassung der lokalen Konfiguration braucht und
      zwar das 'spin.index_url'-Setting, sodass interne plugins von
      packages.contact.de gezogen werden können.
@@ -314,7 +294,6 @@ zu zerschlagen. Die Ordnung der Schritte ist partiell.
   we can rename the whole stuff to 'mach' (i.e. German for 'do').
 
   Package names would be:
-
   - mach[^1]
   - mach-python
   - mach-ce

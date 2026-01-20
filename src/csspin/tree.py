@@ -623,6 +623,7 @@ class YamlParser:
         self: YamlParser,
         data: str | int | list | dict | ruamel.yaml.comments.CommentedKeyMap | None,
     ) -> ConfigTree | int | str | list | ruamel.yaml.comments.CommentedKeyMap | None:
+        # FIXME: Can this return int?
         if isinstance(data, str):
             return self.parse_str(data)
         elif isinstance(data, list):
@@ -663,6 +664,7 @@ class YamlParser:
                 ki = KeyInfo(self._fn, data.lc.key(key)[0] + 1)
                 tree_set_keyinfo(config, key, ki)
 
+        # FIXME: Is this still true? AFAIR the 'if' directive was removed.
         # If parsing this dict resulted in a list (which can happen by
         # using e.g. if), the result has been stored under the magic
         # key '$' and we return that instead of the parsed dict.
