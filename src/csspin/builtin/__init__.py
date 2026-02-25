@@ -284,7 +284,7 @@ def provision(cfg) -> None:  # type: ignore[no-untyped-def]
     toporun(cfg, "finalize_provision")
 
 
-@task(noenv=True)
+@task(noenv=True, short_help="Clean up project-local resources.")
 def cleanup(  # type: ignore[no-untyped-def]
     cfg,
     purge: option(  # type: ignore[valid-type]
