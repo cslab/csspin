@@ -52,7 +52,9 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 import urllib.request
+import zipfile
 from contextlib import contextmanager
 from traceback import format_exc
 
@@ -958,6 +960,44 @@ def download(url: str, location: str | Path) -> None:
     with urllib.request.urlopen(url) as response:
         data = response.read()
         writebytes(location, data)
+
+
+def extract(archive: str | Path, extract_to: str | Path, member: str = "") -> None:
+    """
+    Unpack ``archive`` into ``extract_to``, optionally filtering by ``member``
+    prefix.
+    """
+    echo(f"Extracting {archive} to {extract_to}")
+    member = str(member).replace("\\", "/")
+
+    mode = None
+    extractor = None
+    if tarfile.is_tarfile(archive):
+        extractor = tarfile.open
+        if str(archive).endswith(".tar.gz") or str(archive).endswith(".tgz"):
+            mode = "r:gz"
+        elif str(archive).endswith(".tar.xz"):
+            mode = "r:xz"
+    elif zipfile.is_zipfile(archive):
+        extractor = zipfile.ZipFile  # type: ignore[assignment]
+        mode = "r"
+    if not mode or extractor is None:
+        die(f"Unsupported archive type {archive}")
+
+    with extractor(archive, mode=mode) as arc:  # type: ignore[misc,arg-type]
+        if isinstance(arc, tarfile.TarFile):
+            members = (
+                entity for entity in arc.getmembers() if entity.name.startswith(member)
+            )
+        elif isinstance(arc, zipfile.ZipFile):
+            members = (entity for entity in arc.namelist() if entity.startswith(member))  # type: ignore[misc]
+        else:
+            members = ()  # type: ignore[assignment]
+
+        arc.extractall(
+            members=members,  # type: ignore[arg-type]
+            path=extract_to,
+        )  # nosec: tarfile_unsafe_members
 
 
 # This is the global configuration tree.

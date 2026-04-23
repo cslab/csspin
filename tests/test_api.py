@@ -15,6 +15,8 @@ import os
 import pickle
 import subprocess
 import sys
+import tarfile
+import zipfile
 from pathlib import Path as PathlibPath
 from typing import TYPE_CHECKING, Callable
 from unittest import mock
@@ -990,3 +992,99 @@ def test_toporun(
 
     captured = capsys.readouterr()
     assert "toporun: configure" in captured.out
+
+
+class TestExtract:
+    """Unit tests for csspin.extract"""
+
+    def test_extract_tar_gz(self: TestExtract, cfg: ConfigTree, tmp_path: Path) -> None:
+        """extract unpacks a .tar.gz archive into the target directory"""
+        archive = tmp_path / "test.tar.gz"
+        content_dir = tmp_path / "src"
+        content_dir.mkdir()
+        (content_dir / "file.txt").write_text("hello")
+
+        with tarfile.open(archive, "w:gz") as tf:
+            tf.add(content_dir / "file.txt", arcname="file.txt")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+        csspin.extract(archive, out_dir)
+
+        assert (out_dir / "file.txt").read_text() == "hello"
+
+    def test_extract_tar_xz(self: TestExtract, cfg: ConfigTree, tmp_path: Path) -> None:
+        """extract unpacks a .tar.xz archive into the target directory"""
+        archive = tmp_path / "test.tar.xz"
+        (tmp_path / "data.txt").write_text("xz content")
+
+        with tarfile.open(archive, "w:xz") as tf:
+            tf.add(tmp_path / "data.txt", arcname="data.txt")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+        csspin.extract(archive, out_dir)
+
+        assert (out_dir / "data.txt").read_text() == "xz content"
+
+    def test_extract_zip(self: TestExtract, cfg: ConfigTree, tmp_path: Path) -> None:
+        """extract unpacks a .zip archive into the target directory"""
+        archive = tmp_path / "test.zip"
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.writestr("hello.txt", "zip content")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+        csspin.extract(archive, out_dir)
+
+        assert (out_dir / "hello.txt").read_text() == "zip content"
+
+    def test_extract_member_filter(
+        self: TestExtract, cfg: ConfigTree, tmp_path: Path
+    ) -> None:
+        """extract filters members by the given prefix"""
+        archive = tmp_path / "test.tar.gz"
+        for name in ("keep/a.txt", "skip/b.txt"):
+            p = tmp_path / name
+            p.parent.mkdir_p()
+            p.write_text(name)
+
+        with tarfile.open(archive, "w:gz") as tf:
+            tf.add(tmp_path / "keep" / "a.txt", arcname="keep/a.txt")
+            tf.add(tmp_path / "skip" / "b.txt", arcname="skip/b.txt")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+        csspin.extract(archive, out_dir, member="keep")
+
+        assert (out_dir / "keep" / "a.txt").exists()
+        assert not (out_dir / "skip" / "b.txt").exists()
+
+    def test_extract_zip_member_filter(
+        self: TestExtract, cfg: ConfigTree, tmp_path: Path
+    ) -> None:
+        """extract filters zip members by the given prefix"""
+        archive = tmp_path / "test.zip"
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.writestr("keep/a.txt", "yes")
+            zf.writestr("skip/b.txt", "no")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+        csspin.extract(archive, out_dir, member="keep")
+
+        assert (out_dir / "keep" / "a.txt").read_text() == "yes"
+        assert not (out_dir / "skip" / "b.txt").exists()
+
+    def test_extract_unsupported_format(
+        self: TestExtract, cfg: ConfigTree, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """extract calls die() for unsupported archive types"""
+        bad_archive = tmp_path / "archive.rar"
+        bad_archive.write_bytes(b"not a real archive")
+
+        mocker.patch("tarfile.is_tarfile", return_value=False)
+        mocker.patch("zipfile.is_zipfile", return_value=False)
+
+        with pytest.raises(click.Abort, match="Unsupported archive type"):
+            csspin.extract(bad_archive, tmp_path / "out")
