@@ -55,7 +55,7 @@ def spin_config_patch() -> str:
 
 
 @fixture()
-def tmp_path(tmp_path: pathlib.Path):
+def tmp_path(tmp_path: pathlib.Path) -> Path:
     """
     Using the custom Path provides simplifies tests, since spin is using this
     type a lot.

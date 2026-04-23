@@ -60,3 +60,4 @@ venv.bak/
 *.log
 doc/_build/
 .vscode
+uv.lock
