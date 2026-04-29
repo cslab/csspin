@@ -60,6 +60,27 @@
 Release Notes
 =============
 
+v3.1.0
+======
+
+April 29, 2026
+
+Enhancements
+============
+
+- Provide ``spin.extract`` function (`#220 <https://code.contact.de/qs/spin/cs.spin/-/work_items/220>`_)
+
+Bug Fixes
+=========
+
+- ``spin.download`` sets no User-Agent (`#245 <https://code.contact.de/qs/spin/cs.spin/-/work_items/245>`_)
+
+Chores
+======
+
+- Help string of cleanup subcommand did not look good (`#218 <https://code.contact.de/qs/spin/cs.spin/-/work_items/218>`_)
+- Document CONTACT Community as Release Notification Channel (`#226 <https://code.contact.de/qs/spin/cs.spin/-/work_items/226>`_)
+
 v3.0.0
 ======
 
