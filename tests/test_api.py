@@ -607,12 +607,53 @@ def test_read_yaml() -> None:
     assert result == csspin.config(foo="bar")
 
 
-def test_download(cfg: ConfigTree, tmp_path: PathlibPath) -> None:
-    """csspin.download is downloading the expected content to file"""
-    url = "https://contact-software.com"
-    location = tmp_path / "index.html"
-    csspin.download(url=url, location=location)
-    assert location.is_file()
+class TestDownload:
+    """
+    Unit tests related to the csspin.download function
+
+    These tests import the cfg fixture to ensure that the function is tested
+    with a properly initialized csspin.ConfigTree.
+    """
+
+    def test_downloads_file(
+        self: TestDownload,
+        cfg: ConfigTree,
+        tmp_path: Path,
+    ) -> None:
+        """csspin.download writes fetched content to the given location"""
+        location = tmp_path / "index.html"
+        csspin.download(url="https://contact-software.com", location=location)
+        assert location.is_file()
+
+    def test_sets_user_agent(
+        self: TestDownload,
+        cfg: ConfigTree,
+        tmp_path: Path,
+    ) -> None:
+        """csspin.download sends a User-Agent header identifying csspin"""
+        with patch("csspin.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value.read.return_value = b"data"
+            csspin.download(url="https://example.com/f", location=tmp_path / "f")
+        req = mock_urlopen.call_args[0][0]
+        assert "csspin" in req.get_header("User-agent")
+
+    def test_merges_extra_headers(
+        self: TestDownload,
+        cfg: ConfigTree,
+        tmp_path: Path,
+    ) -> None:
+        """csspin.download merges caller-supplied headers into the request"""
+        with patch("csspin.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value.read.return_value = b"data"
+            csspin.download(
+                url="https://example.com/f",
+                location=tmp_path / "f",
+                headers={"X-Custom": "value", "User-Agent": "custom-agent"},
+            )
+        req = mock_urlopen.call_args[0][0]
+        assert req.get_header("X-custom") == "value"
+        assert "csspin" not in req.get_header("User-agent")
+        assert "custom-agent" in req.get_header("User-agent")
 
 
 def test_get_tree(cfg: ConfigTree) -> None:

@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from csspin.cli import GroupWithAliases
 
 import collections
+import importlib.metadata
 import inspect
 import os
 import pickle
@@ -950,14 +951,25 @@ def readyaml(fname: str | Path) -> ConfigTree:
     return tree_load(fname)
 
 
-def download(url: str, location: str | Path) -> None:
-    """Download data from ``url`` to ``location``."""
+def download(url: str, location: str | Path, headers: dict | None = None) -> None:
+    """Download data from ``url`` to ``location`` using optional ``headers``."""
     url, location = interpolate((url, location))
     dirname = os.path.dirname(location)
     mkdir(dirname)
     echo(f"Download {url} -> {location} ...")
 
-    with urllib.request.urlopen(url) as response:
+    download_headers = {
+        "User-Agent": (
+            f"csspin/v{importlib.metadata.version('csspin')}"
+            " (https://github.com/cslab/csspin)"
+        )
+    }
+
+    if headers:
+        download_headers.update(headers)
+
+    request = urllib.request.Request(url, headers=download_headers)
+    with urllib.request.urlopen(request) as response:
         data = response.read()
         writebytes(location, data)
 
