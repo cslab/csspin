@@ -107,7 +107,7 @@ Plugin lifecycle
 
    .. code-block:: python
       :caption: Defining plugin defaults within the plugin module
-      :emphasize-lines: 4
+      :emphasize-lines: 3
 
       from csspin import config
 

@@ -19,7 +19,7 @@
 .. _csspin_docs: https://csspin-docs.readthedocs.io/en/stable/
 .. _csspin_frontend: https://csspin-frontend.readthedocs.io/en/stable/
 .. _csspin_java: https://csspin-java.readthedocs.io/en/stable/
-.. _csspin_python: https://csspin-java.readthedocs.io/en/stable/
+.. _csspin_python: https://csspin-python.readthedocs.io/en/stable/
 
 .. _csspin_workflows.stdworkflows: https://csspin-workflows.readthedocs.io/en/stable/plugins/stdworkflows.html
 .. _csspin_frontend.node: https://csspin-frontend.readthedocs.io/en/stable/plugins/node.html
