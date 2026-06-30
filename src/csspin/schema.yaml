@@ -72,6 +72,19 @@ spin:
       help: |
         A dictionary mapping workflow names to lists of commands. This is
         automatically set up by the `when` argument to :py:func:`spin.task`.
+    subprocess_environment:
+      type: str internal
+      help: |
+        A zero-argument callable returning a context manager that activates the
+        "subprocess environment" in which ``spin run``, ``extra_tasks`` scripts
+        and the commands spawned by :py:func:`csspin.sh` are executed.
+
+        An environment-providing plugin (e.g. ``csspin-python.python``) sets this in the
+        ``configure`` hook so that commands run inside the project's environment
+        without globally activating it in spin's own (in-process) environment.
+        When unset, commands run in spin's in-process environment.
+        :py:func:`csspin.sh` only enters this environment when its
+        ``use_subprocess_environment`` argument is true (the default).
 
 environment:
   type: object

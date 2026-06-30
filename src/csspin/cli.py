@@ -34,6 +34,7 @@ import importlib
 import importlib.metadata as importlib_metadata
 import os
 import sys
+from contextlib import nullcontext
 from site import addsitedir
 from traceback import format_exc
 from types import ModuleType
@@ -83,6 +84,10 @@ DEFAULTS = config(
         config=Path("{SPIN_CONFIG}"),
         extra_index=None,
         version=importlib_metadata.version("csspin"),
+        # Default subprocess environment: a no-op context manager. Environment
+        # providing plugins (e.g. csspin-python) replace this in their configure
+        # hook so csspin.sh activates their environment around spawned commands.
+        subprocess_environment=nullcontext,
     ),
     platform=config(
         exe=".exe" if sys.platform == "win32" else "",
