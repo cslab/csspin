@@ -56,7 +56,7 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from traceback import format_exc
 
 import click
@@ -453,7 +453,9 @@ class Command:
         return sh(*cmd, **kwargs)
 
 
-def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
+def sh(
+    *cmd: Any, use_subprocess_environment: bool = True, **kwargs: Any
+) -> subprocess.CompletedProcess | None:
     """Run a program by building a command line from `cmd`.
 
     When multiple positional arguments are given, each is treated as
@@ -464,6 +466,13 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     `silent` is ``False``, the resulting command line will be
     echoed. When `shell` is ``True``, the command line is passed to
     the system's shell.
+
+    Unless ``use_subprocess_environment`` is ``False``, the command is
+    run inside the "subprocess environment" provided by
+    :py:data:`spin.subprocess_environment` (e.g. the project's virtual
+    environment, as set up by ``csspin-python``). When no such
+    environment is configured, the command runs in spin's own
+    in-process environment.
 
     Other keyword arguments are passed into
     :py:func:`subprocess.run`.
@@ -477,18 +486,11 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
     cmd = interpolate(cmd)  # type: ignore[assignment]
     shell = kwargs.pop("shell", len(cmd) == 1)
     check = kwargs.pop("check", True)
-    env = argenv = kwargs.pop("env", None)
-    if env:
-        process_env = dict(os.environ)
-        process_env.update(env)
-        env = process_env
+    argenv = kwargs.pop("env", None)
 
     executable = None
-    if sys.platform == "win32":
-        if len(cmd) == 1:
-            cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
-        if not shell:
-            executable = shutil.which(cmd[0])
+    if sys.platform == "win32" and len(cmd) == 1:
+        cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
     if not kwargs.pop("silent", False):
 
@@ -501,14 +503,39 @@ def sh(*cmd: Any, **kwargs: Any) -> subprocess.CompletedProcess | None:
 
     message = "Command '{cmd_}' failed with exit status {returncode}."
     cmd_ = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[unreachable] # noqa: E501
+
+    cfg = get_tree()
+    environment = (
+        cfg.spin.subprocess_environment if use_subprocess_environment else nullcontext
+    )
+
     try:
-        debug(
-            f"subprocess.run({cmd}, shell={shell}, check={check}, env={argenv},"
-            f" executable={executable}, kwargs={kwargs})",
-        )
-        cpi = subprocess.run(
-            cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
-        )
+        with environment():
+            # Build the process environment *inside* the activated subprocess environment,
+            # so that changes it makes to os.environ (e.g. venv activation) are
+            # reflected in the spawned subprocess.
+            if argenv is not None:
+                env = dict(os.environ)
+                env.update(argenv)
+            else:
+                env = None
+            # Resolve the executable *after* activating the subprocess
+            # environment, so the command is found in the activated environment
+            # (e.g. the venv's Scripts directory) rather than against the
+            # unmodified PATH. This is Windows-only because there we pre-resolve
+            # the program via shutil.which (which reads the current os.environ);
+            # on POSIX subprocess resolves cmd[0] itself via the *spawned*
+            # process' PATH (the env we pass below), so it already honours the
+            # activated environment.
+            if sys.platform == "win32" and not shell:
+                executable = shutil.which(cmd[0])
+            debug(
+                f"subprocess.run({cmd}, {shell=}, {check=}, {argenv=},"
+                f" {executable=}, {kwargs=})",
+            )
+            cpi = subprocess.run(
+                cmd, shell=shell, check=check, env=env, executable=executable, **kwargs
+            )
     except FileNotFoundError as ex:
         debug(format_exc())
         die(str(ex))

@@ -139,9 +139,7 @@ Plugin lifecycle
       installs all collected Python dependencies into the virtual environment.
 
    #. Each plugin's ``init(cfg)`` callback is invoked. This is meant to prepare
-      the environment for using the resources provisioned by the plugin. For
-      example, the `csspin_python.python`_ plugin activates the virtual
-      environment here.
+      the environment for using the resources provisioned by the plugin.
 
 #. Finally the actual tasks is executed.
 
@@ -625,6 +623,8 @@ config-tree of a spin plugin:
 Most plugins should follow the second model.
 
 
+.. _outer-and-inner-interpreter:
+
 Outer and inner interpreter
 ---------------------------
 
@@ -651,6 +651,37 @@ Packages installed using the outer interpreter can depend on other Python
 versions than those installed using the inner interpreter. This is a common
 source of confusion, especially when using the `csspin_python.python`_-like
 plugins.
+
+
+.. _subprocess-environment:
+
+The subprocess environment
+--------------------------
+
+spin distinguishes two environments:
+
+- the **in-process environment** -- the environment of the spin process itself
+  (the outer interpreter, see :ref:`outer-and-inner-interpreter`), in which
+  plugin code runs; and
+
+- the **subprocess environment** -- the environment in which processes spawned by
+  :py:func:`csspin.sh` are executed: ``spin run``, the scripts of ``extra_tasks``
+  and the tools a plugin invokes (all of which are handed to :py:func:`csspin.sh`).
+
+By default these are the same. A subprocess-environment-providing plugin (such as
+`csspin_python.python`_) can make ``csspin.sh`` run commands inside a Python
+virtual environment by registering a zero-argument callable returning a context
+manager on :py:data:`spin.subprocess_environment` -- typically from its
+``configure`` hook, so it is available during provisioning too:
+
+.. code-block:: python
+
+   def configure(cfg):
+       cfg.spin.subprocess_environment = lambda: my_environment(cfg)
+
+``csspin.sh`` enters that context manager around every command it spawns, so the
+environment is activated for the spawned process only rather than process-wide.
+See :py:func:`csspin.sh` for the ``use_subprocess_environment`` opt-out.
 
 
 Transparency and behavior consistency
