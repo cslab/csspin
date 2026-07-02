@@ -60,6 +60,22 @@
 Release Notes
 =============
 
+v3.1.1
+======
+
+July 02, 2026
+
+Bug Fixes
+---------
+
+- Faulty hyperlink to csspin_python documentation (`#256 <https://code.contact.de/qs/spin/cs.spin/-/work_items/256>`_)
+- Provisioned environment interferes with spins active process (`#237 <https://code.contact.de/qs/spin/cs.spin/-/work_items/237>`_)
+
+Chores
+------
+
+- Clarifying environment terminology and usage in tdocs (`!184 <https://code.contact.de/qs/spin/cs.spin/-/merge_requests/184>`_)
+
 v3.1.0
 ======
 
