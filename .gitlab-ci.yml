@@ -6,6 +6,7 @@ include:
     file:
       - ci/common.yml
       - ci/pre-commit.yml
+      - ci/analyze.yml
   - component: $CI_SERVER_FQDN/qs/ci-templates/twine_upload@0.1.0
     inputs:
       name: pypi_upload
@@ -14,6 +15,8 @@ include:
       wheel_path: dist/csspin-*.whl
       needs:
         - wheel
+        - job: analyze
+          artifacts: false
         - job: test_spin_ce_integration
           artifacts: false
         - job: test_spin_frontend_integration
@@ -187,6 +190,28 @@ test_csspin_workflows_integration:
     TRIGGER_PROJECT: qs/spin/csspin-workflows
   extends: .external_integration_base
 
+# ----------------------------- Deploy/Analyze stage ---------------------------
+analyze:
+  extends: .analyze
+  needs:
+    - python3.10
+    - python3.11
+    - python3.12
+    - python3.13
+    - python3.14
+    - windows
+  variables:
+    SOURCE_DIRS: src
+    PYLINTRC: pyproject.toml
+    CI_PROJECT_NAME: csspin
+  script:
+    - SONAR_OPTS="${SONAR_OPTS} -Dsonar.projectVersion=$(git describe --tags --first-parent | awk -F"-" '{split($1, res, "."); sub(/v/, "", res[1]); printf("%d.%d", res[1], res[2])}')"
+    - /usr/bin/combine_test_reports -o reports reports-*/
+    - python3 -m pylint --rcfile=${PYLINTRC} --disable=similarities --exit-zero --persistent=no --output-format=parseable ${SOURCE_DIRS} > pylint-report.txt
+    - sonar-scanner ${SONAR_OPTS}
+    - echo -n "Merged test coverage is "
+    - curl ${SONAR_COV_URL} 2>/dev/null | jq '.component.measures[0].value'
+
 # ------------------------------- Release stage --------------------------------
 
 pages:
@@ -195,17 +220,7 @@ pages:
       artifacts: true
     - job: wheel
       artifacts: false
-    - job: python3.10
-      artifacts: false
-    - job: python3.11
-      artifacts: false
-    - job: python3.12
-      artifacts: false
-    - job: python3.13
-      artifacts: false
-    - job: python3.14
-      artifacts: false
-    - job: windows
+    - job: analyze
       artifacts: false
   image: alpine
   stage: release

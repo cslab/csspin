@@ -29,11 +29,11 @@ python:
   # Stuff that must be installed into the project's virtual
   # environments (additional development dependencies, Python)
   requirements:
+    - -e .
     - build # TODO: Maybe move into csspin_python.python
     - pytest-mock
     - sphinx-click
     - sphinx-rtd-theme
-    - .
 
 uv_provisioner:
   enabled: true
