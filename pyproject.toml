@@ -59,14 +59,21 @@ target-version = ['py39']
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:"]
-omit = ["/tmp/**/*.py"]
+include = ["src/csspin/*"]
 precision = 2
 
 [tool.coverage.run]
-omit = ["/tmp/**/*.py"]
+# `include` (not `source`) keeps the recorded paths as plain relative globs
+# SonarQube can map back to the repo tree; `source` rewrites them against the
+# source root in a way the scanner cannot resolve for subprocess coverage.
+include = ["src/csspin/*"]
 parallel = true
+# Auto-enable coverage in the spin subprocesses without a manual
+# COVERAGE_PROCESS_START shim; `sigterm` flushes data for children killed by
+# SIGTERM.
+patch = ["subprocess"]
 relative_files = true
-source_pkgs = ["csspin"]
+sigterm = true
 
 [tool.isort]
 multi_line_output = 3
