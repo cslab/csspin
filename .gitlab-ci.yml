@@ -17,15 +17,17 @@ include:
         - wheel
         - job: analyze
           artifacts: false
-        - job: test_spin_ce_integration
+        - job: test_csspin_ce_integration
           artifacts: false
-        - job: test_spin_frontend_integration
+        - job: test_csspin_frontend_integration
           artifacts: false
-        - job: test_spin_java_integration
+        - job: test_csspin_java_integration
           artifacts: false
-        - job: test_spin_python_integration
+        - job: test_csspin_python_integration
           artifacts: false
-        - job: test_spin_docs_integration
+        - job: test_csspin_docs_integration
+          artifacts: false
+        - job: test_csspin_tooling_integration
           artifacts: false
         - job: test_csspin_workflows_integration
           artifacts: false
@@ -160,29 +162,34 @@ windows:
     - if: "$CI_COMMIT_REF_PROTECTED"
     - when: never
 
-test_spin_ce_integration:
+test_csspin_ce_integration:
   variables:
-    TRIGGER_PROJECT: pod/components/spin_ce
+    TRIGGER_PROJECT: pod/components/csspin-ce
   extends: .external_integration_base
 
-test_spin_frontend_integration:
+test_csspin_frontend_integration:
   variables:
-    TRIGGER_PROJECT: pod/components/spin_frontend
+    TRIGGER_PROJECT: pod/components/csspin-frontend
   extends: .external_integration_base
 
-test_spin_java_integration:
+test_csspin_java_integration:
   variables:
-    TRIGGER_PROJECT: pod/components/spin_java
+    TRIGGER_PROJECT: pod/components/csspin-java
   extends: .external_integration_base
 
-test_spin_python_integration:
+test_csspin_python_integration:
   variables:
-    TRIGGER_PROJECT: pod/components/spin_python
+    TRIGGER_PROJECT: pod/components/csspin-python
   extends: .external_integration_base
 
-test_spin_docs_integration:
+test_csspin_docs_integration:
   variables:
-    TRIGGER_PROJECT: pod/components/spin_docs
+    TRIGGER_PROJECT: pod/components/csspin-docs
+  extends: .external_integration_base
+
+test_csspin_tooling_integration:
+  variables:
+    TRIGGER_PROJECT: pod/components/csspin-tooling
   extends: .external_integration_base
 
 test_csspin_workflows_integration:
