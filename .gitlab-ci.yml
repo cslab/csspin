@@ -162,32 +162,32 @@ windows:
 
 test_spin_ce_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_ce
+    TRIGGER_PROJECT: pod/components/spin_ce
   extends: .external_integration_base
 
 test_spin_frontend_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_frontend
+    TRIGGER_PROJECT: pod/components/spin_frontend
   extends: .external_integration_base
 
 test_spin_java_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_java
+    TRIGGER_PROJECT: pod/components/spin_java
   extends: .external_integration_base
 
 test_spin_python_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_python
+    TRIGGER_PROJECT: pod/components/spin_python
   extends: .external_integration_base
 
 test_spin_docs_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/spin_docs
+    TRIGGER_PROJECT: pod/components/spin_docs
   extends: .external_integration_base
 
 test_csspin_workflows_integration:
   variables:
-    TRIGGER_PROJECT: qs/spin/csspin-workflows
+    TRIGGER_PROJECT: pod/components/csspin-workflows
   extends: .external_integration_base
 
 # ----------------------------- Deploy/Analyze stage ---------------------------
