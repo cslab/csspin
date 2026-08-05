@@ -1,13 +1,13 @@
 # -*- mode: yaml; coding: utf-8 -*-
 
 include:
-  - project: qs/cs.template
+  - project: pod/tools/cs.template
     ref: v2026.2.3.0
     file:
       - ci/common.yml
       - ci/pre-commit.yml
       - ci/analyze.yml
-  - component: $CI_SERVER_FQDN/qs/ci-templates/twine_upload@0.1.0
+  - component: $CI_SERVER_FQDN/pod/tools/ci-templates/twine_upload@0.1.0
     inputs:
       name: pypi_upload
       twine_username: __token__

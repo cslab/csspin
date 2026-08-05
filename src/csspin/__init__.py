@@ -813,7 +813,7 @@ def namespaces(*nslist: dict) -> Generator:
 # platformdirs provides by default, which is ~/Library/Application
 # Support/, unsuitable for command line applications like spin.  See
 # https://github.com/cslab/csspin-python/issues/1 and the discussion
-# at https://code.contact.de/qs/spin/cs.spin/-/merge_requests/76
+# at https://code.contact.de/pod/components/csspin/-/merge_requests/76
 #
 # On Windows platformdirs.user_config_dir and
 # platformdirs.user_data_dir both point to %LOCALAPPDATA%, that's why

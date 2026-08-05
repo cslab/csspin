@@ -52,9 +52,9 @@
     Chores
     ------
 
-    - Add release notes to the documentation structure (`#204 <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
-    - Update links in the documentation (`#195 <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
-    - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
+    - Add release notes to the documentation structure (`#204 <https://code.contact.de/pod/components/csspin/-/issues/204>`_)
+    - Update links in the documentation (`#195 <https://code.contact.de/pod/components/csspin/-/issues/195>`_)
+    - Remove outdated TODO in the documentation (`#200 <https://code.contact.de/pod/components/csspin/-/issues/200>`_)
 
 =============
 Release Notes
@@ -68,13 +68,13 @@ July 02, 2026
 Bug Fixes
 ---------
 
-- Faulty hyperlink to csspin_python documentation (`#256 <https://code.contact.de/qs/spin/cs.spin/-/work_items/256>`_)
-- Provisioned environment interferes with spins active process (`#237 <https://code.contact.de/qs/spin/cs.spin/-/work_items/237>`_)
+- Faulty hyperlink to csspin_python documentation (`#256 <https://code.contact.de/pod/components/csspin/-/work_items/256>`_)
+- Provisioned environment interferes with spins active process (`#237 <https://code.contact.de/pod/components/csspin/-/work_items/237>`_)
 
 Chores
 ------
 
-- Clarifying environment terminology and usage in tdocs (`!184 <https://code.contact.de/qs/spin/cs.spin/-/merge_requests/184>`_)
+- Clarifying environment terminology and usage in tdocs (`!184 <https://code.contact.de/pod/components/csspin/-/merge_requests/184>`_)
 
 v3.1.0
 ======
@@ -84,18 +84,18 @@ April 29, 2026
 Enhancements
 ============
 
-- Provide ``spin.extract`` function (`#220 <https://code.contact.de/qs/spin/cs.spin/-/work_items/220>`_)
+- Provide ``spin.extract`` function (`#220 <https://code.contact.de/pod/components/csspin/-/work_items/220>`_)
 
 Bug Fixes
 =========
 
-- ``spin.download`` sets no User-Agent (`#245 <https://code.contact.de/qs/spin/cs.spin/-/work_items/245>`_)
+- ``spin.download`` sets no User-Agent (`#245 <https://code.contact.de/pod/components/csspin/-/work_items/245>`_)
 
 Chores
 ======
 
-- Help string of cleanup subcommand did not look good (`#218 <https://code.contact.de/qs/spin/cs.spin/-/work_items/218>`_)
-- Document CONTACT Community as Release Notification Channel (`#226 <https://code.contact.de/qs/spin/cs.spin/-/work_items/226>`_)
+- Help string of cleanup subcommand did not look good (`#218 <https://code.contact.de/pod/components/csspin/-/work_items/218>`_)
+- Document CONTACT Community as Release Notification Channel (`#226 <https://code.contact.de/pod/components/csspin/-/work_items/226>`_)
 
 v3.0.0
 ======
@@ -106,26 +106,26 @@ Breaking Changes
 ----------------
 
 - Drop Python 3.9 support (`#210
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/225>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/225>`_)
 
 Bug Fixes
 ---------
 
 - ``spin --help`` fails if project is not provisioned (`#209
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/209>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/209>`_)
 - Building python on macOS fails with default config (`#2
   <https://github.com/cslab/csspin/issues/2>`_, (`#221
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/221>`_))
+  <https://code.contact.de/pod/components/csspin/-/issues/221>`_))
 - Type hint for ``namespaces()`` incorrect (`!169
-  <https://code.contact.de/qs/spin/cs.spin/-/merge_requests/169>`_)
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/169>`_)
 
 Chores
 ------
 
 - Add repository URL information to Wheel metadata (`#219
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/219>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/219>`_)
 - Update release process documentation and contribution guideline (`#224
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/224>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/224>`_)
 
 v2.0.2
 ======
@@ -136,17 +136,17 @@ Bug Fixes
 ---------
 
 - Programs started using spin run might misbehave in some cases (`#215
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/215>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/215>`_)
 
 Chores
 ------
 
 - Add release notes to the documentation structure (`#204
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/204>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/204>`_)
 - Remove outdated TODO in the documentation (`#200
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/200>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/200>`_)
 - Deprecation of the `system-provision` subcommand (`#197
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/197>`_, `#183
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/183>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/197>`_, `#183
+  <https://code.contact.de/pod/components/csspin/-/issues/183>`_)
 - Update links in the documentation (`#195
-  <https://code.contact.de/qs/spin/cs.spin/-/issues/195>`_)
+  <https://code.contact.de/pod/components/csspin/-/issues/195>`_)

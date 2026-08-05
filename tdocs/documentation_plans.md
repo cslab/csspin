@@ -5,7 +5,7 @@
 **cs.spin**:
 
 - documentation for cs.spin must be updated to match the current state (also remove examples that reference to builtin plugins)
-- extend the documentation in terms of references to the QA-maintained plugin-packages below qs/spin (including a short description about which use-cases are covered by which plugin-package)
+- extend the documentation in terms of references to the QA-maintained plugin-packages below pod/components (including a short description about which use-cases are covered by which plugin-package)
 
 **plugin-packages**:
 

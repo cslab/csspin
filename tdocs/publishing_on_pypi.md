@@ -228,7 +228,7 @@ zu zerschlagen. Die Ordnung der Schritte ist partiell.
 
 1. Auf den Feature-Branches von den Repos weiter ausprobieren und
    gucken, was man so alles ändern muss
-   (https://code.contact.de/qs/spin/cs.spin/-/merge_requests/145).
+   (https://code.contact.de/pod/components/csspin/-/merge_requests/145).
 
 2. Wir passen die import statements in den Plugins an, sodass sie mit
    beiden spin core Varianten kompatibel sind, und zwar so:
