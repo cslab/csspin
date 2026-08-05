@@ -19,7 +19,11 @@
 through a plugin package and are always available.
 """
 
+import importlib.metadata
+import json
 import sys
+import time
+import urllib.request
 
 import click
 import distro
@@ -28,7 +32,9 @@ from csspin import (
     abspath,
     argument,
     confirm,
+    debug,
     die,
+    memoizer,
     option,
     parse_version,
     rmtree,
@@ -270,6 +276,46 @@ def distro_task(cfg) -> None:  # type: ignore[no-untyped-def]
     print(f"distro={repr(dinfo['id'])} version={parse_version(dinfo['version'])}")
 
 
+def check_for_updates(cfg) -> None:  # type: ignore[no-untyped-def]
+    if not cfg.spin.check_for_updates:
+        return
+
+    with memoizer(cfg.spin.data / "csspin_update_check.memo") as m:
+        current_time = time.time()
+        timestamps = m.items()
+        last_checked = timestamps[-1] if timestamps else 0
+        if current_time - last_checked < cfg.spin.version_check_ttl:
+            return
+
+        headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
+        try:
+            request = urllib.request.Request(
+                "https://pypi.org/simple/csspin/", headers=headers
+            )
+            with urllib.request.urlopen(request, timeout=10) as response:
+                latest_version = json.loads(response.read())["versions"][-1]
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            json.JSONDecodeError,
+            KeyError,
+        ) as exc:
+            debug(f"Could not check for a new csspin version: {exc}")
+            return
+        m.clear()
+        m.add(current_time)
+
+    current_version = importlib.metadata.version("csspin")
+
+    if parse_version(latest_version) > parse_version(current_version):
+        warn(
+            "A new release of csspin is available:",
+            f"{click.style(current_version, fg='red')} ->"
+            f" {click.style(latest_version, fg='green')}",
+        )
+        warn("Consider updating to the latest version.")
+
+
 @task("provision", noenv=True)
 def provision(cfg) -> None:  # type: ignore[no-untyped-def]
     """
@@ -282,6 +328,8 @@ def provision(cfg) -> None:  # type: ignore[no-untyped-def]
 
     toporun(cfg, "provision")
     toporun(cfg, "finalize_provision")
+
+    check_for_updates(cfg)
 
 
 @task(noenv=True, short_help="Clean up project-local resources.")
