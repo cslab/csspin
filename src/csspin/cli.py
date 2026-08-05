@@ -506,7 +506,6 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
         die(exc)
 
     finalize_cfg_tree(cfg)
-    mkdir("{spin.data}")
 
     if help:
         # If help should be printed, we do so with exit-code 0
@@ -659,6 +658,7 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
         PREPEND_PROP,
         APPEND_PROP,
     )
+
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
 
@@ -669,6 +669,8 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
 
     if DUMP:
         print(obfuscate(tree.tree_dump(cfg)))
+
+    mkdir("{spin.data}")
 
 
 def install_plugin_packages(cfg: tree.ConfigTree) -> None:

@@ -54,6 +54,16 @@ spin:
     version:
       type: str internal
       help: The version of spin that is being used.
+    version_check_ttl:
+      type: int
+      help: Seconds between checks for a new csspin release.
+      default: 21600 # 6 hours
+    check_for_updates:
+      type: bool
+      help: |
+        Whether 'spin provision' should check for and notify about a newer
+        csspin release.
+      default: true
     project_name:
       type: str
       help: The project that is spin running on
