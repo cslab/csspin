@@ -258,28 +258,18 @@ can define the following sub-keys:
 * ``spin``: a list of spin commands (without ``spin``)
 * ``help``: help text to display
 
-The following example adds ``pipx-install`` and ``all`` as tasks to
-spin:
+The following example adds ``install-demo-data`` as a task to spin:
 
 .. code-block:: yaml
 
-   ...
-   extra_tasks:
-     pipx-install:
-       env:
-         USE_EMOJI: no
-       script:
-         - pipx install --force --editable .
-       help: This installs spin via pipx
-     all:
-       spin:
-         - build
-         - tests
-         - docs
-         - package
-         - upload
-       help: Run a set of available tasks
-
+  ...
+  extra_tasks:
+    install-demo-data:
+      env:
+        URL: "https://gitlab.contact.de"  # available during script execution
+      script:
+        - python -c "import os; print('Downloading data from ' + os.getenv('URL'))"
+      help: This text appears next to the command when running spin --help
 
 Build-rules
 -----------
