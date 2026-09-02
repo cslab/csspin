@@ -306,9 +306,10 @@ There are some more constraints and notable details:
 - Default values should be defined in the Python module of the plugin and *not
   within the schema*.
 
-- Values that won't have a valid YAML type (valid types: object/dict, list, str,
-  int, float, bool), during runtime can't be represented in the schema. These
-  must be defined in the plugins module using ``defaults = spin.config(...).``
+- Values that won't have a valid YAML type (see :ref:`plugin-schema-types-label`
+  for the available types), during runtime can't be represented in the schema.
+  These must be defined in the plugins module using ``defaults =
+  spin.config(...).``
 
 - Properties with default values that are initially ``None`` (``defaults =
   config(key=None)``) and will have a valid type during runtime (e.g. set
@@ -325,6 +326,8 @@ There are some more constraints and notable details:
 
 As mentioned schemas are used to assign types to properties. The available
 types are referenced below.
+
+.. _plugin-schema-types-label:
 
 .. list-table:: Available property types
    :widths: 20 80
@@ -352,7 +355,7 @@ types are referenced below.
      - integer values
    * - ``bool``
      - boolean values
-   * - secret
+   * - ``secret``
      - secret string values (API keys, passwords) that will be masked in the output
 
 Spin handles types of configuration tree properties as defined in the respective
@@ -747,20 +750,24 @@ Those secrets obviously can't be part of the plugin implementation, including
 the configuration defaults (where they belong semantically in many cases).
 
 Canonical solution for that problem is pulling those secrets from the
-configuration tree property and interpolating the default value from an
-environment variable, i.e. something like this:
+configuration tree property. Since there is no sensible default for a secret by
+design, we can simply declare it as ``secret`` (see :ref:`plugin-schema-types-label`)
+in the plugin's schema:
 
-.. code-block:: python
-   :caption: Secret usage within a plugin
+.. code-block:: yaml
+   :caption: Defining a property to be a secret
 
-   from csspin import config
+   # myplugin_schema.yaml
+   myplugin:
+       properties:
+           token:
+               type: secret
+               help: A token for authenticating myplugin
 
-   defaults = config(postgres=config(postgres_syspwd="{POSTGRES_SYSPWD}"))
-
-That way we can provide the secrets conveniently as well on CI/CD as
-AWS/production as on dev-workstations. Additionally, developers have the
-additional benefit to control the according configuration properties via private
-unshared ``global.yaml`` (see :ref:`writing-global-label`).
+That way we can provide the secrets conveniently via environment variables for
+instance in CI/CD via setting ``SPIN_TREE_MYPLUGIN__TOKEN=abcd``. Additionally,
+developers have the benefit to control the according configuration properties
+via a private unshared ``global.yaml`` (see :ref:`writing-global-label`).
 
 Dependency Management
 ---------------------
