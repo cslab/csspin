@@ -4,8 +4,8 @@ requires = ["setuptools>=77", "setuptools_scm>=8"]
 
 [project]
 authors = [
-  {name = "CONTACT Software GmbH", email = "info@contact-software.com"},
-  {name = "Frank Patz-Brockmann", email = "frank.patz-brockmann@contact-software.com"}
+  { name = "CONTACT Software GmbH", email = "info@contact-software.com" },
+  { name = "Frank Patz-Brockmann", email = "frank.patz-brockmann@contact-software.com" }
 ]
 classifiers = [
   "Environment :: Console",
@@ -34,9 +34,9 @@ dynamic = ["version", "readme"]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 maintainers = [
-  {name = "Waleri Enns", email = "waleri.enns@contact-software.com"},
-  {name = "Benjamin Thomas Schwertfeger", email = "benjaminthomas.schwertfeger@contact-software.com"},
-  {name = "Fabian Hafer", email = "fabian.hafer@contact-software.com"}
+  { name = "Waleri Enns", email = "waleri.enns@contact-software.com" },
+  { name = "Benjamin Thomas Schwertfeger", email = "benjaminthomas.schwertfeger@contact-software.com" },
+  { name = "Fabian Hafer", email = "fabian.hafer@contact-software.com" }
 ]
 name = "csspin"
 requires-python = ">=3.10"
@@ -311,7 +311,7 @@ markers = [
 ]
 
 [tool.setuptools.dynamic]
-readme = {file = "README.rst", content-type = "text/x-rst"}
+readme = { file = "README.rst", content-type = "text/x-rst" }
 
 [tool.setuptools.packages.find]
 namespaces = false
