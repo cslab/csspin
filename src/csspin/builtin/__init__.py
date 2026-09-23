@@ -21,6 +21,7 @@ through a plugin package and are always available.
 
 import importlib.metadata
 import json
+import shlex
 import sys
 import time
 import urllib.request
@@ -66,7 +67,7 @@ def exec_shell(ctx: click.Context, args: list[str]) -> None:
         subcommand_obj = commands.get_command(ctx, "run")  # type: ignore[attr-defined]
         click.echo(subcommand_obj.get_help(ctx))
     else:
-        sh(" ".join(args), shell=True)
+        sh(shlex.join(args), shell=True)
 
 
 def pretty_descriptor(parent: str, name: str, descriptor, rst: bool) -> str:  # type: ignore[no-untyped-def]
