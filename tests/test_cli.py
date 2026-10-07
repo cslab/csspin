@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import os
 import sys
+import textwrap
 from pathlib import Path as PathlibPath
-from shutil import copy
+from shutil import copy, which
 from typing import TYPE_CHECKING, Callable, Generator
 
 import click
@@ -415,3 +416,129 @@ def test_spin_version() -> None:
     expected_version = importlib_metadata.version("csspin")
     output = check_output(["spin", "--version"], text=True)
     assert expected_version in output
+
+
+def _shell_complete(
+    comp_words: str, comp_cword: int, cwd: PathlibPath | None = None
+) -> set[str]:
+    """Helper method for spin shell complete tests"""
+    env = {
+        **os.environ,
+        "_SPIN_COMPLETE": "bash_complete",
+        "COMP_WORDS": comp_words,
+        "COMP_CWORD": str(comp_cword),
+    }
+    output = check_output(["spin"], env=env, cwd=cwd, text=True)
+    return {line.split(",", 1)[1] for line in output.splitlines() if line}
+
+
+@pytest.mark.parametrize(
+    "comp_words,comp_cword,expected",
+    [
+        ("spin provi", 1, {"provision"}),
+        ("spin sbom", 2, {"assemble", "build", "enrich", "quality"}),
+        ("spin prov", 2, set()),
+        ("spin --", 1, {"--generate-shell-completion", "--verbose", "--version"}),
+    ],
+    ids=["command", "subcommand", "incomplete", "all-options"],
+)
+def test_spin_shell_complete(
+    comp_words: str, comp_cword: int, expected: set[str]
+) -> None:
+    """Ensuring that spin shell completion suggests commands and subcommands"""
+    assert expected <= _shell_complete(comp_words, comp_cword)
+
+
+def test_spin_shell_complete_missing_spinfile(tmp_path: PathlibPath) -> None:
+    """Check if autcomplete suggests top-level options without a spinfile"""
+    assert "--version" in _shell_complete("spin -f no_spinfile.yaml --ver", 3)
+    assert _shell_complete("spin -f no_spinfile.yaml provi", 3) == set()
+
+
+# Real shell command completion for command line in $TEST_SPIN_COMPLETE_LINE.
+_SHELL_DRIVERS = {
+    "bash": [
+        "bash",
+        "--norc",
+        "--noprofile",
+        "-c",
+        textwrap.dedent("""
+            source <(spin --generate-shell-completion bash)
+            COMP_WORDS=($TEST_SPIN_COMPLETE_LINE); [[ $TEST_SPIN_COMPLETE_LINE == *" " ]] && COMP_WORDS+=("")
+            COMP_CWORD=$((${#COMP_WORDS[@]} -1))
+            _spin_completion spin
+            printf "%s\\n" "${COMPREPLY[@]}"
+        """),
+    ],
+    "zsh": [
+        "zsh",
+        "-f",
+        "-c",
+        textwrap.dedent("""
+            compdef() { :; }
+            compadd() { print -rl -- "${(@P)${@[-1]}}"; }
+            _describe() { local c; for c in ${(@P)3}; do print -r -- "${c%%:*}"; done; }
+            source <(spin --generate-shell-completion zsh)
+            words=("${(@s: :)TEST_SPIN_COMPLETE_LINE}"); CURRENT=${#words}
+            _spin_completion
+        """),
+    ],
+    "fish": [
+        "fish",
+        "--no-config",
+        "-c",
+        textwrap.dedent("""
+            spin --generate-shell-completion fish | source
+            complete -C "$TEST_SPIN_COMPLETE_LINE" | string split -f1 \\t; or true
+        """),
+    ],
+    "powershell": [
+        "pwsh",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        textwrap.dedent("""
+            . ([scriptblock]::Create((spin --generate-shell-completion powershell) -join "`n"))
+            $line = $env:TEST_SPIN_COMPLETE_LINE
+            $result = TabExpansion2 -inputScript $line -cursorColumn $line.Length
+            $result.CompletionMatches.CompletionText
+        """),
+    ],
+}
+
+
+@pytest.mark.parametrize("shell", _SHELL_DRIVERS)
+@pytest.mark.parametrize(
+    "line,expected",
+    [
+        ("spin provi", {"provision"}),
+        ("spin sbom ", {"assemble", "build", "enrich", "quality"}),
+        ("spin --ver", {"--verbose", "--version"}),
+        ("spin --", {"--generate-shell-completion", "--verbose", "--version"}),
+        ("spin -", {"-C", "-q", "-v", "--dump"}),
+        ("spin loremipsum", set()),
+    ],
+    ids=[
+        "command",
+        "subcommand",
+        "option",
+        "all-options",
+        "single-dash",
+        "unknown-command",
+    ],
+)
+def test_spin_shell_complete_e2e(shell: str, line: str, expected: set[str]) -> None:
+    """Ensuring that the generated completion script works in each shell"""
+    driver = _SHELL_DRIVERS[shell]
+    if sys.platform == "win32" and shell != "powershell":
+        pytest.skip(f"{shell} can't reach the venv's spin on Windows")
+    if not which(driver[0]):
+        pytest.skip(f"{driver[0]} is not installed")
+
+    env = {
+        **os.environ,
+        "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"],
+        "TEST_SPIN_COMPLETE_LINE": line,
+    }
+    output = check_output(driver, env=env, text=True)
+    assert expected <= set(output.splitlines())

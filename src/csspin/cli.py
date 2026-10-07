@@ -42,6 +42,7 @@ from typing import TYPE_CHECKING, Any, Generator, Iterable
 
 import click
 import packaging.version
+from click.shell_completion import get_completion_class
 from path import Path
 
 from csspin import (
@@ -72,6 +73,8 @@ from csspin.tree import ConfigTree
 
 if TYPE_CHECKING:
     from typing import Callable
+
+    from click.shell_completion import CompletionItem
 
 
 # These are the basic defaults for the top-level configuration
@@ -374,10 +377,32 @@ def base_options(fn: Callable) -> Callable:
                 " spin -p python.version=3.10.19 ..."
             ),
         ),
+        click.option(
+            "--generate-shell-completion",
+            "shell",
+            type=click.Choice(["bash", "zsh", "fish", "powershell"]),
+            is_eager=True,
+            expose_value=False,
+            callback=_print_completion_script,
+            help=(
+                "Print the shell completion script. For bash, add"
+                '  eval "$(spin --generate-shell-completion bash)" to ~/.bashrc'
+            ),
+        ),
     ]
     for decorator in decorators:
         fn = decorator(fn)
     return fn
+
+
+def _print_completion_script(
+    ctx: click.Context, param: click.Parameter, value: str | None
+) -> None:
+    if not value or ctx.resilient_parsing:
+        return
+    comp_cls = get_completion_class(value)
+    print(comp_cls(cli, {}, "spin", "_SPIN_COMPLETE").source())
+    ctx.exit()
 
 
 class GroupWithAliases(click.Group):
@@ -405,6 +430,51 @@ def register_noenv(cmdname: str) -> None:
 _nested = False
 
 
+class LazyLoadSpin(click.Command):
+    def shell_complete(
+        self, ctx: click.Context, incomplete: str
+    ) -> list[CompletionItem]:
+        spinfile = find_spinfile(ctx.params.get("spinfile"))
+        completion_result: list[CompletionItem] = []
+
+        if not spinfile:
+            completion_result = click.Command.shell_complete(  # type: ignore[attr-defined]
+                self, ctx, incomplete
+            )
+            return completion_result
+
+        cfg = load_minimal_tree(
+            spinfile=spinfile, envbase=ctx.params.get("envbase"), setenvs=False
+        )
+        try:
+            load_plugins_into_tree(cfg)
+        except ModuleNotFoundError:
+            pass
+
+        with commands.make_context(
+            ctx.info_name or "spin",
+            list(ctx.args),
+            parent=ctx,
+            resilient_parsing=True,
+            help_option_names=["--help"],
+        ) as sub_ctx:  # type: ignore[attr-defined]
+            cur_ctx = sub_ctx
+
+            while isinstance(cur_ctx.command, click.MultiCommand):
+                rest = cur_ctx.protected_args + cur_ctx.args
+                if not rest:
+                    break
+                name, cmd, args = cur_ctx.command.resolve_command(cur_ctx, rest)
+                if cmd is None:
+                    return []  # type: ignore[unreachable]
+                cur_ctx = cmd.make_context(
+                    name, args, parent=cur_ctx, resilient_parsing=True
+                )
+
+            completion_result = cur_ctx.command.shell_complete(cur_ctx, incomplete)
+            return completion_result
+
+
 @click.command(cls=GroupWithAliases, help=__doc__)
 @click.pass_context
 @base_options  # required for the documentation build to find CLI references
@@ -418,6 +488,7 @@ def commands(ctx: click.Context, **kwargs: Any) -> None:
 
 
 @click.command(
+    cls=LazyLoadSpin,
     context_settings={
         "allow_extra_args": True,
         # Override the default help option name -- we want click to

@@ -88,7 +88,7 @@ pre-commit:
   script:
     - python -m pip install .
     - spin provision
-    - spin test -vv --coverage --with-test-report
+    - spin --ap pytest.opts=-v test --coverage --with-test-report
   after_script:
     - mkdir reports-${CI_JOB_ID}
     - mv pytest.xml reports-${CI_JOB_ID}/
@@ -106,28 +106,28 @@ pre-commit:
         path: ./*coverage*.xml
   interruptible: true
 
-.install_git:
+.install_test_dependencies:
   before_script:
-    - apt-get update -y && apt-get install git -y
+    - apt-get update -y && apt-get install git zsh fish -y
 
 python3.10:
-  extends: [.test_base, .install_git]
+  extends: [.test_base, .install_test_dependencies]
   image: python:3.10-slim
 
 python3.11:
-  extends: [.test_base, .install_git]
+  extends: [.test_base, .install_test_dependencies]
   image: python:3.11-slim
 
 python3.12:
-  extends: [.test_base, .install_git]
+  extends: [.test_base, .install_test_dependencies]
   image: python:3.12-slim
 
 python3.13:
-  extends: [.test_base, .install_git]
+  extends: [.test_base, .install_test_dependencies]
   image: python:3.13-slim
 
 python3.14:
-  extends: [.test_base, .install_git]
+  extends: [.test_base, .install_test_dependencies]
   image: python:3.14-slim
 
 windows:
