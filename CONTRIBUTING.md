@@ -125,9 +125,13 @@ Steps to create a release:
    [cetest](https://code.contact.de/pod/images/cetest) image, follow the release
    procedure there.
 
-5. Announce the release via
+5. If the release is a major or minor, add the new version to the project's
+   entry in CEDM's component portfolio, set the previous version's status
+   to "eingestellt", and set the new version's status to "lieferbar".
+
+6. Announce the release via
    https://community.contact-software.com/c/news-and-announcements/releases/11
    channel. Don't forget to set the tags "ptm" and "csspin" for better
    visibility.
 
-6. [optional] Create a Demo It! demonstrating the latest improvements of csspin.
+7. [optional] Create a Demo It! demonstrating the latest improvements of csspin.
