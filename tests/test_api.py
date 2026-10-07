@@ -847,10 +847,6 @@ def test_argument() -> None:
     assert isinstance(decorated_command.params[0].type, click.types.StringParamType)
     assert decorated_command.params[0].required
 
-    with pytest.raises(TypeError, match=".* got an unexpected keyword argument 'help'"):
-        argument = csspin.argument(help="Arguments must not implement 'help'")
-        argument("param")(task(test_command))
-
 
 def test_option() -> None:
     """

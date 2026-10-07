@@ -22,3 +22,52 @@ Command Line Reference
 
 .. click:: csspin.cli:commands
    :prog: spin
+
+
+.. _shell-completion-label:
+
+Shell Completion
+================
+
+Spin supports :kbd:`Tab` completion for Bash, Zsh, Fish, and PowerShell.
+To enable it, generate the completion script for your shell with
+:option:`--generate-shell-completion <spin --generate-shell-completion>`
+and load it when the shell starts.
+
+Bash
+----
+
+Add this to ``~/.bashrc``:
+
+.. code-block:: bash
+
+   eval "$(spin --generate-shell-completion bash)"
+
+Zsh
+---
+
+Add this to ``~/.zshrc``:
+
+.. code-block:: zsh
+
+   eval "$(spin --generate-shell-completion zsh)"
+
+Fish
+----
+
+Save the script output to Fish's completions directory:
+
+.. code-block:: fish
+
+   spin --generate-shell-completion fish > ~/.config/fish/completions/spin.fish
+
+PowerShell
+----------
+
+Add this to your PowerShell profile (``$PROFILE``):
+
+.. code-block:: powershell
+
+   spin --generate-shell-completion powershell | Out-String | Invoke-Expression
+
+After modifying your shell configuration, open a new shell for the changes to take effect. :kbd:`Tab` completion should now work.
