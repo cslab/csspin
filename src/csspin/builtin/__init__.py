@@ -20,14 +20,17 @@ through a plugin package and are always available.
 """
 
 import importlib.metadata
+import importlib.util
 import json
 import shlex
 import sys
+import textwrap
 import time
 import urllib.request
 
 import click
 import distro
+from path import Path
 
 from csspin import (
     abspath,
@@ -35,9 +38,13 @@ from csspin import (
     confirm,
     debug,
     die,
+    echo,
+    exists,
     memoizer,
+    mkdir,
     option,
     parse_version,
+    readtext,
     rmtree,
     run_script,
     run_spin,
@@ -46,6 +53,7 @@ from csspin import (
     toporun,
     tree,
     warn,
+    writetext,
 )
 from csspin.cli import (
     APPEND_PROP,
@@ -56,6 +64,14 @@ from csspin.cli import (
     install_plugin_packages,
     load_plugins_into_tree,
 )
+
+CATCHUP_COMMAND = "spin catchup"
+
+# Project-local hook config per agent.
+AGENT_HOOK_FILES = {
+    "claude": Path(".claude/settings.json"),
+    "codex": Path(".codex/hooks.json"),
+}
 
 
 @task("run", add_help_option=False)
@@ -389,3 +405,127 @@ def cleanup(  # type: ignore[no-untyped-def]
 
     if purge:
         rmtree(cfg.spin.data)
+
+
+def _build_catchup_briefing(cfg) -> str:  # type: ignore[no-untyped-def]
+    """Assemble the markdown briefing printed by 'spin catchup'."""
+    spec = importlib.util.find_spec("csspin")
+    install_location = spec.submodule_search_locations[0]  # type: ignore[union-attr,index]
+
+    return textwrap.dedent(f"""\
+        # {cfg.spin.project_name} uses spin
+
+        spin (csspin) is a pluggable task runner: it provisions the tools this
+        project needs into `{cfg.spin.spin_dir}`, and turns every task and
+        workflow its plugins define into a `spin <task>` command. Everything
+        below reflects what spin (version {cfg.spin.version}) knows about this
+        project's `{cfg.spin.spinfile.name}` right now. Some projects keep more
+        than one spinfile (selected via `spin -f <name>`). If so, this briefing
+        is specific to `{cfg.spin.spinfile.name}` alone, so check for others
+        before assuming it's the only one. To get the briefing for another
+        spinfile, run `spin -f <name> catchup`.
+
+        If `{cfg.spin.spin_dir}` does not exist yet, run `spin provision` first.
+        Plugin tasks (e.g. `spin pytest`) only exist once the project is
+        provisioned.
+
+        ## How spin fits together
+
+        `{cfg.spin.spinfile.name}` is the source of truth for what gets
+        installed and how tasks behave. Editing it changes nothing until `spin
+        provision` runs again. Provisioning also installs and configures
+        whatever plugins the file lists (e.g. a Python or Node toolchain, test
+        runners), each contributing its own tasks and configuration section.
+
+        `{cfg.spin.spin_dir}` holds everything spin manages for this project:
+        plugin packages, managed tool installs, virtual environments. spin
+        populates it (`spin provision`) and tears it down (`spin cleanup`).
+        Manual edits or installs there tend to produce a broken state that
+        neither command will detect or fix.
+
+        Run tools through spin: `spin <task>` for whatever the project defines
+        (e.g. `spin pytest`, `spin build`), or `spin run <exe>` for a one-off
+        command that should still execute inside spin's managed environment
+        (e.g. `spin run python -m pip list`). A tool called by its bare name
+        (e.g. python, or pytest ) outside of spin may resolve to a different,
+        unmanaged copy, if one happens to be on `PATH` at all.
+
+        `spin --help` only lists the tasks available right now. After editing
+        `{cfg.spin.spinfile.name}` and reprovisioning, run `spin --help` again
+        to see what's new.
+
+        ## Finding specifics
+
+        - `spin <task> --help`: options and defaults for one task, e.g. `spin
+          pytest --help`.
+        - `spin schemadoc [<path>]`: documents csspin's configuration tree
+          (every property the schema defines, not only the ones set in
+          `{cfg.spin.spinfile.name}`), e.g. `spin schemadoc python.version`.
+        - `spin --dump`: the fully interpreted configuration in effect. This can
+          be large, so pipe it through `grep <property>` for a specific value
+          instead of reading all of it.
+        - `{cfg.spin.spin_dir}/plugins`: where installed plugin packages live.
+        - {install_location}: where spin's own sources are installed, for
+          inspecting how the plugin/task system works directly.
+        """)
+
+
+def _install_catchup_hook(cfg, agent: str) -> None:  # type: ignore[no-untyped-def]
+    """
+    Add a SessionStart hook running 'spin catchup' to the agent's project
+    config. Creates the config file if it is missing.
+    """
+    target = cfg.spin.spinfile.absolute().parent / AGENT_HOOK_FILES[agent]
+    settings = {}
+    try:
+        if exists(target):
+            settings = json.loads(readtext(target))
+        groups = settings.setdefault("hooks", {}).setdefault("SessionStart", [])
+        already_installed = any(
+            handler.get("command") == CATCHUP_COMMAND
+            for group in groups
+            for handler in group.get("hooks", [])
+        )
+    except (json.JSONDecodeError, AttributeError, TypeError) as ex:
+        die(
+            f"{target} is not a valid hook config, not touching it: {ex}", resolve=False
+        )
+
+    if already_installed:
+        echo(f"{target} already runs '{CATCHUP_COMMAND}' on session start.")
+    else:
+        groups.append(
+            {
+                "matcher": "startup|resume|clear|compact",
+                "hooks": [{"type": "command", "command": CATCHUP_COMMAND}],
+            }
+        )
+        mkdir(target.parent)
+        writetext(target, json.dumps(settings, indent=4) + "\n")
+        echo(f"Added a SessionStart hook running '{CATCHUP_COMMAND}' to {target}.")
+
+    if agent == "codex":
+        warn(
+            "Codex only runs project hooks once the project's .codex/ layer is"
+            " trusted and the hook is reviewed. Run '/hooks' in Codex to trust it."
+        )
+
+
+@task("catchup", noenv=True)
+def catchup(  # type: ignore[no-untyped-def]
+    cfg,
+    install: option(  # type: ignore[valid-type]
+        "--install",
+        type=click.Choice(sorted(AGENT_HOOK_FILES)),
+        help="Add a session start hook running 'spin catchup' to the"  # noqa: F722
+        " project's config for the given agent.",
+    ),
+) -> None:
+    """
+    Print a briefing for agentic coding tools about this project's spin setup.
+    """
+    if install:
+        _install_catchup_hook(cfg, install)
+        return
+
+    print(_build_catchup_briefing(cfg))

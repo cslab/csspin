@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import textwrap
@@ -104,6 +105,153 @@ def test_cleanup(
     )
 
     assert not tmp_spin_data.exists()
+
+
+def write_minimal_spinfile(project_dir: PathlibPath, project_name: str) -> None:
+    """Write a plugin-free spinfile.yaml so catchup stays hermetic."""
+    (project_dir / "spinfile.yaml").write_text(
+        f"spin:\n  project_name: {project_name}\n"
+    )
+
+
+def count_catchup_hooks(settings: dict) -> int:
+    """Count the SessionStart handlers that run 'spin catchup'."""
+    return sum(
+        handler["command"] == "spin catchup"
+        for group in settings["hooks"]["SessionStart"]
+        for handler in group["hooks"]
+    )
+
+
+class TestCatchup:
+    """Tests for the 'spin catchup' builtin task."""
+
+    def test_briefing(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+    ) -> None:
+        """catchup prints the briefing even though nothing is provisioned."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+
+        with chdir(tmp_path):
+            result = cli_runner.invoke(cli.cli, ["catchup"])
+
+        assert result.exit_code == 0
+        assert "catchup-test" in result.output
+
+    @pytest.mark.parametrize(
+        "agent, target",
+        [
+            ("claude", ".claude/settings.json"),
+            ("codex", ".codex/hooks.json"),
+        ],
+    )
+    def test_install_creates_hook_config(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+        agent: str,
+        target: str,
+    ) -> None:
+        """--install=<agent> creates the missing config with a SessionStart hook."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+
+        with chdir(tmp_path):
+            result = cli_runner.invoke(cli.cli, ["catchup", f"--install={agent}"])
+
+        assert result.exit_code == 0
+        assert count_catchup_hooks(json.loads((tmp_path / target).read_text())) == 1
+        if agent == "codex":
+            assert "/hooks" in result.output
+
+    def test_install_targets_spinfile_directory(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+    ) -> None:
+        """The hook lands next to the spinfile, not in the current directory."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+        subdir = tmp_path / "sub"
+        subdir.mkdir()
+
+        spinfile = tmp_path / "spinfile.yaml"
+
+        with chdir(tmp_path):
+            result = cli_runner.invoke(
+                cli.cli,
+                ["-C", str(subdir), "-f", str(spinfile), "catchup", "--install=claude"],
+            )
+
+        assert result.exit_code == 0
+        assert (tmp_path / ".claude" / "settings.json").exists()
+        assert not (subdir / ".claude").exists()
+
+    def test_install_preserves_existing_settings(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+    ) -> None:
+        """Unrelated settings and other hooks survive the merge."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+        settings_file = tmp_path / ".claude" / "settings.json"
+        settings_file.parent.mkdir()
+        settings_file.write_text(
+            json.dumps(
+                {
+                    "permissions": {"allow": ["Bash(ls:*)"]},
+                    "hooks": {
+                        "SessionStart": [
+                            {"hooks": [{"type": "command", "command": "echo hi"}]}
+                        ],
+                        "Stop": [{"hooks": [{"type": "command", "command": "x"}]}],
+                    },
+                }
+            )
+        )
+
+        with chdir(tmp_path):
+            result = cli_runner.invoke(cli.cli, ["catchup", "--install=claude"])
+
+        assert result.exit_code == 0
+        settings = json.loads(settings_file.read_text())
+        assert settings["permissions"] == {"allow": ["Bash(ls:*)"]}
+        assert "Stop" in settings["hooks"]
+        assert len(settings["hooks"]["SessionStart"]) == 2
+        assert count_catchup_hooks(settings) == 1
+
+    def test_install_is_idempotent(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+    ) -> None:
+        """Running --install twice does not add a second hook."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+
+        with chdir(tmp_path):
+            cli_runner.invoke(cli.cli, ["catchup", "--install=claude"])
+            result = cli_runner.invoke(cli.cli, ["catchup", "--install=claude"])
+
+        assert result.exit_code == 0
+        settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
+        assert count_catchup_hooks(settings) == 1
+
+    def test_install_rejects_invalid_json(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: PathlibPath,
+    ) -> None:
+        """A broken config is reported and left untouched."""
+        write_minimal_spinfile(tmp_path, "catchup-test")
+        settings_file = tmp_path / ".claude" / "settings.json"
+        settings_file.parent.mkdir()
+        settings_file.write_text("{not json")
+
+        with chdir(tmp_path):
+            result = cli_runner.invoke(cli.cli, ["catchup", "--install=claude"])
+
+        assert result.exit_code != 0
+        assert settings_file.read_text() == "{not json"
 
 
 def test_find_spinfile(tmp_path: PathlibPath) -> None:
