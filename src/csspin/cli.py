@@ -560,8 +560,15 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
         setenvs=not help,
     )
 
-    if ctx.args and ctx.args[0] in ("cleanup", "provision", "system-provision"):
-        # Special case for tasks that modify the config tree themselves.
+    if ctx.args and ctx.args[0] in (
+        "catchup",
+        "cleanup",
+        "provision",
+        "system-provision",
+    ):
+        # Special case for tasks that modify the config tree themselves, or
+        # that must keep working (catchup) even when plugins aren't
+        # provisioned yet and thus can't be loaded here.
         commands.main(ctx.args)
         return None
     try:

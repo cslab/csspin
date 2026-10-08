@@ -416,6 +416,37 @@ individual property documentations.
    The absolute path to spin's project related data. This is also the place
    environments are provisioned.
 
+``catchup``
+-----------
+
+:program:`spin catchup` prints a briefing for agentic coding tools (or humans)
+about a project's spin setup: what spin manages, how tasks and provisioning
+relate, and where to find more specific information, allowing agents (and
+humans) to orientate quickly without reading the entire documentation or
+scanning the source code.
+
+.. code-block:: bash
+   :caption: Getting a brief summary of spin how to orientate in the current project
+
+   spin catchup
+
+To make an agent run ``spin catchup`` at the start of every session (a session
+in this context is the active connection and its conversations between AI agents
+with their triggering entity), pass ``--install=claude`` or ``--install=codex``.
+This adds a ``SessionStart`` hook running ``spin catchup`` to the project-local
+hook configuration of that agent (``.claude/settings.json`` for Claude Code,
+``.codex/hooks.json`` for Codex), so the briefing reaches the agent without it
+having to follow an instruction.
+
+.. code-block:: bash
+   :caption: Installing the session start hook for Claude Code
+
+   spin catchup --install=claude
+
+.. Note:: Codex ignores project hooks until the project's ``.codex/`` layer is
+          trusted and the hook is reviewed. Run ``/hooks`` in Codex once after
+          installing the hook.
+
 .. _system-provision-label:
 
 ``system-provision``
