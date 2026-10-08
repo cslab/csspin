@@ -256,3 +256,27 @@ This changes some parts of the current implementation of cs.spin, especially the
 --provision and --cleanup flags, as they violate 8.3, as the thing that spin
 _does_ is provide a way to run tasks of plugins. Thus, we'll be reimplementing
 the CLI such that we'll have a provision and a cleanup task.
+
+## 9. Why `path.Path` instead of `pathlib.Path`?
+
+The dependency on the `path` package was inherited with the code base (it has
+been in use since the first schema facility); the current team did not decide to
+introduce it. We did, however, decide actively to _keep_ it, because spin relies
+on the following properties:
+
+- `path.Path` is a subclass of `str`. Values of type `path` in the ConfigTree
+  can therefore be interpolated (`interpolate1`), logged, and passed to `sh()`,
+  `os.makedirs()` or third-party APIs like any other string, without casting
+  them first. `pathlib.Path` is no `str`, so every place where the tree mixes
+  strings and paths would need explicit conversions.
+- `path.Path` provides convenience methods like `rmtree()`, `mkdir_p()`,
+  `copytree()` and `dirname()`, on which API functions such as `rmtree` and
+  `copy` in `csspin/__init__.py` build.
+
+Other advantages listed by the `path` project (faster release cycle, easier
+subclassing) are not relevant for us.
+
+`path.Path` aims at being a drop-in replacement for `pathlib.Path`, so APIs may
+accept both (`str | Path`), but values stored in the ConfigTree are
+`path.Path` objects. See also section 3 for the (independent) question whether
+the tree should contain `Path` objects at all.
