@@ -60,6 +60,37 @@
 Release Notes
 =============
 
+v3.2.0
+======
+
+October 08, 2026
+
+Enhancements
+------------
+
+- Inform users about new csspin versions (`#210 <https://code.contact.de/pod/components/csspin/-/work_items/210>`_)
+- Agent Experience: let spin describe itself to agents (`#258 <https://code.contact.de/pod/components/csspin/-/work_items/258>`_)
+- Implement shell completion (`#251 <https://code.contact.de/pod/components/csspin/-/work_items/251>`_)
+
+Bug Fixes
+---------
+
+- csspin fails when "<" is used e.g. when installing packages (`#253 <https://code.contact.de/pod/components/csspin/-/work_items/253>`_)
+- Pinned version of 'Packaging' leads to error during spin provision (`#262 <https://code.contact.de/pod/components/csspin/-/work_items/262>`_)
+
+Chores
+------
+
+- Update the extra_tasks examples (`#213 <https://code.contact.de/pod/components/csspin/-/work_items/213>`_)
+- Documented guide on secrets management breaks provisioning (`#254 <https://code.contact.de/pod/components/csspin/-/work_items/254>`_)
+- Add SonarQube analysis (`!188 <https://code.contact.de/pod/components/csspin/-/merge_requests/188>`_)
+- Fix downstream project paths (`!192 <https://code.contact.de/pod/components/csspin/-/merge_requests/192>`_)
+- Change the project paths for downstream projects (`!193 <https://code.contact.de/pod/components/csspin/-/merge_requests/193>`_)
+- Update CI includes and stale references after move to pod/components (`!194 <https://code.contact.de/pod/components/csspin/-/merge_requests/194>`_)
+- Add CEDM component portfolio update to release procedure (`!195 <https://code.contact.de/pod/components/csspin/-/merge_requests/195>`_)
+- Add AGENTS.md guidance for AI coding agents (`!197 <https://code.contact.de/pod/components/csspin/-/merge_requests/197>`_)
+- Document the reason for using path.Path in tdocs (`!202 <https://code.contact.de/pod/components/csspin/-/merge_requests/202>`_)
+
 v3.1.1
 ======
 
