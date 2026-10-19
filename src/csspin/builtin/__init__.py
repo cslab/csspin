@@ -304,23 +304,22 @@ def check_for_updates(cfg) -> None:  # type: ignore[no-untyped-def]
         if current_time - last_checked < cfg.spin.version_check_ttl:
             return
 
+        # Record the attempt up front so a failing check is not retried on
+        # every spin call.
+        m.clear()
+        m.add(current_time)
+
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         try:
             request = urllib.request.Request(
-                "https://pypi.org/simple/csspin/", headers=headers
+                f"{cfg.spin.index_url.rstrip('/')}/csspin/", headers=headers
             )
             with urllib.request.urlopen(request, timeout=10) as response:
                 latest_version = json.loads(response.read())["versions"][-1]
-        except (
-            urllib.error.URLError,
-            TimeoutError,
-            json.JSONDecodeError,
-            KeyError,
-        ) as exc:
-            debug(f"Could not check for a new csspin version: {exc}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # The check is not essential, so no failure may stop spin.
+            debug(f"Could not check for a new csspin version: {exc!r}")
             return
-        m.clear()
-        m.add(current_time)
 
     current_version = importlib.metadata.version("csspin")
 
