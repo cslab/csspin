@@ -22,6 +22,7 @@ from conftest import chdir
 from path import Path
 
 from csspin import cli, memoizer
+from csspin.builtin import check_for_updates
 from csspin.tree import ConfigTree
 
 if TYPE_CHECKING:
@@ -690,3 +691,34 @@ def test_spin_shell_complete_e2e(shell: str, line: str, expected: set[str]) -> N
     }
     output = check_output(driver, env=env, text=True)
     assert expected <= set(output.splitlines())
+
+
+def test_check_for_updates_uses_index_url(
+    cfg: ConfigTree, mocker: MockerFixture, tmp_path: PathlibPath
+) -> None:
+    """The update check requests csspin from spin.index_url."""
+    cfg.spin.data = Path(tmp_path)
+    cfg.spin.index_url = "https://mirror.example/simple/"
+    urlopen = mocker.patch("csspin.builtin.urllib.request.urlopen")
+    urlopen.return_value.__enter__.return_value.read.return_value = (
+        b'{"versions": ["0.0.1"]}'
+    )
+
+    check_for_updates(cfg)
+
+    assert urlopen.call_args.args[0].full_url == "https://mirror.example/simple/csspin/"
+
+
+def test_check_for_updates_failure_does_not_raise_and_is_memoized(
+    cfg: ConfigTree, mocker: MockerFixture, tmp_path: PathlibPath
+) -> None:
+    """A failing update check does not terminate spin and is not retried within the TTL."""
+    cfg.spin.data = Path(tmp_path)
+    urlopen = mocker.patch(
+        "csspin.builtin.urllib.request.urlopen", side_effect=ConnectionResetError
+    )
+
+    check_for_updates(cfg)
+    check_for_updates(cfg)
+
+    assert urlopen.call_count == 1

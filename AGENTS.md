@@ -150,4 +150,6 @@ Key plugin-facing concepts:
 
 See `CONTRIBUTING.md` for the full process (issue-first, draft MR/PR, GitLab
 is canonical with a GitHub push mirror for external contributors). Release
-notes go into `doc/relnotes.rst`; there is no separate changelog file.
+notes go into `doc/relnotes.rst`, and only when preparing a release. Do not
+add or change entries there as part of a feature or fix. There is no separate
+changelog file.
