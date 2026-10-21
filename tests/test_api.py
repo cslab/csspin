@@ -625,6 +625,21 @@ class TestDownload:
         csspin.download(url="https://contact-software.com", location=location)
         assert location.is_file()
 
+    def test_downloads_file_url(
+        self: TestDownload,
+        cfg: ConfigTree,
+        tmp_path: Path,
+    ) -> None:
+        """csspin.download copies the content of a file:// URL to the location"""
+        source = tmp_path / "source" / "archive.tar.gz"
+        source.parent.mkdir()
+        source.write_bytes(b"fake archive")
+        location = tmp_path / "target" / "archive.tar.gz"
+
+        csspin.download(url=PathlibPath(source).as_uri(), location=location)
+
+        assert location.read_bytes() == b"fake archive"
+
     def test_sets_user_agent(
         self: TestDownload,
         cfg: ConfigTree,
