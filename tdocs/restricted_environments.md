@@ -23,9 +23,21 @@ When a plugin downloads an archive, binary or jar, it provides
    `https://github.com/redis-windows/redis-windows/releases/download/{ce_services.redis.version}`
    (as of csspin-ce v5.0.0). This way users see the default sources in the
    configuration tree and can mirror the upstream layout.
-3. The property help lists the file names the directory holds, the archive
-   format (zip, tar.gz, tar.xz, jar) and the layout inside the archive that the
-   plugin's extraction relies on. For example
+3. The property help has up to three parts, in this order, and nothing else:
+   1. Contents, always: `URL of a directory containing` and the file names in
+      double backticks. A name per platform only where the names differ.
+   2. Layout, only where the extraction addresses a directory or a sub-path in
+      the archive by name. A binary at the top level of the archive needs no
+      line.
+   3. Scope, only where it applies: `Windows only.` and the precedence against
+      `<tool>.use` and `<tool>.mirror[s]`.
+
+   In file names, `<version>` is the `version` property next to `download_url`
+   and `<version_postfix>` is the sibling `version_postfix` property. The help
+   does not repeat the archive format (the file extension shows it), the default
+   (the configuration tree shows it) or the trailing-slash handling (item 5). For
+   example
+
    ```yaml
    # ce_services_schema.yaml
    redis:
@@ -37,10 +49,14 @@ When a plugin downloads an archive, binary or jar, it provides
        download_url:
          type: str
          help: |
-           URL of a directory containing downloadable redis source archives
-           as ``Redis-{ce_services.redis.version}-Windows-x64-msys2.zip``.
+           URL of a directory containing
+           ``Redis-<version>-Windows-x64-msys2.zip``. The archive contains the
+           directory ``Redis-<version>-Windows-x64-msys2``. Windows only.
    ```
+
 4. Where `<tool>.use` exists, it skips the download and takes precedence.
+5. The plugin removes trailing slashes from the value before it appends the file
+   name, so `https://host/dir` and `https://host/dir/` behave the same.
 
 "Open" questions:
 
@@ -162,7 +178,7 @@ def provision(cfg):
 
 ## Misc
 
-- `csspin.download` probably reads `file://` URLs.
+- `csspin.download` reads `file://` URLs. A test in `tests/test_api.py` covers it.
 - In general: we probably need more than a single sentence for most `help`
   properties in schemas. Since this is part of the documentation and also
   available locally (`spin schemadoc`) it doesn't hurt here.
