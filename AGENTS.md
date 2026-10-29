@@ -117,9 +117,14 @@ Key plugin-facing concepts:
   tree isn't populated yet; only call inside `configure()`/task bodies.
   Nearly every `csspin` I/O helper (`sh`, `cd`, `readtext`, ...) interpolates
   its path/string arguments automatically.
-- **`sh()`**: the shell-out primitive. Runs inside `cfg.spin.subprocess_environment`
-  (a context manager plugins like `csspin_python` replace to activate a venv)
-  unless `use_subprocess_environment=False`.
+- **`sh()`**: the shell-out primitive. Commands run with the environment
+  variables of spin's process; environment-providing plugins (e.g.
+  `csspin_python` for its venv) activate their environment once, in `init`,
+  by setting environment variables only. Plugin code must never import from
+  a project environment, and activation must never touch spin's `sys.path`
+  (see "Plugin code and the project environment" in `doc/howtoplugins.rst`).
+  `spin.subprocess_environment` and `use_subprocess_environment` are
+  deprecated; `sh()` still honours them with a warning until they're removed.
 - **`build_target`/`build_rules`**: a tiny make-like system driven by the
   `build_rules` section of `spinfile.yaml` (see the `doc/schemaref.rst` and
   `requirements.txt` rules in this repo's own `spinfile.yaml`), checking

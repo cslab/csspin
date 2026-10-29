@@ -350,6 +350,110 @@ def test_load_plugin(
         cli.load_plugin(cfg_spin_dummy, import_spec="foo")
 
 
+def test_load_plugin_failing_import(
+    cfg_spin_dummy: ConfigTree,
+    tmp_path: PathlibPath,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """
+    A plugin that fails to import one of its modules raises the original error,
+    rather than being reported as a plugin that needs to be provisioned.
+    """
+    (tmp_path / "spin_test_broken.py").write_text("import spin_test_missing\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    with pytest.raises(ModuleNotFoundError) as excinfo:
+        cli.load_plugin(cfg_spin_dummy, import_spec="spin_test_broken")
+    assert not isinstance(excinfo.value, cli.PluginNotFoundError)
+    assert excinfo.value.name == "spin_test_missing"
+
+    # A missing plugin package is still reported as such
+    with pytest.raises(cli.PluginNotFoundError, match="it may need to be provisioned"):
+        cli.load_plugin(cfg_spin_dummy, import_spec="spin_test_missing.plugin")
+
+
+def test_project_environment_import_guard(
+    tmp_path: PathlibPath, monkeypatch: MonkeyPatch
+) -> None:
+    """
+    Imports that only resolve in the activated project environment fail with a
+    message explaining why.
+    """
+    site_packages = os.path.join(tmp_path, "venv", "lib", "python3.10", "site-packages")
+    os.makedirs(site_packages)
+    with open(os.path.join(site_packages, "spin_test_venv_only.py"), "w") as f:
+        f.write("")
+    guard = cli.ProjectEnvironmentImportGuard()
+
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+    assert guard.find_spec("spin_test_venv_only") is None
+
+    monkeypatch.setenv("VIRTUAL_ENV", str(tmp_path / "venv"))
+    assert guard.find_spec("spin_test_nowhere") is None
+    assert guard.find_spec("spin_test_venv_only.sub", path=["x"]) is None
+
+    monkeypatch.setattr(sys, "meta_path", [*sys.meta_path, guard])
+    with pytest.raises(ModuleNotFoundError, match="only installed in the project"):
+        import spin_test_venv_only  # noqa: F401  # pylint: disable=import-error
+
+    # Code probing for optional modules keeps working
+    try:
+        import spin_test_venv_only  # noqa: F401,F811  # pylint: disable=import-error
+    except ImportError:
+        pass
+
+
+def test_project_environment_import_warning(
+    tmp_path: PathlibPath,
+    monkeypatch: MonkeyPatch,
+    mocker: MockerFixture,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    Importing a module from the activated project environment, e.g. inside
+    csspin-python's python_env(), works but warns, naming the importing file,
+    or the file running the importing code via exec().
+    """
+    import csspin
+
+    mocker.patch.object(csspin, "_DEPRECATION_WARNINGS", set())
+    venv = os.path.join(tmp_path, "venv")
+    site_packages = os.path.join(venv, "lib", "python3.10", "site-packages")
+    os.makedirs(site_packages)
+    for module in (
+        "spin_test_from_venv",
+        "spin_test_also_from_venv",
+        "spin_test_exec_from_venv",
+    ):
+        with open(os.path.join(site_packages, f"{module}.py"), "w") as f:
+            f.write("VALUE = 42\n")
+    monkeypatch.setenv("VIRTUAL_ENV", venv)
+    monkeypatch.setattr(
+        sys, "meta_path", [cli.ProjectEnvironmentImportWarning(), *sys.meta_path]
+    )
+
+    # The environment isn't on sys.path: nothing is imported from it
+    with pytest.raises(ModuleNotFoundError):
+        import spin_test_from_venv  # noqa: F401  # pylint: disable=import-error
+    assert "project environment" not in capsys.readouterr().err
+
+    # Inside an in-process activation, the import works, but warns
+    monkeypatch.syspath_prepend(site_packages)
+    import spin_test_also_from_venv  # pylint: disable=import-error
+
+    assert spin_test_also_from_venv.VALUE == 42
+    err = capsys.readouterr().err
+    assert "Module 'spin_test_also_from_venv' was imported from the project" in err
+    assert f"by {__file__}" in err
+
+    # Code run by exec() has no file of its own, like csspin-python's
+    # venv_init() running activate_this.py: the warning names its caller
+    exec("import spin_test_exec_from_venv")  # pylint: disable=exec-used # nosec
+    err = capsys.readouterr().err
+    assert "Module 'spin_test_exec_from_venv' was imported from the project" in err
+    assert f"by {__file__}." in err
+
+
 def test_reverse_toposort(cfg: ConfigTree) -> None:
     """
     csspin.cli.reverse_toposort returns a list containing the passed 'nodes' in

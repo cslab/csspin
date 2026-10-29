@@ -85,6 +85,10 @@ spin:
     subprocess_environment:
       type: str internal
       help: |
+        Deprecated, will be removed (see :ref:`activating-environments`).
+        Environment-providing plugins activate their environment once, in their
+        ``init`` hook, by setting environment variables.
+
         A zero-argument callable returning a context manager that activates the
         "subprocess environment" in which ``spin run``, ``extra_tasks`` scripts
         and the commands spawned by :py:func:`csspin.sh` are executed.

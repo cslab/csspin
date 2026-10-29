@@ -1,5 +1,13 @@
 # Ensuring explicit and intentional environment use aka "Operation Wuseldusel"
 
+> **Being superseded** by #270: `spin.subprocess_environment` and `sh()`'s
+> `use_subprocess_environment` are deprecated and will be removed.
+> Environment-providing plugins activate their environment once, in `init`, by
+> setting environment variables only, so `spin run` and `extra_tasks` scripts
+> run in it as well. See "Outer and inner interpreter" and "Activating
+> environments" in `doc/howtoplugins.rst`, and the wiki page `activation_issue`
+> for the phased plan.
+
 Assumption: One `spinfile.yaml` results in a _single_ environment.
 
 ## Definitions
