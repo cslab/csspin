@@ -453,8 +453,48 @@ class Command:
         return sh(*cmd, **kwargs)
 
 
+# The plugin development guide, for warnings pointing to its sections
+_PLUGIN_GUIDE_URL = "https://csspin.readthedocs.io/en/stable/howtoplugins.html"
+
+_DEPRECATION_WARNINGS: set[str] = set()
+
+
+def _warn_deprecated(message: str) -> None:
+    """Warn about the use of a deprecated feature, once per spin run."""
+    if message not in _DEPRECATION_WARNINGS:
+        _DEPRECATION_WARNINGS.add(message)
+        warn(message)
+
+
+def _warn_subprocess_environment(cfg: ConfigTree) -> None:
+    """Warn that the deprecated spin.subprocess_environment has been
+    registered, naming the plugin that did it, as far as it can be told from
+    where the configuration tree recorded the assignment."""
+    # Avoid a cyclic import
+    from csspin.tree import (  # pylint: disable=import-outside-toplevel
+        tree_keyinfo,
+    )
+
+    who = "A plugin"
+    keyinfo = tree_keyinfo(cfg.spin, "subprocess_environment")
+    if keyinfo and os.path.isfile(keyinfo.file):
+        who = f"Code at {keyinfo.file}:{keyinfo.line}"
+        for name, module in cfg.get("loaded", {}).items():
+            module_file = getattr(module, "__file__", None)
+            if module_file and os.path.samefile(module_file, keyinfo.file):
+                who = f"Plugin {name} ({keyinfo.file}:{keyinfo.line})"
+                break
+    _warn_deprecated(
+        f"{who} registered spin.subprocess_environment, which is deprecated and"
+        " will be removed. Environment-providing plugins activate their"
+        " environment once instead, by setting environment variables in their"
+        " 'init' hook. A newer release of the plugin package may already do so."
+        f" See {_PLUGIN_GUIDE_URL}#activating-environments."
+    )
+
+
 def sh(
-    *cmd: Any, use_subprocess_environment: bool = True, **kwargs: Any
+    *cmd: Any, use_subprocess_environment: bool | None = None, **kwargs: Any
 ) -> subprocess.CompletedProcess | None:
     """Run a program by building a command line from `cmd`.
 
@@ -467,12 +507,17 @@ def sh(
     echoed. When `shell` is ``True``, the command line is passed to
     the system's shell.
 
-    Unless ``use_subprocess_environment`` is ``False``, the command is
-    run inside the "subprocess environment" provided by
-    :py:data:`spin.subprocess_environment` (e.g. the project's virtual
-    environment, as set up by ``csspin-python``). When no such
-    environment is configured, the command runs in spin's own
-    in-process environment.
+    The command runs with the environment variables of spin's process, in
+    which environment-providing plugins have activated their environment
+    (see "Activating environments" in the plugin development guide).
+
+    .. deprecated::
+       :py:data:`spin.subprocess_environment` and the
+       ``use_subprocess_environment`` argument are deprecated and will be
+       removed (see :ref:`subprocess-environment`). Unless
+       ``use_subprocess_environment`` is ``False``, the command is still run
+       inside the context manager a plugin registered as
+       :py:data:`spin.subprocess_environment`.
 
     Other keyword arguments are passed into
     :py:func:`subprocess.run`.
@@ -492,25 +537,38 @@ def sh(
     if sys.platform == "win32" and len(cmd) == 1:
         cmd = shlex.split(cmd[0].replace("\\", "\\\\"))
 
-    if not kwargs.pop("silent", False):
+    silent = kwargs.pop("silent", False)
 
-        def quote(arg: str) -> str:
-            if len(cmd) > 1 and " " in arg:
-                return f"'{arg}'"
-            return arg
-
-        echo(" ".join(quote(c) for c in cmd))
+    def quote(arg: str) -> str:
+        if len(cmd) > 1 and " " in arg:
+            return f"'{arg}'"
+        return arg
 
     message = "Command '{cmd_}' failed with exit status {returncode}."
     cmd_ = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[unreachable] # noqa: E501
 
+    if use_subprocess_environment is not None:
+        _warn_deprecated(
+            "The 'use_subprocess_environment' argument of csspin.sh() is"
+            " deprecated and will be removed. See"
+            f" {_PLUGIN_GUIDE_URL}#activating-environments."
+        )
     cfg = get_tree()
     environment = (
-        cfg.spin.subprocess_environment if use_subprocess_environment else nullcontext
+        cfg.spin.subprocess_environment
+        if use_subprocess_environment is not False
+        else nullcontext
     )
+    if environment is not nullcontext:
+        # Usually reported right after the 'configure' hooks already
+        _warn_subprocess_environment(cfg)
 
     try:
         with environment():
+            # Echo the command only now, so it is shown after the activation of
+            # the environment it runs in.
+            if not silent:
+                echo(" ".join(quote(c) for c in cmd))
             # Build the process environment *inside* the activated subprocess environment,
             # so that changes it makes to os.environ (e.g. venv activation) are
             # reflected in the spawned subprocess.

@@ -30,14 +30,16 @@ and options (see :ref:`environment-as-input-channel-label`).
 
 from __future__ import annotations
 
+import glob
 import importlib
+import importlib.machinery
 import importlib.metadata as importlib_metadata
 import os
 import sys
 from contextlib import nullcontext
 from site import addsitedir
 from traceback import format_exc
-from types import ModuleType
+from types import FrameType, ModuleType
 from typing import TYPE_CHECKING, Any, Generator, Iterable
 
 import click
@@ -46,7 +48,10 @@ from click.shell_completion import get_completion_class
 from path import Path
 
 from csspin import (
+    _PLUGIN_GUIDE_URL,
     Verbosity,
+    _warn_deprecated,
+    _warn_subprocess_environment,
     cd,
     config,
     debug,
@@ -124,6 +129,142 @@ def find_spinfile(spinfile: str | None) -> str | None:
     return None
 
 
+class PluginNotFoundError(ModuleNotFoundError):
+    """A plugin module isn't installed."""
+
+
+# Advice for plugin code importing from the project environment, see "Plugin
+# code and the project environment" in doc/howtoplugins.rst
+PROJECT_ENVIRONMENT_IMPORT_ADVICE = (
+    "To use a tool or information from the project environment, run it, e.g."
+    " with csspin.sh() or csspin.backtick(): the environment is activated for the"
+    " commands spin runs. Only if plugin code needs the module itself, in spin's"
+    " process, make it a dependency of the plugin package. See"
+    f" {_PLUGIN_GUIDE_URL}#plugin-code-and-project-environment."
+)
+
+
+class ProjectEnvironmentImportGuard:
+    """Explain imports that only resolve in the activated project environment.
+
+    Plugin code runs in spin's process and must only import from spin's own
+    installation and the plugin packages, never from the project's environment,
+    which may use another Python version (see "Plugin code and the project
+    environment" in doc/howtoplugins.rst). Appended to sys.meta_path, this
+    finder is only consulted when all regular finders have failed. If the module
+    exists in the environment named by VIRTUAL_ENV, it raises a
+    ModuleNotFoundError explaining that, instead of Python's bare "No module
+    named ...".
+    """
+
+    def find_spec(
+        self, name: str, path: Any = None, target: Any = None
+    ) -> importlib.machinery.ModuleSpec | None:
+        # Submodules follow their parent package, so only top-level imports
+        # need to be checked
+        if path is not None or not (venv := os.environ.get("VIRTUAL_ENV")):
+            return None
+        site_dirs = glob.glob(os.path.join(venv, "lib", "python*", "site-packages"))
+        site_dirs.append(os.path.join(venv, "Lib", "site-packages"))
+        if importlib.machinery.PathFinder.find_spec(name, site_dirs) is None:
+            return None
+        raise ModuleNotFoundError(
+            f"No module named '{name}' in spin's environment. It is only"
+            f" installed in the project environment {venv}, which plugin code"
+            " must not import from. "
+            + PROJECT_ENVIRONMENT_IMPORT_ADVICE,
+            name=name,
+        )
+
+
+def _inside(path: str, directory: str) -> bool:
+    """Check whether 'path' is 'directory' or lies within it."""
+    path = os.path.normcase(os.path.abspath(path))
+    directory = os.path.normcase(os.path.abspath(directory))
+    return path == directory or path.startswith(directory + os.sep)
+
+
+def _importing_file() -> str | None:
+    """Return the file of the innermost frame outside the import machinery that
+    has a source file. Frames without one, like "<frozen ...>" or "<string>" for
+    code run by exec() (e.g. an activate_this.py), are skipped in favour of
+    their caller."""
+    frame: FrameType | None = sys._getframe(1)  # pylint: disable=protected-access
+    while frame:
+        filename = frame.f_code.co_filename
+        if not filename.startswith("<") and filename != __file__:
+            return filename
+        frame = frame.f_back
+    return None
+
+
+def _processing_pth_file() -> bool:
+    """Check whether the current import is run by a .pth file, which 'site'
+    processes when a directory is added via site.addsitedir()."""
+    frame: FrameType | None = sys._getframe(1)  # pylint: disable=protected-access
+    while frame:
+        if frame.f_code.co_name == "addpackage" and os.path.basename(
+            frame.f_code.co_filename
+        ) in ("site.py", "<frozen site>"):
+            return True
+        frame = frame.f_back
+    return False
+
+
+class ProjectEnvironmentImportWarning:
+    """Warn about modules imported from the activated project environment.
+
+    Plugin code must not import from the project's environment (see "Plugin
+    code and the project environment" in doc/howtoplugins.rst), but in-process
+    activations like csspin-python's deprecated python_env() make that possible
+    by putting the environment on sys.path. Inserted at the front of
+    sys.meta_path, this finder only observes: while the environment named by
+    VIRTUAL_ENV is on sys.path, it checks where a top-level import would resolve
+    to, and warns if that's inside the environment. It never changes how an
+    import resolves.
+    """
+
+    def find_spec(
+        self, name: str, path: Any = None, target: Any = None
+    ) -> importlib.machinery.ModuleSpec | None:
+        venv = os.environ.get("VIRTUAL_ENV")
+        # Cheap pre-check: the environment is usually not on sys.path
+        if (
+            path is not None
+            or not venv
+            or not any(isinstance(p, str) and _inside(p, venv) for p in sys.path)
+        ):
+            return None
+        spec = importlib.machinery.PathFinder.find_spec(name)
+        if spec is None:
+            return None
+        locations = [spec.origin] if spec.origin else []
+        locations += list(spec.submodule_search_locations or [])
+        # Imports run by the environment's .pth files are a side effect of the
+        # in-process activation itself, not of plugin code
+        if any(_inside(location, venv) for location in locations) and (
+            not _processing_pth_file()
+        ):
+            importer = _importing_file()
+            _warn_deprecated(
+                f"Module '{name}' was imported from the project environment {venv}"
+                + (f" by {importer}" if importer else "")
+                + ". Plugin code must not import from the project environment, and"
+                " this will fail in a future release. "
+                + PROJECT_ENVIRONMENT_IMPORT_ADVICE
+            )
+        return None
+
+
+def install_import_guard() -> None:
+    """Install the ProjectEnvironmentImportWarning at the front and the
+    ProjectEnvironmentImportGuard at the end of sys.meta_path, once."""
+    if not any(isinstance(f, ProjectEnvironmentImportWarning) for f in sys.meta_path):
+        sys.meta_path.insert(0, ProjectEnvironmentImportWarning())
+    if not any(isinstance(f, ProjectEnvironmentImportGuard) for f in sys.meta_path):
+        sys.meta_path.append(ProjectEnvironmentImportGuard())
+
+
 def load_plugin(
     cfg: tree.ConfigTree,
     import_spec: str,
@@ -147,15 +288,26 @@ def load_plugin(
         mod = importlib.import_module(import_spec)
         full_name = mod.__name__
     except ModuleNotFoundError as exc:
+        plugin_found = exc.name and not (
+            import_spec == exc.name or import_spec.startswith(f"{exc.name}.")
+        )
         if may_fail:
             # We tolerate this only in context of cleanup, where imports may not
             # succeed.
             warn(
-                f"Plugin {import_spec} could not be loaded, it may need to be"
-                " provisioned"
+                f"Plugin {import_spec} could not be loaded: {exc}"
+                if plugin_found
+                else (
+                    f"Plugin {import_spec} could not be loaded, it may need to"
+                    " be provisioned"
+                )
             )
+        elif plugin_found:
+            # The plugin fails to import one of its own modules: show the
+            # plugin's traceback
+            raise
         else:
-            raise ModuleNotFoundError(
+            raise PluginNotFoundError(
                 f"Plugin {import_spec} could not be loaded, it may need to be"
                 " provisioned"
             ) from exc
@@ -573,7 +725,7 @@ def cli(  # type: ignore[return] # pylint: disable=too-many-arguments,too-many-p
         return None
     try:
         load_plugins_into_tree(cfg)
-    except ModuleNotFoundError as exc:
+    except PluginNotFoundError as exc:
         if help:
             warn(
                 "To get the complete help output you might need to run 'spin provision'"
@@ -704,6 +856,7 @@ def load_plugins_into_tree(cfg: tree.ConfigTree, cleanup: bool = False) -> None:
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
     addsitedir(cfg.spin.spin_dir / "plugins")
+    install_import_guard()
 
     for import_spec in yield_plugin_import_specs(cfg):
         load_plugin(cfg, import_spec, may_fail=cleanup)
@@ -739,6 +892,8 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
 
     # Run 'configure' hooks of plugins
     toporun(cfg, "configure")
+    if cfg.spin.get("subprocess_environment", nullcontext) is not nullcontext:
+        _warn_subprocess_environment(cfg)
 
     # Interpolate values of the configuration tree and enforce their types
     tree.tree_sanitize(cfg)

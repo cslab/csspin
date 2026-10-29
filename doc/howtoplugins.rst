@@ -139,7 +139,9 @@ Plugin lifecycle
       installs all collected Python dependencies into the virtual environment.
 
    #. Each plugin's ``init(cfg)`` callback is invoked. This is meant to prepare
-      the environment for using the resources provisioned by the plugin.
+      the environment for using the resources provisioned by the plugin. For
+      example, the `csspin_python.python`_ plugin activates the project's
+      virtual environment here (see :ref:`activating-environments`).
 
 #. Finally the actual tasks is executed.
 
@@ -626,65 +628,81 @@ config-tree of a spin plugin:
 Most plugins should follow the second model.
 
 
+.. _plugin-code-and-project-environment:
 .. _outer-and-inner-interpreter:
 
-Outer and inner interpreter
----------------------------
+Plugin code and the project environment
+---------------------------------------
 
-To avoid confusion when and where to define Python dependencies, we clarify the
-concept between the outer and the inner interpreter.
+spin is a task runner for projects of any kind. spin and its plugins are
+written in Python, but a project using spin doesn't have to use Python at all.
+spin keeps two kinds of code apart:
 
-spin itself creates a Python virtual environment to install plugin-packages,
-plugins, additional packages, and their dependencies during the provision. This
-is being performed by the outer interpreter that spin runs with, e.g.,
-Python 3.11.
+- **In-process: spin and its plugins.** All plugin code runs in spin's own
+  process: hooks like ``configure``, ``init`` and ``provision`` as well as the
+  tasks. It can only import from spin's installation and from the
+  plugin-packages, which spin installs into ``.spin/plugins``. Everything a
+  plugin imports must therefore be a dependency of its plugin-package, e.g. the
+  `jdk` package for provisioning Java, or `virtualenv` for creating the virtual
+  environment of `csspin_python.python`_.
 
-Packages that are needed by plugins during hooks like `configure`, `provision`,
-`finalize_provision`, and `cleanup`, should be installed using the outer
-interpreter. This can be for example the `jdk` package for provisioning Java or
-`virtualenv` for provisioning the inner Python virtual environment of the
-`csspin_python.python`_ plugin.
+- **Subprocesses: the project environment.** The tools a project is developed
+  with are provisioned by plugins into the *project environment*, e.g. a JDK, a
+  Node.js installation, or a Python virtual environment with the packages
+  listed in ``requires.python``. spin uses them only by running them as
+  separate processes: the commands of tasks, ``spin run`` and the scripts of
+  ``extra_tasks``. The plugins providing them activate them for these
+  processes (see :ref:`activating-environments`).
 
-Dependencies that are required during the execution of tasks, must be installed
-using the inner interpreter e.g., when using `csspin_python.python`_ as Python
-backend, the required packages must be defined using `requires.python` within
-the configuration of the plugin.
+If a plugin needs something from the project environment, it runs it with
+:py:func:`csspin.sh` or :py:func:`csspin.backtick`, by its plain name on the
+activated ``PATH`` or by its path, e.g. ``{python.scriptdir}/cmake{platform.exe}``.
 
-Packages installed using the outer interpreter can depend on other Python
-versions than those installed using the inner interpreter. This is a common
-source of confusion, especially when using the `csspin_python.python`_-like
-plugins.
+A Python virtual environment in the project environment is no exception, even
+though it's Python, like spin: plugin code must never import from it. The
+virtual environment may use another Python version than spin, and compiled
+extensions built for it can't be loaded into spin's process. Such imports
+worked by accident with earlier versions of spin.
+
+
+.. _activating-environments:
+
+Activating environments
+-----------------------
+
+A plugin providing an environment for the processes spin starts activates it by
+setting the environment variables of spin's process, typically with
+:py:func:`csspin.setenv`. It does so once: in its ``init`` hook, and during
+``spin provision`` as soon as the environment exists. :py:func:`csspin.sh` runs
+commands with the environment variables of spin's process, so all commands see
+the activated environment. For example, `csspin_python.python`_ puts the script
+directory of the project's virtual environment first on ``PATH`` and sets
+``VIRTUAL_ENV``.
+
+Activating an environment must never change spin's own ``sys.path`` or
+``sys.prefix``, e.g. by executing the ``activate_this.py`` of a virtual
+environment in spin's process. That would make the packages of the project
+environment importable by plugin code (see
+:ref:`plugin-code-and-project-environment`).
+
+If plugin code imports a module that is only installed in the activated
+environment, spin fails with an error explaining that, rather than Python's
+bare "No module named ...".
 
 
 .. _subprocess-environment:
 
-The subprocess environment
---------------------------
+The subprocess environment (deprecated)
+---------------------------------------
 
-spin distinguishes two environments:
-
-- the **in-process environment** -- the environment of the spin process itself
-  (the outer interpreter, see :ref:`outer-and-inner-interpreter`), in which
-  plugin code runs; and
-
-- the **subprocess environment** -- the environment in which processes spawned by
-  :py:func:`csspin.sh` are executed: ``spin run``, the scripts of ``extra_tasks``
-  and the tools a plugin invokes (all of which are handed to :py:func:`csspin.sh`).
-
-By default these are the same. A subprocess-environment-providing plugin (such as
-`csspin_python.python`_) can make ``csspin.sh`` run commands inside a Python
-virtual environment by registering a zero-argument callable returning a context
-manager on :py:data:`spin.subprocess_environment` -- typically from its
-``configure`` hook, so it is available during provisioning too:
-
-.. code-block:: python
-
-   def configure(cfg):
-       cfg.spin.subprocess_environment = lambda: my_environment(cfg)
-
-``csspin.sh`` enters that context manager around every command it spawns, so the
-environment is activated for the spawned process only rather than process-wide.
-See :py:func:`csspin.sh` for the ``use_subprocess_environment`` opt-out.
+Earlier versions let a plugin register a zero-argument callable returning a
+context manager as :py:data:`spin.subprocess_environment`, which
+:py:func:`csspin.sh` entered around every command it spawned, unless called
+with ``use_subprocess_environment=False``. Both are deprecated and will be
+removed: environment-providing plugins activate their
+environment once instead (see :ref:`activating-environments`). Until then,
+:py:func:`csspin.sh` still honours a registered context manager and warns
+about it.
 
 
 Transparency and behavior consistency

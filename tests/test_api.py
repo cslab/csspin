@@ -322,6 +322,85 @@ def test_sh(cfg, mocker: MockerFixture) -> None:
     assert "_OJDS" in subprocess.run.call_args.kwargs["env"]  # type: ignore[attr-defined]
 
 
+def test_sh_subprocess_environment_deprecated(
+    cfg, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """
+    A registered spin.subprocess_environment is still entered around commands,
+    with a deprecation warning, and the command is echoed after its activation.
+    """
+    from contextlib import contextmanager
+
+    mocker.patch.object(csspin, "_DEPRECATION_WARNINGS", set())
+    events = []
+
+    @contextmanager
+    def environment():
+        events.append("enter")
+        csspin.echo("activate")
+        yield
+        events.append("exit")
+
+    cfg.spin.subprocess_environment = environment
+    try:
+        csspin.sh(sys.executable, "-c", "pass")
+        csspin.sh(sys.executable, "-c", "pass")
+    finally:
+        from contextlib import nullcontext
+
+        cfg.spin.subprocess_environment = nullcontext
+
+    output = capsys.readouterr()
+    assert events == ["enter", "exit", "enter", "exit"]
+    assert output.err.count("registered spin.subprocess_environment") == 1
+    # Not set by a plugin module: the location of the assignment is named
+    assert f"Code at {__file__}:" in output.err
+    assert output.out.index("activate") < output.out.index("-c pass")
+
+
+def test_subprocess_environment_warning_names_plugin(
+    cfg,
+    tmp_path,
+    mocker: MockerFixture,
+    monkeypatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The deprecation warning names the plugin registering the hook."""
+    import importlib
+    from contextlib import nullcontext
+
+    mocker.patch.object(csspin, "_DEPRECATION_WARNINGS", set())
+    with open(os.path.join(tmp_path, "spin_test_hookplugin.py"), "w") as f:
+        f.write(
+            "from contextlib import nullcontext\n"
+            "def configure(cfg):\n"
+            "    cfg.spin.subprocess_environment = lambda: nullcontext()\n"
+        )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    plugin = importlib.import_module("spin_test_hookplugin")
+    mocker.patch.dict(cfg.loaded, {"spin_test_hookplugin": plugin})
+    try:
+        plugin.configure(cfg)
+        csspin._warn_subprocess_environment(cfg)
+    finally:
+        cfg.spin.subprocess_environment = nullcontext
+
+    err = capsys.readouterr().err
+    assert "Plugin spin_test_hookplugin (" in err
+    assert "spin_test_hookplugin.py:3)" in err
+
+
+def test_sh_use_subprocess_environment_deprecated(
+    cfg, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Passing use_subprocess_environment warns about its deprecation."""
+    mocker.patch.object(csspin, "_DEPRECATION_WARNINGS", set())
+    csspin.sh(sys.executable, "-c", "pass")
+    assert "deprecated" not in capsys.readouterr().err
+    csspin.sh(sys.executable, "-c", "pass", use_subprocess_environment=False)
+    assert "'use_subprocess_environment' argument" in capsys.readouterr().err
+
+
 def test_backtick(mocker: MockerFixture) -> None:
     """
     csspin.backtick is calling csspin.sh using the correct arguments and returning
