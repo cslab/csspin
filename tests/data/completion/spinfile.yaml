@@ -1,0 +1,6 @@
+# Project for testing spin's command line, independent of provisioned plugin
+# packages.
+plugin_paths:
+  - plugins
+plugins:
+  - sbom

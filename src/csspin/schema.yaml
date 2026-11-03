@@ -39,6 +39,14 @@ spin:
         The absolute path to spin's project related data. This is also the place
         environments are provisioned.
       default: "{spin.project_root}/.spin"
+    plugin_site_packages:
+      type: path internal
+      help: |
+        The site-packages directory of the virtual environment
+        ``{spin.spin_dir}/plugins``, which plugin packages are installed into.
+        Subprocesses running spin's interpreter can add it to ``PYTHONPATH``
+        to import plugin packages, except those installed in editable mode.
+      # value is set during runtime
     launch_dir:
       type: path internal
       help: The directory in which spin was called.
