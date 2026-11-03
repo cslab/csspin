@@ -491,10 +491,22 @@ def tree_apply_directives(tree: ConfigTree) -> None:
             tree_apply_directives(value)
 
 
-def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) -> None:
+# User-specific configuration files (global.yaml and, once loaded, the
+# project's local spinfile) whose values must not be overwritten by sources with
+# a lower priority, like the spinfile or plugin defaults.
+PROTECTED_SOURCES: set[str] = {"global.yaml"}
+
+
+def tree_update(
+    target: ConfigTree,
+    source: ConfigTree,
+    keep: str | tuple = (),
+    protect: bool = True,
+) -> None:
     """This will *overwrite*, not fill up, like tree_merge.
 
-    Key-Value pairs with origin global.yaml will not be updated.
+    Key-Value pairs originating from one of the ``PROTECTED_SOURCES`` will not
+    be updated, unless ``protect`` is ``False``.
 
     :param target: The target tree which is to be modified
     :type target: ConfigTree
@@ -503,6 +515,9 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
     :param keep: Ignore keys with KeyInfo.file equals values in ``keep``,
         defaults to ()
     :type keep: str | tuple, optional
+    :param protect: Keep the values originating from ``PROTECTED_SOURCES``,
+        defaults to True
+    :type protect: bool, optional
     """
 
     if not isinstance(keep, (str, tuple)):
@@ -511,10 +526,10 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
     # import csspin.schema here to avoid cyclic import
     from csspin import schema  # pylint: disable=cyclic-import
 
-    if (
-        isinstance(keep, str) and (keep := (keep,))
-    ) or "global.yaml" not in keep:  # pylint: disable=condition-evals-to-constant
-        keep += ("global.yaml",)
+    if isinstance(keep, str):
+        keep = (keep,)
+    if protect:
+        keep += tuple(PROTECTED_SOURCES)
 
     for key, value in source.items():
         ki = tree_keyinfo(source, key)
@@ -527,10 +542,20 @@ def tree_update(target: ConfigTree, source: ConfigTree, keep: str | tuple = ()) 
             if isinstance(value, dict):
                 if key not in target:
                     target[key] = ConfigTree()
-                    tree_update(target[key], value, keep=keep)  # type: ignore[arg-type]
+                    tree_update(
+                        target[key],
+                        value,  # type: ignore[arg-type]
+                        keep=keep,
+                        protect=False,
+                    )
                     tree_set_keyinfo(target, key, ki)
                 else:
-                    tree_update(target[key], value, keep=keep)  # type: ignore[arg-type]
+                    tree_update(
+                        target[key],
+                        value,  # type: ignore[arg-type]
+                        keep=keep,
+                        protect=False,
+                    )
             elif key not in target or (
                 (ki_file := tree_keyinfo(target, key).file)
                 and all(pattern not in ki_file for pattern in keep)

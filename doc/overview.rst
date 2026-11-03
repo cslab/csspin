@@ -122,15 +122,18 @@ and thus extend the configuration tree.
 
 
 Spin is *building the configuration tree* during its execution by using the
-following sources:
+following sources, each one overriding the ones before it:
 
-#. **Default configuration** that spin ships
+#. **Default configuration** that spin and its plugins ship
+
+#. **Project configuration** provided by ``spinfile.yaml`` (see
+   :ref:`writing-spinfile-label`)
 
 #. **User specific configuration** in form of a ``global.yaml``
    (optional, see :ref:`writing-global-label`)
 
-#. **Project configuration** provided by ``spinfile.yaml`` (see
-   :ref:`writing-spinfile-label`)
+#. **Local project configuration** in form of a
+   ``spinfile.local.yaml`` (optional, see :ref:`writing-local-label`)
 
 #. **Environment variables** that updates or extends the configuration
 

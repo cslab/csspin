@@ -23,7 +23,7 @@ from path import Path
 
 from csspin import cli, memoizer
 from csspin.builtin import check_for_updates
-from csspin.tree import ConfigTree
+from csspin.tree import ConfigTree, tree_keyinfo
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
@@ -638,6 +638,131 @@ def test_plugin_directives(
     assert "csspin-python" in cfg.plugin_packages
     assert cfg.loaded.get("csspin_dummy.dummy")
     assert cfg.loaded.get("csspin_dummy.dummy2")
+
+
+class TestLocalSpinfile:
+    """The project's local spinfile, e.g. spinfile.local.yaml."""
+
+    @pytest.mark.parametrize(
+        "spinfile, expected",
+        (
+            ("spinfile.yaml", "spinfile.local.yaml"),
+            ("other.yml", "other.local.yml"),
+            ("spinfile", "spinfile.local"),
+        ),
+    )
+    def test_name(self, tmp_path: Path, spinfile: str, expected: str) -> None:
+        """The local spinfile is named after the spinfile and lives next to it."""
+        assert cli.local_spinfile(tmp_path / spinfile) == tmp_path / expected
+
+    @pytest.fixture()
+    def layered_config(
+        self, monkeypatch: MonkeyPatch, tmp_path: Path
+    ) -> Generator[Callable[[], ConfigTree], None, None]:
+        """
+        Provide a project with a spinfile, a global.yaml and a local spinfile, all
+        setting the same properties, and a function to load its configuration tree.
+        """
+        plugin_path = Path(__file__).dirname() / "data" / "csspin_dummy" / "src"
+        (tmp_path / "spinfile.yaml").write_text(textwrap.dedent(f"""\
+                plugin_paths: [{plugin_path}]
+                plugins: [csspin_dummy.dummy]
+                plugin_packages: [from-spinfile]
+                from_spinfile: spinfile
+                from_global: spinfile
+                from_local: spinfile
+                """))
+        (tmp_path / "config").mkdir()
+        (tmp_path / "config" / "global.yaml").write_text(textwrap.dedent("""\
+                append plugin_packages: [from-global]
+                from_global: global
+                from_local: global
+                """))
+        (tmp_path / "spinfile.local.yaml").write_text(textwrap.dedent("""\
+                append plugin_packages: [from-local]
+                from_local: local
+                dummy:
+                  dummy: local
+                """))
+        monkeypatch.setenv("SPIN_CONFIG", tmp_path / "config")
+        monkeypatch.setenv("SPIN_DISABLE_GLOBAL_YAML", "")
+        monkeypatch.delenv("SPIN_DISABLE_LOCAL_YAML", raising=False)
+
+        def load() -> ConfigTree:
+            cfg = cli.load_minimal_tree(
+                spinfile=tmp_path / "spinfile.yaml", cwd=tmp_path, envbase=tmp_path
+            )
+            cli.load_plugins_into_tree(cfg)
+            return cfg
+
+        with chdir(tmp_path):
+            yield load
+
+    def test_precedence(
+        self, layered_config: Callable[[], ConfigTree], tmp_path: Path
+    ) -> None:
+        """
+        The local spinfile overrides both the spinfile and global.yaml, its
+        directives extend the ones of global.yaml, and its values aren't replaced by
+        plugin defaults.
+        """
+        cfg = layered_config()
+
+        assert cfg.from_spinfile == "spinfile"
+        assert cfg.from_global == "global"
+        assert cfg.from_local == "local"
+        assert tree_keyinfo(cfg, "from_local").file == tmp_path / "spinfile.local.yaml"
+        assert cfg.plugin_packages == ["from-spinfile", "from-global", "from-local"]
+        assert cfg.dummy.dummy == "local"
+
+    def test_disabled(
+        self, layered_config: Callable[[], ConfigTree], monkeypatch: MonkeyPatch
+    ) -> None:
+        """The local spinfile is ignored if SPIN_DISABLE_LOCAL_YAML is set."""
+        monkeypatch.setenv("SPIN_DISABLE_LOCAL_YAML", "True")
+        cfg = layered_config()
+
+        assert cfg.from_local == "global"
+        assert cfg.plugin_packages == ["from-spinfile", "from-global"]
+
+    @pytest.mark.parametrize("global_yaml", (None, "", "verbose: false\n"))
+    @pytest.mark.parametrize(
+        "local_yaml, expected",
+        (
+            ("plugin_packages: [baz]\n", ["baz"]),
+            ("append plugin_packages: [baz]\n", ["foo", "bar", "baz"]),
+        ),
+    )
+    def test_spinfile_directive(
+        self,  # pylint: disable=too-many-arguments
+        monkeypatch: MonkeyPatch,
+        tmp_path: Path,
+        global_yaml: str | None,
+        local_yaml: str,
+        expected: list[str],
+    ) -> None:
+        """
+        The local spinfile overrides or extends plugin_packages including the
+        spinfile's directives, whether global.yaml exists or not.
+        """
+        (tmp_path / "spinfile.yaml").write_text(textwrap.dedent("""\
+                plugin_packages: [foo]
+                append plugin_packages: [bar]
+                """))
+        (tmp_path / "spinfile.local.yaml").write_text(local_yaml)
+        (tmp_path / "config").mkdir()
+        if global_yaml is not None:
+            (tmp_path / "config" / "global.yaml").write_text(global_yaml)
+        monkeypatch.setenv("SPIN_CONFIG", tmp_path / "config")
+        monkeypatch.setenv("SPIN_DISABLE_GLOBAL_YAML", "")
+        monkeypatch.delenv("SPIN_DISABLE_LOCAL_YAML", raising=False)
+
+        with chdir(tmp_path):
+            cfg = cli.load_minimal_tree(
+                spinfile=tmp_path / "spinfile.yaml", cwd=tmp_path, envbase=tmp_path
+            )
+
+        assert cfg.plugin_packages == expected
 
 
 def test_install_plugin_packages(

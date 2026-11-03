@@ -59,6 +59,7 @@ from csspin import (
     exists,
     get_requires,
     get_tree,
+    info,
     interpolate1,
     memoizer,
     mkdir,
@@ -110,6 +111,13 @@ PROP: list[str] = []
 PREPEND_PROP: list[str] = []
 APPEND_PROP: list[str] = []
 DUMP = False
+
+
+def local_spinfile(spinfile: str | Path) -> str:
+    """Return the path of the local companion of 'spinfile', e.g.
+    'spinfile.local.yaml' for 'spinfile.yaml'."""
+    base, ext = os.path.splitext(os.path.abspath(spinfile))
+    return f"{base}.local{ext}"
 
 
 def find_spinfile(spinfile: str | None) -> str | None:
@@ -323,10 +331,12 @@ def load_plugin(
         debug(f"{indent}add subtree {settings_name}")
         plugin_config_tree = cfg.setdefault(settings_name, config())
         if not isinstance(plugin_config_tree, ConfigTree):
+            spinfile = cfg.spin.project_root / Path(cfg.spin.spinfile).basename()
             die(
                 f"The configuration of {import_spec} is invalid."
-                " Please check its configuration in spinfile.yaml"
-                " and global.yaml."
+                f" Please check its configuration in {spinfile},"
+                f" {interpolate1(Path('{SPIN_CONFIG}/global.yaml'))}"
+                f" and {local_spinfile(spinfile)}."
             )
 
         if not import_spec.startswith("csspin."):
@@ -794,6 +804,8 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
     userdata = readyaml(spinfile) if spinfile else config()
     if not userdata:
         die("The spinfile seems to be invalid!")
+    tree.PROTECTED_SOURCES.clear()
+    tree.PROTECTED_SOURCES.add("global.yaml")
     tree.tree_update(cfg, userdata)
     tree.tree_merge(cfg, DEFAULTS)
 
@@ -807,6 +819,24 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
         if user_settings:
             debug(f"Merging user settings from {os.path.normpath(spin_global)}")
             tree.tree_update(cfg, user_settings)
+
+    # Apply the directives of the spinfile and global.yaml right away, so that
+    # they aren't replaced by the ones of the local spinfile. Do it whether or
+    # not global.yaml exists, so that the result doesn't depend on it.
+    tree.tree_apply_certain(cfg, ("plugins", "plugin_paths", "plugin_packages"))
+
+    # Merge the project's local settings if they exist. These
+    # override all of the above, including global.yaml.
+    if (
+        spinfile
+        and not os.getenv("SPIN_DISABLE_LOCAL_YAML")
+        and exists(spin_local := local_spinfile(spinfile))
+    ):
+        local_settings = readyaml(spin_local)
+        if local_settings:
+            info(f"Merging local settings from {spin_local}")
+            tree.tree_update(cfg, local_settings, protect=False)
+            tree.PROTECTED_SOURCES.add(spin_local)
 
     if envbase:
         cfg.spin.spin_dir = Path(envbase).absolute() / ".spin"

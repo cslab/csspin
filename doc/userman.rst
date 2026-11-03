@@ -70,17 +70,22 @@ top-level directory of the project that lists the plugins to use, parameters for
 task etc. This file is used to construct a :ref:`configuration tree
 <configuration-tree-system-label>`, a nested data structure that defines the
 project and the behavior of spin and the plugins. The configuration tree is
-built from (in this order):
+built from the following sources, each one overriding the ones before it:
 
 * The default configuration of spin itself and each plugin. E.g. plugin default
   values defined within each plugin module.
 * The settings from ``spinfile.yaml`` complement (or override) the defaults.
 * If it exists, user-specific settings are read from
   ``$XDG_CONFIG_HOME/spin/global.yaml`` (``%LOCALAPPDATA%\spin\config\global.yaml``
-  on Windows) and complement the project configuration
-  tree; a use-case for this can be to globally set a proxy for accessing
-  specific resources. This behavior can be disabled by setting the environment
-  variable ``SPIN_DISABLE_GLOBAL_YAML`` to ``True``.
+  on Windows) and override the project's settings; a use-case for this can be
+  to globally set a proxy for accessing specific resources. This behavior can be
+  disabled by setting the environment variable ``SPIN_DISABLE_GLOBAL_YAML`` to
+  ``True``.
+* If it exists, the project's local settings are read from
+  ``spinfile.local.yaml`` next to ``spinfile.yaml`` and override all of the
+  above, including ``global.yaml`` (see :ref:`writing-local-label`). This
+  behavior can be disabled by setting the environment variable
+  ``SPIN_DISABLE_LOCAL_YAML`` to ``True``.
 * Environment variables as defined
   :ref:`here <environment-as-input-channel-label>`
 * Command line settings given by :option:`-p prop=value <spin -p>`,
@@ -368,6 +373,31 @@ example below.
      # built and installed.
      devpackages:
        - -e {HOME}/Projects/cpytoolchain
+
+
+.. _writing-local-label:
+
+Writing ``spinfile.local.yaml``
+===============================
+
+While ``global.yaml`` applies to all projects of a user, ``spinfile.local.yaml``
+next to ``spinfile.yaml`` applies to this one project only (``other.local.yaml``
+for a spinfile named ``other.yaml``). It uses the same format as
+``spinfile.yaml`` and overrides both ``spinfile.yaml`` and ``global.yaml``.
+
+.. code-block:: yaml
+   :caption: :file:`spinfile.local.yaml`
+
+   # Use the Python interpreter of the system instead of provisioning one.
+   python:
+     use: /usr/bin/python3
+
+   # Load an additional plugin for this working copy only.
+   append plugins:
+     - my_plugin
+
+   append plugin_paths:
+     - ../my-plugins
 
 
 .. _environment-as-input-channel-label:

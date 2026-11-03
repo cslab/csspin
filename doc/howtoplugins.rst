@@ -160,8 +160,8 @@ Developing plugins
 Plugins are Python modules that are imported by ``spin``, doing whatever
 side-effects are required. Plugins are loaded in one of the following ways:
 
-* plugins that are listed under the ``plugins`` key of ``spinfile.yaml`` or
-  ``global.yaml``
+* plugins that are listed under the ``plugins`` key of ``spinfile.yaml``,
+  ``global.yaml`` or ``spinfile.local.yaml``
 
 * plugins that are listed as requirements in another plugin's configuration
   subtree under the ``requires.spin`` key
@@ -785,7 +785,8 @@ in the plugin's schema:
 That way we can provide the secrets conveniently via environment variables for
 instance in CI/CD via setting ``SPIN_TREE_MYPLUGIN__TOKEN=abcd``. Additionally,
 developers have the benefit to control the according configuration properties
-via a private unshared ``global.yaml`` (see :ref:`writing-global-label`).
+via a private unshared ``global.yaml`` (see :ref:`writing-global-label`) or
+``spinfile.local.yaml`` (see :ref:`writing-local-label`).
 
 Dependency Management
 ---------------------
