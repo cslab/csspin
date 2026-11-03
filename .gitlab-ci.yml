@@ -2,7 +2,7 @@
 
 include:
   - project: pod/tools/cs.template
-    ref: v2026.2.3.0
+    ref: v2027.1.2.0
     file:
       - ci/common.yml
       - ci/pre-commit.yml
