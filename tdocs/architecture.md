@@ -21,7 +21,7 @@ choice2 --> |subcommand: system-provision| print_system_provision_cmdline[Print 
 choice2 --> |otherwise| toporun_init[Toporun-step: init] --> run_task[Execute the called task] --> end_
 
     subgraph load_minimal_tree[Setup minimal ConfigTree]
-        load_spinfile[Load spinfile.yaml] --> load_global_yaml[Load global.yaml] --> load_local_plugins[Load project-local plugins] --> load_builtin_plugin[Load spin's built-in Plugin]
+        load_spinfile[Load spinfile.yaml] --> load_global_yaml[Load global.yaml] --> load_local_yaml[Load spinfile.local.yaml] --> load_local_plugins[Load project-local plugins] --> load_builtin_plugin[Load spin's built-in Plugin]
     end
 
     subgraph load_plugins_into_tree[Load plugins into the ConfigTree]

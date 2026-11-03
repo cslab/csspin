@@ -61,8 +61,12 @@ Startup sequence (`src/csspin/cli.py`, function `cli`):
 2. `load_minimal_tree` builds the tree from spin's own `schema.yaml`, merges
    in `spinfile.yaml`, then the optional user global
    (`$XDG_CONFIG_HOME/spin/global.yaml`, disable via
-   `SPIN_DISABLE_GLOBAL_YAML`), then loads `csspin.builtin` and applies
-   `plugins`/`plugin_paths`/`plugin_packages` directives.
+   `SPIN_DISABLE_GLOBAL_YAML`), then the optional project-local
+   `spinfile.local.yaml` next to the spinfile (disable via
+   `SPIN_DISABLE_LOCAL_YAML`), each overriding the previous ones. It then loads
+   `csspin.builtin` and applies `plugins`/`plugin_paths`/`plugin_packages`
+   directives. Values from `global.yaml` and the local file are protected
+   from being overwritten by plugin defaults (`tree.PROTECTED_SOURCES`).
 3. For `provision`/`cleanup`/`system-provision`, control goes straight to
    `csspin.builtin` tasks (`src/csspin/builtin/__init__.py`), since plugin
    packages may not be installed yet.
