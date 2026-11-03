@@ -463,7 +463,8 @@ def _build_catchup_briefing(cfg) -> str:  # type: ignore[no-untyped-def]
         - `spin --dump`: the fully interpreted configuration in effect. This can
           be large, so pipe it through `grep <property>` for a specific value
           instead of reading all of it.
-        - `{cfg.spin.spin_dir}/plugins`: where installed plugin packages live.
+        - `{cfg.spin.plugin_site_packages}`: where installed plugin packages
+          live, in the virtual environment `{cfg.spin.spin_dir}/plugins`.
         - {install_location}: where spin's own sources are installed, for
           inspecting how the plugin/task system works directly.
         """)

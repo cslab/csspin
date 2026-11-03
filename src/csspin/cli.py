@@ -35,7 +35,9 @@ import importlib
 import importlib.machinery
 import importlib.metadata as importlib_metadata
 import os
+import site
 import sys
+import sysconfig
 from contextlib import nullcontext
 from site import addsitedir
 from traceback import format_exc
@@ -64,7 +66,9 @@ from csspin import (
     memoizer,
     mkdir,
     obfuscate,
+    readtext,
     readyaml,
+    rmtree,
     schema,
     secrets,
     set_tree,
@@ -769,6 +773,123 @@ def find_plugin_packages(cfg: tree.ConfigTree) -> Generator:
     yield from cfg.plugin_packages
 
 
+def plugin_venv_path(plugin_dir: str | Path, name: str) -> Path:
+    """Return the sysconfig path 'name' (e.g. "purelib" or "scripts") of the
+    virtual environment 'plugin_dir', which plugin packages are installed into.
+    """
+    if "venv" in sysconfig.get_scheme_names():
+        scheme = "venv"
+    else:  # Python < 3.11
+        scheme = "nt" if os.name == "nt" else "posix_prefix"
+    return Path(
+        sysconfig.get_path(
+            name, scheme, vars={"base": plugin_dir, "platbase": plugin_dir}
+        )
+    )
+
+
+def plugin_venv_matches(plugin_dir: str | Path) -> bool:
+    """Check whether 'plugin_dir' is a virtual environment created for the
+    Python version spin is running on."""
+    pyvenv_cfg = Path(plugin_dir) / "pyvenv.cfg"
+    if not pyvenv_cfg.is_file():
+        return False
+    settings = {
+        key.strip(): value.strip()
+        for key, _, value in (
+            line.partition("=") for line in readtext(pyvenv_cfg).splitlines()
+        )
+    }
+    version = settings.get("version_info") or settings.get("version") or ""
+    return (
+        version.split(".")[:2] == [str(v) for v in sys.version_info[:2]]
+        # The base interpreter may have been removed or upgraded in place, or
+        # creating the venv may have been interrupted
+        and Path(settings.get("home", "")).is_dir()
+        and plugin_venv_python(plugin_dir).is_file()
+    )
+
+
+def plugin_venv_python(plugin_dir: str | Path) -> Path:
+    """Return the path of the interpreter of the virtual environment
+    'plugin_dir'."""
+    python = "python.exe" if sys.platform == "win32" else "python"
+    return plugin_venv_path(plugin_dir, "scripts") / python
+
+
+def write_sitecustomize(directory: Path, code: str) -> None:
+    """Write a sitecustomize module running 'code' into 'directory'.
+
+    Python imports only the first sitecustomize module on sys.path, so the
+    module goes on to run the next one on sys.path, as without it (e.g. one
+    of a CI image, or for measuring the coverage of subprocesses).
+    """
+    writetext(
+        directory / "sitecustomize.py",
+        "# Created by spin automatically\n"
+        f"{code}"
+        "import importlib.machinery, importlib.util, os, sys\n"
+        "dirs = [os.path.normcase(os.path.abspath(p or '.')) for p in sys.path]\n"
+        "here = os.path.normcase(os.path.dirname(os.path.abspath(__file__)))\n"
+        "if here in dirs:\n"
+        "    spec = importlib.machinery.PathFinder.find_spec(\n"
+        "        'sitecustomize', sys.path[dirs.index(here) + 1 :]\n"
+        "    )\n"
+        "    if spec and spec.loader:\n"
+        "        spec.loader.exec_module(importlib.util.module_from_spec(spec))\n",
+    )
+
+
+def provision_plugin_venv(plugin_dir: Path) -> Path:
+    """Create the virtual environment 'plugin_dir' for plugin packages, unless
+    it exists already, and return the path of its interpreter.
+
+    Plugin packages are imported by spin's own process, so the virtual
+    environment is based on spin's interpreter. It is never activated; spin
+    adds its site-packages to sys.path instead.
+    """
+    if not plugin_venv_matches(plugin_dir):
+        if exists(plugin_dir):
+            # Either a plugin directory of former spin versions, which used
+            # 'pip install -t', or a virtual environment for another Python
+            info(f"Recreating {plugin_dir} as a virtual environment")
+            rmtree(plugin_dir)
+        sh(sys.executable, "-mvenv", "--without-pip", plugin_dir)
+
+    # Plugins used to add the plugin directory itself to PYTHONPATH for
+    # subprocesses requiring plugin packages (like csspin-python running
+    # virtualenv). Keep this working until they use spin.plugin_site_packages.
+    write_sitecustomize(
+        plugin_dir,
+        "import site\n"
+        f"site.addsitedir({str(plugin_venv_path(plugin_dir, 'purelib'))!r})\n",
+    )
+
+    return plugin_venv_python(plugin_dir)
+
+
+def provision_pip_site(plugin_dir: Path) -> Path:
+    """Create a directory to put on PYTHONPATH for pip installing into the
+    virtual environment 'plugin_dir', and return it.
+
+    Its sitecustomize module appends the site directories of spin's own
+    environment to sys.path, so pip doesn't install spin's packages a second
+    time. Being appended, they come after the venv's site-packages, as in
+    spin's own process. Build backends don't see them, because pip replaces
+    PYTHONPATH for its isolated build environments.
+    """
+    spin_site_dirs = site.getsitepackages()
+    if site.ENABLE_USER_SITE:
+        spin_site_dirs.append(site.getusersitepackages())
+    pip_site = Path(mkdir(plugin_dir / "pip-site"))
+    write_sitecustomize(
+        pip_site,
+        "import sys\n"
+        f"sys.path.extend(p for p in {spin_site_dirs!r} if p not in sys.path)\n",
+    )
+    return pip_site
+
+
 def yield_plugin_import_specs(cfg: tree.ConfigTree) -> Generator:
     if not isinstance(cfg.plugins, list):
         die("'plugins' configuration is invalid!")
@@ -847,6 +968,9 @@ def load_minimal_tree(  # pylint: disable=too-many-locals,too-many-arguments
         cfg.spin.project_name = cfg.spin.project_root.basename()
     cfg.spin.launch_dir = Path().cwd().relpath(cfg.spin.project_root)
     cfg.spin.spin_dir = interpolate1(Path(cfg.spin.spin_dir)).absolute()  # type: ignore[union-attr]
+    cfg.spin.plugin_site_packages = plugin_venv_path(
+        cfg.spin.spin_dir / "plugins", "purelib"
+    )
 
     if not cwd:
         cd(cfg.spin.project_root)
@@ -885,7 +1009,7 @@ def load_plugins_into_tree(cfg: tree.ConfigTree, cleanup: bool = False) -> None:
     # which we expect to live in plugin packages. Afterwards
     # 'cfg.loaded' will be a mapping from plugin names to module
     # objects.
-    addsitedir(cfg.spin.spin_dir / "plugins")
+    addsitedir(plugin_venv_path(cfg.spin.spin_dir / "plugins", "purelib"))
     install_import_guard()
 
     for import_spec in yield_plugin_import_specs(cfg):
@@ -940,24 +1064,18 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     """Install plugin packages which are not yet installed and extend the
     configuration tree.
     """
-    mkdir(plugin_dir := interpolate1(Path("{spin.spin_dir}") / "plugins"))
-
-    # To be able to do editable installs to plugin dir, we have to
-    # temporarily set PYTHONPATH, to let the pip subprocess
-    # believe plugin_dir is in sys.path. But we must be careful to
-    # unset it before calling anything else -- see below!
-    old_python_path = os.environ.get("PYTHONPATH", None)
-    os.environ["PYTHONPATH"] = plugin_dir
+    plugin_dir = interpolate1(Path("{spin.spin_dir}") / "plugins")
+    python = provision_plugin_venv(plugin_dir)
 
     cmd = [
         f"{sys.executable}",
         "-mpip",
+        "--python",
+        python,
         "install",
         "-q" if cfg.verbosity < Verbosity.INFO else None,
         "--disable-pip-version-check",
         "--upgrade",
-        "-t",
-        plugin_dir,
         "--index-url",
         "{spin.index_url}",
     ]
@@ -965,20 +1083,14 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     if cfg.spin.extra_index:
         cmd.extend(["--extra-index-url", cfg.spin.extra_index])
 
-    # Install all missing plugin-packages at once to avoid pip's dependency
-    # resolver to fail without exit-zero, while using the "-t" (target) option
-    # pointing to the plugin directory.
+    # Install all plugin-packages at once to avoid pip's dependency resolver to
+    # fail without exit-zero.
     with memoizer(plugin_dir / "packages.memo") as m:  # type: ignore[operator]
         if to_be_installed := set(find_plugin_packages(cfg)):
             args = list(cmd)
             for pkg in to_be_installed:
                 args.extend(pkg.split())
-            sh(*args)
+            pythonpath = [provision_pip_site(plugin_dir), os.getenv("PYTHONPATH")]
+            sh(*args, env={"PYTHONPATH": os.pathsep.join(filter(None, pythonpath))})
             for pkg in to_be_installed:
                 m.add(pkg)
-
-    # Now remove PYTHONPATH and make plugin a pth-enabled part of sys.path
-    if old_python_path:
-        os.environ["PYTHONPATH"] = old_python_path
-    else:
-        del os.environ["PYTHONPATH"]

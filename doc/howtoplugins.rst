@@ -62,8 +62,16 @@ then be used by adding their name. Given a project layout like this:
       - myplugin
 
 **Plugin-packages** containing a set of plugins are declared in
-``plugin_packages``. spin installs plugins into
-``.spin/plugins``.
+``plugin_packages``. spin installs plugins into the virtual environment
+``.spin/plugins``, which is based on the Python interpreter spin is running on.
+Dependencies of plugin-packages that spin itself provides (like ``csspin`` or
+``click``) are taken from spin's own installation, if its version satisfies the
+requirement. Otherwise :program:`pip` installs the required version into
+``.spin/plugins``, but spin's process keeps importing its own version.
+Subprocesses running spin's interpreter (``sys.executable``) can add
+``{spin.plugin_site_packages}`` to ``PYTHONPATH`` to import plugin-packages.
+This doesn't cover plugin-packages installed in editable mode, as Python
+doesn't process their ``.pth`` files for directories on ``PYTHONPATH``.
 
   .. code-block:: yaml
     :caption: ``spinfile.yaml`` defining plugins to import from plugin-packages

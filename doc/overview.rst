@@ -165,9 +165,9 @@ errors where a project's directory name differs from the project name, for
 example if a project ``foo`` has been cloned into the directory ``foo_new``.
 
 The ``plugin_packages`` key lists plugin-packages that are installed using
-:program:`pip` into a project-specific plugin directory (which notably is
-different from the project's virtual environment, in case it is a Python
-project).
+:program:`pip` into a project-specific virtual environment for plugins (which
+notably is different from the project's virtual environment, in case it is a
+Python project).
 
 ``plugins`` is a list of Python modules of plugin-packages or local modules,
 that are imported by spin and implement spin plugins. In this case,
@@ -182,11 +182,12 @@ it to then add the current project as editable install:
 
 .. code-block:: console
    :caption: Provision a Python project using spin
-   :emphasize-lines: 1,3,6,11,14
+   :emphasize-lines: 1,4,7,12,15
 
    $ spin provision
-   spin: mkdir /home/developer/src/qs/spin/csspin/.spin/plugins
-   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q -t /home/developer/src/qs/spin/csspin/.spin/plugins csspin_python
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mvenv --without-pip /home/developer/src/qs/spin/csspin/.spin/plugins
+   spin: mkdir -p /home/developer/src/qs/spin/csspin/.spin/plugins/pip-site
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip --python /home/developer/src/qs/spin/csspin/.spin/plugins/bin/python install -q csspin_python
    spin: set PYTHON_BUILD_CACHE_PATH=/home/developer/.local/share/spin/pyenv_cache
    spin: set PYTHON_CFLAGS=-DOPENSSL_NO_COMP
    spin: /home/developer/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.10.19 /home/developer/.local/share/spin/python/3.10.19
@@ -234,8 +235,8 @@ that ``csspin_python.pytest`` depends on from PyPI:
    :emphasize-lines: 7
 
    $ spin provision
-   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q \
-       -t /home/developer/src/qs/spin/csspin/.spin/plugins \
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip \
+       --python /home/developer/src/qs/spin/csspin/.spin/plugins/bin/python install -q \
        csspin_python
    spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pip install -q pytest-cov pytest
@@ -300,8 +301,8 @@ installs all the tools and sets up the :program:`pre-commit` hooks.
    :emphasize-lines: 5
 
    $ spin provision
-   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip install -q \
-       -t /home/developer/src/qs/spin/csspin/.spin/plugins \
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip \
+       --python /home/developer/src/qs/spin/csspin/.spin/plugins/bin/python install -q \
        csspin_python \
        git+https://git.example.com/projstds#egg=projstds
    spin: activate /home/developer/src/qs/spin/csspin/.spin/venv

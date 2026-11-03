@@ -13,7 +13,7 @@ import os
 import sys
 import textwrap
 from pathlib import Path as PathlibPath
-from shutil import copy, which
+from shutil import copy, copytree, which
 from typing import TYPE_CHECKING, Callable, Generator
 
 import click
@@ -36,9 +36,22 @@ from subprocess import run as subprocess_run
 from csspin import Verbosity
 
 
-def test_cli(cli_runner: CliRunner) -> None:
+@pytest.fixture(scope="module")
+def completion_project(tmp_path_factory: pytest.TempPathFactory) -> PathlibPath:
+    """A project with a local plugin providing the 'sbom' task group, so the
+    tests don't depend on the plugin packages provisioned for this repo."""
+    project = tmp_path_factory.mktemp("completion") / "project"
+    copytree(PathlibPath(__file__).parent / "data" / "completion", project)
+    # Otherwise the first spin call echoes creating it, which would be taken
+    # as a completion item
+    (project / ".spin").mkdir()
+    return project
+
+
+def test_cli(cli_runner: CliRunner, completion_project: PathlibPath) -> None:
     """csspin.cli can be invoked using click"""
-    result = cli_runner.invoke(cli.cli, ["--help"])
+    with chdir(completion_project):
+        result = cli_runner.invoke(cli.cli, ["--help"])
     assert result.exit_code == 0
 
 
@@ -604,7 +617,8 @@ def test_load_plugins_into_tree(
         assert cfg.spin.project_root == spinfile.dirname()
         assert cfg.spin.project_name == tmp_path.basename()
         assert cfg.spin.spin_dir == tmp_path / ".spin"
-        assert cfg.spin.spin_dir / "plugins" in sys.path
+        assert cfg.spin.plugin_site_packages.startswith(cfg.spin.spin_dir / "plugins")
+        assert cfg.spin.plugin_site_packages in sys.path
 
         assert os.path.isfile(tmp_path / ".spin" / ".gitignore")
         with open(tmp_path / ".spin" / ".gitignore", "r", encoding="utf-8") as f:
@@ -765,26 +779,325 @@ class TestLocalSpinfile:
         assert cfg.plugin_packages == expected
 
 
-def test_install_plugin_packages(
-    mocker: MockerFixture,
-    cfg: ConfigTree,
-    tmp_path: PathlibPath,
-    trivial_plugin_path: Path,
-) -> None:
-    """
-    csspin.cli.install_plugin_packages executes is able to install plugin packages
-    """
-    cfg.spin.spin_dir = tmp_path
-    plugin_dir = cfg.spin.spin_dir / "plugins"
-    mocker.patch(
-        "csspin.cli.find_plugin_packages", return_value=(str(trivial_plugin_path),)
-    )
-    cli.install_plugin_packages(cfg)
+class TestPluginPackages:
+    """Installing plugin packages into the plugin venv."""
 
-    assert (plugin_dir / "trivial-1.0.0.dist-info").is_dir()
-    assert (plugin_dir / "packages.memo").is_file()
-    with memoizer(plugin_dir / "packages.memo") as m:
-        assert m.check(trivial_plugin_path)
+    @staticmethod
+    def _make_package(  # pylint: disable=too-many-arguments
+        path: Path,
+        name: str,
+        version: str,
+        dependencies: tuple[str, ...] = (),
+        backend: str = "",
+    ) -> Path:
+        """Create a minimal Python project for testing plugin package installs.
+        'backend' is the source of an in-tree build backend wrapping setuptools'.
+        """
+        module = name.replace("-", "_")
+        os.makedirs(path / module)
+        (path / module / "__init__.py").write_text("")
+        build_backend = 'build-backend = "setuptools.build_meta"'
+        if backend:
+            (path / "_backend.py").write_text(
+                backend + "\nfrom setuptools.build_meta import *\n"
+            )
+            build_backend = 'build-backend = "_backend"\nbackend-path = ["."]'
+        (path / "pyproject.toml").write_text(textwrap.dedent(f"""\
+                [build-system]
+                requires = ["setuptools>=64"]
+                {build_backend}
+
+                [project]
+                name = "{name}"
+                version = "{version}"
+                dependencies = {json.dumps(list(dependencies))}
+
+                [tool.setuptools]
+                packages = ["{module}"]
+                """))
+        return path
+
+    @staticmethod
+    def _site_packages(plugin_dir: Path) -> PathlibPath:
+        """Find the site-packages directory of the plugin venv, independently of
+        how spin computes it."""
+        (site_packages,) = PathlibPath(plugin_dir).rglob("site-packages")
+        return site_packages
+
+    def test_install_plugin_packages(
+        self,
+        mocker: MockerFixture,
+        cfg: ConfigTree,
+        tmp_path: PathlibPath,
+        trivial_plugin_path: Path,
+    ) -> None:
+        """
+        csspin.cli.install_plugin_packages installs plugin packages into a
+        virtual environment.
+        """
+        cfg.spin.spin_dir = tmp_path
+        plugin_dir = cfg.spin.spin_dir / "plugins"
+        mocker.patch(
+            "csspin.cli.find_plugin_packages",
+            return_value=(str(trivial_plugin_path),),
+        )
+        cli.install_plugin_packages(cfg)
+
+        assert (plugin_dir / "pyvenv.cfg").is_file()
+        assert (self._site_packages(plugin_dir) / "trivial-1.0.0.dist-info").is_dir()
+        assert (plugin_dir / "packages.memo").is_file()
+        with memoizer(plugin_dir / "packages.memo") as m:
+            assert m.check(trivial_plugin_path)
+
+    def test_install_plugin_packages_uses_spins_packages(
+        self, cfg: ConfigTree, tmp_path: PathlibPath
+    ) -> None:
+        """Dependencies provided by spin's own environment aren't installed
+        again."""
+        cfg.spin.spin_dir = tmp_path / "spin"
+        package = self._make_package(
+            tmp_path / "package", "spin-test-plugin", "1.0", dependencies=("click",)
+        )
+        cfg.plugin_packages = [str(package)]
+
+        cli.install_plugin_packages(cfg)
+
+        site_packages = self._site_packages(cfg.spin.spin_dir / "plugins")
+        assert (site_packages / "spin_test_plugin").is_dir()
+        assert not (site_packages / "click").exists()
+
+    def test_install_plugin_packages_build_isolation(
+        self, cfg: ConfigTree, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Build backends of plugin packages built from source don't see spin's
+        own packages, so they get the versions their build requirements ask
+        for.
+        """
+        cfg.spin.spin_dir = tmp_path / "spin"
+        package = self._make_package(
+            tmp_path / "package",
+            "spin-test-plugin",
+            "1.0",
+            backend=textwrap.dedent("""\
+                import importlib.util
+                if importlib.util.find_spec("click"):
+                    raise RuntimeError("spin's packages leak into the build")
+                """),
+        )
+        cfg.plugin_packages = [str(package)]
+
+        cli.install_plugin_packages(cfg)
+
+        plugin_dir = cfg.spin.spin_dir / "plugins"
+        assert (self._site_packages(plugin_dir) / "spin_test_plugin").is_dir()
+        # pip 26.2 and later keep build environments from processing the venv's
+        # .pth files, so the build above only fails with older ones. Check
+        # with any pip that the venv's interpreter, which runs the build
+        # backends, doesn't see spin's packages on its own.
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+        output = check_output(
+            [
+                cli.plugin_venv_python(plugin_dir),
+                "-c",
+                "import importlib.util; print(importlib.util.find_spec('click'))",
+            ],
+            env=env,
+            text=True,
+        )
+        assert output.strip() == "None"
+
+    def test_install_plugin_packages_switch_editable(
+        self, cfg: ConfigTree, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Switching between a regular and an editable install of a plugin
+        package leaves no traces of the former installation.
+        """
+        cfg.spin.spin_dir = tmp_path / "spin"
+        package = self._make_package(tmp_path / "package", "spin-test-plugin", "1.0")
+
+        cfg.plugin_packages = [str(package)]
+        cli.install_plugin_packages(cfg)
+        site_packages = self._site_packages(cfg.spin.spin_dir / "plugins")
+        assert (site_packages / "spin_test_plugin").is_dir()
+
+        cfg.plugin_packages = [f"-e {package}"]
+        cli.install_plugin_packages(cfg)
+        assert not (site_packages / "spin_test_plugin").exists()
+        assert any("editable" in name for name in os.listdir(site_packages))
+
+        cfg.plugin_packages = [str(package)]
+        cli.install_plugin_packages(cfg)
+        assert (site_packages / "spin_test_plugin").is_dir()
+        assert not any("editable" in name for name in os.listdir(site_packages))
+
+    @pytest.mark.usefixtures("cfg")  # provides the verbosity for info()
+    def test_provision_plugin_venv_replaces_target_dir(
+        self, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Plugin directories of former spin versions, populated by 'pip install
+        -t', are replaced by a virtual environment.
+        """
+        plugin_dir = Path(tmp_path) / "plugins"
+        (plugin_dir / "csspin_python").makedirs()
+
+        python = cli.provision_plugin_venv(plugin_dir)
+
+        assert python.is_file()
+        assert (plugin_dir / "pyvenv.cfg").is_file()
+        assert not (plugin_dir / "csspin_python").exists()
+
+    @pytest.mark.usefixtures("cfg")  # provides the verbosity for sh()
+    def test_sitecustomize_runs_next_one(self, tmp_path: PathlibPath) -> None:
+        """
+        The sitecustomize modules spin creates for subprocesses run the next
+        sitecustomize module on sys.path, which they would hide otherwise, once.
+        """
+        plugin_dir = Path(tmp_path) / "plugins"
+        cli.provision_plugin_venv(plugin_dir)
+        pip_site = cli.provision_pip_site(plugin_dir)
+        other = Path(tmp_path) / "other"
+        other.mkdir()
+        (other / "sitecustomize.py").write_text(
+            "import os\nos.environ['RUNS'] = os.environ.get('RUNS', '') + 'x'\n"
+        )
+
+        for pythonpath in (
+            [pip_site, other],
+            [plugin_dir, other],
+            [pip_site, plugin_dir, other],
+        ):
+            output = check_output(
+                [sys.executable, "-c", "import os; print(os.environ['RUNS'])"],
+                env={**os.environ, "PYTHONPATH": os.pathsep.join(pythonpath)},
+                text=True,
+            )
+            assert output.strip() == "x", pythonpath
+
+    def test_plugin_venv_path(self, tmp_path: PathlibPath) -> None:
+        """plugin_venv_path returns the paths the venv's interpreter uses."""
+        plugin_dir = Path(tmp_path) / "plugins"
+        subprocess_run(
+            [sys.executable, "-mvenv", "--without-pip", plugin_dir], check=True
+        )
+        python = cli.plugin_venv_python(plugin_dir)
+
+        output = check_output(
+            [
+                python,
+                "-c",
+                (
+                    "import sysconfig; print(sysconfig.get_path('purelib'));"
+                    " print(sysconfig.get_path('scripts'))"
+                ),
+            ],
+            text=True,
+        )
+        purelib, scripts = output.splitlines()
+        assert os.path.samefile(cli.plugin_venv_path(plugin_dir, "purelib"), purelib)
+        assert os.path.samefile(cli.plugin_venv_path(plugin_dir, "scripts"), scripts)
+
+    def test_plugin_venv_matches(self, tmp_path: PathlibPath) -> None:
+        """Virtual environments for other Python versions don't match."""
+        plugin_dir = Path(tmp_path) / "plugins"
+        assert not cli.plugin_venv_matches(plugin_dir)
+
+        subprocess_run(
+            [sys.executable, "-mvenv", "--without-pip", plugin_dir], check=True
+        )
+        assert cli.plugin_venv_matches(plugin_dir)
+
+        pyvenv_cfg = plugin_dir / "pyvenv.cfg"
+        pyvenv_cfg.write_text(
+            pyvenv_cfg.read_text().replace(
+                f"{sys.version_info[0]}.{sys.version_info[1]}.", "2.7."
+            )
+        )
+        assert not cli.plugin_venv_matches(plugin_dir)
+
+    def test_plugin_venv_matches_missing_interpreter(
+        self, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Virtual environments whose base interpreter or own interpreter is
+        missing don't match.
+        """
+        plugin_dir = Path(tmp_path) / "plugins"
+        subprocess_run(
+            [sys.executable, "-mvenv", "--without-pip", plugin_dir], check=True
+        )
+        pyvenv_cfg = plugin_dir / "pyvenv.cfg"
+        settings = pyvenv_cfg.read_text()
+
+        pyvenv_cfg.write_text(
+            "".join(
+                f"home = {tmp_path / 'gone'}\n" if line.startswith("home") else line
+                for line in settings.splitlines(keepends=True)
+            )
+        )
+        assert not cli.plugin_venv_matches(plugin_dir)
+
+        pyvenv_cfg.write_text(settings)
+        assert cli.plugin_venv_matches(plugin_dir)
+        cli.plugin_venv_python(plugin_dir).unlink()
+        assert not cli.plugin_venv_matches(plugin_dir)
+
+    def test_plugin_site_packages_on_pythonpath(
+        self, minimum_yaml_path: str, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Subprocesses running spin's interpreter with spin.plugin_site_packages
+        on PYTHONPATH can import plugin packages, including their dependencies
+        taken from spin's own environment.
+        """
+        cfg = cli.load_minimal_tree(
+            minimum_yaml_path, cwd=os.getcwd(), envbase=tmp_path
+        )
+        cfg.plugin_packages = [
+            str(
+                self._make_package(
+                    tmp_path / "package",
+                    "spin-test-plugin",
+                    "1.0",
+                    dependencies=("click",),
+                )
+            )
+        ]
+        cli.install_plugin_packages(cfg)
+
+        output = check_output(
+            [
+                sys.executable,
+                "-c",
+                "import spin_test_plugin, click; print('ok')",
+            ],
+            env={**os.environ, "PYTHONPATH": str(cfg.spin.plugin_site_packages)},
+            text=True,
+        )
+        assert output.strip() == "ok"
+
+    def test_plugin_venv_pythonpath_compatibility(
+        self, cfg: ConfigTree, tmp_path: PathlibPath
+    ) -> None:
+        """
+        Subprocesses adding the plugin directory to PYTHONPATH, as plugins did when
+        it wasn't a virtual environment, can still import plugin packages.
+        """
+        cfg.spin.spin_dir = tmp_path / "spin"
+        plugin_dir = cfg.spin.spin_dir / "plugins"
+        cfg.plugin_packages = [
+            str(self._make_package(tmp_path / "package", "spin-test-plugin", "1.0"))
+        ]
+        cli.install_plugin_packages(cfg)
+
+        output = check_output(
+            [sys.executable, "-c", "import spin_test_plugin; print('ok')"],
+            env={**os.environ, "PYTHONPATH": str(plugin_dir)},
+            text=True,
+        )
+        assert output.strip() == "ok"
 
 
 def test_spin_version() -> None:
@@ -821,10 +1134,13 @@ def _shell_complete(
     ids=["command", "subcommand", "incomplete", "all-options"],
 )
 def test_spin_shell_complete(
-    comp_words: str, comp_cword: int, expected: set[str]
+    comp_words: str,
+    comp_cword: int,
+    expected: set[str],
+    completion_project: PathlibPath,
 ) -> None:
     """Ensuring that spin shell completion suggests commands and subcommands"""
-    assert expected <= _shell_complete(comp_words, comp_cword)
+    assert expected <= _shell_complete(comp_words, comp_cword, cwd=completion_project)
 
 
 def test_spin_shell_complete_missing_spinfile(tmp_path: PathlibPath) -> None:
@@ -905,7 +1221,9 @@ _SHELL_DRIVERS = {
         "unknown-command",
     ],
 )
-def test_spin_shell_complete_e2e(shell: str, line: str, expected: set[str]) -> None:
+def test_spin_shell_complete_e2e(
+    shell: str, line: str, expected: set[str], completion_project: PathlibPath
+) -> None:
     """Ensuring that the generated completion script works in each shell"""
     driver = _SHELL_DRIVERS[shell]
     if sys.platform == "win32" and shell != "powershell":
@@ -918,7 +1236,7 @@ def test_spin_shell_complete_e2e(shell: str, line: str, expected: set[str]) -> N
         "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"],
         "TEST_SPIN_COMPLETE_LINE": line,
     }
-    output = check_output(driver, env=env, text=True)
+    output = check_output(driver, env=env, cwd=completion_project, text=True)
     assert expected <= set(output.splitlines())
 
 
