@@ -136,7 +136,7 @@ January 14, 2026
 Breaking Changes
 ----------------
 
-- Drop Python 3.9 support (`#210
+- Drop Python 3.9 support (`#225
   <https://code.contact.de/pod/components/csspin/-/issues/225>`_)
 
 Bug Fixes
