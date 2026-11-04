@@ -110,10 +110,6 @@ pre-commit:
   before_script:
     - apt-get update -y && apt-get install git zsh fish -y
 
-python3.10:
-  extends: [.test_base, .install_test_dependencies]
-  image: python:3.10-slim
-
 python3.11:
   extends: [.test_base, .install_test_dependencies]
   image: python:3.11-slim
@@ -129,6 +125,10 @@ python3.13:
 python3.14:
   extends: [.test_base, .install_test_dependencies]
   image: python:3.14-slim
+
+python3.15:
+  extends: [.test_base, .install_test_dependencies]
+  image: python:3.15-slim
 
 windows:
   extends: .test_base
@@ -201,11 +201,11 @@ test_csspin_workflows_integration:
 analyze:
   extends: .analyze
   needs:
-    - python3.10
     - python3.11
     - python3.12
     - python3.13
     - python3.14
+    - python3.15
     - windows
   variables:
     SOURCE_DIRS: src

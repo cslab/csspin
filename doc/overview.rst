@@ -157,7 +157,7 @@ as an example to perform the provisioning.
    plugins:
      - csspin_python.python
    python:
-     version: 3.10.19
+     version: 3.11.17
 
 The ``spin.project_name`` property tells spin the name of the project we're
 working on. Setting it may not be required, but is always recommended to avoid
@@ -177,7 +177,7 @@ plugin, and ``version`` specifies the release of the Python interpreter that
 this project wants to use.
 
 Provisioning this project would download the `csspin_python`_ plugin-package and
-its dependencies, install Python 3.10.19 and create a virtual environment from
+its dependencies, install Python 3.11.17 and create a virtual environment from
 it to then add the current project as editable install:
 
 .. code-block:: console
@@ -190,12 +190,12 @@ it to then add the current project as editable install:
    spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mpip --python /home/developer/src/qs/spin/csspin/.spin/plugins/bin/python install -q csspin_python
    spin: set PYTHON_BUILD_CACHE_PATH=/home/developer/.local/share/spin/pyenv_cache
    spin: set PYTHON_CFLAGS=-DOPENSSL_NO_COMP
-   spin: /home/developer/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.10.19 /home/developer/.local/share/spin/python/3.10.19
-   Downloading Python-3.10.19.tar.xz...
-   -> https://www.python.org/ftp/python/3.10.19/Python-3.10.19.tar.xz
-   Installing Python-3.10.19...
-   Installed Python-3.10.19 to /home/developer/.local/share/spin/python/3.10.19
-   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mvirtualenv -q -p /home/developer/.local/share/spin/python/3.10.19/bin/python /home/developer/src/qs/spin/csspin/.spin/venv
+   spin: /home/developer/.local/share/spin/pyenv/plugins/python-build/bin/python-build 3.11.17 /home/developer/.local/share/spin/python/3.11.17
+   Downloading Python-3.11.17.tar.xz...
+   -> https://www.python.org/ftp/python/3.11.17/Python-3.11.17.tar.xz
+   Installing Python-3.11.17...
+   Installed Python-3.11.17 to /home/developer/.local/share/spin/python/3.11.17
+   spin: /home/developer/src/qs/spin/csspin/venv/bin/python3.12 -mvirtualenv -q -p /home/developer/.local/share/spin/python/3.11.17/bin/python /home/developer/src/qs/spin/csspin/.spin/venv
    spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: python -mpip -q install -U pip
    spin: pip install -q -e .
@@ -221,7 +221,7 @@ Now you want to test your project using `pytest`_. All that is necessary
    plugins:
      - csspin_python.pytest
    python:
-     version: 3.10.19
+     version: 3.11.17
 
 Spin will resolve the dependency from ``csspin_python.pytest`` to
 ``csspin_python.python`` without the need to define both plugins within
@@ -253,7 +253,7 @@ After provisioning, `spin` gained a new subcommand ``pytest``:
    spin: activate /home/developer/src/qs/spin/csspin/.spin/venv
    spin: pytest tests
    ======================= test session starts =================================
-   platform linux -- Python 3.10.19, pytest-8.3.2, pluggy-1.5.0
+   platform linux -- Python 3.11.17, pytest-8.3.2, pluggy-1.5.0
    rootdir: /home/developer/src/qs/spin/csspin
    configfile: pyproject.toml
    plugins: cov-5.0.0
@@ -281,7 +281,7 @@ tools and settings required. You can simply add that plugin to your
      - csspin_python.pytest
      - mycompany.projstds
    python:
-     version: 3.10.19
+     version: 3.11.17
    projstds:
      # Plugin settings goes here
 
