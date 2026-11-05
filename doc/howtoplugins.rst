@@ -191,6 +191,12 @@ The plugin API consists of the following:
   passing the values to spins API that will resolve values internally (e.g.
   :py:func:`csspin.sh` via ``sh("ls {spin.data}")``).
 
+  Properties of type ``path`` are still plain strings there, so interpolate
+  first and compute afterwards, because a placeholder can resolve to an absolute
+  path. After the last ``configure(cfg)`` callback ran, spin interpolates the
+  whole tree and enforces the schema types. ``init(cfg)`` and ``provision(cfg)``
+  therefore see resolved, typed values and must not interpolate them again.
+
 * An optional ``init(cfg)`` callback that is called before any subcommand is
   executed, but after ``configure(cfg)``. ``init(cfg)`` can be used to setup
   state after all plugins have been configured.

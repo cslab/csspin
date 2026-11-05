@@ -101,7 +101,9 @@ lists the supported surface: `task`, `group`, `config`, `sh`, `echo`/`info`/
 (click integration, plugin loading) and is imported lazily from `__init__.py`
 functions to avoid an import cycle. `src/csspin/builtin/` holds the tasks
 that are always available without any plugin packages (`provision`,
-`cleanup`, `system-provision`, `run`, `schemadoc`, `distro`).
+`cleanup`, `system-provision`, `run`, `schemadoc`, `distro`). Plugin
+conventions (idempotence, OS independence, fail early, secrets) live in
+`doc/howtoplugins.rst` and `tdocs/plugin_guideline.md`.
 
 Key plugin-facing concepts:
 
@@ -119,6 +121,8 @@ Key plugin-facing concepts:
   the config tree plus `os.environ`, used pervasively (e.g. `"{python.version}"`,
   `"{spin.project_root}"`). Do not call at plugin module import time — the
   tree isn't populated yet; only call inside `configure()`/task bodies.
+  Values are raw during `configure()` and resolved and typed from
+  `provision()` on (see `doc/howtoplugins.rst`).
   Nearly every `csspin` I/O helper (`sh`, `cd`, `readtext`, ...) interpolates
   its path/string arguments automatically.
 - **`sh()`**: the shell-out primitive. Commands run with the environment
@@ -128,7 +132,7 @@ Key plugin-facing concepts:
   a project environment, and activation must never touch spin's `sys.path`
   (see "Plugin code and the project environment" in `doc/howtoplugins.rst`).
   `spin.subprocess_environment` and `use_subprocess_environment` are
-  deprecated; `sh()` still honours them with a warning until they're removed.
+  deprecated; `sh()` still honors them with a warning until they're removed.
 - **`build_target`/`build_rules`**: a tiny make-like system driven by the
   `build_rules` section of `spinfile.yaml` (see the `doc/schemaref.rst` and
   `requirements.txt` rules in this repo's own `spinfile.yaml`), checking
@@ -154,6 +158,35 @@ Key plugin-facing concepts:
 - Fixtures (`tests/conftest.py`) build config trees via `load_minimal_tree`
   (and `cfg`/`cfg_spin_dummy` for pre-built trees), rather than constructing
   `ConfigTree` objects by hand.
+
+## Compatibility
+
+Customers and external projects use csspin and the `csspin-*` plugin packages,
+so every change must keep existing setups working.
+
+- Deprecate before removing. Keep the old property, task, option or API working
+  next to the new one, warn with `_warn_deprecated` (`src/csspin/__init__.py`),
+  mark the schema help as deprecated, and remove it in a later release. This
+  covers `__all__`, schema property names and defaults. Name unavoidable breaks
+  in the MR description for the release notes.
+- Each csspin pipeline triggers integration jobs in the sibling plugin repos
+  (`test_csspin_<plugin>_integration`). A red downstream job points at the
+  csspin change.
+
+## Restricted environments
+
+Customers might run spin without internet access. Read
+`tdocs/restricted_environments.md` before adding or changing anything that
+downloads or installs.
+
+- Everything spin or a plugin fetches from a public host (including update
+  checks and helper `pip install` calls) needs a spin property that points
+  elsewhere, with the upstream URL as default. Follow the names, help layout and
+  precedence in the tdoc.
+- Control goes through spin properties. Use an environment variable only when
+  the tool offers no other mechanism, and set it from the property inside the
+  plugin. Give each artifact its own property and add no global
+  upstream-to-mirror rewrite map.
 
 ## Contribution workflow
 
