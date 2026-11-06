@@ -60,6 +60,45 @@
 Release Notes
 =============
 
+v3.3.0
+======
+
+November 06, 2026
+
+Enhancements
+------------
+
+- Support ``spinfile.local.yaml`` (`!207
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/207>`_)
+- Install plugin packages into a virtual environment (`!206
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/206>`_)
+
+Bug Fixes
+---------
+
+- Update check ignores ``spin.index_url`` (`#265
+  <https://code.contact.de/pod/components/csspin/-/work_items/265>`_)
+
+Chores
+------
+
+- Drop Python 3.10 test and add Python 3.15 test (`#273
+  <https://code.contact.de/pod/components/csspin/-/work_items/273>`_)
+- ``csspin.download`` reading ``file://`` URLs is not tested (`#266
+  <https://code.contact.de/pod/components/csspin/-/work_items/266>`_)
+- Deprecate ``spin.subprocess_environment`` and
+  ``use_subprocess_environment`` (`!211
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/211>`_)
+- Update CI to cs.template v2027.1.2.0 (`!213
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/213>`_)
+- Document how to provide alternative dependency retrieval (`!204
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/204>`_)
+- Define the ``download_url`` help structure in the restricted environments
+  tdoc (`!210
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/210>`_)
+- Add compatibility and restricted environments rules to ``AGENTS.md`` (`!215
+  <https://code.contact.de/pod/components/csspin/-/merge_requests/215>`_)
+
 v3.2.0
 ======
 
