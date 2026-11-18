@@ -52,7 +52,6 @@ from path import Path
 from csspin import (
     _PLUGIN_GUIDE_URL,
     Verbosity,
-    _warn_deprecated,
     _warn_subprocess_environment,
     cd,
     config,
@@ -77,6 +76,7 @@ from csspin import (
     toporun,
     tree,
     warn,
+    warn_deprecated,
     writetext,
 )
 from csspin.tree import ConfigTree
@@ -258,7 +258,7 @@ class ProjectEnvironmentImportWarning:
             not _processing_pth_file()
         ):
             importer = _importing_file()
-            _warn_deprecated(
+            warn_deprecated(
                 f"Module '{name}' was imported from the project environment {venv}"
                 + (f" by {importer}" if importer else "")
                 + ". Plugin code must not import from the project environment, and"

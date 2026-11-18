@@ -56,7 +56,7 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
-from contextlib import contextmanager, nullcontext
+from contextlib import ContextDecorator, contextmanager, nullcontext
 from traceback import format_exc
 
 import click
@@ -69,6 +69,8 @@ __all__ = [
     "echo",
     "info",
     "warn",
+    "warn_deprecated",
+    "deprecation",
     "error",
     "cd",
     "copy",
@@ -459,11 +461,42 @@ _PLUGIN_GUIDE_URL = "https://csspin.readthedocs.io/en/stable/howtoplugins.html"
 _DEPRECATION_WARNINGS: set[str] = set()
 
 
-def _warn_deprecated(message: str) -> None:
-    """Warn about the use of a deprecated feature, once per spin run."""
+def warn_deprecated(message: str) -> None:
+    """Warn about the use of a deprecated feature, once per spin run.
+
+    Spin shows each distinct ``message`` only once.
+
+    >>> warn_deprecated("The 'foo' property is deprecated, use 'bar'.")
+
+    """
     if message not in _DEPRECATION_WARNINGS:
         _DEPRECATION_WARNINGS.add(message)
         warn(message)
+
+
+class deprecation(ContextDecorator):  # pylint: disable=invalid-name
+    """Warn about a deprecated feature, once per spin run.
+
+    As a context manager, it warns on entry. As a decorator, it warns each time
+    the decorated function is called, but not when the plugin is imported.
+    Spin shows each distinct ``message`` only once.
+
+    >>> @deprecation("old_task() is deprecated, use new_task().")
+    ... def old_task(): ...
+
+    >>> with deprecation("The 'foo' mode is deprecated."):
+    ...     run_foo_mode()
+
+    """
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __enter__(self) -> None:
+        warn_deprecated(self.message)
+
+    def __exit__(self, *exc_info: object) -> None:
+        return None
 
 
 def _warn_subprocess_environment(cfg: ConfigTree) -> None:
@@ -484,7 +517,7 @@ def _warn_subprocess_environment(cfg: ConfigTree) -> None:
             if module_file and os.path.samefile(module_file, keyinfo.file):
                 who = f"Plugin {name} ({keyinfo.file}:{keyinfo.line})"
                 break
-    _warn_deprecated(
+    warn_deprecated(
         f"{who} registered spin.subprocess_environment, which is deprecated and"
         " will be removed. Environment-providing plugins activate their"
         " environment once instead, by setting environment variables in their"
@@ -548,7 +581,7 @@ def sh(
     cmd_ = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)  # type: ignore[unreachable] # noqa: E501
 
     if use_subprocess_environment is not None:
-        _warn_deprecated(
+        warn_deprecated(
             "The 'use_subprocess_environment' argument of csspin.sh() is"
             " deprecated and will be removed. See"
             f" {_PLUGIN_GUIDE_URL}#activating-environments."

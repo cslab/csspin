@@ -544,6 +544,40 @@ A typical example is a missing secret, the according check may look as below:
                f" property 'mkinstance.postgres.postgres_syspwd'"
            )
 
+Deprecate before removing
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Users depend on the properties, tasks, options and functions of a plugin. Keep
+the old API working next to the new one, warn when it is used, and remove it in
+a later major release.
+
+Use :py:func:`csspin.warn_deprecated` to warn at once, and
+:py:class:`csspin.deprecation` to warn when a block of code or a function is
+used. Spin shows each message once per run. Spin interpolates the message
+against the configuration tree.
+
+.. code-block:: python
+   :caption: Example of a deprecated function and a deprecated code path
+
+   from csspin import deprecation, warn_deprecated
+
+
+   @deprecation("old_name() is deprecated and will be removed. Use new_name().")
+   def old_name(cfg):
+       return new_name(cfg)
+
+
+   def configure(cfg):
+       if cfg.myplugin.get("old_property"):
+           warn_deprecated(
+               "'myplugin.old_property' is deprecated and will be removed."
+               " Use 'myplugin.new_property'."
+           )
+
+Warn only about changes that the user can act on. Do not warn about internal
+changes that the user cannot influence. Name the replacement in the message, so
+the user knows what to do.
+
 Mind the CLI best-practices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

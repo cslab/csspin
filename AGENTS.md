@@ -165,7 +165,7 @@ Customers and external projects use csspin and the `csspin-*` plugin packages,
 so every change must keep existing setups working.
 
 - Deprecate before removing. Keep the old property, task, option or API working
-  next to the new one, warn with `_warn_deprecated` (`src/csspin/__init__.py`),
+  next to the new one, warn with `warn_deprecated` (`src/csspin/__init__.py`),
   mark the schema help as deprecated, and remove it in a later release. This
   covers `__all__`, schema property names and defaults. Name unavoidable breaks
   in the MR description for the release notes.
