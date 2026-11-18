@@ -49,6 +49,8 @@ Communication with the user
 .. autofunction:: info
 .. autofunction:: debug
 .. autofunction:: warn
+.. autofunction:: warn_deprecated
+.. autoclass:: deprecation
 .. autofunction:: error
 .. autofunction:: die
 

@@ -401,6 +401,63 @@ def test_sh_use_subprocess_environment_deprecated(
     assert "'use_subprocess_environment' argument" in capsys.readouterr().err
 
 
+class TestDeprecationHelpers:
+    """
+    Unit tests related to csspin.warn_deprecated and csspin.deprecation
+
+    The tests import the cfg fixture, because warnings are interpolated against
+    the configuration tree. Each test starts with no message shown yet.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _reset_shown_messages(
+        self: TestDeprecationHelpers, cfg: ConfigTree, mocker: MockerFixture
+    ) -> None:
+        """Forget the messages shown by other tests, restored after the test"""
+        mocker.patch.object(csspin, "_DEPRECATION_WARNINGS", set())
+
+    def test_warn_deprecated_once_per_message(
+        self: TestDeprecationHelpers, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """warn_deprecated shows each message once and a new message again"""
+        csspin.warn_deprecated("first is deprecated")
+        csspin.warn_deprecated("first is deprecated")
+        csspin.warn_deprecated("second is deprecated")
+        err = capsys.readouterr().err
+        assert err.count("first is deprecated") == 1
+        assert err.count("second is deprecated") == 1
+
+    def test_context_manager_warns_on_entry_once(
+        self: TestDeprecationHelpers, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """deprecation as a context manager warns on entry, once per message"""
+        deprecation = csspin.deprecation("block is deprecated")
+        assert "block is deprecated" not in capsys.readouterr().err
+        with deprecation:
+            assert capsys.readouterr().err.count("block is deprecated") == 1
+        with csspin.deprecation("block is deprecated"):
+            pass
+        assert "block is deprecated" not in capsys.readouterr().err
+
+    def test_decorator_warns_at_call_once(
+        self: TestDeprecationHelpers, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """
+        deprecation as a decorator does not warn when applied, warns at the
+        call, warns once per message, and returns the function's result
+        """
+
+        @csspin.deprecation("old_function is deprecated")
+        def old_function(value: int) -> int:
+            return value * 2
+
+        assert "old_function is deprecated" not in capsys.readouterr().err
+        assert old_function(2) == 4
+        assert capsys.readouterr().err.count("old_function is deprecated") == 1
+        assert old_function(3) == 6
+        assert "old_function is deprecated" not in capsys.readouterr().err
+
+
 def test_backtick(mocker: MockerFixture) -> None:
     """
     csspin.backtick is calling csspin.sh using the correct arguments and returning
