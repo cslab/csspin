@@ -651,6 +651,11 @@ def backtick(*cmd: str, **kwargs: Any) -> str:
 #: EXPORTS is a list that contains all (key, value) tuples of environment variables
 #: that got set or unset via :py:func:`csspin.setenv` during the current spin execution.
 #:
+#: .. deprecated:: 3.4.0
+#:    ``EXPORTS`` is deprecated and will be removed in a later major release.
+#:    A plugin sets the variables it needs in its ``init`` hook instead (see
+#:    :ref:`activating-environments`).
+#:
 #: The ``value`` of a given element is already fully interpolated, except for
 #: parts that look like environment variables. So any plugin using ``EXPORTS`` is able
 #: to lazily evaluate the value of a variable in cases, where it has been set
@@ -678,9 +683,6 @@ def setenv(*args: Any, **kwargs: Any) -> None:
     keyword arguments are interpolated against the configuration tree.
 
     Passing ``None`` as a value removes the environment variable.
-
-    Variables that have been set during or before ``configure()`` will be
-    patched into the activation scripts of the Python virtual environment.
 
     On Windows, all passed environment variable keys will be set in upper case.
 

@@ -727,6 +727,9 @@ the activated environment. For example, `csspin_python.python`_ puts the script
 directory of the project's virtual environment first on ``PATH`` and sets
 ``VIRTUAL_ENV``.
 
+``spin provision`` runs no ``init`` hook. A plugin that needs a variable during
+``spin provision`` sets it there, too.
+
 Activating an environment must never change spin's own ``sys.path`` or
 ``sys.prefix``, e.g. by executing the ``activate_this.py`` of a virtual
 environment in spin's process. That would make the packages of the project
