@@ -26,6 +26,8 @@
   - [ ] For all new files which will be published: added the license header?
 - Formalities
   - [ ] Adhere to the contributing guidelines in CONTRIBUTING.md
+  - [ ] If this MR deprecates something, its removal issue is in the next major
+        release milestone
   - [ ] The merge request and related issue(s) are labeled and will be closed
         properly after merge
   - [ ] Communication to stakeholders (if required)
