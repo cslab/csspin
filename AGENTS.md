@@ -164,11 +164,18 @@ Key plugin-facing concepts:
 Customers and external projects use csspin and the `csspin-*` plugin packages,
 so every change must keep existing setups working.
 
-- Deprecate before removing. Keep the old property, task, option or API working
-  next to the new one, warn with `warn_deprecated` (`src/csspin/__init__.py`),
-  mark the schema help as deprecated, and remove it in a later release. This
-  covers `__all__`, schema property names and defaults. Name unavoidable breaks
-  in the MR description for the release notes.
+- Deprecate before removing. Keep the old property, task, option, default or
+  API working next to the new one and remove it in a later major release. For
+  user-facing changes, warn with `warn_deprecated` (`src/csspin/__init__.py`)
+  and mark the schema help as deprecated. This covers `__all__`, schema
+  property names and defaults. Keep warnings sparse and show them only to
+  people who can act on them. Name unavoidable breaks in the MR description
+  for the release notes.
+- Each deprecation needs an issue that owns the removal. Link it in the MR
+  that adds the deprecation and assign it to the milestone
+  `PTM - <project>: vX.Y.Z release planning` of the next major release, where
+  `<project>` is this project's name. Create the milestone if the project has
+  none yet.
 - Each csspin pipeline triggers integration jobs in the sibling plugin repos
   (`test_csspin_<plugin>_integration`). A red downstream job points at the
   csspin change.

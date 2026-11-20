@@ -51,6 +51,8 @@ Please follow these steps considering code contributions:
    - [ ] All pre-commit hooks pass
    - [ ] Relevant tests have been added or updated (if necessary)
    - [ ] The documentation has been updated (if necessary)
+   - [ ] Deprecations follow the rules in "Compatibility and deprecations" (if
+         necessary)
    - [ ] The code is sufficiently documented (docstrings, comments, etc.)
    - [ ] The changes adhere to the project's coding standards including:
      - Pre-Commit hooks and their configuration
@@ -89,6 +91,21 @@ csspin:
 10. Address any feedback from the reviewer.
 11. Once approved, a maintainer will merge or take over the request.
 
+### Compatibility and deprecations
+
+Customers and external projects depend on this project, so a breaking change
+needs a prior deprecation. Keep the old property, task, option, default or API
+working next to the new one and remove it in a later major release. For
+user-facing changes, warn with `warn_deprecated` and mark the schema help as
+deprecated. Keep warnings sparse and show them only to people who can act on
+them.
+
+Every deprecation needs an issue that owns the removal. Link it in the
+request that adds the deprecation and assign it to the milestone named
+`PTM - <project>: vX.Y.Z release planning`, where `<project>` is the name of
+this project and X.Y.Z is the next major release. Create the milestone if the
+project has none yet.
+
 ## Release Procedure
 
 > This section is only relevant for maintainers of the csspin project.
@@ -108,6 +125,9 @@ Steps to create a release:
    - Ensure that release related merge request and issues are labeled and closed
      properly.
    - If there is a milestone, make sure that all tasks are done.
+   - For a major release, finish the issues of its
+     `PTM - <project>: vX.Y.Z release planning` milestone or move them to a
+     later major release.
 
 1. Create the release notes by opening a new merge request at the csspin
    repository in GitLab targeting the master branch and adding a new section to
