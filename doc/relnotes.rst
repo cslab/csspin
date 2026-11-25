@@ -60,6 +60,31 @@
 Release Notes
 =============
 
+v3.4.0
+======
+
+November 25, 2026
+
+Enhancements
+------------
+
+- Add public helpers for deprecation warnings (`#276
+  <https://code.contact.de/pod/components/csspin/-/work_items/276>`_)
+
+Bug Fixes
+---------
+
+- Update check fails on devpi indices and ignores ``spin.extra_index``
+  (`#271 <https://code.contact.de/pod/components/csspin/-/work_items/271>`_)
+
+Chores
+------
+
+- Deprecate ``csspin.EXPORTS`` (`#277
+  <https://code.contact.de/pod/components/csspin/-/work_items/277>`_)
+- Document the compatibility and deprecation rules for plugin packages
+  (`#279 <https://code.contact.de/pod/components/csspin/-/work_items/279>`_)
+
 v3.3.0
 ======
 
