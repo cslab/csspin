@@ -1060,6 +1060,14 @@ def finalize_cfg_tree(cfg: tree.ConfigTree) -> None:
     mkdir("{spin.data}")
 
 
+def pip_index_args(cfg: tree.ConfigTree) -> list[str]:
+    args = ["--index-url", interpolate1("{spin.index_url}")]
+    if cfg.spin.extra_index:
+        args.extend(["--extra-index-url", cfg.spin.extra_index])
+
+    return args
+
+
 def install_plugin_packages(cfg: tree.ConfigTree) -> None:
     """Install plugin packages which are not yet installed and extend the
     configuration tree.
@@ -1076,12 +1084,8 @@ def install_plugin_packages(cfg: tree.ConfigTree) -> None:
         "-q" if cfg.verbosity < Verbosity.INFO else None,
         "--disable-pip-version-check",
         "--upgrade",
-        "--index-url",
-        "{spin.index_url}",
+        *pip_index_args(cfg),
     ]
-
-    if cfg.spin.extra_index:
-        cmd.extend(["--extra-index-url", cfg.spin.extra_index])
 
     # Install all plugin-packages at once to avoid pip's dependency resolver to
     # fail without exit-zero.

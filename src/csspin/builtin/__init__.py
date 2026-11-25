@@ -23,10 +23,10 @@ import importlib.metadata
 import importlib.util
 import json
 import shlex
+import subprocess
 import sys
 import textwrap
 import time
-import urllib.request
 
 import click
 import distro
@@ -63,6 +63,7 @@ from csspin.cli import (
     finalize_cfg_tree,
     install_plugin_packages,
     load_plugins_into_tree,
+    pip_index_args,
 )
 
 CATCHUP_COMMAND = "spin catchup"
@@ -293,7 +294,7 @@ def distro_task(cfg) -> None:  # type: ignore[no-untyped-def]
     print(f"distro={repr(dinfo['id'])} version={parse_version(dinfo['version'])}")
 
 
-def check_for_updates(cfg) -> None:  # type: ignore[no-untyped-def]
+def check_for_updates(cfg: tree.ConfigTree) -> None:
     if not cfg.spin.check_for_updates:
         return
 
@@ -309,13 +310,24 @@ def check_for_updates(cfg) -> None:  # type: ignore[no-untyped-def]
         m.clear()
         m.add(current_time)
 
-        headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
+        cmd = [
+            f"{sys.executable}",
+            "-mpip",
+            "--disable-pip-version-check",
+            "--retries",
+            "0",
+            "--timeout",
+            "10",
+            "index",
+            "versions",
+            "--json",
+            "csspin",
+            *pip_index_args(cfg),
+        ]
+
         try:
-            request = urllib.request.Request(
-                f"{cfg.spin.index_url.rstrip('/')}/csspin/", headers=headers
-            )
-            with urllib.request.urlopen(request, timeout=10) as response:
-                latest_version = json.loads(response.read())["versions"][-1]
+            out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+            latest_version = json.loads(out)["latest"]
         except Exception as exc:  # pylint: disable=broad-exception-caught
             # The check is not essential, so no failure may stop spin.
             debug(f"Could not check for a new csspin version: {exc!r}")
