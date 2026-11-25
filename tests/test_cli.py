@@ -1246,14 +1246,14 @@ def test_check_for_updates_uses_index_url(
     """The update check requests csspin from spin.index_url."""
     cfg.spin.data = Path(tmp_path)
     cfg.spin.index_url = "https://mirror.example/simple/"
-    urlopen = mocker.patch("csspin.builtin.urllib.request.urlopen")
-    urlopen.return_value.__enter__.return_value.read.return_value = (
-        b'{"versions": ["0.0.1"]}'
-    )
+    run = mocker.patch("csspin.builtin.subprocess.run")
+
+    run.return_value.stdout = '{"latest": "3.3.0"}'
 
     check_for_updates(cfg)
 
-    assert urlopen.call_args.args[0].full_url == "https://mirror.example/simple/csspin/"
+    cmd = run.call_args.args[0]
+    assert cmd[cmd.index("--index-url") + 1] == "https://mirror.example/simple/"
 
 
 def test_check_for_updates_failure_does_not_raise_and_is_memoized(
@@ -1261,11 +1261,11 @@ def test_check_for_updates_failure_does_not_raise_and_is_memoized(
 ) -> None:
     """A failing update check does not terminate spin and is not retried within the TTL."""
     cfg.spin.data = Path(tmp_path)
-    urlopen = mocker.patch(
-        "csspin.builtin.urllib.request.urlopen", side_effect=ConnectionResetError
+    run = mocker.patch(
+        "csspin.builtin.subprocess.run", side_effect=ConnectionResetError
     )
 
     check_for_updates(cfg)
     check_for_updates(cfg)
 
-    assert urlopen.call_count == 1
+    assert run.call_count == 1
